@@ -1,8 +1,6 @@
 # Solving Food — Product Requirements
 
-> Status: Draft v0.3 · Source: `THOUGHTS.md` + answered open questions · Last updated: 2026-10-08
->
-> Precedence rule: where `THOUGHTS.md` contradicts itself, the later line wins (it was written top to bottom).
+> Status: Draft v0.4 · Source: `THOUGHTS.md` + answered open questions · Last updated: 2026-10-09
 
 ---
 
@@ -52,6 +50,7 @@ The name **Solving Food** is final.
 - **R2.9** The **recipe and meal library is global**. Every user can search, add, and edit it (§4).
 - **R2.10** The only **per-user setting** is the theme (§11). Everything else is configured per household.
 - **R2.11** Every household member gets the same experience on their own device. For example, a spouse can check the plan or cook from a recipe on their phone.
+- **R2.12** **Open sign-up.** Anyone with the app's URL can create an account. Once signed up, they appear in the user directory so others can invite them to a household.
 
 ---
 
@@ -109,7 +108,7 @@ flowchart LR
 ### 4.3 Adding & Editing Recipes
 
 - **R4.15** **Manual entry.** Users can add a recipe with a title, images, ingredients, steps, tags, cuisine, main protein, servings, times, and tools.
-- **R4.16** **Drop folder.** A `.cook` (Cooklang) file placed in the app's cloud drop folder is imported automatically, and the file is deleted once it's processed. This is how recipes arrive from an external LLM: the user gives the LLM a recipe link or photo, the LLM writes a Cooklang file following a **Claude skill**, and drops it in the folder.
+- **R4.16** **Drop folder.** A `.cook` (Cooklang) file placed in the app's cloud drop folder is imported automatically, and the file is deleted once it's processed. This is how recipes arrive from an external LLM: the user gives the LLM a recipe link or photo, the LLM writes a Cooklang file following a **Claude skill**, and drops it in the folder. Images referenced by the file are **saved into the app** (never hot-linked), and the result of each import (success or error) is shown as a notification (R12.1).
 - **R4.17** The Claude skill defines the Cooklang schema the app expects, including **cuisine** and **main protein**, so the LLM infers them.
 - **R4.18** **Full recipes are stored**, including all steps. The app is private to friends and family.
 - **R4.19** **Anyone can edit any recipe**, and the change applies for all users. There are no private copies or forks. Edits are versioned so mistakes can be undone.
@@ -119,6 +118,16 @@ flowchart LR
 
 - **R4.21** A **Copy link** button shares a recipe or meal. The link opens the normal recipe or meal page, which is readable without an account.
 - **R4.22** Users can export a recipe as a `.cook` file.
+
+### 4.5 Cooking Timers & Layouts
+
+- **R4.23** **Timers alert even when the phone is locked** or the app is in the background. A notification announces which timer finished and opens the recipe at that step. On iPhone, this requires the app to be installed to the home screen, and the app prompts the user to install it the first time they start a timer.
+- **R4.24** The cooking view has layouts for **phone portrait, phone landscape, and tablet**. On larger or landscape screens, the current step, its ingredients, and running timers are shown side by side, so a propped-up tablet can be followed from across the kitchen.
+
+### 4.6 Managing the Library
+
+- **R4.25** **Cuisine** and **main protein** are chosen from **fixed lists**, the same in the recipe form and the Claude skill, so recipes are classified consistently.
+- **R4.26** **Any user can delete a recipe.** A confirmation dialog warns that it will be deleted **for all users in every household**. Deleting removes it from searches, meals, plans, and favourites everywhere. Past cook history keeps the recipe's name, marked as deleted.
 
 ---
 
@@ -138,21 +147,27 @@ flowchart LR
 ### 6.1 Plan Page
 
 - **R6.1** The Plan page shows the **meals selected for the current period** as a list that can be sorted and filtered.
-- **R6.2** A **budget meter** is always visible. It starts at the household's budget for the period and goes down as meals are added. The cost of a meal counts only ingredients that have to be bought; ingredients already in supply cost nothing extra.
-- **R6.3** The budget covers **all food for planned meals** in the period. Food bought outside of recipes (manual list additions, staples) doesn't count against it.
-- **R6.4** Going over budget is allowed. The meter goes negative and turns red, but the app **never stops** the user from adding meals.
-- **R6.5** Meals not cooked by the end of the period **roll over** into the next period's plan automatically.
-- **R6.6** Planned meals show an **expiry badge** when one of their ingredients is expiring soon, e.g. *"Salmon expires in 2 days"*.
+- **R6.2** **Period coverage view.** Above the list, the Plan page shows the plan period as a **calendar-like strip**: one cell per day, labelled with its weekday and date for orientation, and one row per meal type the household plans (breakfast, lunch, dinner).
+  - Cells **fill from left to right** as meals are added. Five dinners planned in a 7-day period fill the first five dinner cells, and the row reads **5/7**. It's a visual version of "5 of 7 dinners planned", **not a schedule**. Meals are never assigned to specific days, and the cells can't be tapped to pick a day.
+  - A meal-prep recipe or leftover portions fill one cell per portion they cover (e.g. 4 lunches from one batch fill 4 lunch cells).
+  - Cooked meals show as solid cells and planned-but-not-cooked meals as outlined cells, so the strip also shows progress through the period.
+  - If more meals are planned than there are days, the row shows the overflow (e.g. **8/7, +1**).
+  - Snacks aren't shown in the strip.
+- **R6.3** A **budget meter** is always visible. It starts at the household's budget for the period and goes down as meals are added. The cost of a meal counts only ingredients that have to be bought; ingredients already in supply cost nothing extra.
+- **R6.4** The budget covers **all food for planned meals** in the period. Food bought outside of recipes (manual list additions, staples) doesn't count against it.
+- **R6.5** Going over budget is allowed. The meter goes negative and turns red, but the app **never stops** the user from adding meals.
+- **R6.6** Meals not cooked by the end of the period **roll over** into the next period's plan automatically.
+- **R6.7** Planned meals show an **expiry badge** when one of their ingredients is expiring soon, e.g. *"Salmon expires in 2 days"*.
 
 ### 6.2 Meal Prep & Leftovers
 
-- **R6.7** One recipe can produce **several portions** that cover future lunches or breakfasts, and these can last into the next period.
-- **R6.8** After a meal is cooked, the app asks: *"Estimated leftovers: 3 lunches — correct?"* The user adjusts the number with ▲/▼ buttons.
-- **R6.9** Leftover portions are tracked as their own supply items, with an expiry date. They fill lunch/breakfast slots in the plan.
+- **R6.8** One recipe can produce **several portions** that cover future lunches or breakfasts, and these can last into the next period.
+- **R6.9** After a meal is cooked, the app asks: *"Estimated leftovers: 3 lunches — correct?"* The user adjusts the number with ▲/▼ buttons.
+- **R6.10** Leftover portions are tracked as their own supply items, with an expiry date. They fill lunch/breakfast slots in the plan.
 
 ### 6.3 Suggestions
 
-- **R6.10** The Plan page has a **Suggested** section ranked by a configurable score:
+- **R6.11** The Plan page has a **Suggested** section ranked by a configurable score:
 
   | Positive factors | Negative factors |
   |---|---|
@@ -164,25 +179,26 @@ flowchart LR
   | Matches household food preferences | Missing kitchen tools |
   | Meets the protein goal | |
 
-- **R6.11** Users can **tune the weight** of each factor in Settings. Presets such as *"Use it up"*, *"Cheap week"*, and *"Adventurous"* are available.
-- **R6.12** **Expiry alerts.** If supply will expire during the period (e.g. salmon), the app shows it prominently and suggests recipes that use more of it.
+- **R6.12** Users can **tune the weight** of each factor in Settings. Presets such as *"Use it up"*, *"Cheap week"*, and *"Adventurous"* are available.
+- **R6.13** **Expiry alerts.** If supply will expire during the period (e.g. salmon), the app shows it prominently and suggests recipes that use more of it.
 
 ### 6.4 Protein Goal
 
-- **R6.13** The household sets a **protein goal per serving** for each meal type (e.g. dinner ≥ 35 g). Each goal can be turned off.
-- **R6.14** Recipe cards and the recipe page show **protein per serving**.
-- **R6.15** Suggestions favour recipes that meet the goal (weighted like the other factors), and the optimiser can be told to only propose recipes that meet it.
-- **R6.16** The Plan page shows the **average protein per serving** for each meal type in the current plan, next to the goal.
+- **R6.14** The household sets a **protein goal per serving** for each meal type (e.g. dinner ≥ 35 g). Each goal can be turned off.
+- **R6.15** Recipe cards and the recipe page show **protein per serving**.
+- **R6.16** Suggestions favour recipes that meet the goal (weighted like the other factors), and the optimiser can be told to only propose recipes that meet it.
+- **R6.17** The Plan page shows the **average protein per serving** for each meal type in the current plan, next to the goal.
 
 ### 6.5 Budget Optimiser
 
-- **R6.17** The user can ask for *"n dinners under $x"* (any meal type). The optimiser proposes a **complete set** of recipes that share ingredients, to cut waste and cost, but differ in cuisine and protein.
-- **R6.18** If the user doesn't like the set, **Next** shows another set that also works well together, and **Back** returns to earlier sets.
-- **R6.19** The user accepts a set as a whole, which adds every recipe in it to the plan. They can remove individual recipes from the Plan page afterwards.
+- **R6.18** The user can ask for *"n dinners under $x"* (any meal type). The optimiser proposes a **complete set** of recipes that share ingredients, to cut waste and cost, but differ in cuisine and protein.
+- **R6.19** If the user doesn't like the set, **Next** shows another set that also works well together, and **Back** returns to earlier sets. There's no fixed number of sets: Next keeps going through every combination that is genuinely good, then says *"No more good combinations"*.
+- **R6.20** The user accepts a set as a whole, which adds every recipe in it to the plan. They can remove individual recipes from the Plan page afterwards.
 
 ### 6.6 Prices
 
-- **R6.20** Ingredient prices come from **live PC Express data** where available. A preconfigured **estimated price list** is the fallback when live prices can't be fetched.
+- **R6.21** Ingredient prices come from **live PC Express data** where available. A preconfigured **estimated price list** is the fallback when live prices can't be fetched.
+- **R6.22** Each household picks the **PC Express store** its prices come from, using an in-app store search. The default is **Loblaws Greenbank Road** (Ottawa).
 
 ---
 
@@ -194,9 +210,10 @@ flowchart LR
 - **R7.4** **Stores.** Each ingredient (or category) has a preferred store, e.g. *meat → Costco*. The list is grouped by store. Only the PC Express section is meant to be copied into ChatGPT. Other stores (e.g. Costco) become in-store checklists.
 - **R7.5** **Copy button.** One button copies the PC Express section in a clean, LLM-friendly format with quantities and brands.
 - **R7.6** **Manual additions.** Users can add any food item to the list at any time.
-- **R7.7** **Staples cadence.** The app learns how fast the household uses staple foods (milk, eggs, coffee). When an item is probably running low, it asks *"Are you out of milk?"* and offers to add it to the list.
+- **R7.7** **Staples cadence.** The app learns how fast the household uses staple foods (milk, eggs, coffee, and the free-use ingredients in R8.14). When an item is probably running low, it asks *"Are you out of milk?"* and offers to add it to the list.
 - **R7.8** **Purchase confirmation.** After an order is delivered or a store trip is done, the user is shown the list of items to confirm. They can adjust for substitutions and out-of-stock items. If they change nothing, the app assumes everything was bought and arrived. The result is added to supply.
 - **R7.9** **Freeze prompt for bulk buys.** Confirming a bulk purchase of a freezable item (e.g. 3 kg of chicken from Costco) asks *"Freeze some of this?"* and lets the user choose how much to freeze.
+- **R7.10** **Product search for brand mapping.** The brand mapping page has an in-app **PC Express product search** showing name, pack size, image, and current price at the household's store. Picking a result links the ingredient to that exact product.
 
 ---
 
@@ -216,6 +233,8 @@ flowchart LR
 - **R8.10** Supply shows exact amounts. It doesn't show any "confidence" or uncertainty indicator.
 - **R8.11** Supply tracks **leftovers** (prepared portions) as well as raw ingredients.
 - **R8.12** Filters: by location (pantry, cupboards, fridge, freezer), category, expiring soon, low stock.
+- **R8.13** **Metric and imperial together.** Every amount in the app (recipes, supply, grocery list) is shown in both systems, e.g. `1 cup flour (125 g · 4.4 oz)`. There's no setting to switch; both are always visible.
+- **R8.14** **Free-use ingredients.** Ingredients used freely and often outside recipes, such as cooking oils, salt, pepper, and butter, aren't tracked by amount. Cooking doesn't subtract them and planned meals don't add them to the grocery list. The staples cadence (R7.7) handles them instead. They appear in a **Staples** group on the Supply page with when each was last bought. **Spices are not free-use** and are tracked like other ingredients. Which ingredients are free-use can be changed per ingredient.
 
 ---
 
@@ -225,7 +244,7 @@ flowchart LR
 - **R9.2** The **review flow**:
   1. **Rate it 1–10.** Each user rates for themselves, and the meal and its recipes can each be rated (R5.3).
   2. **Adjust ingredients used.** The recipe quantities are pre-filled. The user can change any amount, remove an ingredient, or add one.
-  3. **Confirm leftovers** with ▲/▼ (R6.8).
+  3. **Confirm leftovers** with ▲/▼ (R6.9).
 - **R9.3** Supply is reduced by the confirmed amounts, and leftover portions are added.
 - **R9.4** A review doesn't have to be done straight away. Cooked meals without a review appear in a **"pending reviews"** prompt so any household member can finish it later (e.g. that evening). Each other member is prompted to add their own rating.
 - **R9.5** The user can mark which planned items were **eaten**. This covers leftovers and snacks as well as cooked meals.
@@ -246,13 +265,14 @@ Everything here belongs to the household except the theme, which is per user.
 
 - **R11.1** **Kitchen tools.** The household lists the equipment it owns (Instant Pot, food processor, sous vide…). Recipes that need missing tools are flagged or filtered out.
 - **R11.2** **Food preferences.** Favourite foods and cuisines, dislikes, and dietary restrictions, set once for the whole household and used in scoring.
-- **R11.3** **Suggestion weights** (R6.11).
-- **R11.4** **Protein goals** per meal type (R6.13).
+- **R11.3** **Suggestion weights** (R6.12).
+- **R11.4** **Protein goals** per meal type (R6.14).
 - **R11.5** **Plan period** length in days.
 - **R11.6** **Budget** for planned meals per period.
 - **R11.7** **Brand mappings** and **stores** (dedicated page, §7).
 - **R11.8** **Household members**: invite by name, remove members, leave the household.
 - **R11.9** **Theme (per user).** Catppuccin flavour (Latte/Frappé/Macchiato/Mocha) and accent colour.
+- **R11.10** **Download & import household data.** A **Download household data** button saves a file with all of the household's data (supply and its history, plans, grocery lists, cook history, ratings, favourites, notes, and settings) plus the recipes and meals it uses. An **Import household data** button loads such a file into the current household, after a warning that it **replaces** the household's existing data. Members aren't changed by an import.
 
 ---
 
@@ -276,9 +296,19 @@ Everything here belongs to the household except the theme, which is per user.
 
 - **Brutalist** style: thick borders, hard shadows, monospace or grotesk type, visible structure, no gradients.
 - **Catppuccin** palette, with a user-selectable accent.
-- **Mobile-first.** Fully usable one-handed in the kitchen. Desktop gets a wider multi-column layout.
+- **Mobile-first.** Designed for phones first and fully usable one-handed in the kitchen.
+- **Scales up properly to large screens**, including 1920×1080 desktops and 4K displays. Big screens use the extra space for more useful content, not stretched or tiny UI:
+  - **Phone:** one column, bottom navigation.
+  - **Tablet:** two panes where it helps (e.g. recipe list + selected recipe).
+  - **Desktop (1080p):** side navigation and multi-pane views. For example, the Plan page shows the plan, suggestions, and budget/protein summary side by side, and recipe grids show more cards per row.
+  - **4K:** text and controls scale up so they're comfortable to read at normal viewing distance (respecting the OS display scaling). Grids gain columns, but text stays at a readable line length and nothing stretches edge to edge.
+  - **Step mode** gets larger text on bigger screens, so it can be read from across the kitchen on a mounted tablet or TV.
 - Installable **PWA**: home-screen icon, works offline. Edits made offline sync when the device reconnects.
 - UI inspiration: screenshots of the user's Obsidian recipe database and existing recipe apps (to collect).
+
+### Notifications
+
+- **R12.1** An app-wide **notification system** shows banners at the **bottom of every page** (above the bottom navigation on phones). It's used for things that finish in the background or fail, such as recipe imports, household data imports, and price refresh problems. Success and info banners disappear on their own after a few seconds. Errors stay until dismissed. A banner can link to the related page, e.g. the newly imported recipe.
 
 ---
 
@@ -289,3 +319,4 @@ Everything here belongs to the household except the theme, which is per user.
 - **NFR3 Scale.** Designed for about **3 households and 10 users** in the first year.
 - **NFR4 Privacy.** Household data (supply, plans, history, ratings) is visible only to members of that household, enforced by database security rules.
 - **NFR5 Live sync.** Changes made by one household member (plan, supply, grocery list) appear on other members' devices without a refresh.
+- **NFR6 Responsive.** Every page works and looks intentional from a 360 px-wide phone up to a 3840×2160 (4K) display, with no horizontal scrolling and no pixelated images.
