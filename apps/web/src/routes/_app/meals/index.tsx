@@ -61,6 +61,7 @@ function MealsPage() {
         onSearchChange={onSearchChange}
         placeholder="Search meals…"
         noun="meals"
+        hide={["supply"]}
         countFor={(x) => applyCollection(rows, x, factsOf, x.q === search.q ? matches : null).items.length}
         optionCount={(key, value) => optionCount(rows, search, factsOf, matches, key, value)}
         tags={tags}

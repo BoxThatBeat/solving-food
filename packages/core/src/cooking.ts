@@ -94,20 +94,16 @@ export function projectedSupply(unexpired: ReadonlyMap<string, number>, planned:
 }
 
 export interface SupplyCoverage {
-  /** Share of the recipe's tracked canonical amount that projected supply covers, 0..1 (1 when nothing is tracked). */
+  /** Share of the recipe's tracked canonical amount that projected supply covers, 0..1 (0 when nothing is tracked). */
   fraction: number;
   /** Every tracked ingredient covered: "can make" (R4.3). */
   canMake: boolean;
   missing: string[];
 }
 
-/** "Use what's left" threshold (R4.4): covered fully or nearly fully. */
-export const USE_UP_THRESHOLD = 0.85;
-
 /**
  * How well projected supply covers one recipe at its own servings (R4.3, R4.4). Free-use, optional, and vague lines
- * don't count. A recipe whose every line is untracked counts as fraction 1 but not "can make" unless something is
- * tracked (so a salad of only free-use items isn't marked).
+ * don't count. A recipe with nothing tracked (only free-use or vague lines) is neither "can make" nor "use what's left".
  */
 export function supplyCoverage(lines: RecipeLines["ingredients"], projected: ReadonlyMap<string, number>, ingredientOf: (id: string) => Pick<GroceryIngredient, "freeUse"> | undefined): SupplyCoverage {
   let need = 0;
@@ -125,7 +121,7 @@ export function supplyCoverage(lines: RecipeLines["ingredients"], projected: Rea
     have += Math.min(p, n);
     if (p + EPS < n) missing.push(id);
   }
-  if (need <= 0) return { fraction: 1, canMake: false, missing };
+  if (need <= 0) return { fraction: 0, canMake: false, missing };
   return { fraction: have / need, canMake: missing.length === 0, missing };
 }
 

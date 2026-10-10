@@ -42,7 +42,7 @@ export interface CollectionViewProps {
   /** The search bar sticks to the top on phones; off inside sheets. */
   sticky?: boolean;
   /** Filter groups that make no sense for this list (e.g. "cooked" on plan items). */
-  hide?: Array<"show" | "tools" | "cost">;
+  hide?: Array<"show" | "tools" | "cost" | "supply">;
 }
 
 type Draft = CollectionSearch;
@@ -66,6 +66,7 @@ function appliedChips(s: CollectionSearch): Array<{ key: string; label: string; 
   if (s.maxActive) out.push({ key: "maxActive", label: `≤ ${s.maxActive} min active`, remove: (x) => ({ ...x, maxActive: undefined }) });
   if (s.minRating) out.push({ key: "minRating", label: `★ ${s.minRating}+`, remove: (x) => ({ ...x, minRating: undefined }) });
   if (s.tools) out.push({ key: "tools", label: "Have the tools", remove: (x) => ({ ...x, tools: undefined }) });
+  if (s.supply) out.push({ key: "supply", label: s.supply === "can" ? "Can make" : "Use what's left", remove: (x) => ({ ...x, supply: undefined }) });
   if (s.maxCost) out.push({ key: "maxCost", label: `≤ $${s.maxCost / 100}/serving`, remove: (x) => ({ ...x, maxCost: undefined }) });
   return out;
 }
@@ -237,12 +238,19 @@ export function CollectionView(p: CollectionViewProps) {
                 Have the tools
               </ToggleChip>
             )}
-            {["Can make", "Use what's left", "Uses expiring"].map((l) => (
-              <ToggleChip key={l} pressed={false} disabled title="Available once Supply arrives (M3)" className="border-dashed shadow-none">
-                {l}
-              </ToggleChip>
-            ))}
-            <p className="m-0 w-full font-mono text-[0.625rem] font-bold text-sub uppercase">Supply filters arrive with Supply (M3)</p>
+            {p.hide?.includes("supply") ? null : (
+              <>
+                <ToggleChip pressed={draft.supply === "can"} onClick={() => setDraft((d) => ({ ...d, supply: d.supply === "can" ? undefined : "can" }))} count={count("supply", "can")}>
+                  Can make
+                </ToggleChip>
+                <ToggleChip pressed={draft.supply === "useup"} onClick={() => setDraft((d) => ({ ...d, supply: d.supply === "useup" ? undefined : "useup" }))} count={count("supply", "useup")}>
+                  Use what&apos;s left
+                </ToggleChip>
+                <ToggleChip pressed={false} disabled title="Arrives with suggestions (M5)" className="border-dashed shadow-none">
+                  Uses expiring
+                </ToggleChip>
+              </>
+            )}
           </Group>
 
           <Group title="Total time" hint={draft.maxTotal ? `≤ ${draft.maxTotal} min` : "Any"}>

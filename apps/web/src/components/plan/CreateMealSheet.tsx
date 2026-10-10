@@ -101,7 +101,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
 
   // Recipes tab: shared filters and text search over the index.
   const notes = useNotes(model.hid);
-  const factsOf = useHouseholdFacts(model.hid, all);
+  const factsOf = useHouseholdFacts(model.hid, all, model.supply.loading ? undefined : model.projected);
   const matches = useRecipeSearch(all, notes, search.q ?? "");
   const result = React.useMemo(() => applyCollection(all, search, factsOf, matches), [all, search, factsOf, matches]);
   const tags = React.useMemo(() => tagCounts(all), [all]);

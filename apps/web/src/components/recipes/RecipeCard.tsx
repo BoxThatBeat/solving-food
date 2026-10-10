@@ -1,5 +1,6 @@
 // <RecipeCard> (Planning/M1 §3, PRD R4.5, R6.15): image, title, time, cuisine, protein per serving ("~" when an
-// ingredient lacks protein data), favourite toggle, and the household's cook stats ("made n times", M3 fills them).
+// ingredient lacks protein data), favourite toggle, the household's cook stats ("made n times", R4.5), and the
+// "can make" mark when supply left after the plan covers it (R4.3).
 // The card is a link; the favourite toggle sits beside it, not inside (no nested interactive elements).
 import { Link } from "@tanstack/react-router";
 import { Plus, Star } from "lucide-react";
@@ -48,6 +49,13 @@ export function RecipeCard({
           <RecipeImage base={r.thumb} cuisine={r.cuisine} alt={r.title} sizes="(min-width: 768px) 18rem, 50vw" className="absolute inset-0" />
           <div className="absolute top-[0.4375rem] right-11 left-[0.4375rem] flex flex-wrap gap-1">
             {facts.favourite ? <Badge className="bg-yellow text-onc shadow-hard-sm">★ FAV</Badge> : null}
+            {facts.canMake ? (
+              <Badge className="bg-acc text-onc shadow-hard-sm" data-testid="can-make">
+                CAN MAKE
+              </Badge>
+            ) : facts.supplyFraction !== undefined && facts.supplyFraction >= 0.85 ? (
+              <Badge className="bg-base text-ink shadow-hard-sm">ALMOST</Badge>
+            ) : null}
             {/* Lavender lightened toward white: the prototype's #c6a0f6 with ink text is 3.7:1. */}
             {family ? <Badge className="bg-[color-mix(in_srgb,#c6a0f6_55%,white)] text-[#4c4f69] shadow-hard-sm">FAMILY</Badge> : null}
           </div>

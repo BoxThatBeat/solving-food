@@ -109,3 +109,19 @@ describe("M2 filters: has all tools, cost per serving, Cheapest", () => {
     expect(missingTools(["Instant Pot", "Wok"], ["instant pot "])).toEqual(["Wok"]);
   });
 });
+
+describe("supply filters (R4.3, R4.4)", () => {
+  it("can make and Use what's left read the household's supply facts", async () => {
+    const { passes, collectionSearchSchema, activeFilterCount } = await import("./collection");
+    const r = { id: "r", title: "x", tags: [], cuisine: "other", mainProtein: "none", proteinPerServingG: 1, proteinApproximate: false, ingredientIds: [], ingredientNames: [], totalMin: 1, activeMin: 1, servings: 1, thumb: null, sourceUrlCanonical: null, fingerprint: "f", createdAtMs: 0 } as const;
+    const base = { favourite: false, timesCooked: 0, lastCookedAtMs: null, rating: null };
+    const can = collectionSearchSchema.parse({ supply: "can" });
+    const use = collectionSearchSchema.parse({ supply: "useup" });
+    expect(passes({ ...r }, can, { ...base, canMake: true, supplyFraction: 1 })).toBe(true);
+    expect(passes({ ...r }, can, { ...base, canMake: false, supplyFraction: 0.9 })).toBe(false);
+    expect(passes({ ...r }, use, { ...base, canMake: false, supplyFraction: 0.9 })).toBe(true);
+    expect(passes({ ...r }, use, { ...base, canMake: false, supplyFraction: 0.5 })).toBe(false);
+    expect(activeFilterCount(use)).toBe(1);
+    expect(collectionSearchSchema.parse({ supply: "bogus" }).supply).toBeUndefined();
+  });
+});

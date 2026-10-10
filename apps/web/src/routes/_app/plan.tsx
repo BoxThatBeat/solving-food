@@ -122,7 +122,7 @@ function PlanPage() {
             placeholder="Search this period's meals…"
             noun="planned meals"
             countFor={(x) => applyCollection(listRows, x, factsOf, null).items.length}
-            hide={["tools", "cost"]}
+            hide={["tools", "cost", "supply"]}
             sticky={false}
             header={
               <div className="flex items-baseline justify-between gap-2">

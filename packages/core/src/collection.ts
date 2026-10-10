@@ -10,7 +10,7 @@ export const SORTS = ["suggested", "newest", "name", "quickest", "protein", "che
 export type CollectionSort = (typeof SORTS)[number];
 
 /** Sorts that need data from later milestones; shown greyed with the reason. */
-export const UNAVAILABLE_SORTS = [{ key: "expiry", label: "Expiring first", reason: "Needs Supply (M3)" }] as const;
+export const UNAVAILABLE_SORTS = [{ key: "expiry", label: "Expiring first", reason: "Arrives with suggestions (M5)" }] as const;
 
 export const SORT_LABELS: Record<CollectionSort, string> = {
   suggested: "Suggested",
@@ -61,6 +61,8 @@ export const collectionSearchSchema = z.object({
   tools: z.coerce.boolean().catch(false).optional(),
   /** Max estimated cost per serving, cents (R4.2). */
   maxCost: num,
+  /** Supply filters (R4.2, R4.3, R4.4): "can" = can make with projected supply; "useup" = Use what's left. */
+  supply: z.enum(["can", "useup"]).catch(undefined as never).optional(),
 });
 export type CollectionSearch = z.infer<typeof collectionSearchSchema>;
 
@@ -85,6 +87,10 @@ export interface HouseholdFacts {
   hasAllTools?: boolean;
   /** Estimated cost per serving in cents, null when a price is unknown. */
   costPerServingCents?: number | null;
+  /** Projected supply (after planned meals) covers every tracked ingredient (R4.3). */
+  canMake?: boolean;
+  /** Share of the recipe's tracked amounts projected supply covers, 0..1 (R4.4). */
+  supplyFraction?: number;
 }
 
 export const NO_FACTS: HouseholdFacts = { favourite: false, timesCooked: 0, lastCookedAtMs: null, rating: null };
@@ -97,7 +103,10 @@ export function missingTools(recipeTools: readonly string[], householdTools: rea
 
 export type FactsOf = (id: string) => HouseholdFacts;
 
-export type FilterKey = "cuisine" | "protein" | "meal" | "tags" | "minProtein" | "maxTotal" | "maxActive" | "minRating" | "cooked" | "fav" | "tools" | "maxCost";
+export type FilterKey = "cuisine" | "protein" | "meal" | "tags" | "minProtein" | "maxTotal" | "maxActive" | "minRating" | "cooked" | "fav" | "tools" | "maxCost" | "supply";
+
+/** "Use what's left" (R4.4): covered fully or nearly fully by what's left after the plan. */
+export const USE_WHATS_LEFT = 0.85;
 
 const MEAL_SET = new Set<string>(MEAL_TYPES);
 
@@ -123,6 +132,8 @@ export function passes(r: RecipeSummary, s: CollectionSearch, facts: HouseholdFa
   if (skip !== "cooked" && s.cooked === "never" && facts.timesCooked > 0) return false;
   if (skip !== "fav" && s.fav && !facts.favourite) return false;
   if (skip !== "tools" && s.tools && facts.hasAllTools === false) return false;
+  if (skip !== "supply" && s.supply === "can" && !facts.canMake) return false;
+  if (skip !== "supply" && s.supply === "useup" && !(facts.canMake || (facts.supplyFraction ?? 0) >= USE_WHATS_LEFT)) return false;
   if (skip !== "maxCost" && s.maxCost && (facts.costPerServingCents === null || facts.costPerServingCents === undefined || facts.costPerServingCents > s.maxCost)) return false;
   return true;
 }
@@ -195,7 +206,7 @@ export function optionCount(
 export function activeFilterCount(s: CollectionSearch): number {
   let n = 0;
   for (const k of ["cuisine", "protein", "meal", "tags"] as const) n += s[k]?.length ?? 0;
-  for (const k of ["minProtein", "maxTotal", "maxActive", "minRating", "cooked", "fav", "tools", "maxCost"] as const) if (s[k]) n++;
+  for (const k of ["minProtein", "maxTotal", "maxActive", "minRating", "cooked", "fav", "tools", "maxCost", "supply"] as const) if (s[k]) n++;
   return n;
 }
 

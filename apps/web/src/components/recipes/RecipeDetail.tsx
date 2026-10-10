@@ -6,6 +6,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { doc } from "firebase/firestore";
 import { ArrowLeft, X } from "lucide-react";
 import {
+  unexpiredByIngredient,
   cooklangFilename,
   formatProtein,
   imageVariant,
@@ -31,6 +32,8 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { RecipeImage } from "./RecipeImage";
 import { useCreateMeal } from "@/components/plan/plan-sheet-context";
+import { useSupply } from "@/data/supply";
+import { SupplyBadge } from "./SupplyBadge";
 
 const DAY = 86_400_000;
 const DATE = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }); // "21 Sep", as the prototype
@@ -89,6 +92,9 @@ export function RecipeDetail({
   const [historyOpen, setHistoryOpen] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const openCreateMeal = useCreateMeal();
+  // Unexpired supply per ingredient for the badges (R4.9; expired lots don't count, R8.15). Signed in only.
+  const supply = useSupply(ctx?.hid ?? null, ctx?.household?.timezone ?? "America/Toronto");
+  const have = React.useMemo(() => (ctx ? unexpiredByIngredient(supply.items.values(), supply.now) : null), [ctx, supply.items, supply.now]);
 
   const copyLink = async () => {
     const url = `${location.origin}/recipes/${id}`;
@@ -203,6 +209,16 @@ export function RecipeDetail({
             >
               + Plan
             </button>
+          ) : null}
+          {ctx && recipe.status !== "pendingDuplicateReview" ? (
+            <Link
+              to="/recipes/$id/cook"
+              params={{ id }}
+              search={{ servings } as never}
+              className="rounded-ui border-2 border-line bg-base px-2.5 py-2 text-[0.8125rem] font-extrabold text-ink no-underline shadow-[3px_3px_0_var(--line)]"
+            >
+              Cook →
+            </Link>
           ) : null}
           {ctx && recipe.status !== "trashed" ? (
             <Link
@@ -353,7 +369,7 @@ export function RecipeDetail({
           </div>
         ) : null}
 
-        <IngredientsTable recipe={recipe} ingredients={ingredients} factor={factor} servings={servings} signedIn={!!ctx} />
+        <IngredientsTable recipe={recipe} ingredients={ingredients} factor={factor} servings={servings} signedIn={!!ctx} have={have} />
 
         {recipe.prepTasks.length ? (
           <section aria-labelledby="prep-h" className="flex flex-col gap-2">
@@ -492,12 +508,15 @@ function IngredientsTable({
   factor,
   servings,
   signedIn,
+  have,
 }: {
   recipe: StoredRecipe;
   ingredients: Map<string, IngredientEntry>;
   factor: number;
   servings: number;
   signedIn: boolean;
+  /** Unexpired supply per ingredient; null while signed out. */
+  have: ReadonlyMap<string, number> | null;
 }) {
   const lookup = lookupFromMap(ingredients);
   return (
@@ -539,12 +558,7 @@ function IngredientsTable({
                 <span className="max-w-[55%] flex-none text-right font-mono text-[0.8125rem] font-extrabold" data-testid="ingredient-amount">
                   {t.amount || "—"}
                 </span>
-                {signedIn ? (
-                  // <SupplyBadge> slot: supply arrives in M3.
-                  <span className="min-w-[2.5rem] flex-none rounded-[calc(var(--r)*0.5)] border-2 border-line bg-base px-1 py-[0.1875rem] text-center font-mono text-[0.65625rem] font-bold" aria-label="In supply: not tracked yet">
-                    —
-                  </span>
-                ) : null}
+                {signedIn && have ? <SupplyBadge need={l.optional ? 0 : l.canonicalAmount * factor} have={have.get(l.ingredientId) ?? 0} ingredient={ing} name={t.name} /> : null}
               </li>
             );
           })}

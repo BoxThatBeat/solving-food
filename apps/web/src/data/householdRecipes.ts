@@ -3,11 +3,12 @@
 
 import { useMemo } from "react";
 import { collection, deleteDoc, doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { costPerServing, missingTools, NO_FACTS, type FavouriteDoc, type HouseholdFacts, type NoteDoc, type RecipeSummary, type StatsDoc } from "@solving-food/core";
+import { costPerServing, missingTools, NO_FACTS, supplyCoverage, type FavouriteDoc, type HouseholdFacts, type NoteDoc, type RecipeSummary, type StatsDoc } from "@solving-food/core";
 import { db } from "@/firebase/app";
 import { useLiveDoc, useLiveQuery } from "./live";
 import { useHousehold } from "./households";
 import { estimateCentsPerUnit } from "./prices";
+import { FREE_USE } from "./supply";
 
 export function useFavourites(hid: string | null) {
   const q = useLiveQuery<FavouriteDoc>(hid ? collection(db, "households", hid, "favourites") : null, hid ? `households/${hid}/favourites` : null);
@@ -52,21 +53,30 @@ function millis(v: unknown): number | null {
  * household owns its tools (R11.1), and its estimated cost per serving (R4.2). `summaries` supplies tools and cost
  * lines; without it those two filters pass everything.
  */
-export function useHouseholdFacts(hid: string | null, summaries?: readonly RecipeSummary[]): (id: string) => HouseholdFacts {
+export function useHouseholdFacts(hid: string | null, summaries?: readonly RecipeSummary[], projected?: ReadonlyMap<string, number>): (id: string) => HouseholdFacts {
   const favs = useFavourites(hid);
   const stats = useStats(hid);
   const household = useHousehold(hid);
   const tools = household.data?.settings?.tools;
   const extra = useMemo(() => {
-    const m = new Map<string, { hasAllTools: boolean; costPerServingCents: number | null }>();
+    const m = new Map<string, { hasAllTools: boolean; costPerServingCents: number | null; canMake?: boolean; supplyFraction?: number }>();
     for (const r of summaries ?? []) {
-      m.set(r.id, {
+      const x: { hasAllTools: boolean; costPerServingCents: number | null; canMake?: boolean; supplyFraction?: number } = {
         hasAllTools: !tools?.length || missingTools(r.tools ?? [], tools).length === 0,
         costPerServingCents: r.lines ? costPerServing(r.lines, estimateCentsPerUnit) : null,
-      });
+      };
+      // Can make / Use what's left (R4.3, R4.4): the summary's per-serving lines at the recipe's servings against what's
+      // left after the plan. Free-use ingredients (bundled list) don't count.
+      if (projected && r.lines) {
+        const lines = Object.entries(r.lines).map(([ingredientId, per]) => ({ ingredientId, canonicalAmount: per * r.servings, optional: false }));
+        const c = supplyCoverage(lines, projected, (id) => ({ freeUse: FREE_USE.has(id) }));
+        x.canMake = c.canMake;
+        x.supplyFraction = c.canMake ? 1 : c.fraction;
+      }
+      m.set(r.id, x);
     }
     return m;
-  }, [summaries, tools]);
+  }, [summaries, tools, projected]);
   return useMemo(() => {
     return (id: string): HouseholdFacts => {
       const s = stats.get(id);
