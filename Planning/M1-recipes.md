@@ -21,6 +21,13 @@ R8.13 (formatting), R12.1.
 
 M0 done. Nothing from Firebase beyond M0.
 
+**Test data already exists:** `data/recipes/` holds the owner's 28 real recipes as Obsidian notes, their
+images, and hand-converted `.cook` files following the conventions in `data/recipes/README.md`. Use them as
+the e2e seed set (replacing the "~30 recipes" placeholder), as drop-folder fixtures (they must all import
+cleanly; any parser gap they expose is a bug in the parser, not the data), and as the first entries in the
+ingredient seed list (every ingredient they mention must exist in `data/ingredients/`). The Claude skill's
+conventions must match that README.
+
 ## Deliverables
 
 1. `data/ingredients/` seed set (~500) with units, densities, unit weights, protein, shelf lives, free-use

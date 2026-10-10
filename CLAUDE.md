@@ -19,8 +19,16 @@ for implementation: layout per page, component shapes, spacing, type, colour tok
 behaviour, and the phone / tablet / desktop / 4K variants (the "device" prop at the top of the script block
 near line 815 switches them).
 
-- **Match it**, don't reinvent it. When the PRD or spec and the design disagree on *behaviour*, the documents
-  win and the design gets a note; when they disagree on *appearance*, the design wins.
+- **Match its look**, don't reinvent it. When the PRD or spec and the design disagree on *behaviour*, the
+  documents win and the design gets a note; when they disagree on *appearance*, the design wins.
+- **It is not a feature spec.** The prototype does not have full parity with the requirements: some screens,
+  states, and controls the PRD asks for are missing from it, and a few things it shows are simplified. Build
+  everything the PRD and the milestone plan require, whether or not the prototype shows it, and style the
+  parts it doesn't show in the same visual language. Never drop a requirement because "the design doesn't
+  have it", and never add a feature only because the prototype shows it.
+- **Pixel-close, not pixel-perfect.** Design-compare is for catching wrong tokens, type, spacing, and layout,
+  not for chasing every pixel. Accessibility fixes (contrast, hit targets, focus rings) take precedence over
+  matching the prototype exactly; record them in the milestone plan.
 - **Pages** in the prototype: plan, recipes, meals, supply, grocery, history, settings. **Sheets:** filter,
   supply item, plan item, more, household, confirm purchase, add. **Cooking phases:** mise, steps, review.
   **Grocery phases:** order, receipt (with the Costco in-store checklist and the freeze step).

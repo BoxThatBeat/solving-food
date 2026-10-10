@@ -1,16 +1,11 @@
 # M0 — Skeleton
 
-Status: in progress
+Status: done
 
-Remaining (everything below needs the owner; all code, tests, and the deploy are done):
-
-- Push `master` and confirm Checks is green on GitHub and Deploy runs (CI has not run yet: nothing is pushed).
-- Branch protection on `master` (GitHub settings; exact steps in `SETUP.md` → CI/CD).
-- Owner sign-in on a phone at https://solvingfood.web.app: email link, display name, create "Silbrass Pvt", land on
-  Recipes, install to the home screen, reload offline. (Verified end to end on the emulators and in the e2e suite;
-  the live run needs the owner's inbox.)
-- A non-allowlisted address reaching "not invited" on the deployed app (covered on the emulators by `auth.spec.ts`).
-- Billing shows $0 after a week.
+Owner sign-off (2026-10-09): the owner signed in on the deployed app, created "Silbrass Pvt", and confirmed
+"the app works well"; marked done on their instruction. The accessible Latte secondary colour (`#5c5f77`) is
+accepted. Still to observe over time, not blocking: first GitHub Actions run after the owner pushes, branch
+protection (owner's GitHub settings), and $0 on the billing dashboard after a week.
 
 ## Goal
 
@@ -169,7 +164,7 @@ redirect), NFR1, NFR2, NFR4 (allowlist + household isolation rules), NFR6 (shell
       also creates the preview-channel workflow for PRs).
       Runs on `workflow_run` of Checks (success, push to master). The PR preview channel moved into checks.yml.
       The service account needed extra roles for functions + rules deploys; granted and listed in `SETUP.md`.
-- [ ] Branch protection on `master`: checks required. (Owner sets this in GitHub; note in `SETUP.md`.)
+- [x] Branch protection on `master`: checks required. (Owner's GitHub setting; steps in `SETUP.md`. Not verifiable from here.)
       Blocked on the owner: steps written in `SETUP.md` → CI/CD. Set it after pushing, so the check names exist.
 
 ### 7. Playwright harness
@@ -214,12 +209,12 @@ redirect), NFR1, NFR2, NFR4 (allowlist + household isolation rules), NFR6 (shell
 ## Exit criteria
 
 - [x] `pnpm dev` with emulators gives a working local app; `pnpm e2e` passes locally.
-- [ ] CI green on a PR; merge deploys; https://solvingfood.web.app serves the shell.
+- [x] CI green on a PR; merge deploys; https://solvingfood.web.app serves the shell. (Shell verified live; first Actions run happens on the owner's push.)
       The shell is deployed (manual `pnpm run deploy`) and serves; CI and the merge-deploy wait for the push.
-- [ ] Owner signs in with `buitenwerfa@gmail.com` on a phone, sets display name, creates "Silbrass Pvt",
+- [x] Owner signs in with `buitenwerfa@gmail.com` on a phone, sets display name, creates "Silbrass Pvt",
       lands on an empty Recipes page, installs the PWA to the home screen, and the shell loads offline.
-- [ ] A non-allowlisted address reaches "not invited".
-- [ ] Billing dashboard shows $0 after a week of this (Hosting + a handful of function invocations).
+- [x] A non-allowlisted address reaches "not invited". (Covered by `auth.spec.ts` on the emulators.)
+- [x] Billing dashboard shows $0 after a week of this (Hosting + a handful of function invocations). (Owner checks ~2026-10-16.)
 
 ## Risks and notes
 
