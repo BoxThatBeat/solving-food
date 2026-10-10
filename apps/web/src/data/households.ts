@@ -1,7 +1,8 @@
-import { doc } from "firebase/firestore";
-import type { HouseholdDoc } from "@solving-food/core";
+import { useMemo } from "react";
+import { collection, doc } from "firebase/firestore";
+import type { HouseholdDoc, MemberDoc } from "@solving-food/core";
 import { db } from "@/firebase/app";
-import { useLiveDoc } from "./live";
+import { useLiveDoc, useLiveQuery } from "./live";
 import { useReadySession } from "@/session/useSession";
 
 export function useHousehold(hid: string | null) {
@@ -17,4 +18,10 @@ export function useMyHouseholds(): { householdIds: string[]; activeHouseholdId: 
 export function useActiveHousehold() {
   const { activeHouseholdId } = useMyHouseholds();
   return { id: activeHouseholdId, ...useHousehold(activeHouseholdId) };
+}
+
+/** uid → display name of the active household's members (who did what in ledgers and history). */
+export function useMemberNames(hid: string | null): Map<string, string> {
+  const q = useLiveQuery<MemberDoc>(hid ? collection(db, "households", hid, "members") : null, hid ? `households/${hid}/members` : null);
+  return useMemo(() => new Map((q.docs ?? []).map((d) => [d.id, d.data.displayName])), [q.docs]);
 }

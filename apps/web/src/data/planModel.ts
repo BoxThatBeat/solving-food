@@ -9,6 +9,9 @@ import {
   buildList,
   incomingFrom,
   itemCosts,
+  projectedSupply,
+  unexpiredByIngredient,
+  type LedgerLot,
   type BuildContext,
   type GroceryIngredient,
   type MappingEntry,
@@ -20,10 +23,8 @@ import {
 import { PRICE_ESTIMATES } from "./prices";
 import { useActiveHousehold } from "./households";
 import { useIngredientsById } from "./ingredients";
+import { useSupply } from "./supply";
 import { millis, useBrandMappings, useDraftList, useOrderedLists, usePeriod, usePlanItems, useRecipeDocs, useSourcingRules, useStores, type StoredPlanItem } from "./plan";
-
-/** Supply is M3: until then nothing is in the kitchen as far as the builder knows (the formula still subtracts it). */
-const NO_SUPPLY: ReadonlyMap<string, number> = new Map();
 
 export function usePlanModel(opts: { extraRecipeIds?: readonly string[] } = {}) {
   const hh = useActiveHousehold();
@@ -37,6 +38,14 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[] } = {}) 
   const mappings = useBrandMappings(hid);
   const ordered = useOrderedLists(hid);
   const draft = useDraftList(hid);
+  const supply = useSupply(hid, household?.timezone ?? "America/Toronto");
+  // Unexpired supply per ingredient (expired lots don't count, R8.15); leftover batches aren't ingredients.
+  const unexpired = useMemo(() => unexpiredByIngredient(supply.items.values(), supply.now), [supply.items, supply.now]);
+  const lotsByIngredient = useMemo(() => {
+    const m = new Map<string, LedgerLot[]>();
+    for (const it of supply.items.values()) if (it.ingredientId) m.set(it.ingredientId, [...(m.get(it.ingredientId) ?? []), ...it.lots]);
+    return m;
+  }, [supply.items]);
 
   const items = useMemo(
     () => [...(planItems.docs ?? [])].sort((a, b) => (millis(a.data.addedAt) ?? Number.MAX_SAFE_INTEGER) - (millis(b.data.addedAt) ?? Number.MAX_SAFE_INTEGER) || a.id.localeCompare(b.id)),
@@ -64,7 +73,7 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[] } = {}) 
     return {
       recipes: (id) => recipeMap.get(id),
       ingredients: (id) => ingMap.get(id),
-      supply: NO_SUPPLY,
+      supply: unexpired,
       incoming: incomingFrom((ordered.docs ?? []).map((d) => d.data)),
       mappings: mappingMap,
       rules: ruleList,
@@ -72,18 +81,20 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[] } = {}) 
       defaultStoreId: household?.defaultStoreId,
       prices: { estimates: PRICE_ESTIMATES },
     };
-  }, [stores.docs, mappings.docs, rules.docs, ingredients, recipes, ordered.docs, household?.defaultStoreId]);
+  }, [stores.docs, mappings.docs, rules.docs, ingredients, recipes, ordered.docs, household?.defaultStoreId, unexpired]);
 
   const inputs: PlanItemInput[] = useMemo(() => items.map((i) => ({ id: i.id, status: i.data.status, servings: i.data.servings, recipes: i.data.recipes })), [items]);
   const built = useMemo(() => buildList(inputs, ctx), [inputs, ctx]);
   const costs = useMemo(() => itemCosts(inputs, ctx), [inputs, ctx]);
+  // Projected supply (R8.4): unexpired − what the period's uncooked items will use.
+  const projected = useMemo(() => projectedSupply(unexpired, inputs, ctx), [unexpired, inputs, ctx]);
   const budget = useMemo(() => budgetState(period.data?.budgetCents ?? household?.budgetCents ?? 0, built), [period.data?.budgetCents, household?.budgetCents, built]);
 
   // Ready to price: every recipe loaded and every ingredient they use.
   const recipesReady = recipeIds.every((id) => recipes.has(id));
   const wantedIngredients = new Set([...recipes.values()].flatMap((r) => r.ingredientIds));
   const ingredientsReady = [...wantedIngredients].every((id) => ingredients.has(id));
-  const ready = !!household && planItems.docs !== undefined && recipesReady && ingredientsReady && stores.docs !== undefined && ordered.docs !== undefined && mappings.docs !== undefined;
+  const ready = !!household && !supply.loading && planItems.docs !== undefined && recipesReady && ingredientsReady && stores.docs !== undefined && ordered.docs !== undefined && mappings.docs !== undefined;
 
   return {
     hid,
@@ -102,6 +113,10 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[] } = {}) 
     draft,
     ordered: ordered.docs,
     ready,
+    supply,
+    unexpired,
+    projected,
+    lotsByIngredient,
   };
 }
 

@@ -56,3 +56,43 @@ run("npx", ["tsx", "data/scripts/upload.ts", "--emulator"]);
 const existing = await db.collection("recipes").limit(1).get();
 if (existing.empty) run("npx", ["tsx", "scripts/drop-recipes.ts", "--emulator", "--uid", uid]);
 else console.log("recipes already present; skipping the drop");
+
+// `pnpm dev:seed -- --supply`: demo supply for visual checks (M3): fresh, use-soon, expired, frozen, and multi-purchase
+// lots, plus a leftover batch. Written directly (emulator only); the app's own changes go through commands.
+if (process.argv.includes("--supply")) {
+  const { Timestamp } = await import("firebase-admin/firestore");
+  const hid = (await db.doc(`users/${uid}`).get()).data()!.activeHouseholdId as string;
+  const DAY = 86_400_000;
+  const now = Date.now();
+  const t = (days: number) => Timestamp.fromMillis(now + days * DAY);
+  const lot = (lotId: string, amount: number, location: string, boughtDaysAgo: number, expiresIn: number | null, extra: Record<string, unknown> = {}) => ({
+    lotId,
+    amount,
+    location,
+    acquiredAt: t(-boughtDaysAgo),
+    ...(expiresIn === null ? {} : { expiresFresh: t(expiresIn) }),
+    ...extra,
+  });
+  const items: Array<[string, string, string, Array<Record<string, unknown>>]> = [
+    ["baby-spinach", "baby spinach", "g", [lot("d1", 140, "fridge", 3, 2)]],
+    ["salmon-fillet", "salmon fillet", "g", [lot("d2", 640, "fridge", 2, 2)]],
+    ["fresh-cilantro", "fresh cilantro", "g", [lot("d3", 30, "fridge", 9, -1)]],
+    ["broccoli", "broccoli", "g", [lot("d4", 450, "fridge", 1, 4)]],
+    ["egg", "egg", "count", [lot("d5", 300, "fridge", 10, 6), lot("d6", 600, "fridge", 2, 20)]],
+    ["jasmine-rice", "jasmine rice", "g", [lot("d7", 3200, "pantry", 30, 300)]],
+    ["pork-shoulder", "pork shoulder", "g", [lot("d8", 1200, "freezer", 60, -50, { frozenAt: t(-58), expiresFrozen: t(150) })]],
+    ["dried-red-lentil", "dried red lentil", "g", [lot("d9", 900, "pantry", 40, null)]],
+  ];
+  const batch = db.batch();
+  for (const [id, label, unit, lots] of items) {
+    const ing = await db.doc(`ingredients/${id}`).get();
+    if (!ing.exists) continue;
+    const amount = lots.reduce((s, l) => s + (l.amount as number), 0);
+    batch.set(db.doc(`households/${hid}/supply/${id}`), { ingredientId: id, label, canonicalUnit: ing.data()!.canonicalUnit ?? unit, canonicalAmount: amount, lots, nextExpiry: null });
+    batch.set(db.doc(`households/${hid}/supply/${id}/transactions/seed`), { delta: amount, kind: "purchase", lotId: lots[0]!.lotId, uid, note: "demo", createdAt: FieldValue.serverTimestamp() });
+  }
+  batch.set(db.doc(`households/${hid}/supply/leftover_demo`), { label: "Chicken tikka traybake", canonicalUnit: "count", canonicalAmount: 2, lots: [lot("demo", 2, "fridge", 1, 3)], cookEventId: "demo", leftoverMealType: "lunch" });
+  batch.set(db.doc(`households/${hid}/cadence/olive-oil`), { avgIntervalDays: 30, lastPurchasedAt: t(-12), purchaseCount: 3 });
+  await batch.commit();
+  console.log(`demo supply written to households/${hid}`);
+}

@@ -28,7 +28,8 @@
     "ingredients:upload:emulator": "tsx data/scripts/upload.ts --emulator",
     "drop:recipes": "tsx scripts/drop-recipes.ts",
     "dev:seed": "tsx scripts/dev-seed.ts",
-    "prices:check": "tsx data/scripts/prices.ts"
+    "prices:check": "tsx data/scripts/prices.ts",
+    "free-use:write": "tsx data/scripts/free-use.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
