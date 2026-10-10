@@ -89,7 +89,8 @@ test.describe("filters and sorts", () => {
     // Supply- and price-based options are visible but not usable yet (M3, M2).
     sheet = await r.openFilters();
     await expect(sheet.getByRole("button", { name: "Can make" })).toBeDisabled();
-    await expect(sheet.getByRole("button", { name: "≤ $4" })).toBeDisabled();
+    // Cost per serving is live since M2 (estimates); grocery and plan specs cover prices.
+    await expect(sheet.getByRole("button", { name: /^≤ \$4/ })).toBeEnabled();
   });
 
   test("sort by name, quickest, and most protein", { tag: ["@R4.2"] }, async ({ page, household: _ }) => {

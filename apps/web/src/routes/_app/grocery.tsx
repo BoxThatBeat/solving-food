@@ -23,7 +23,7 @@ import { Input, Select } from "@/components/ui/input";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/chip";
 import { useNotify } from "@/components/notifications-context";
-import { addManualItem, applyDraftChanges, DRAFT_ID, millis, orderDraft, removeItem, tickItem, undoOrder, type StoredList } from "@/data/plan";
+import { addLine, addManualItem, DRAFT_ID, syncDraft, millis, orderDraft, removeItem, tickItem, undoOrder, type StoredList } from "@/data/plan";
 import { usePlanModel } from "@/data/planModel";
 import { searchIngredients, useAllIngredients, type IngredientEntry } from "@/data/ingredients";
 import { useReadySession } from "@/session/useSession";
@@ -46,9 +46,10 @@ function GroceryPage() {
   // Regenerate (§8): keep the stored draft in step with the plan. Manual lines and ticks survive; field-level writes.
   const sync = React.useCallback(async () => {
     if (!m.ready || m.draft.data === undefined || !m.periodId) return;
+    // Cheap check on the snapshot first; the transaction re-reads before writing.
     const { set, remove } = mergeDraft(m.draft.data?.items ?? {}, m.built.items);
     if (!Object.keys(set).length && !remove.length && m.draft.data && m.draft.data.periodId === m.periodId) return;
-    await applyDraftChanges(m.hid, m.periodId, !!m.draft.data, m.draft.data?.periodId, set, remove);
+    await syncDraft(m.hid, m.periodId, m.built.items);
   }, [m.ready, m.draft.data, m.built.items, m.periodId, m.hid]);
   React.useEffect(() => {
     const t = setTimeout(() => void sync().catch((e) => console.warn("grocery sync failed", e)), 300);
@@ -110,7 +111,7 @@ function GroceryPage() {
       const line: GroceryItem = { ...shown, checked: on };
       if (on) line.checkedBy = s.user.uid;
       else delete line.checkedBy;
-      return applyDraftChanges(m.hid, m.periodId, !!m.draft.data, m.draft.data?.periodId, { [id]: line }, []).catch(fail);
+      return addLine(m.hid, m.periodId, id, line, !!m.draft.data).catch(fail);
     }
     return tickItem(m.hid, listId, id, on, s.user.uid).catch(fail);
   };
@@ -312,8 +313,9 @@ function OrderedList({ id, list, stores, ingredients, onTick, onUndo }: { id: st
 
 /** Manual additions (R7.6): free text, or an ingredient (priced and stored like plan lines, in packs). */
 function AddItem({ stores, defaultStoreId, onAdd }: { stores: readonly StoreEntry[]; defaultStoreId?: string | undefined; onAdd: (input: { ingredientId?: string; freeText?: string; packs: number; storeId?: string }, ingredient?: IngredientEntry) => Promise<void> }) {
-  const ing = useAllIngredients();
   const [text, setText] = React.useState("");
+  // The whole ingredient list only once someone types (475 documents per listener).
+  const ing = useAllIngredients(text.trim().length > 0);
   const [picked, setPicked] = React.useState<IngredientEntry | null>(null);
   const [storeId, setStoreId] = React.useState<string>("");
   const [packs, setPacks] = React.useState(1);

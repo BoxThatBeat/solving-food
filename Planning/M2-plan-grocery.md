@@ -144,3 +144,54 @@ All member read/write per the generic rule; `meals` global.
 
 - Without supply, the budget meter never goes back up in M2; that's expected and documented in R6.3.
 - Price estimates are rough; the meter's accuracy improves in M5 with live prices. Don't polish estimates.
+
+## Deviations and decisions (2026-10-10)
+
+- **No price upload:** `data/price-estimates.json` (all 475 seeded ingredients, each the price of its default pack plus a
+  derived `centsPerUnit`) is bundled into the web app: no Firestore reads, works offline. `pnpm prices:check` flags
+  missing or unknown IDs and unconvertible packs; `-- --write` refreshes `centsPerUnit`. M5's live prices go in front.
+- **Rollover:** periods are keyed by their local start date, so concurrent rollovers write the same document; carried
+  copies are `<newPeriodId>_<fromItemId>` and the originals stay in the old period untouched. The same client
+  bootstrap creates the first period and the default stores for households that have none (the owner's live
+  household, and e2e households seeded without them). A budget change in Settings also updates the current period's
+  snapshot; a new period length applies from the next period.
+- **Grocery list documents:** the draft is `groceryLists/draft`, regenerated field by field while the Grocery page is
+  open. Copy moves every item (all stores) into a new list with `status: ordered`, `orderedAt`, `orderedBy`; the Costco
+  checklist travels with the order and stays tickable there. Undo moves the items back (ticks kept) and deletes the
+  ordered list. A blocked clipboard shows the text in a sheet with "I copied it · mark ordered".
+- **Manual lines** are free text, or an ingredient bought in whole packs (priced, but outside the budget, R6.4).
+- **Cost per serving filter and Cheapest sort** are now live (estimates, no pack rounding), and **"Have the tools"**
+  is a new filter. Both read two new index-summary fields, `tools` and `lines` (a map: Firestore can't store nested
+  arrays, which the first try hit). Summaries written before M2 are refreshed by the weekly maintenance function
+  (new step `refreshSummaries`), not a one-off script.
+- **Recipe cleanup** now recomputes a plan item's coverage after removing a deleted recipe from it.
+- **Rules:** periods, plan items, and stores use `isMemberAfter` (existsAfter on the member doc) so the creation batch
+  can write them; clients create plan items as `planned` and can't change their status (M3 commands will).
+- **Coverage:** leftover portions are the recipe's estimate, summed across a meal's recipes, not scaled by servings.
+- **Suggestions placeholder:** the newest recipes not yet planned, each with a "+" into Create meal; **protein summary**
+  shows plan averages per meal type without goals (goals are M5).
+- **Plan item status changes, Cook buttons, expiry badges, pending reviews** are M3; the item card has Edit and
+  remove (with Undo in the banner) instead.
+- **Banners can carry an action** (Undo) in addition to a link.
+- **Visual baselines** for the Recipes library were regenerated: recipe cards gain the "+ Add to plan" button.
+
+## Design-compare notes (phone 430×932, desktop 1920×1080, Latte)
+
+Compared with the prototype's Plan, Meals, Grocery (order phase), Settings, and Add to plan sheet. Matched: page
+headers (kicker + Archivo Black), the desktop Plan's three columns (plan · suggested · budget/protein), plan item
+cards (title, TO COOK badge, mono meta, badges, recipe rows, footer bar with cost), the phone budget bar under the
+header, meal cards (two-up image strip, badges, recipe rows, star / Copy link / + Plan), grocery store cards (ink
+header with total, rows with ×n), the Add to plan sheet (title, 2×2 meal-type chips, budget impact, full-width button).
+
+Intentional differences:
+
+- **Coverage strip** is not in the prototype; built as a card in its language (labelled day columns, solid accent =
+  cooked, outlined = planned, dashed = open, "n/N · +k").
+- **Create meal** has a pick step the prototype lacks (multi-select with multipliers, Saved meals tab) before its
+  Add to plan sheet; the details step adds servings, Save as meal, and name.
+- **Grocery rows** all have a tick box (the prototype ticks only Costco) because ticks are live for every member; the
+  sub-line shows need → packs in metric and imperial; the staples prompt, "Groceries arrived? Confirm", and receipt
+  phase are M3/M5. Ordered lists show below the draft with "Undo order".
+- **Settings** stay separate pages (M0 decision) styled as the prototype's cards; stores and sourcing rules have their
+  own page with per-category selects, brands a table plus form.
+- Not shown yet: Pending reviews, Use it or lose it, Budget optimiser, protein goals, Cook buttons (M3/M5).

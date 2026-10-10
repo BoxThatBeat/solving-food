@@ -24,6 +24,7 @@ import {
 import {
   buildPlanItem,
   carriedItemId,
+  mergeDraft,
   carryOver,
   DEFAULT_STORE_ID,
   DEFAULT_STORES,
@@ -324,25 +325,43 @@ export function deleteMapping(hid: string, ingredientId: string) {
 
 const draftRef = (hid: string) => doc(db, "households", hid, "groceryLists", DRAFT_ID);
 
-/** Writes the field-level changes regeneration computed (core `mergeDraft`). Creates the draft on first use. */
-export async function applyDraftChanges(hid: string, periodId: string, exists: boolean, currentPeriodId: string | undefined, set: Record<string, GroceryItem>, remove: string[]): Promise<void> {
-  if (!exists) {
-    await setDoc(draftRef(hid), { periodId, status: "draft", createdAt: serverTimestamp(), items: set });
-    return;
-  }
-  const args: unknown[] = [];
-  for (const [id, it] of Object.entries(set)) args.push(new FieldPath("items", id), it);
-  for (const id of remove) args.push(new FieldPath("items", id), deleteField());
-  if (currentPeriodId !== periodId) args.push("periodId", periodId);
-  if (!args.length) return;
-  const [f, v, ...rest] = args as [FieldPath, unknown, ...unknown[]];
-  await updateDoc(draftRef(hid), f, v, ...rest);
+/**
+ * Regenerate (§8) in a transaction: read the stored draft, merge the generated plan lines into it (core `mergeDraft`:
+ * manual lines and ticks kept), write only what changed. A tick or another member's regeneration in between makes the
+ * transaction retry on fresh data, so nobody's tick is overwritten. Needs a connection; offline the page still shows
+ * the computed lines and the draft catches up later.
+ */
+export async function syncDraft(hid: string, periodId: string, generated: Record<string, GroceryItem>): Promise<void> {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+  const ref = draftRef(hid);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    const stored = snap.data() as StoredList | undefined;
+    if (!stored) {
+      tx.set(ref, { periodId, status: "draft", createdAt: serverTimestamp(), items: generated });
+      return;
+    }
+    const { set, remove } = mergeDraft(stored.items ?? {}, generated);
+    const args: unknown[] = [];
+    for (const [id, it] of Object.entries(set)) args.push(new FieldPath("items", id), it);
+    for (const id of remove) args.push(new FieldPath("items", id), deleteField());
+    if (stored.periodId !== periodId) args.push(new FieldPath("periodId"), periodId);
+    if (!args.length) return;
+    const [f, v, ...rest] = args as [FieldPath, unknown, ...unknown[]];
+    tx.update(ref, f, v, ...rest);
+  });
+}
+
+/** Writes one whole line into the draft (creating the draft if needed; merge, never replace). */
+export async function addLine(hid: string, periodId: string, id: string, item: GroceryItem, draftExists: boolean): Promise<void> {
+  if (draftExists) await updateDoc(draftRef(hid), new FieldPath("items", id), item);
+  // Two quick writes can both think the draft is missing: merge so neither replaces the other.
+  else await setDoc(draftRef(hid), { periodId, status: "draft", createdAt: serverTimestamp(), items: { [id]: item } }, { merge: true });
 }
 
 export async function addManualItem(hid: string, periodId: string, item: GroceryItem, draftExists: boolean): Promise<string> {
   const id = `manual_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`;
-  if (draftExists) await updateDoc(draftRef(hid), new FieldPath("items", id), item);
-  else await setDoc(draftRef(hid), { periodId, status: "draft", createdAt: serverTimestamp(), items: { [id]: item } });
+  await addLine(hid, periodId, id, item, draftExists);
   return id;
 }
 

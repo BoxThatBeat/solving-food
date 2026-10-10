@@ -30,11 +30,26 @@ ${opts.lines}${opts.tools ? ` Use the #${opts.tools}{}.` : ""}
  */
 export const CHICKEN_LINES = "Sear @chicken thigh{600%g} in @olive oil{2%tbsp}, then wilt @baby spinach{140%g}.";
 
-export async function makePlanRecipe(base: string, opts: Parameters<typeof cook>[0] = { lines: CHICKEN_LINES }): Promise<{ id: string; title: string }> {
-  const title = uniqueTitle(base);
-  const id = await makeRecipe(title, { cook: cook(opts) });
-  await waitForIndexed(id);
-  return { id, title };
+/**
+ * Created once per worker and reused by later tests in it (each test has its own household, and these recipes are
+ * never edited): every recipe write re-sends the index chunk to every open page, and a full run creating a fresh one
+ * per test ran the Firestore emulator out of heap.
+ */
+const planRecipes = new Map<string, Promise<{ id: string; title: string }>>();
+export function makePlanRecipe(base: string, opts: Parameters<typeof cook>[0] = { lines: CHICKEN_LINES }): Promise<{ id: string; title: string }> {
+  const key = JSON.stringify([base, opts]);
+  let p = planRecipes.get(key);
+  if (!p) {
+    p = (async () => {
+      const title = uniqueTitle(base);
+      const id = await makeRecipe(title, { cook: cook(opts) });
+      await waitForIndexed(id);
+      return { id, title };
+    })();
+    p.catch(() => planRecipes.delete(key));
+    planRecipes.set(key, p);
+  }
+  return p;
 }
 
 /** Seeds the household's current period (the client would otherwise create it on open). */

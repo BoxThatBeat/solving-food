@@ -2,7 +2,7 @@
 
 > Everything here is **non-secret** (the Firebase web config is shipped to browsers by design).
 > Secrets (PC Express credentials) live only in Secret Manager; see "Secrets" below.
-> Last verified: 2026-10-10 (M1)
+> Last verified: 2026-10-10 (M2)
 
 ## Decision: one project, no dev
 
@@ -98,6 +98,21 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   ingredient seed.
 - **Local demo data:** `pnpm dev`, then `pnpm dev:seed` (emulator only) creates `dev@example.com` with "Silbrass Pvt",
   uploads the ingredients, and drops the 28 recipes (~40 s).
+
+## M2 operations (2026-10-10)
+
+- **No new functions or scheduler jobs.** Planning, rollover, and the grocery list run in the client. The weekly
+  `maintenance` job gained one step: it rewrites recipe-index summaries that lack the M2 fields (`tools`, `lines`,
+  used by the "Have the tools" and cost-per-serving filters). Until it first runs (Monday 04:00 Toronto, or run it now
+  with `gcloud scheduler jobs run firebase-schedule-maintenance-us-east1 --location us-east1`), existing recipes pass
+  the tools filter and have no cost per serving.
+- **Existing households:** the first time a member opens the app after the M2 deploy, the client bootstrap creates the
+  household's first plan period (starting that day) and the default stores (`pc-express`, `costco`) and sets
+  `defaultStoreId`. Nothing is written to the owner's household by a script.
+- **Price estimates** live in `data/price-estimates.json` and ship inside the web app; there is nothing to upload.
+  After adding seed ingredients run `pnpm prices:check` (and `-- --write` to refresh `centsPerUnit`).
+- **Firestore emulator heap:** `scripts/e2e.sh` sets `JAVA_TOOL_OPTIONS=-Xmx3g` (a full two-project run ran the emulator
+  out of its default heap).
 
 ## CI/CD (GitHub Actions)
 
