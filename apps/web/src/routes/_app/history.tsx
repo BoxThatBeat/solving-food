@@ -285,7 +285,7 @@ function HistoryRow({
             devs.slice(0, 4).map((d) => {
               const u = unitOf(d.ingredientId);
               return (
-                <Badge key={d.ingredientId} className="bg-peach text-onc uppercase">
+                <Badge key={d.ingredientId} className="bg-peach-soft text-onc uppercase">
                   {d.delta > 0 ? "+" : "−"}
                   {formatCanonical(Math.abs(d.delta), u.u, u.w).split(" · ")[0]} {ingredientName(d.ingredientId)}
                 </Badge>

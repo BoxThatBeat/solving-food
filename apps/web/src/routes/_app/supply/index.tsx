@@ -264,7 +264,7 @@ function SupplyRow({ r, first, open, onToggle, tz, now, children }: { r: Row; fi
               </Badge>
             ))}
             {r.current > 1e-6 ? <ExpiryBadge flag={r.exp.flag} expiresMs={r.exp.expiresMs} frozen={r.exp.frozenOnly} nowMs={now} tz={tz} /> : null}
-            {frozenLots && !r.exp.frozenOnly ? <Badge className="bg-blue text-onc uppercase">❄ {frozenLots} frozen</Badge> : null}
+            {frozenLots && !r.exp.frozenOnly ? <Badge className="bg-blue-soft text-onc uppercase">❄ {frozenLots} frozen</Badge> : null}
             {r.low ? <Badge className="bg-yellow text-onc uppercase">Low</Badge> : null}
             {purchases > 1 ? <Badge className="bg-base uppercase">{purchases} purchases</Badge> : null}
             {r.item.shortAtMs ? <Badge className="bg-yellow text-onc uppercase">Check amount</Badge> : null}

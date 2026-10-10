@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 const FLAG_CLASS: Record<ExpiryFlag, string> = {
   expired: "bg-red-soft text-onc",
-  soon: "bg-peach text-onc",
+  soon: "bg-peach-soft text-onc",
   fresh: "bg-s0 text-ink",
   none: "bg-s0 text-ink",
 };
@@ -17,5 +17,5 @@ export function ExpiryBadge({ flag, expiresMs, frozen, nowMs, tz, className }: {
   if (flag === "expired") text = "Expired";
   else if (flag === "none") text = frozen ? "❄ Frozen" : "Keeps";
   else text = `${frozen ? "❄ Frozen" : flag === "soon" ? "Use soon" : "Fresh"} · ${d === 0 ? "today" : shortDuration(d!)}`;
-  return <Badge className={cn("uppercase", frozen && flag !== "expired" ? "bg-blue text-onc" : FLAG_CLASS[flag], className)}>{text}</Badge>;
+  return <Badge className={cn("uppercase", frozen && flag !== "expired" ? "bg-blue-soft text-onc" : FLAG_CLASS[flag], className)}>{text}</Badge>;
 }

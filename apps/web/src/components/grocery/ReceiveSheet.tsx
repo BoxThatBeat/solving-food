@@ -140,7 +140,7 @@ function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, clos
           </div>
         }
       >
-        <div className="flex flex-col gap-2.5 rounded-ui border-bw bg-blue p-4 text-onc shadow-hard" data-testid="freeze-prompt">
+        <div className="flex flex-col gap-2.5 rounded-ui border-bw bg-blue-soft p-4 text-onc shadow-hard" data-testid="freeze-prompt">
           <span className="font-mono text-[0.65625rem] font-extrabold tracking-[0.09rem]">BULK BUY · {storeOf(current.item.storeId)?.name.toUpperCase()}</span>
           <span className="font-display text-[1.5rem] leading-[1.05]">Freeze some of this?</span>
           <span className="text-[0.875rem] font-semibold">

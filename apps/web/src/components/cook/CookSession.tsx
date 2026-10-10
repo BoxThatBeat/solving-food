@@ -169,7 +169,7 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
             ☀ AWAKE
           </span>
         ) : null}
-        {!online ? <span className="rounded-ui border-2 border-line bg-peach px-1.5 py-0.5 font-mono text-[0.5625rem] font-bold text-onc">OFFLINE</span> : null}
+        {!online ? <span className="rounded-ui border-2 border-line bg-peach-soft px-1.5 py-0.5 font-mono text-[0.5625rem] font-bold text-onc">OFFLINE</span> : null}
         <Button variant="ink" size="sm" onClick={finish} disabled={finished}>
           Done cooking
         </Button>

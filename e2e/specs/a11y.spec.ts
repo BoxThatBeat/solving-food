@@ -176,6 +176,7 @@ test("M3 pages and sheets in Latte and Mocha: supply with every flag, add supply
     await page.goto(`/recipes/${r.id}`);
     await expect(page.getByTestId("supply-badge").first()).toBeVisible();
     await expectNoSeriousViolations(page, `recipe with supply badges (${flavour})`);
+    await page.evaluate(() => sessionStorage.clear()); // the cook view resumes where it was left
     await page.goto(`/plan/${itemId}/cook`);
     await expect(page.getByRole("heading", { name: "Mise en place" })).toBeVisible();
     await expectNoSeriousViolations(page, `mise en place (${flavour})`);

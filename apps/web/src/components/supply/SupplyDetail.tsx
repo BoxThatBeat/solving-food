@@ -102,7 +102,7 @@ function LotRow({ lot, item, ingredient, unit, hid, uid, tz, nowMs }: { lot: Led
           <Button
             size="sm"
             variant="chip"
-            className="bg-blue text-onc"
+            className="bg-blue-soft text-onc"
             onClick={() => {
               sendCommand(hid, uid, "thaw", { supplyId: item.id, lotId: lot.lotId });
               notify({ kind: "success", message: `${name} thawed · use within 2 days` });
@@ -128,7 +128,7 @@ function LotRow({ lot, item, ingredient, unit, hid, uid, tz, nowMs }: { lot: Led
         </Button>
       </div>
       {freezing !== null ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-ui border-2 border-line bg-blue p-2 text-onc">
+        <div className="flex flex-wrap items-center gap-2 rounded-ui border-2 border-line bg-blue-soft p-2 text-onc">
           <span className="font-mono text-[0.625rem] font-bold">FREEZE HOW MUCH?</span>
           <Stepper label="Amount to freeze" value={freezing} min={Math.min(step, lot.amount)} max={lot.amount} step={step} onChange={setFreezing} format={(v) => amountText(v, unit)} className="bg-base text-ink" />
           <Button

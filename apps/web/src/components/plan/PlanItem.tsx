@@ -97,7 +97,7 @@ export function PlanItemCard({ v, recipes, onOpen, hid, uid }: { v: PlanItemView
         ) : null}
         <div className="flex flex-wrap gap-1">
           {leftover ? null : <Badge className="bg-s0 uppercase">{it.servings} serving{it.servings === 1 ? "" : "s"}</Badge>}
-          {it.carriedFromId ? <Badge className="bg-peach text-onc uppercase">Carried over</Badge> : null}
+          {it.carriedFromId ? <Badge className="bg-peach-soft text-onc uppercase">Carried over</Badge> : null}
           {it.savedMealId ? <Badge className="bg-[color-mix(in_srgb,var(--blue)_55%,white)] text-[#4c4f69] uppercase">Saved meal</Badge> : null}
           {leftovers.map((t) => (
             <Badge key={t} className="bg-[color-mix(in_srgb,#c6a0f6_55%,white)] text-[#4c4f69] uppercase">
@@ -106,11 +106,11 @@ export function PlanItemCard({ v, recipes, onOpen, hid, uid }: { v: PlanItemView
           ))}
           {trashed ? <Badge className="bg-red-soft text-onc uppercase">Recipe in Trash</Badge> : null}
           {v.expiry && status === "planned" ? (
-            <Badge className="bg-peach text-onc uppercase" data-testid="expiry-badge">
+            <Badge className="bg-peach-soft text-onc uppercase" data-testid="expiry-badge">
               {v.expiry}
             </Badge>
           ) : null}
-          {v.leftover?.expired && status === "planned" ? <Badge className="bg-red-soft text-onc uppercase">Past its use-by</Badge> : v.leftover && status === "planned" ? <Badge className="bg-peach text-onc uppercase">Eat soon</Badge> : null}
+          {v.leftover?.expired && status === "planned" ? <Badge className="bg-red-soft text-onc uppercase">Past its use-by</Badge> : v.leftover && status === "planned" ? <Badge className="bg-peach-soft text-onc uppercase">Eat soon</Badge> : null}
         </div>
       </div>
       {multi ? (

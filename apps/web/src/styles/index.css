@@ -80,6 +80,9 @@
   --color-red: var(--red);
   /* Red lightened toward white: ink on the prototype's red is 3.2:1, too low for small badge text (AA). */
   --color-red-soft: color-mix(in srgb, var(--red) 55%, white);
+  /* Same for peach and blue under small text (ink on them is 4.1:1 and 3.6:1). */
+  --color-peach-soft: color-mix(in srgb, var(--peach) 70%, white);
+  --color-blue-soft: color-mix(in srgb, var(--blue) 55%, white);
   --color-peach: var(--peach);
   --color-yellow: var(--yellow);
   --color-blue: var(--blue);
