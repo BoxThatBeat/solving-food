@@ -250,7 +250,7 @@ function SupplyRow({ r, first, open, onToggle, tz, now, children }: { r: Row; fi
   const unit = unitFor(r.item, r.ing);
   const name = r.item.label.charAt(0).toUpperCase() + r.item.label.slice(1);
   const frozenLots = r.item.lots.filter((l) => l.frozenAtMs).length;
-  const purchases = r.item.lots.length;
+  const purchases = new Set(r.item.lots.map((l) => l.acquiredAtMs)).size; // a freeze split is still one purchase
   const id = `supply-${r.item.id}`;
   return (
     <li className={cn(!first && "border-t-2 border-line")} data-testid="supply-row" aria-label={name}>

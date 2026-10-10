@@ -1,7 +1,8 @@
 // The Grocery page (PRD R7.1–R7.6; TECHNICAL_SPECS §8): the list the plan needs, minus supply and ordered lists,
 // rounded to packs, brand-mapped, grouped by store. Ticks are live for every member (field updates on the items map).
 // Copy hands the PC Express section to ChatGPT and marks the list ordered, with Undo (R7.5). Prototype "Grocery",
-// phase "order". Receiving and the freeze prompt arrive with Supply (M3).
+// phase "order". An ordered list is confirmed on arrival (phase "receipt", R7.8) with the freeze prompt for bulk buys
+// (R7.9): <ReceiveSheet> sends one receiveGroceries command.
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
@@ -25,6 +26,7 @@ import { Textarea } from "@/components/ui/chip";
 import { useNotify } from "@/components/notifications-context";
 import { addLine, addManualItem, DRAFT_ID, syncDraft, millis, orderDraft, removeItem, tickItem, undoOrder, type StoredList } from "@/data/plan";
 import { usePlanModel } from "@/data/planModel";
+import { ReceiveSheet } from "@/components/grocery/ReceiveSheet";
 import { searchIngredients, useAllIngredients, type IngredientEntry } from "@/data/ingredients";
 import { useReadySession } from "@/session/useSession";
 import { cn } from "@/lib/utils";
@@ -42,6 +44,10 @@ function GroceryPage() {
   const draftItems = m.draft.data?.items;
   const [fallbackText, setFallbackText] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
+  const [receiving, setReceiving] = React.useState<string | null>(null);
+  const receivingList = receiving ? (m.ordered ?? []).find((l) => l.id === receiving) : undefined;
+  // Lists with a receiveGroceries command still on its way to the server: shown as "adding to supply…".
+  const receivingIds = new Set(m.supply.pendingCommands.flatMap((p) => (p.command.type === "receiveGroceries" ? [p.command.payload.listId] : [])));
 
   // Regenerate (§8): keep the stored draft in step with the plan. Manual lines and ticks survive; field-level writes.
   const sync = React.useCallback(async () => {
@@ -187,13 +193,27 @@ function GroceryPage() {
           <h2 id="ordered-h" className="m-0 font-display text-[1.375rem] font-normal">
             Ordered · waiting for delivery
           </h2>
-          <p className="m-0 text-[0.8125rem] font-semibold text-sub">These count as incoming, so they aren't added again. Confirming the delivery arrives with Supply (M3).</p>
+          <p className="m-0 text-[0.8125rem] font-semibold text-sub">These count as incoming, so they aren't added again. When they arrive, confirm them and they go into supply.</p>
           {[...(m.ordered ?? [])]
             .sort((a, b) => (millis(b.data.orderedAt) ?? 0) - (millis(a.data.orderedAt) ?? 0))
             .map((l) => (
-              <OrderedList key={l.id} id={l.id} list={l.data} stores={m.stores} ingredients={m.ingredients} onTick={(id, on) => tick(l.id, id, on)} onUndo={() => void undoOrder(m.hid, l.id).then(() => notify({ kind: "success", message: "Order undone · items back on the list" }))} />
+              <OrderedList
+                key={l.id}
+                id={l.id}
+                list={l.data}
+                stores={m.stores}
+                ingredients={m.ingredients}
+                receiving={receivingIds.has(l.id)}
+                onReceive={() => setReceiving(l.id)}
+                onTick={(id, on) => tick(l.id, id, on)}
+                onUndo={() => void undoOrder(m.hid, l.id).then(() => notify({ kind: "success", message: "Order undone · items back on the list" }))}
+              />
             ))}
         </section>
+      ) : null}
+
+      {receivingList ? (
+        <ReceiveSheet open onOpenChange={(o) => !o && setReceiving(null)} listId={receivingList.id} items={receivingList.data.items} stores={m.stores} ingredients={m.ingredients} hid={m.hid} uid={s.user.uid} />
       ) : null}
 
       <Sheet open={fallbackText !== null} onOpenChange={(o) => !o && setFallbackText(null)}>
@@ -292,16 +312,20 @@ function StoreCard({
   );
 }
 
-function OrderedList({ id, list, stores, ingredients, onTick, onUndo }: { id: string; list: StoredList; stores: readonly StoreEntry[]; ingredients: Map<string, IngredientEntry>; onTick: (id: string, on: boolean) => void; onUndo: () => void }) {
+function OrderedList({ id, list, stores, ingredients, onTick, onUndo, onReceive, receiving }: { id: string; list: StoredList; stores: readonly StoreEntry[]; ingredients: Map<string, IngredientEntry>; onTick: (id: string, on: boolean) => void; onUndo: () => void; onReceive: () => void; receiving: boolean }) {
   const at = millis(list.orderedAt);
   return (
     <div className="flex flex-col gap-2.5 rounded-ui border-2 border-dashed border-line p-3" data-testid="ordered-list" data-list={id}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-mono text-[0.6875rem] font-bold uppercase">Ordered {at ? ORDERED_AT.format(new Date(at)) : "just now"} · {Object.keys(list.items).length} items</span>
-        <Button size="sm" variant="secondary" onClick={onUndo}>
+        <Button size="sm" variant="secondary" onClick={onUndo} disabled={receiving}>
           Undo order
         </Button>
       </div>
+      <button type="button" onClick={onReceive} disabled={receiving} className="press flex cursor-pointer items-center justify-between gap-3 self-start rounded-ui border-bw bg-base px-4 py-3 text-left text-[1rem] font-extrabold text-ink shadow-hard disabled:cursor-wait disabled:opacity-60">
+        {receiving ? "Adding to supply…" : "Groceries arrived? Confirm"}
+        <span aria-hidden>→</span>
+      </button>
       <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[repeat(auto-fill,minmax(28rem,1fr))]">
         {groupByStore(list.items, stores).map((g) => (
           <StoreCard key={g.store.id} store={g.store} lines={g.items} ingredients={ingredients} onTick={onTick} />

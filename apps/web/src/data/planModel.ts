@@ -60,8 +60,10 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[] } = {}) 
     for (const r of recipes.values()) for (const id of r.ingredientIds) ids.add(id);
     for (const m of mappings.docs ?? []) ids.add(m.id);
     for (const it of Object.values(draft.data?.items ?? {})) if (it.ingredientId) ids.add(it.ingredientId);
+    for (const l of ordered.docs ?? []) for (const it of Object.values(l.data.items)) if (it.ingredientId) ids.add(it.ingredientId);
+    for (const it of supply.items.values()) if (it.ingredientId) ids.add(it.ingredientId);
     return [...ids];
-  }, [recipes, mappings.docs, draft.data]);
+  }, [recipes, mappings.docs, draft.data, ordered.docs, supply.items]);
   const ingredients = useIngredientsById(ingredientIds);
 
   const ctx: BuildContext = useMemo(() => {
