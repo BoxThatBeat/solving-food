@@ -176,7 +176,7 @@ recipes/{recipeId}/versions/{version}             // full snapshot + editedBy, e
 
 recipeIndex/{chunkN}                              // ≤ ~500 compact summaries per doc (§9)
 
-meals/{mealId}
+meals/{mealId}                                    // SAVED meals only (R5.2); unsaved meals live inside plan items
   name, recipes: [{ recipeId, servingsMultiplier }], createdBy, updatedAt
 
 prices/{pcxStoreId}_{productCode}                 // PC Express price at one store
@@ -214,10 +214,12 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
   stats/{type_targetId}          timesCooked, lastCookedAt, ratingSum, ratingCount   // function-maintained
 
   periods/{periodId}             start, end, budgetCents                    // snapshot at creation
-  planItems/{itemId}             periodId, mealId? | recipeId? | leftoverSupplyId?, mealType, servings,
+  planItems/{itemId}             periodId, kind: "meal"|"leftover", mealType, servings,
+                                 recipes: [{ recipeId, servingsMultiplier }],   // kind=meal: the meal itself (R5.1), 1..n recipes
+                                 savedMealId?, name?,                        // set when created from / saved as a Meals-list meal (R5.8)
+                                 leftoverSupplyId?, sourcePlanItemId?,       // kind=leftover → the batch they came from
                                  coverage: { breakfast?, lunch?, dinner? },   // slots it fills (R6.2)
-                                 status: planned|cooked|skipped|eaten, carriedFromId?,
-                                 sourcePlanItemId?, addedBy                 // leftovers → the batch they came from
+                                 status: planned|cooked|skipped|eaten, carriedFromId?, addedBy
 
   cookEvents/{eventId}           planItemId?, recipeIds[], titles[], cookedBy, cookedAt,   // titles survive recipe deletion
                                  used: [{ ingredientId, canonicalAmount }], leftoverPortions,
@@ -271,8 +273,8 @@ Any user can delete a global recipe, but deletion is **soft** (R4.26). A **confi
 **Purge:** the weekly maintenance function (§8, §13) finds recipes with `trashedAt` older than 30 days and deletes each document. An `onDocumentDeleted(recipes/*)` function then cleans up:
 
 - Deletes `versions/*` and the recipe's images in Storage.
-- Removes it from every meal that includes it. A meal left with no recipes is deleted.
-- In every household: deletes `planned` plan items for it, plus its favourites, notes, and stats.
+- Removes it from every saved meal that includes it. A saved meal left with no recipes is deleted.
+- In every household: removes it from the `recipes` list of `planned` plan items (an item left with no recipes is deleted), plus its favourites, notes, and stats.
 - Keeps `cookEvents`, ratings, and history entries, which show the stored title marked *(deleted)*.
 
 The same cleanup runs for the only other hard delete: a new drop import discarded with **Keep existing** during duplicate review (§9), which was never visible to anyone.
@@ -354,7 +356,7 @@ Firestore writes queue up offline, but callable functions don't. So every action
 
 `households/{hid}.currentPeriodId` points to the active period. When any member opens the app after `period.end` (midnight in the household's `timezone`), the client runs a **Firestore transaction**. It creates the next period (length `periodDays`, with a budget snapshot), copies uncooked `planned` items into it with `carriedFromId`, and advances `currentPeriodId`. The transaction makes this idempotent, so two members opening the app at once can't create two periods. No scheduler is needed. Transactions need a connection, so a device that is offline keeps showing the ended period with a "period ended, will roll over when online" note, and all its other actions still work.
 
-**Servings:** a recipe added to the plan gets `servings = household.defaultServings` (R11.12); a meal's recipes are scaled by their `servingsMultiplier` on top of that. The user can change the number on the plan item.
+**Creating meals (R5.7, R5.8):** every `kind: "meal"` plan item is created by `<CreateMealSheet>`: multi-select recipes (via `<CollectionView>` with Suggested first) or pick a saved meal, choose `mealType` and `servings` (default `household.defaultServings`, R11.12), optionally name it and tick "Save as meal", which also writes a `meals/{id}` document and sets `savedMealId`. "Add to plan" on a recipe opens the same sheet with that recipe preselected. Each recipe is scaled by `servings × servingsMultiplier`. The user can change servings and meal type on the plan item afterwards. Ratings and `stats` for meals key on `savedMealId`, so unsaved meals only rate their recipes.
 
 ### Coverage & leftovers
 
@@ -681,16 +683,17 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 ### Key components
 
 - **`<CollectionView>`**: shared search, filter, and sort for Recipes, Meals, Plan, and History, with a **Suggested** sort. Filter state lives in the URL.
+- **`<CreateMealSheet>`**: the Plan page's primary action (R5.7). Tabs *Recipes* (multi-select `<CollectionView>`, Suggested sort first, selected recipes pinned at the top with per-recipe multiplier) and *Saved meals*; then meal type, servings, optional name + "Save as meal" (R5.8); Add to plan.
 - **`<BudgetMeter>`**: sticky on the Plan page; turns red below zero.
 - **`<SupplyBadge>`**: the "have / need" chip next to recipe ingredients.
 - **`<CoverageStrip>`**: the period coverage view (R6.2). One row per meal type, one cell per day, filled left to right from plan items' `coverage`. Cooked or eaten cells are solid, planned cells are outlined, and overflow shows as "+n". Cells aren't interactive.
 - **`<ExpiryBadge>`**: on planned meals (R6.7).
 - **`<ProteinSummary>`**: average protein per serving vs. goal for each meal type, on the Plan page.
 - **`<OptimiserSheet>`**: n / $x inputs, Next / Back / Accept.
-- **`<MealCookView>`**: the meal's recipes with their durations; the user picks the order and checks recipes off. When all are checked, it opens the review.
+- **`<MealCookView>`**: the plan item's recipes with their durations; the user picks the order and checks recipes off. When all are checked, it opens the review. One-recipe meals skip the ordering step.
 - **`<StepMode>`**: full-screen, swipe between steps, inline amounts, Screen Wake Lock API, inline timers (§12 Cooking timers). Adapts to orientation and size (§12 Cooking layouts).
 - **`<MiseEnPlace>`**: the prep checklist shown before step mode.
-- **`<ReviewSheet>`**: per-user 1–10 rating for the meal and recipes → used amounts (pre-filled with what `finishCooking` already deducted) → leftovers ▲/▼. Submits a `submitReview` command whose corrections are the differences. It can be completed later from **Pending reviews** on the Plan page.
+- **`<ReviewSheet>`**: per-user 1–10 rating for each recipe, and for the meal when it has a `savedMealId` (otherwise a "Save this meal?" prompt for multi-recipe meals, R5.8) → used amounts (pre-filled with what `finishCooking` already deducted) → leftovers ▲/▼. Submits a `submitReview` command whose corrections are the differences. It can be completed later from **Pending reviews** on the Plan page.
 - **`<SupplyAdjust>`**: typed amount, ±5 / ±25 buttons, Apply.
 - **`<ExpiredLotPrompt>`**: shown on Supply and Plan for each expired lot, with **Still good** (`extendExpiry`) and **Threw it out** (`discard`) (R8.15).
 - **`<TrashList>`**: `/recipes/trash`, trashed recipes with days remaining and a Restore button (R4.26).
@@ -826,8 +829,8 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | `drop-folder.spec.ts` | Upload `.cook` files → recipes appear with downloaded images; invalid file shows an error banner on whatever page is open; file deleted after processing; duplicate goes to the review list; keep existing / keep new / keep both (R4.16–R4.17, R4.20) |
 | `notifications.spec.ts` | Banners appear at the bottom of any page, stack, auto-dismiss (success) or persist (error), link to their target, and stay dismissed across devices (R12.1) |
 | `sharing.spec.ts` | Copy link; signed-out visitor sees the recipe/meal page without household data; `.cook` export downloads and re-imports (R4.21–R4.22) |
-| `meals.spec.ts` | Create, edit, favourite, share meals; choose recipe order with durations shown; meal and recipe ratings (R5.1–R5.6) |
-| `plan.spec.ts` | Add/remove items scaled to default servings; meal types; coverage strip shows only planned meal types, fills left to right, shows n/N and overflow, cells not clickable; budget meter goes down, ignores incoming and in-supply ingredients, goes back up after receiving, goes negative and turns red, never blocks; expiry badges; protein summary; landing page redirect (R6.1–R6.7, R6.17, R11.12–R11.13) |
+| `meals.spec.ts` | Saved meals list: edit, favourite, share; "Save as meal" from Create meal and from the review flow; saved meal picked in Create meal; choose recipe order with durations shown; meal and recipe ratings (R5.1–R5.4, R5.6, R5.8) |
+| `plan.spec.ts` | Create meal with one recipe, with several recipes, and from a saved meal; Add to plan shortcut from a recipe; remove items; default servings; meal types (R5.5, R5.7); coverage strip shows only planned meal types, fills left to right, shows n/N and overflow, cells not clickable; budget meter goes down, ignores incoming and in-supply ingredients, goes back up after receiving, goes negative and turns red, never blocks; expiry badges; protein summary; landing page redirect (R6.1–R6.7, R6.17, R11.12–R11.13) |
 | `rollover.spec.ts` | Uncooked items carry over at period end; two members opening at once creates one period (R6.6) |
 | `leftovers.spec.ts` | Meal-prep batch fills lunch cells when planned; confirmed ▲/▼ count replaces the estimate; leftover supply item with expiry; leftover plan items roll over; mark eaten (R6.8–R6.10, R9.5) |
 | `suggestions.spec.ts` | Ranking reflects expiry, supply, ratings, variety, and protein goal; weight sliders and presets change the order; expiry alerts (R6.11–R6.14, R6.16) |

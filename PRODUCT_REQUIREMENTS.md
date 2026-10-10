@@ -70,7 +70,7 @@ flowchart LR
 ```
 
 1. **Suggest.** The app ranks recipes so the ones that use up supply close to expiry come first, while staying varied and within budget. A **Suggested** sort option is always available, and it also ranks the results of any filter.
-2. **Plan.** The user adds recipes or saved meals to the plan, scaled to the household's default servings (R11.12). The budget meter goes down as they add.
+2. **Plan.** The user presses **Create meal**, picks one or more recipes (or a saved meal), sets the meal type and servings (default from R11.12), and adds it to the plan (R5.7). The budget meter goes down as they add.
 3. **Grocery list.** The app works out *needed − projected supply − items already ordered*, applies preferred brands, and groups items by store.
 4. **Order.** The user copies the list into ChatGPT, which orders it through the PC Express plugin. Copying marks the list as **ordered**. When the groceries arrive, the user confirms them and corrects any quantities that changed. The app adds them to supply.
 5. **Cook.** The user opens a planned meal and cooks from the step view. Pressing **Done cooking** immediately deducts the recipe's ingredients from supply and records the estimated leftovers, so supply is right even if nobody reviews the meal.
@@ -80,7 +80,7 @@ flowchart LR
 ### The plan period
 
 - The household configures the **plan period length in days** (default 7).
-- A plan is a list of meals and recipes for that period, assigned to a meal type (breakfast, lunch, dinner, snack), not to specific days.
+- A plan is a list of meals for that period, each assigned to a meal type (breakfast, lunch, dinner, snack), not to specific days. A meal is one or more recipes (§5).
 - There is **no limit** on how many meals a plan can hold, and users can add to the plan and generate a new grocery list at any point during the period.
 
 ---
@@ -135,12 +135,14 @@ flowchart LR
 
 ## 5. Meals (Recipe Collections)
 
-- **R5.1** A **meal** is a named collection of one or more recipes eaten together, e.g. *"Taco night" = tortillas + carnitas + pico de gallo*.
-- **R5.2** Meals are saved in a **separate list** from recipes. They can be planned, favourited, rated, and shared like recipes.
-- **R5.3** **Both meals and their individual recipes can be rated.**
+- **R5.1** A **meal** is one or more recipes eaten together, e.g. *"Taco night" = tortillas + carnitas + pico de gallo*. **Every item in the plan is a meal.** A recipe planned on its own is simply a one-recipe meal.
+- **R5.2** **Saved meals** are meals the household has named and kept for reuse. They live in the **Meals** list, separate from recipes, and can be favourited, rated, shared, and picked directly when creating a meal (R5.7). Meals that aren't saved exist only in the plan and in history.
+- **R5.3** **Both saved meals and individual recipes can be rated.**
 - **R5.4** Meals are **not tied to a specific day**. A plan is a list of meals for the period, cooked in any order.
 - **R5.5** Each planned meal has a type: breakfast, lunch, dinner, or snack. A meal-prep batch can cover several meal slots.
 - **R5.6** When cooking a meal with several recipes, the user **chooses the order**. Each recipe's name shows its total time underneath, for quick reference.
+- **R5.7** **Creating a meal happens on the Plan page.** The user presses **Create meal**, then picks **one or more recipes** using the shared search, filter, and sort component (R4.7) with multi-select, with Suggested recipes shown first. Alternatively they pick a **saved meal**. They set the meal type (R5.5) and servings (default R11.12), then press **Add to plan**. The **Add to plan** button on a recipe page or card is a shortcut that creates a one-recipe meal after the same two choices.
+- **R5.8** **Saving a meal.** While creating a meal, or later from the plan or the review flow (*"Save this meal?"*), the user can give it a **name** and save it to the Meals list (R5.2). Saving doesn't change the planned item; it adds a reusable copy. A planned meal created from a saved meal remembers which one, so the saved meal collects ratings and cook stats.
 
 ---
 
@@ -148,7 +150,7 @@ flowchart LR
 
 ### 6.1 Plan Page
 
-- **R6.1** The Plan page shows the **meals selected for the current period** as a list that can be sorted and filtered.
+- **R6.1** The Plan page shows the **meals selected for the current period** as a list that can be sorted and filtered. Its primary action is **Create meal** (R5.7).
 - **R6.2** **Period coverage view.** Above the list, the Plan page shows the plan period as a **calendar-like strip**: one cell per day, labelled with its weekday and date for orientation, and one row per meal type the household plans (R11.13; breakfast, lunch, and dinner by default).
   - Cells **fill from left to right** as meals are added. Five dinners planned in a 7-day period fill the first five dinner cells, and the row reads **5/7**. It's a visual version of "5 of 7 dinners planned", **not a schedule**. Meals are never assigned to specific days, and the cells can't be tapped to pick a day.
   - A meal-prep recipe or leftover portions fill one cell per portion they cover (e.g. 4 lunches from one batch fill 4 lunch cells).
@@ -245,7 +247,7 @@ flowchart LR
 
 - **R9.1** While cooking, the user checks off each recipe in the meal as it's done. The **review flow opens automatically** once every recipe is checked off. It also opens if the user taps **Done cooking** before all recipes are checked off.
 - **R9.2** The **review flow**:
-  1. **Rate it 1–10.** Each user rates for themselves, and the meal and its recipes can each be rated (R5.3).
+  1. **Rate it 1–10.** Each user rates for themselves. Each recipe can be rated, and so can the meal if it's a saved one (R5.3). For an unsaved meal with more than one recipe, the flow offers *"Save this meal?"* (R5.8).
   2. **Adjust ingredients used.** The recipe quantities are pre-filled. The user can change any amount, remove an ingredient, or add one.
   3. **Confirm leftovers** with ▲/▼ (R6.9).
 - **R9.3** Supply is updated in two steps so that it's never left stale. **Done cooking** immediately subtracts the recipe's ingredients (at the planned servings) and adds the recipe's estimated leftover portions. The review then **corrects** supply by the difference between those defaults and what the user confirms. If the review is never completed, the defaults stand.
@@ -288,9 +290,9 @@ Everything here belongs to the household except the theme, which is per user.
 
 | Page | Purpose |
 |---|---|
-| **Plan** | Current period's meals, budget meter, suggestions, optimiser, expiry alerts, pending reviews |
+| **Plan** | Current period's meals, Create meal, budget meter, suggestions, optimiser, expiry alerts, pending reviews |
 | **Recipes** | Global library: search, filter, add, review possible duplicates, Trash |
-| **Meals** | Saved recipe collections |
+| **Meals** | Saved meals (named recipe collections) |
 | **Supply** | Current and projected amounts, expiry dates, transactions |
 | **Grocery** | Generated list grouped by store, copy button, purchase confirmation |
 | **History** | Cooked meals, ratings, stats |
