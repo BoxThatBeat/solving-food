@@ -17,6 +17,7 @@ import {
 } from "@solving-food/core";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/chip";
 import { IngredientPicker } from "@/components/recipes/IngredientPicker";
 import { useNotify } from "@/components/notifications-context";
 import { useAllIngredients, useIngredientsById, type IngredientEntry } from "@/data/ingredients";
@@ -140,6 +141,7 @@ function ReviewFlow({
   const [mealName, setMealName] = React.useState(() => defaultMealName(source.recipeIds.map(recipeTitles)));
   const [used, setUsed] = React.useState(() => source.used.filter((u) => u.canonicalAmount > 0).map((u) => ({ ...u })));
   const [leftovers, setLeftovers] = React.useState(source.leftoverPortions);
+  const [note, setNote] = React.useState("");
   const supply = useSupply(hid, tz);
   const usedIngredients = useIngredientsById([...used.map((u) => u.ingredientId), ...[...supply.items.values()].flatMap((i) => (i.ingredientId ? [i.ingredientId] : []))]);
   const [adding, setAdding] = React.useState(false);
@@ -162,6 +164,7 @@ function ReviewFlow({
       ratings,
       ...(rateOnly ? {} : { used: used.map((u) => ({ ingredientId: u.ingredientId, canonicalAmount: Math.max(0, Math.round(u.canonicalAmount * 1000) / 1000) })), leftoverPortions: leftovers }),
       ...(savedMealId && savedMealId !== source.savedMealId ? { savedMealId } : {}),
+      ...(note.trim() ? { note: note.trim().slice(0, 500) } : {}),
     });
     notify({ kind: "success", message: rateOnly ? "Rating saved" : `Review saved · supply corrected${leftovers ? ` · ${leftovers} leftover portion${leftovers === 1 ? "" : "s"}` : ""}`, link: rateOnly ? undefined : { to: "/supply", label: "See supply" } });
     onDone();
@@ -311,6 +314,10 @@ function ReviewFlow({
                   </Button>
                 </span>
               </div>
+              <label className="flex flex-col gap-1.5">
+                <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">NOTES FOR NEXT TIME (OPTIONAL)</span>
+                <Textarea rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Pork could go five minutes longer." />
+              </label>
             </>
           )}
 

@@ -20,6 +20,21 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from "./ui/sheet";
 import { Wordmark } from "./Wordmark";
 import { PlanSheetProvider } from "./plan/PlanSheetProvider";
 import { useMeals, usePlanItems } from "@/data/plan";
+import { usePendingReviews } from "./cook/helpers";
+import { useSupply } from "@/data/supply";
+import { itemExpiry } from "./supply/format";
+
+/** Supply items expiring soon or expired (the prototype's "3 SOON" beside Supply). */
+function useSoonCount(hid: string, tz: string): number {
+  const supply = useSupply(hid, tz);
+  let n = 0;
+  for (const it of supply.items.values()) {
+    if (!it.lots.length) continue;
+    const f = itemExpiry(it.lots, supply.now, tz).flag;
+    if (f === "soon" || f === "expired") n++;
+  }
+  return n;
+}
 
 const page = (to: NavPage["to"]) => PAGES.find((p) => p.to === to)!;
 const MORE_PAGES = [page("/meals"), page("/history"), page("/settings")];
@@ -165,7 +180,16 @@ function NavList({ compact }: { compact?: boolean }) {
   const hh = useActiveHousehold();
   const planned = usePlanItems(hh.id, hh.data?.currentPeriodId).docs?.filter((d) => d.data.status === "planned").length;
   const meals = useMeals().docs?.length;
-  const counts: Partial<Record<NavPage["to"], number | undefined>> = { "/plan": planned, "/recipes": recipeCount, "/meals": meals };
+  const s = useReadySession();
+  const toRate = usePendingReviews(hh.id, s.user.uid).length;
+  const soon = useSoonCount(hh.id, hh.data?.timezone ?? "America/Toronto");
+  const counts: Partial<Record<NavPage["to"], number | string | undefined>> = {
+    "/plan": planned,
+    "/recipes": recipeCount,
+    "/meals": meals,
+    "/supply": soon ? `${soon} SOON` : undefined,
+    "/history": toRate ? `${toRate} TO RATE` : undefined,
+  };
   return (
     <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
       {PAGES.map((p) => {
