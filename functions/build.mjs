@@ -11,7 +11,7 @@ await build({
   target: "node22",
   format: "esm",
   sourcemap: true,
-  external: ["firebase-admin", "firebase-admin/*", "firebase-functions", "firebase-functions/*"],
+  external: ["firebase-admin", "firebase-admin/*", "firebase-functions", "firebase-functions/*", "sharp"],
   banner: {
     // Some bundled CJS deps call require(); give ESM output a require().
     js: "import { createRequire as __createRequire } from 'module'; const require = __createRequire(import.meta.url);",

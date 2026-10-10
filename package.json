@@ -14,7 +14,7 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm --filter @solving-food/core --filter @solving-food/web test",
     "test:rules": "firebase emulators:exec --only firestore,storage \"pnpm --filter @solving-food/rules-tests test\"",
-    "test:functions": "pnpm --filter @solving-food/functions build && firebase emulators:exec --only functions,firestore \"pnpm --filter @solving-food/functions test\"",
+    "test:functions": "pnpm --filter @solving-food/functions build && firebase emulators:exec --only functions,firestore,storage \"pnpm --filter @solving-food/functions test\"",
     "e2e": "bash scripts/e2e.sh",
     "e2e:coverage": "pnpm --filter @solving-food/e2e coverage",
     "emulators": "pnpm --filter @solving-food/functions build && firebase emulators:start --only auth,firestore,storage,functions",

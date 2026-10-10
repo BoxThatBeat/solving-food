@@ -207,7 +207,8 @@ export const notificationSchema = z.object({
   message: z.string().min(1),
   link: z.string().optional(),
   createdAt: timestamp,
-  dismissedAt: timestamp.optional(),
+  /** null until dismissed; written explicitly so `where("dismissedAt", "==", null)` matches. */
+  dismissedAt: timestamp.nullable().optional(),
 });
 export type NotificationDoc = z.infer<typeof notificationSchema>;
 

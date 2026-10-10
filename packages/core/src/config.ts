@@ -3,6 +3,9 @@
 /** Every Firebase resource lives here (TECHNICAL_SPECS §2). */
 export const REGION = "us-east1";
 
+/** The default Cloud Storage bucket (SETUP.md); the drop-folder trigger names it explicitly. */
+export const STORAGE_BUCKET = "solvingfood.firebasestorage.app";
+
 /** R2.3: a user can create at most this many households. Enforced in firestore.rules too. */
 export const MAX_HOUSEHOLDS_CREATED = 3;
 

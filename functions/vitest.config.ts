@@ -9,6 +9,10 @@ export default defineConfig({
   },
   test: {
     include: ["test/**/*.test.ts"],
-    testTimeout: 20_000,
+    setupFiles: ["test/setup.ts"],
+    testTimeout: 60_000,
+    hookTimeout: 60_000,
+    // One emulator suite and live triggers: files and tests run one at a time.
+    fileParallelism: false,
   },
 });
