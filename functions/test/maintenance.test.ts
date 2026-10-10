@@ -46,8 +46,8 @@ describe("maintenance: 30-day trash purge and cleanup", () => {
   it("purges only recipes trashed more than 30 days ago, and the cleanup follows everywhere", async () => {
     const now = Date.now();
     await db.doc("recipes/old").set(recipe("Old", { status: "trashed", trashedAt: new Date(now - 31 * DAY), trashedBy: "u1" }));
-    await db.doc("recipes/recent").set(recipe("Recent", { status: "trashed", trashedAt: new Date(now - 5 * DAY), trashedBy: "u1" }));
-    await db.doc("recipes/keep").set(recipe("Keep"));
+    await db.doc("recipes/recent").set(recipe("Recent", { status: "trashed", trashedAt: new Date(now - 5 * DAY), trashedBy: "u1", imagePaths: [] }));
+    await db.doc("recipes/keep").set(recipe("Keep", { imagePaths: [] })); // an image shared with a live recipe would be kept
     await db.doc("recipes/old/versions/1").set({ title: "Old" });
     for (const size of [480, 960, 1920]) await bucket().file(`recipes/old/img1/${size}.webp`).save(Buffer.from("x"), { contentType: "image/webp" });
     // Two households reference it.
@@ -82,7 +82,7 @@ describe("maintenance: 30-day trash purge and cleanup", () => {
       expect((await db.doc(`households/${hid}/cookEvents/e1`).get()).data()!.titles).toEqual(["Old"]);
     }
     expect((await db.doc("recipes/old/versions/1").get()).exists).toBe(false);
-    expect(await fileExists("recipes/old/img1/480.webp")).toBe(false);
+    await poll(async () => !(await fileExists("recipes/old/img1/480.webp")), 30_000, "image cleanup");
   });
 
   it("sweeps drop-folder leftovers older than a day", async () => {

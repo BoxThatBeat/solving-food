@@ -80,7 +80,7 @@ if (emulator) {
   execFileSync("gcloud", ["storage", "cp", ...files.map((f) => join(recipesDir, f)), dest], { stdio: "inherit" });
   const deadline = Date.now() + 10 * 60_000;
   for (;;) {
-    let out = "";
+    let out: string;
     try {
       out = execFileSync("gcloud", ["storage", "ls", dest], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
     } catch {
