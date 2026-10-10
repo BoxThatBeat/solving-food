@@ -5,7 +5,9 @@ rules_version = '2';
 //                                 browser can't encode WebP) ≤ 2 MB
 //   recipe-drop/{uid}/{file}      drop folder: the owner uploads .cook files (≤ 1 MB) and the images they
 //                                 reference (≤ 10 MB); only functions read and delete
-// Everything else (imports/ arrives in M4) is denied.
+//   imports/{hid}/{file}          household data import (M4, §13): members of that household upload one zip
+//                                 (≤ 20 MB); nobody reads it but the importHousehold function, which deletes it
+// Everything else is denied.
 service firebase.storage {
   match /b/{bucket}/o {
     // Same gate as Firestore (R2.12): a verified address on the allowlist. Cross-service read of Firestore.
@@ -29,6 +31,14 @@ service firebase.storage {
         && ((file.matches('.*\\.[cC][oO][oO][kK]$') && request.resource.size <= 1024 * 1024)
             || (request.resource.contentType.matches('image/(jpeg|png|webp|gif|heic|heif|avif)')
                 && request.resource.size <= 10 * 1024 * 1024));
+    }
+
+    match /imports/{hid}/{file} {
+      allow create: if allowed()
+        && firestore.exists(/databases/(default)/documents/households/$(hid)/members/$(request.auth.uid))
+        && file.matches('[A-Za-z0-9_-]{1,64}[.]zip')
+        && request.resource.size <= 20 * 1024 * 1024
+        && request.resource.contentType.matches('application/(zip|x-zip-compressed|octet-stream)');
     }
 
     match /{allPaths=**} {

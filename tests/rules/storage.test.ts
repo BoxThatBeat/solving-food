@@ -73,6 +73,29 @@ describe("drop folder (R4.16)", () => {
   });
 });
 
+describe("household data imports (M4, §13)", () => {
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore() as unknown as Firestore;
+      await setDoc(doc(db, "households", "h1", "members", ALICE.uid), { uid: ALICE.uid, displayName: "Alice", joinedAt: new Date() });
+    });
+  });
+
+  it("a member uploads one zip ≤ 20 MB into their household's folder; nobody reads or deletes it", async () => {
+    await assertSucceeds(uploadBytes(ref(st(ALICE), "imports/h1/0f1e2d3c.zip"), bytes(1000), { contentType: "application/zip" }));
+    await assertFails(getBytes(ref(st(ALICE), "imports/h1/0f1e2d3c.zip")));
+    await assertFails(deleteObject(ref(st(ALICE), "imports/h1/0f1e2d3c.zip")));
+  });
+
+  it("refuses other households, other types, big files, and odd names", async () => {
+    await assertFails(uploadBytes(ref(st(ALICE), "imports/h2/x.zip"), bytes(10), { contentType: "application/zip" }));
+    await assertFails(uploadBytes(ref(st(ALICE), "imports/h1/x.zip"), bytes(20 * 1024 * 1024 + 1), { contentType: "application/zip" }));
+    await assertFails(uploadBytes(ref(st(ALICE), "imports/h1/x.html"), bytes(10), { contentType: "text/html" }));
+    await assertFails(uploadBytes(ref(st(ALICE), "imports/h1/x.zip"), bytes(10), { contentType: "text/html" }));
+    await assertFails(uploadBytes(ref(st(EVE), "imports/h1/x.zip"), bytes(10), { contentType: "application/zip" }));
+  });
+});
+
 describe("everything else", () => {
   it("is denied", async () => {
     await assertFails(uploadString(ref(st(ALICE), "imports/h1/x.json"), "{}"));

@@ -9,6 +9,8 @@ rules_version = '2';
 // M3: households/*/commands (create), and member reads of the function-only supply (+ transactions), cookEvents,
 //     ratings, stats, cadence; users/*/devices (web-push tokens) and users/*/timers (read). Everything else is
 //     denied until the milestone that introduces it adds its rules.
+// M4: households/*/invites (+ collection-group read of your own), member docs by accepting an invite, member deletes
+//     (remove and leave). The household itself is deleted by the cleanup function when its last member leaves.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -365,14 +367,46 @@ service cloud.firestore {
 
       match /members/{uid} {
         allow read: if isMember(hid);
-        // Creator only, in the household's creation batch. Invites (M4) add the other two paths from §10.
+        // Your own member doc, in one of three ways (§10): as the creator in the household's creation batch, or by
+        // accepting an invite keyed by your uid (invite by name) or your address (invite by email, R2.4).
         allow create: if uid == me() && allowed()
           && request.resource.data.keys().hasOnly(['uid', 'displayName', 'joinedAt'])
           && request.resource.data.uid == me()
           && validDisplayName(request.resource.data.displayName)
           && request.resource.data.joinedAt == request.time
-          && !exists(/databases/$(database)/documents/households/$(hid))
-          && getAfter(/databases/$(database)/documents/households/$(hid)).data.createdBy == me();
+          && ((!exists(/databases/$(database)/documents/households/$(hid))
+                && getAfter(/databases/$(database)/documents/households/$(hid)).data.createdBy == me())
+              || exists(/databases/$(database)/documents/households/$(hid)/invites/$(me()))
+              || exists(/databases/$(database)/documents/households/$(hid)/invites/$(email())));
+        // No roles (R2.5): any member removes anyone, themselves included (leave, R2.13). The last member leaving
+        // triggers the cleanup function that deletes the household.
+        allow delete: if isMember(hid);
+      }
+
+      // Invites (§10, R2.4): keyed by the invitee's uid (by name) or lower-cased address (by email). Members create
+      // and cancel them; the invitee reads and deletes (accept or decline) their own.
+      match /invites/{key} {
+        allow read: if isMember(hid) || (allowed() && (key == me() || key == email()));
+        allow delete: if isMember(hid) || (allowed() && (key == me() || key == email()));
+        allow create: if isMember(hid)
+          && request.resource.data.keys().hasOnly(['inviteeUid', 'inviteeEmailLower', 'householdName', 'invitedBy',
+                                                    'invitedByName', 'createdAt'])
+          && request.resource.data.keys().hasAll(['householdName', 'invitedBy', 'invitedByName', 'createdAt'])
+          && str(request.resource.data.householdName, 1, 60)
+          && request.resource.data.householdName == get(/databases/$(database)/documents/households/$(hid)).data.name
+          && request.resource.data.invitedBy == me()
+          && validDisplayName(request.resource.data.invitedByName)
+          && request.resource.data.createdAt == request.time
+          && (('inviteeUid' in request.resource.data
+                && !('inviteeEmailLower' in request.resource.data)
+                && request.resource.data.inviteeUid == key
+                && key != me()
+                && !exists(/databases/$(database)/documents/households/$(hid)/members/$(key)))
+              || ('inviteeEmailLower' in request.resource.data
+                && !('inviteeUid' in request.resource.data)
+                && request.resource.data.inviteeEmailLower == key
+                && key == key.lower()
+                && key.matches('^[^@/ ]+@[^@/ ]+[.][^@/ ]+$')));
       }
 
       // Favourites (R4.6): one doc per target, keyed "<type>_<targetId>".
@@ -493,6 +527,13 @@ service cloud.firestore {
     // duplicated uid field, which is what the query filters on, so Firestore can prove the query safe.
     match /{path=**}/members/{memberId} {
       allow read: if allowed() && resource.data.uid == me();
+    }
+
+    // "My invites": two collection-group queries on invites (inviteeUid == me, inviteeEmailLower == my address).
+    // Like members, the rule checks the fields the queries filter on.
+    match /{path=**}/invites/{inviteKey} {
+      allow read: if allowed()
+        && (resource.data.get('inviteeUid', '') == me() || resource.data.get('inviteeEmailLower', '') == email());
     }
   }
 }
