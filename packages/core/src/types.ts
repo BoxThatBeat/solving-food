@@ -95,9 +95,19 @@ export const ingredientSchema = z.object({
   isStaple: z.boolean(),
   freeUse: z.boolean(),
   needsReview: z.boolean(),
+  // Set when a person creates or edits an ingredient in the app (absent on seed data).
+  createdBy: z.string().optional(),
+  updatedBy: z.string().optional(),
+  updatedAt: timestamp.optional(),
 });
 export type IngredientDoc = z.infer<typeof ingredientSchema>;
 
+/**
+ * One ingredient line. `measure` is a unit key from `packages/core/src/units.ts` ("g", "cup", "tsp", "count", "pinch")
+ * or a singular count noun ("clove", "fillet"). `displayText` is the recipe's own wording of the ingredient name
+ * ("fresh basil"); the amount is rendered from `amount` + `measure`. `canonicalAmount` is grams (or a count for
+ * count-canonical ingredients), 0 when the amount is vague or the ingredient lacks the conversion.
+ */
 export const recipeIngredientSchema = z.object({
   id: id,
   ingredientId: id,
@@ -108,10 +118,16 @@ export const recipeIngredientSchema = z.object({
   optional: z.boolean(),
 });
 
+/**
+ * Step text is plain text with `{{ing:<lineId>}}` placeholders (the line's full amount) or
+ * `{{ing:<lineId>|<amount>|<measure>}}` (part of it, when an ingredient is added in several steps). `section` starts
+ * a named part of the recipe ("Tzatziki Sauce").
+ */
 export const recipeStepSchema = z.object({
   text: z.string().min(1),
   ingredientRefs: z.array(id),
   timerSeconds: z.number().int().positive().optional(),
+  section: z.string().optional(),
 });
 
 export const prepTaskSchema = z.object({
@@ -137,12 +153,18 @@ export const recipeSchema = z.object({
   defaultLeftoverPortions: nonNegInt,
   leftoverMealType: z.enum(MEAL_TYPES).optional(),
   proteinPerServingG: z.number().min(0).optional(),
+  /** True when a non-optional ingredient has no protein value or conversion, so the figure is "~" (§5). */
+  proteinApproximate: z.boolean().optional(),
+  /** Free-text notes that came with the recipe (Cooklang comments); household notes live in households/{hid}/notes. */
+  notes: z.string().optional(),
   sourceUrl: z.url().optional(),
   sourceUrlCanonical: z.string().optional(),
   fingerprint: z.string(),
   ingredientIds: z.array(id),
+  /** Image base paths `recipes/{id}/{imageId}`; each has `480.webp`, `960.webp`, `1920.webp`. The first is the hero. */
   imagePaths: z.array(z.string()),
-  indexChunk: nonNegInt,
+  /** Assigned by the index function on creation (§9); absent until then. */
+  indexChunk: nonNegInt.optional(),
   status: z.enum(RECIPE_STATUSES),
   possibleDuplicateOf: id.optional(),
   trashedAt: timestamp.optional(),
