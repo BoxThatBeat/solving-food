@@ -13,7 +13,7 @@
 #   scripts/pw close
 set -euo pipefail
 
-PW_CLI_VERSION="0.1.14"   # Playwright 1.61.x; keep in step with pkgs.playwright-driver in flake.nix
+PW_CLI_VERSION="0.1.19"   # Playwright 1.63.x; keep in step with pkgs.playwright-driver in flake.nix (nix eval shows 1.63.0)
 
 if [[ -z "${PLAYWRIGHT_BROWSERS_PATH:-}" ]]; then
   echo "scripts/pw: PLAYWRIGHT_BROWSERS_PATH is not set. Run inside the dev shell (direnv or nix develop)." >&2
