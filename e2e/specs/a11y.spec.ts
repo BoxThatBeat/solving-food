@@ -41,6 +41,7 @@ test("sign-in, not-invited, and first-run pages", async ({ page, uniqueEmail }) 
 });
 
 test("shell pages in Latte and Mocha", async ({ page, household }) => {
+  test.slow(); // 10 full-page scans
   void household;
   for (const flavour of ["latte", "mocha"] as const) {
     if (flavour === "mocha") {
