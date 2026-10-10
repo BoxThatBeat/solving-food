@@ -81,3 +81,16 @@ test("dismissing on one device dismisses on the others", { tag: ["@R12.1"] }, as
   await expect(stack(page).getByRole("alert")).toBeHidden();
   await ctx.close();
 });
+
+test("a burst of notifications shows the newest three and a \"+N more\" row with Dismiss all", { tag: ["@R12.1"] }, async ({ page, household }) => {
+  await page.goto("/recipes");
+  for (let i = 1; i <= 6; i++) await notifyUser(household.uid, { kind: "error", message: `bulk-${i}.cook: missing title` });
+  await expect(stack(page).getByRole("alert")).toHaveCount(3);
+  await expect(stack(page).getByRole("alert").last()).toContainText("bulk-6.cook");
+  await expect(stack(page).getByText("+3 more notifications")).toBeVisible();
+  await stack(page).getByRole("button", { name: "Dismiss all" }).click();
+  await expect(stack(page).locator("[data-kind]")).toHaveCount(0);
+  await expect
+    .poll(async () => (await adminDb.collection(`users/${household.uid}/notifications`).where("dismissedAt", "==", null).get()).size)
+    .toBe(0);
+});

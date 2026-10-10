@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 import { NotificationsContext, useNotifications, type Banner, type NotificationKind } from "./notifications-context";
 
 export const AUTO_DISMISS_MS = 6000;
+/** At most this many banners at once; the rest collapse into a "+N more" row (a bulk drop reports one per file). */
+export const MAX_VISIBLE = 3;
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const [banners, setBanners] = React.useState<Banner[]>([]);
@@ -116,6 +118,9 @@ const KIND_STYLE: Record<NotificationKind, string> = {
 export function NotificationBanners({ className }: { className?: string }) {
   const ctx = React.useContext(NotificationsContext);
   if (!ctx) return null;
+  // The newest few; hidden ones keep their own timers (success and info still clear themselves).
+  const visible = ctx.banners.slice(-MAX_VISIBLE);
+  const more = ctx.banners.length - visible.length;
   // Always mounted (empty when there's nothing to show): an open sheet hides everything outside it from assistive tech
   // except live regions that already exist (aria-hidden's hideOthers), and banners must stay readable over sheets.
   // z-[60] puts them above sheet and dialog overlays (z-40/50) too.
@@ -125,7 +130,17 @@ export function NotificationBanners({ className }: { className?: string }) {
       aria-live="polite"
       data-testid="notifications"
     >
-      {ctx.banners.map((b) => (
+      {more > 0 ? (
+        <div className="pointer-events-auto flex w-full max-w-[min(92vw,40rem)] items-center justify-between gap-3 rounded-ui border-2 border-line bg-base px-3.5 py-2 text-[0.8125rem] font-extrabold text-ink shadow-hard-sm">
+          <span>
+            +{more} more notification{more === 1 ? "" : "s"}
+          </span>
+          <button type="button" onClick={() => ctx.banners.forEach((b) => ctx.dismiss(b.id))} className="cursor-pointer bg-transparent p-1 text-inherit underline">
+            Dismiss all
+          </button>
+        </div>
+      ) : null}
+      {visible.map((b) => (
         <div
           key={b.id}
           role={b.kind === "error" ? "alert" : "status"}
