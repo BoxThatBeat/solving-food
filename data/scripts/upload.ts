@@ -37,7 +37,10 @@ for (const { id, ...doc } of items) {
   }
   writes.push({ path, data: doc as never });
 }
-await store.setMany(writes);
+// Every ingredient write fires the ingredientRecipes trigger. The Functions emulator starts one worker process per
+// concurrent event and keeps it, so 475 writes at once leave dozens of ~80 MB workers and make it drop other events
+// (the drop folder's). Small paced batches keep it to a handful. The live project scales and retries on its own.
+await store.setMany(writes, store.where === "emulator" ? { chunk: 4, pauseMs: 120 } : {});
 console.log(
   `ingredients (${store.where}): ${writes.length} written, ${same} unchanged, ${edited} edited in the app and kept${force ? "" : " (use --force to overwrite)"}; ${items.length} in the seed`,
 );

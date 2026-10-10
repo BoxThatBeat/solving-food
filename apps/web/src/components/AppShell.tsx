@@ -14,6 +14,7 @@ import { useReadySession, useSession } from "@/session/useSession";
 import { useOnline } from "@/hooks/useOnline";
 import { cn } from "@/lib/utils";
 import { NotificationBanners, NotificationFeed } from "./notifications";
+import { useRecipeIndex } from "@/search/useRecipeSearch";
 import { HouseholdSheet } from "./HouseholdSheet";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "./ui/sheet";
 import { Wordmark } from "./Wordmark";
@@ -156,6 +157,10 @@ function HouseholdButton({ compact }: { compact?: boolean }) {
 
 function NavList({ compact }: { compact?: boolean }) {
   const pathname = usePathname();
+  // Counts beside nav items, as in the prototype. Only Recipes has one in M1; the identical recipeIndex listener the
+  // Recipes page uses is shared by the SDK, so this costs no extra reads.
+  const recipeCount = useRecipeIndex()?.length;
+  const counts: Partial<Record<NavPage["to"], number | undefined>> = { "/recipes": recipeCount };
   return (
     <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
       {PAGES.map((p) => {
@@ -174,7 +179,14 @@ function NavList({ compact }: { compact?: boolean }) {
                 on ? "border-line bg-acc text-onc shadow-hard-sm" : "border-transparent bg-transparent text-ink",
               )}
             >
-              {compact ? <Icon aria-hidden className="size-5" strokeWidth={2.5} /> : <span>{p.label}</span>}
+              {compact ? (
+                <Icon aria-hidden className="size-5" strokeWidth={2.5} />
+              ) : (
+                <>
+                  <span>{p.label}</span>
+                  {counts[p.to] ? <span className="font-mono text-[0.6875rem] font-bold">{counts[p.to]}</span> : null}
+                </>
+              )}
             </Link>
           </li>
         );

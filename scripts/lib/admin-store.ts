@@ -19,8 +19,8 @@ export interface AdminStore {
   where: "emulator" | "live";
   /** Documents that exist, by path. */
   getMany(paths: string[]): Promise<Map<string, Record<string, unknown>>>;
-  /** Full overwrites, in batches of up to 400. */
-  setMany(docs: Array<{ path: string; data: Record<string, Plain | undefined> }>): Promise<void>;
+  /** Full overwrites, in batches of up to 400 (or `chunk`, pausing `pauseMs` between batches). */
+  setMany(docs: Array<{ path: string; data: Record<string, Plain | undefined> }>, opts?: { chunk?: number; pauseMs?: number }): Promise<void>;
   /** Simple equality query on a top-level collection. */
   queryEq(collection: string, field: string, value: string): Promise<Array<{ id: string; data: Record<string, unknown> }>>;
 }
@@ -53,11 +53,13 @@ function adminStore(where: "emulator" | "live"): AdminStore {
       }
       return out;
     },
-    async setMany(docs) {
-      for (let i = 0; i < docs.length; i += 400) {
+    async setMany(docs, opts = {}) {
+      const n = opts.chunk ?? 400;
+      for (let i = 0; i < docs.length; i += n) {
         const b = db.batch();
-        for (const d of docs.slice(i, i + 400)) b.set(db.doc(d.path), stripUndefined(d.data));
+        for (const d of docs.slice(i, i + n)) b.set(db.doc(d.path), stripUndefined(d.data));
         await b.commit();
+        if (opts.pauseMs && i + n < docs.length) await new Promise((r) => setTimeout(r, opts.pauseMs));
       }
     },
     async queryEq(collection, field, value) {

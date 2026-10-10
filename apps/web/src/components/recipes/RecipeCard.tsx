@@ -28,7 +28,7 @@ export function RecipeCard({
   return (
     <article
       className={cn(
-        "@container relative flex min-w-0 flex-col overflow-hidden rounded-ui border-bw bg-base text-ink",
+        "@container relative flex h-full min-w-0 flex-col overflow-hidden rounded-ui border-bw bg-base text-ink",
         selected ? "border-acc" : "shadow-hard",
       )}
       data-testid="recipe-card"
@@ -40,8 +40,9 @@ export function RecipeCard({
         aria-current={selected ? "page" : undefined}
         className="flex flex-col text-ink no-underline"
       >
-        <div className="relative aspect-[4/5] w-full border-b-bw">
-          <RecipeImage base={r.thumb} cuisine={r.cuisine} alt={r.title} sizes="(min-width: 768px) 18rem, 50vw" />
+        <div className="relative aspect-[4/5] w-full overflow-hidden border-b-bw">
+          {/* Absolutely placed so a photo's intrinsic height can't stretch the 4:5 box (aspect-ratio yields to content). */}
+          <RecipeImage base={r.thumb} cuisine={r.cuisine} alt={r.title} sizes="(min-width: 768px) 18rem, 50vw" className="absolute inset-0" />
           <div className="absolute top-[0.4375rem] right-11 left-[0.4375rem] flex flex-wrap gap-1">
             {facts.favourite ? <Badge className="bg-yellow text-onc shadow-hard-sm">★ FAV</Badge> : null}
             {family ? <Badge className="bg-[#c6a0f6] text-onc shadow-hard-sm">FAMILY</Badge> : null}

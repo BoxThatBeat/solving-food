@@ -264,7 +264,7 @@ export function RecipeDetail({
           ].map(([k, v]) => (
             <div key={k} className="flex flex-col-reverse gap-[0.1875rem] rounded-ui border-2 border-line bg-base px-1 pt-[0.5625rem] pb-[0.4375rem] text-center">
               <dt className="font-mono text-[0.5625rem] font-bold tracking-[0.03rem] text-sub uppercase">{k === "Protein" ? "Protein / serv" : k}</dt>
-              <dd className="m-0 font-mono text-base font-extrabold" data-testid={`meta-${k!.toLowerCase()}`}>
+              <dd className="m-0 font-mono text-[1rem] font-extrabold" data-testid={`meta-${k!.toLowerCase()}`}>
                 {v}
               </dd>
             </div>
@@ -292,7 +292,7 @@ export function RecipeDetail({
             >
               −
             </button>
-            <output className="flex min-w-11 items-center justify-center border-x-2 border-line font-mono text-base font-extrabold" aria-label="Servings">
+            <output className="flex min-w-11 items-center justify-center border-x-2 border-line font-mono text-[1rem] font-extrabold" aria-label="Servings">
               {servings}
             </output>
             <button type="button" aria-label="More servings" onClick={() => setServings((s) => Math.min(100, s + 1))} className="h-10 w-11 cursor-pointer border-0 bg-pg text-lg font-extrabold text-ink">

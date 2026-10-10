@@ -174,7 +174,7 @@ export function CollectionView(p: CollectionViewProps) {
             <button
               type="button"
               onClick={apply}
-              className="press w-full cursor-pointer rounded-ui border-bw bg-acc p-4 text-base font-extrabold text-onc shadow-hard"
+              className="press w-full cursor-pointer rounded-ui border-bw bg-acc p-4 text-[1rem] font-extrabold text-onc shadow-hard"
             >
               Show {p.countFor({ ...draft, q: search.q })} {p.noun}
             </button>
