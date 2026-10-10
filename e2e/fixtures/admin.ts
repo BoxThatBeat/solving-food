@@ -6,8 +6,9 @@ import { AUTH_EMULATOR, FIRESTORE_EMULATOR, PROJECT_ID } from "./emulator";
 
 process.env.FIRESTORE_EMULATOR_HOST = FIRESTORE_EMULATOR;
 process.env.FIREBASE_AUTH_EMULATOR_HOST = AUTH_EMULATOR;
+process.env.FIREBASE_STORAGE_EMULATOR_HOST ??= "127.0.0.1:9199";
 
-const app = getApps()[0] ?? initializeApp({ projectId: PROJECT_ID });
+const app = getApps()[0] ?? initializeApp({ projectId: PROJECT_ID, storageBucket: "solvingfood.firebasestorage.app" });
 export const adminDb = getFirestore(app);
 export const adminAuth = getAuth(app);
 

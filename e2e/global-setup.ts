@@ -1,4 +1,5 @@
-// Fails fast with a useful message when the Emulator Suite isn't running (use `pnpm e2e` from the repo root).
+// Fails fast with a useful message when the Emulator Suite isn't running (use `pnpm e2e` from the repo root), then
+// loads the shared recipe library once per run (fixtures/recipes.ts).
 import { AUTH_EMULATOR, FIRESTORE_EMULATOR } from "./fixtures/emulator";
 
 async function up(url: string): Promise<boolean> {
@@ -21,4 +22,8 @@ export default async function globalSetup(): Promise<void> {
       await new Promise((r) => setTimeout(r, 500));
     }
   }
+  const { seedLibrary } = await import("./fixtures/recipes");
+  const t = Date.now();
+  await seedLibrary((m) => process.env.E2E_DEBUG && console.log(`[seed] ${m}`));
+  console.log(`recipe library ready (${Math.round((Date.now() - t) / 1000)} s)`);
 }

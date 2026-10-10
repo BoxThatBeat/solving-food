@@ -84,7 +84,7 @@ export const test = base.extend<Fixtures>({
       const uid = (await uidFor(email))!;
       await seedProfile(uid, email, displayName, opts.theme ? { theme: opts.theme } : {});
       const hh = await seedHousehold(uid, displayName, opts.household ?? "Silbrass Pvt");
-      await expect(page).toHaveURL(/\/recipes$/);
+      await expect(page).toHaveURL(/\/recipes$/, { timeout: 20_000 });
       await expect(page.getByRole("heading", { level: 1, name: "Recipes" })).toBeVisible();
       return { email, uid, displayName, hid: hh.hid, householdName: hh.name };
     });

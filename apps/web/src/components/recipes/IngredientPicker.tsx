@@ -44,6 +44,14 @@ export function IngredientPicker({
   const [active, setActive] = React.useState(0);
   const [creating, setCreating] = React.useState<string | null>(null);
   const listId = React.useId();
+  // Blur closes the list after a beat (so a tap on an option lands first); focus coming back cancels that, or a
+  // blur-then-refocus (browser autofocus, a re-render, a tap on the input itself) would close the list just opened.
+  const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = null;
+  };
+  React.useEffect(() => cancelClose, []);
   const results = React.useMemo(() => searchIngredients(ingredients, text), [ingredients, text]);
   const exact = results.some((r) => normalizeName(r.name) === normalizeName(text) || r.aliases.some((a) => normalizeName(a) === normalizeName(text)));
   const options: Array<{ kind: "pick"; i: IngredientEntry } | { kind: "create" }> = [
@@ -89,12 +97,19 @@ export function IngredientPicker({
         placeholder="Ingredient (e.g. chicken)"
         value={text}
         onChange={(e) => {
+          cancelClose();
           setText(e.target.value);
           setOpen(true);
           setActive(0);
         }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onFocus={() => {
+          cancelClose();
+          setOpen(true);
+        }}
+        onBlur={() => {
+          cancelClose();
+          closeTimer.current = setTimeout(() => setOpen(false), 150);
+        }}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") {
             e.preventDefault();

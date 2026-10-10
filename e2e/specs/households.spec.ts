@@ -24,10 +24,10 @@ test("create the first household with timezone, default servings, and meal types
   await page.getByRole("button", { name: "Breakfast" }).click();
   await page.getByRole("button", { name: "Create household" }).click();
 
-  // Lands on an empty Recipes page (R12 landing: no plan yet).
+  // Lands on the Recipes page (R12 landing: no plan yet), which shows the shared library.
   await expect(page).toHaveURL(/\/recipes$/);
   await expect(page.getByRole("heading", { name: "Recipes", level: 1 })).toBeVisible();
-  await expect(page.getByText("No recipes yet.")).toBeVisible();
+  await expect(page.getByRole("list", { name: "Recipes" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Household: Silbrass Pvt/ }).first()).toBeVisible();
 
   const uid = (await uidFor(email))!;

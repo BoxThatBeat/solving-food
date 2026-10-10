@@ -115,10 +115,13 @@ const KIND_STYLE: Record<NotificationKind, string> = {
 /** Bottom-of-page stack; sits above the phone tab bar (`className` sets the offset). */
 export function NotificationBanners({ className }: { className?: string }) {
   const ctx = React.useContext(NotificationsContext);
-  if (!ctx || ctx.banners.length === 0) return null;
+  if (!ctx) return null;
+  // Always mounted (empty when there's nothing to show): an open sheet hides everything outside it from assistive tech
+  // except live regions that already exist (aria-hidden's hideOthers), and banners must stay readable over sheets.
+  // z-[60] puts them above sheet and dialog overlays (z-40/50) too.
   return (
     <div
-      className={cn("pointer-events-none fixed inset-x-0 z-30 flex flex-col items-center gap-2 px-4", className)}
+      className={cn("pointer-events-none fixed inset-x-0 z-[60] flex flex-col items-center gap-2 px-4", className)}
       aria-live="polite"
       data-testid="notifications"
     >
