@@ -5,11 +5,20 @@ import { allowlist } from "../fixtures/admin";
 import { expect, signInWithEmailLink, test } from "../fixtures/test";
 
 async function expectNoSeriousViolations(page: Page, label: string) {
-  // Sheets fade their overlay in; contrast measured mid-animation is meaningless.
-  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"));
-  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
-  const bad = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
-  expect(bad.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`), label).toEqual([]);
+  // Live data can re-render the page mid-scan (another spec's import adds a duplicate-review banner and shifts the
+  // layout), which makes axe sample the wrong background. A violation has to show up in three scans in a row.
+  let bad: string[] = [];
+  for (let attempt = 0; attempt < 3; attempt++) {
+    // Sheets fade their overlay in; contrast measured mid-animation is meaningless.
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"));
+    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+    bad = results.violations
+      .filter((v) => v.impact === "serious" || v.impact === "critical")
+      .map((v) => `${v.id}: ${v.nodes.map((n) => `${n.target.join(" ")} (${n.failureSummary?.split("\n").slice(1).join(" ").trim()})`).join(", ")}`);
+    if (!bad.length) return;
+    await page.waitForTimeout(750);
+  }
+  expect(bad, label).toEqual([]);
 }
 
 test("sign-in, not-invited, and first-run pages", async ({ page, uniqueEmail }) => {
@@ -83,6 +92,10 @@ test("recipe pages and sheets (M1) in Latte and Mocha", async ({ page, household
   const id = await seedRecipeId("Garlic Rice and Chicken");
   await makeRecipe(uniqueTitle("A11y Trashed"), { status: "trashed", extra: { trashedAt: new Date(), trashedBy: household.uid } });
   await makeRecipe(uniqueTitle("A11y Pending"), { status: "pendingDuplicateReview" });
+  // Every card badge on screen: FAMILY (tag) and ★ FAV (this household's favourite).
+  await makeRecipe(uniqueTitle("A11y Family"), { content: { tags: ["dinner", "family recipe"] } });
+  const { adminDb } = await import("../fixtures/admin");
+  await adminDb.doc(`households/${household.hid}/favourites/recipe_${id}`).set({ type: "recipe", targetId: id });
   for (const flavour of ["latte", "mocha"] as const) {
     if (flavour === "mocha") {
       await page.goto("/settings/theme");

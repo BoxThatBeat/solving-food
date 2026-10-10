@@ -3,9 +3,10 @@
 // Every one must import as an active recipe with every ingredient resolved to the seed (no new needsReview
 // ingredients), its taxonomy, and its image in three sizes when the note had one.
 import { readdirSync, readFileSync } from "node:fs";
-import { basename, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { CUISINES, MAIN_PROTEINS, splitFrontMatter } from "@solving-food/core";
+import { dropAndWait, dropItems } from "../../scripts/lib/drop";
 import { RECIPES_DIR, bucket, clearFirestore, db, fileExists, poll, seedIngredients } from "./helpers";
 
 const UID = "household-owner";
@@ -28,11 +29,15 @@ describe("the 28 household recipes import through the drop folder", () => {
     expect(files).toHaveLength(28);
     const ingredientsBefore = (await db.collection("ingredients").count().get()).data().count;
     const prefix = `recipe-drop/${UID}/`;
-    for (const m of meta.filter((x) => x.imagePath)) {
-      const name = basename(m.imagePath!);
-      await bucket().file(prefix + name).save(readFileSync(m.imagePath!), { contentType: /\.png$/i.test(name) ? "image/png" : "image/jpeg", resumable: false });
-    }
-    for (const m of meta) await bucket().file(prefix + m.file).save(readFileSync(join(RECIPES_DIR, m.file)), { contentType: "text/plain", resumable: false });
+    // Delivered the way `pnpm drop:recipes` does it: a few at a time, photo before its .cook, stragglers re-sent.
+    await dropAndWait(
+      dropItems(RECIPES_DIR, files),
+      {
+        put: async (path, name, contentType) => void (await bucket().file(prefix + name).save(readFileSync(path), { contentType, resumable: false })),
+        list: async () => (await bucket().getFiles({ prefix }))[0].map((f) => f.name.slice(prefix.length)),
+      },
+      { concurrency: 3, staleMs: 60_000, timeoutMs: 240_000 },
+    );
 
     const docs = await poll(
       async () => {
@@ -40,7 +45,7 @@ describe("the 28 household recipes import through the drop folder", () => {
         const withImages = snap.docs.filter((d) => (d.data().imagePaths ?? []).length > 0).length;
         return snap.size === 28 && withImages === meta.filter((m) => m.image).length ? snap.docs : null;
       },
-      240_000,
+      60_000,
       "28 imports",
     );
 

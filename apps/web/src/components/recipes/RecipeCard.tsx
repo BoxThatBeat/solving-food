@@ -45,7 +45,8 @@ export function RecipeCard({
           <RecipeImage base={r.thumb} cuisine={r.cuisine} alt={r.title} sizes="(min-width: 768px) 18rem, 50vw" className="absolute inset-0" />
           <div className="absolute top-[0.4375rem] right-11 left-[0.4375rem] flex flex-wrap gap-1">
             {facts.favourite ? <Badge className="bg-yellow text-onc shadow-hard-sm">★ FAV</Badge> : null}
-            {family ? <Badge className="bg-[#c6a0f6] text-onc shadow-hard-sm">FAMILY</Badge> : null}
+            {/* Lavender lightened toward white: the prototype's #c6a0f6 with ink text is 3.7:1. */}
+            {family ? <Badge className="bg-[color-mix(in_srgb,#c6a0f6_55%,white)] text-[#4c4f69] shadow-hard-sm">FAMILY</Badge> : null}
           </div>
           <span className="absolute right-[0.4375rem] bottom-[0.4375rem] rounded-[calc(var(--r)*0.5)] bg-ink px-[0.3125rem] py-[0.1875rem] font-mono text-[0.6875rem] font-extrabold text-base">
             {facts.rating ? `★ ${facts.rating.toFixed(1)}` : "NEW"}

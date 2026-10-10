@@ -8,6 +8,18 @@ import { bucket } from "./admin";
 export const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 const FETCH_TIMEOUT_MS = 20_000;
 
+/** Retries a transient failure (dropped connection, 5xx) a couple of times with a short backoff. */
+async function withRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+  for (let i = 1; ; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (i >= attempts) throw e;
+      await new Promise((r) => setTimeout(r, 400 * i));
+    }
+  }
+}
+
 /** Resizes to the three standard widths (never enlarging) and uploads them; returns the image base path. */
 export async function storeRecipeImage(recipeId: string, input: Buffer): Promise<string> {
   const base = `recipes/${recipeId}/${randomUUID().replace(/-/g, "").slice(0, 12)}`;
@@ -15,9 +27,11 @@ export async function storeRecipeImage(recipeId: string, input: Buffer): Promise
   await Promise.all(
     IMAGE_SIZES.map(async (w) => {
       const out = await img.clone().resize({ width: w, withoutEnlargement: true }).webp({ quality: w >= 1920 ? 78 : 80 }).toBuffer();
-      await bucket()
-        .file(imageVariant(base, w))
-        .save(out, { contentType: "image/webp", resumable: false, metadata: { cacheControl: "public, max-age=31536000, immutable" } });
+      await withRetry(() =>
+        bucket()
+          .file(imageVariant(base, w))
+          .save(out, { contentType: "image/webp", resumable: false, metadata: { cacheControl: "public, max-age=31536000, immutable" } }),
+      );
     }),
   );
   return base;

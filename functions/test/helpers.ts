@@ -24,10 +24,13 @@ let seeded = false;
 export async function seedIngredients(): Promise<void> {
   if (seeded) return;
   const { items } = loadIngredients();
-  for (let i = 0; i < items.length; i += 400) {
+  // Paced: each write fires ingredientRecipes, and a burst makes the Functions emulator spawn a worker per event
+  // and drop other triggers (data/scripts/upload.ts).
+  for (let i = 0; i < items.length; i += 4) {
     const b = db.batch();
-    for (const { id, ...doc } of items.slice(i, i + 400)) b.set(db.collection("ingredients").doc(id), doc);
+    for (const { id, ...doc } of items.slice(i, i + 4)) b.set(db.collection("ingredients").doc(id), doc);
     await b.commit();
+    await new Promise((r) => setTimeout(r, 120));
   }
   seeded = true;
 }
