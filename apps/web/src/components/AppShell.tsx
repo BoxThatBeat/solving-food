@@ -18,6 +18,7 @@ import { useRecipeIndex } from "@/search/useRecipeSearch";
 import { HouseholdSheet } from "./HouseholdSheet";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "./ui/sheet";
 import { Wordmark } from "./Wordmark";
+import { PlanSheetProvider } from "./plan/PlanSheetProvider";
 
 const page = (to: NavPage["to"]) => PAGES.find((p) => p.to === to)!;
 const MORE_PAGES = [page("/meals"), page("/history"), page("/settings")];
@@ -306,6 +307,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
 function ReadyShell({ children, uid }: { children: React.ReactNode; uid: string }) {
   return (
+    <PlanSheetProvider>
     <div className="flex min-h-dvh bg-pg text-ink">
       <SideRail />
       <SideNav />
@@ -321,6 +323,7 @@ function ReadyShell({ children, uid }: { children: React.ReactNode; uid: string 
       <NotificationFeed uid={uid} />
       <NotificationBanners className="bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-7" />
     </div>
+    </PlanSheetProvider>
   );
 }
 

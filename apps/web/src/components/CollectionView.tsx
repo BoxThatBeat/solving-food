@@ -5,6 +5,7 @@ import * as React from "react";
 import {
   ACTIVE_TIME_STEPS,
   activeFilterCount,
+  COST_STEPS,
   CUISINES,
   MAIN_PROTEINS,
   MEAL_TYPES,
@@ -38,6 +39,10 @@ export interface CollectionViewProps {
   children?: React.ReactNode;
   /** Extra content between the search bar and the results (segment, banners). */
   header?: React.ReactNode;
+  /** The search bar sticks to the top on phones; off inside sheets. */
+  sticky?: boolean;
+  /** Filter groups that make no sense for this list (e.g. "cooked" on plan items). */
+  hide?: Array<"show" | "tools" | "cost">;
 }
 
 type Draft = CollectionSearch;
@@ -60,6 +65,8 @@ function appliedChips(s: CollectionSearch): Array<{ key: string; label: string; 
   if (s.maxTotal) out.push({ key: "maxTotal", label: `≤ ${s.maxTotal} min total`, remove: (x) => ({ ...x, maxTotal: undefined }) });
   if (s.maxActive) out.push({ key: "maxActive", label: `≤ ${s.maxActive} min active`, remove: (x) => ({ ...x, maxActive: undefined }) });
   if (s.minRating) out.push({ key: "minRating", label: `★ ${s.minRating}+`, remove: (x) => ({ ...x, minRating: undefined }) });
+  if (s.tools) out.push({ key: "tools", label: "Have the tools", remove: (x) => ({ ...x, tools: undefined }) });
+  if (s.maxCost) out.push({ key: "maxCost", label: `≤ $${s.maxCost / 100}/serving`, remove: (x) => ({ ...x, maxCost: undefined }) });
   return out;
 }
 
@@ -108,7 +115,7 @@ export function CollectionView(p: CollectionViewProps) {
 
   return (
     <div className="flex flex-col gap-3.5">
-      <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-2.5 bg-pg px-4 pt-1 pb-2 md:static md:mx-0 md:px-0 md:pt-0 md:pb-0">
+      <div className={cn("flex flex-col gap-2.5", p.sticky !== false && "sticky top-0 z-10 -mx-4 bg-pg px-4 pt-1 pb-2 md:static md:mx-0 md:px-0 md:pt-0 md:pb-0")}>
         {p.header}
         <div className="flex max-w-[60rem] items-stretch gap-2.5">
           <Input
@@ -225,6 +232,11 @@ export function CollectionView(p: CollectionViewProps) {
             <ToggleChip pressed={draft.cooked === "never"} onClick={() => setDraft((d) => ({ ...d, cooked: d.cooked === "never" ? undefined : "never" }))} count={count("cooked", "never")}>
               Never cooked
             </ToggleChip>
+            {p.hide?.includes("tools") ? null : (
+              <ToggleChip pressed={!!draft.tools} onClick={() => setDraft((d) => ({ ...d, tools: d.tools ? undefined : true }))} count={count("tools", true)}>
+                Have the tools
+              </ToggleChip>
+            )}
             {["Can make", "Use what's left", "Uses expiring"].map((l) => (
               <ToggleChip key={l} pressed={false} disabled title="Available once Supply arrives (M3)" className="border-dashed shadow-none">
                 {l}
@@ -257,13 +269,15 @@ export function CollectionView(p: CollectionViewProps) {
             ))}
           </Group>
 
-          <Group title="Cost per serving" hint="Prices arrive in M2">
-            {["≤ $2", "≤ $4", "≤ $6"].map((l) => (
-              <ToggleChip key={l} pressed={false} disabled title="Needs prices (M2)" className="border-dashed shadow-none">
-                {l}
-              </ToggleChip>
-            ))}
-          </Group>
+          {p.hide?.includes("cost") ? null : (
+            <Group title="Cost per serving" hint={draft.maxCost ? `≤ $${draft.maxCost / 100} · estimates` : "Any · estimates"}>
+              {COST_STEPS.map((c) => (
+                <ToggleChip key={c} pressed={draft.maxCost === c} onClick={() => setDraft((d) => ({ ...d, maxCost: d.maxCost === c ? undefined : c }))} count={count("maxCost", c)}>
+                  ≤ ${c / 100}
+                </ToggleChip>
+              ))}
+            </Group>
+          )}
 
           <Group title="Household rating" hint={draft.minRating ? `★ ${draft.minRating}+` : "Any"}>
             {RATING_STEPS.map((r) => (

@@ -30,6 +30,7 @@ import { ConfirmDialog } from "@/components/ui/dialog";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { RecipeImage } from "./RecipeImage";
+import { useCreateMeal } from "@/components/plan/plan-sheet-context";
 
 const DAY = 86_400_000;
 const DATE = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }); // "21 Sep", as the prototype
@@ -87,6 +88,7 @@ export function RecipeDetail({
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [historyOpen, setHistoryOpen] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
+  const openCreateMeal = useCreateMeal();
 
   const copyLink = async () => {
     const url = `${location.origin}/recipes/${id}`;
@@ -193,6 +195,15 @@ export function RecipeDetail({
           >
             .cook
           </button>
+          {ctx && openCreateMeal && recipe.status === "active" ? (
+            <button
+              type="button"
+              onClick={() => openCreateMeal({ recipeIds: [id], ...(recipe.tags.includes("breakfast") ? { mealType: "breakfast" as const } : recipe.tags.includes("lunch") && !recipe.tags.includes("dinner") ? { mealType: "lunch" as const } : {}) })}
+              className="cursor-pointer rounded-ui border-2 border-line bg-acc px-2.5 py-2 text-[0.8125rem] font-extrabold text-onc shadow-[3px_3px_0_var(--line)]"
+            >
+              + Plan
+            </button>
+          ) : null}
           {ctx && recipe.status !== "trashed" ? (
             <Link
               to="/recipes/$id/edit"

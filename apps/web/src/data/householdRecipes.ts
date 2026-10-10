@@ -3,9 +3,11 @@
 
 import { useMemo } from "react";
 import { collection, deleteDoc, doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { NO_FACTS, type FavouriteDoc, type HouseholdFacts, type NoteDoc, type StatsDoc } from "@solving-food/core";
+import { costPerServing, missingTools, NO_FACTS, type FavouriteDoc, type HouseholdFacts, type NoteDoc, type RecipeSummary, type StatsDoc } from "@solving-food/core";
 import { db } from "@/firebase/app";
 import { useLiveDoc, useLiveQuery } from "./live";
+import { useHousehold } from "./households";
+import { estimateCentsPerUnit } from "./prices";
 
 export function useFavourites(hid: string | null) {
   const q = useLiveQuery<FavouriteDoc>(hid ? collection(db, "households", hid, "favourites") : null, hid ? `households/${hid}/favourites` : null);
@@ -45,21 +47,39 @@ function millis(v: unknown): number | null {
   return typeof t.toMillis === "function" ? t.toMillis() : null;
 }
 
-/** Everything <CollectionView> needs to know about the household for each recipe. */
-export function useHouseholdFacts(hid: string | null): (id: string) => HouseholdFacts {
+/**
+ * Everything <CollectionView> needs to know about the household for each recipe: favourite, cook stats, whether the
+ * household owns its tools (R11.1), and its estimated cost per serving (R4.2). `summaries` supplies tools and cost
+ * lines; without it those two filters pass everything.
+ */
+export function useHouseholdFacts(hid: string | null, summaries?: readonly RecipeSummary[]): (id: string) => HouseholdFacts {
   const favs = useFavourites(hid);
   const stats = useStats(hid);
+  const household = useHousehold(hid);
+  const tools = household.data?.settings?.tools;
+  const extra = useMemo(() => {
+    const m = new Map<string, { hasAllTools: boolean; costPerServingCents: number | null }>();
+    for (const r of summaries ?? []) {
+      m.set(r.id, {
+        hasAllTools: !tools?.length || missingTools(r.tools ?? [], tools).length === 0,
+        costPerServingCents: r.lines ? costPerServing(r.lines, estimateCentsPerUnit) : null,
+      });
+    }
+    return m;
+  }, [summaries, tools]);
   return useMemo(() => {
     return (id: string): HouseholdFacts => {
       const s = stats.get(id);
       const favourite = favs.has(id);
-      if (!s && !favourite) return NO_FACTS;
+      const x = extra.get(id);
+      if (!s && !favourite && !x) return NO_FACTS;
       return {
         favourite,
         timesCooked: s?.timesCooked ?? 0,
         lastCookedAtMs: millis(s?.lastCookedAt),
         rating: s && s.ratingCount > 0 ? s.ratingSum / s.ratingCount : null,
+        ...(x ?? {}),
       };
     };
-  }, [favs, stats]);
+  }, [favs, stats, extra]);
 }

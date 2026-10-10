@@ -1,6 +1,6 @@
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { collection, doc, increment, serverTimestamp, writeBatch } from "firebase/firestore";
+import { collection, doc, increment, serverTimestamp, Timestamp, writeBatch } from "firebase/firestore";
 import { Minus, Plus } from "lucide-react";
 import {
   CURRENCY,
@@ -10,6 +10,8 @@ import {
   SERVINGS_MAX,
   buildNewHousehold,
   defaultHouseholdInput,
+  DEFAULT_STORES,
+  firstPeriod,
   newHouseholdInputSchema,
   type NewHouseholdInput,
   type PlannableMealType,
@@ -48,8 +50,8 @@ function timezoneOptions(selected: string): string[] {
   return zones.includes(selected) ? zones : [selected, ...zones];
 }
 
-// First household (Planning/M0 §5): one batch writes households/{hid}, members/{uid}, and bumps
-// users/{uid}.householdsCreated; the rules check the counter (R2.3) and the creator's member doc.
+// First household (Planning/M0 §5, M2 §1/§5): one batch writes households/{hid}, members/{uid}, the first period, the
+// default stores, and bumps users/{uid}.householdsCreated; the rules check the counter (R2.3) and the creator's member doc.
 function CreateHouseholdPage() {
   const { user, displayName } = Route.useRouteContext();
   const [form, setForm] = React.useState<NewHouseholdInput>(() => defaultHouseholdInput(detectTimezone()));
@@ -76,9 +78,13 @@ function CreateHouseholdPage() {
       const { household, member } = buildNewHousehold(parsed.data, { uid: user.uid, displayName });
       const hRef = doc(collection(db, "households"));
       const batch = writeBatch(db);
-      batch.set(hRef, { ...household, createdAt: serverTimestamp() });
+      // The first plan period starts today (Planning/M2 §1) and the default stores exist from the start (§5).
+      const p = firstPeriod(Date.now(), household.periodDays, household.timezone);
+      batch.set(hRef, { ...household, currentPeriodId: p.id, createdAt: serverTimestamp() });
       batch.set(doc(hRef, "members", user.uid), { ...member, joinedAt: serverTimestamp() });
       batch.update(doc(db, "users", user.uid), { householdsCreated: increment(1), activeHouseholdId: hRef.id });
+      batch.set(doc(hRef, "periods", p.id), { start: Timestamp.fromMillis(p.startMs), end: Timestamp.fromMillis(p.endMs), budgetCents: household.budgetCents });
+      for (const st of DEFAULT_STORES) batch.set(doc(hRef, "stores", st.id), { name: st.name, kind: st.kind, bulk: st.bulk });
       await batch.commit();
       // The membership listener flips the session to ready; the router lands on Recipes.
     } catch (err) {

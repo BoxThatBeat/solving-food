@@ -2,7 +2,7 @@
 // ingredient lacks protein data), favourite toggle, and the household's cook stats ("made n times", M3 fills them).
 // The card is a link; the favourite toggle sits beside it, not inside (no nested interactive elements).
 import { Link } from "@tanstack/react-router";
-import { Star } from "lucide-react";
+import { Plus, Star } from "lucide-react";
 import { formatProtein, taxonomyLabel, type HouseholdFacts, type RecipeSummary } from "@solving-food/core";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/chip";
@@ -13,12 +13,15 @@ export function RecipeCard({
   recipe: r,
   facts,
   onFavourite,
+  onPlan,
   selected,
   search,
 }: {
   recipe: RecipeSummary;
   facts: HouseholdFacts;
   onFavourite: (on: boolean) => void;
+  /** "Add to plan" shortcut (R5.7); absent where planning isn't possible. */
+  onPlan?: () => void;
   selected?: boolean;
   /** Current list search params, kept so the detail page's Back returns to the same filters. */
   search?: Record<string, unknown>;
@@ -52,7 +55,7 @@ export function RecipeCard({
             {facts.rating ? `★ ${facts.rating.toFixed(1)}` : "NEW"}
           </span>
         </div>
-        <div className="flex flex-col gap-[0.3125rem] px-2.5 pt-[0.5625rem] pb-[0.6875rem]">
+        <div className={cn("flex flex-col gap-[0.3125rem] px-2.5 pt-[0.5625rem] pb-[0.6875rem]", onPlan && "pr-12")}>
           <span className="font-mono text-[0.625rem] leading-[1.35] font-semibold text-sub uppercase">
             {r.totalMin} MIN · {taxonomyLabel(r.cuisine)} · {protein === "—" ? "PROTEIN —" : `${protein} PROTEIN`}
           </span>
@@ -72,6 +75,17 @@ export function RecipeCard({
       >
         <Star aria-hidden className="size-4" strokeWidth={2.5} fill={facts.favourite ? "currentColor" : "none"} />
       </button>
+      {onPlan ? (
+        <button
+          type="button"
+          onClick={onPlan}
+          aria-label={`Add ${r.title} to plan`}
+          title="Add to plan"
+          className="press absolute right-[0.4375rem] bottom-[0.5rem] grid size-[2.375rem] cursor-pointer place-items-center rounded-ui border-2 border-line bg-acc text-onc shadow-hard-sm"
+        >
+          <Plus aria-hidden className="size-5" strokeWidth={3} />
+        </button>
+      ) : null}
     </article>
   );
 }

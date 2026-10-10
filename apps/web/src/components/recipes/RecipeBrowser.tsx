@@ -21,6 +21,7 @@ import { useNotify } from "@/components/notifications-context";
 import { cn } from "@/lib/utils";
 import { RecipeCard } from "./RecipeCard";
 import { DuplicateReviewSheet } from "./DuplicateReview";
+import { useCreateMeal } from "@/components/plan/plan-sheet-context";
 
 export function RecipeBrowser({
   search,
@@ -39,8 +40,9 @@ export function RecipeBrowser({
   const hh = useActiveHousehold();
   const summaries = useRecipeIndex();
   const notes = useNotes(hh.id);
-  const factsOf = useHouseholdFacts(hh.id);
+  const factsOf = useHouseholdFacts(hh.id, summaries);
   const pending = useRecipesWithStatus("pendingDuplicateReview");
+  const openCreateMeal = useCreateMeal();
   const all = React.useMemo(() => summaries ?? [], [summaries]);
   const matches = useRecipeSearch(all, notes, search.q ?? "");
   const result = React.useMemo(() => applyCollection(all, search, factsOf, matches), [all, search, factsOf, matches]);
@@ -154,7 +156,7 @@ export function RecipeBrowser({
         >
           {result.items.map((r) => (
             <li key={r.id} className="min-w-0">
-              <RecipeCard recipe={r} facts={factsOf(r.id)} selected={r.id === selectedId} search={params} onFavourite={(on) => fav(r.id, r.title, on)} />
+              <RecipeCard recipe={r} facts={factsOf(r.id)} selected={r.id === selectedId} search={params} onFavourite={(on) => fav(r.id, r.title, on)} onPlan={openCreateMeal ? () => openCreateMeal({ recipeIds: [r.id] }) : undefined} />
             </li>
           ))}
         </ul>
