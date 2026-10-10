@@ -1,0 +1,47 @@
+# Deploy to the `solvingfood` project after Checks pass on master (Planning/M0 §6).
+# Auth: the service-account key in FIREBASE_SERVICE_ACCOUNT_SOLVINGFOOD (created by `firebase init hosting:github`;
+# extra deploy roles granted 2026-10-09, see SETUP.md).
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [Checks]
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+      - run: nix develop -c pnpm install --frozen-lockfile
+      - run: nix develop -c pnpm build
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SOLVINGFOOD }}
+      - name: firebase deploy
+        run: nix develop -c firebase deploy --only hosting,functions,firestore,storage --project solvingfood --non-interactive --force
+      - name: Smoke check
+        run: |
+          curl -fsS https://solvingfood.web.app/ | grep -q "<title>Solving Food</title>"
+          curl -fsS https://us-east1-solvingfood.cloudfunctions.net/healthcheck | grep -q '"ok":true'
