@@ -48,6 +48,11 @@ export default tseslint.config(
     },
   },
   {
+    // The timer push handler imported by the Workbox service worker (apps/web/public/push-sw.js).
+    files: ["apps/web/public/**/*.js"],
+    languageOptions: { globals: { ...globals.serviceworker } },
+  },
+  {
     files: ["apps/web/**/*.{ts,tsx}"],
     languageOptions: { globals: { ...globals.browser } },
     plugins: { "react-hooks": reactHooks, "react-refresh": reactRefresh },

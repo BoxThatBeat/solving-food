@@ -2,7 +2,7 @@
 // function sends data-only FCM web pushes: { kind: "timer", title, body, link, timerId }. Show them, and open (or focus)
 // the app at the step when the notification or its "Open" action is tapped.
 self.addEventListener("push", (event) => {
-  let msg = {};
+  let msg;
   try {
     msg = event.data ? event.data.json() : {};
   } catch {

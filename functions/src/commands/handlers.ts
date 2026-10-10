@@ -39,7 +39,7 @@ import {
   type RecipeDoc,
 } from "@solving-food/core";
 import { db } from "../admin";
-import { CommandError, SupplyStore, toMs, ts } from "./store";
+import { CommandError, toMs, ts, type SupplyStore } from "./store";
 
 export interface Ctx {
   tx: Transaction;
