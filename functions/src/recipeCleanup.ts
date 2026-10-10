@@ -27,9 +27,16 @@ export async function cleanupDeletedRecipe(id: string): Promise<CleanupReport> {
   report.versions = (await versions.count().get()).data().count;
   await db.recursiveDelete(versions);
 
+  // Images, unless another recipe now uses them ("Keep new" copies an import's image paths onto the existing recipe).
   const [files] = await bucket().getFiles({ prefix: `recipes/${id}/` });
-  await Promise.all(files.map((f) => f.delete({ ignoreNotFound: true })));
-  report.images = files.length;
+  const bases = [...new Set(files.map((f) => f.name.split("/").slice(0, 3).join("/")))];
+  for (const base of bases) {
+    const used = await db.collection("recipes").where("imagePaths", "array-contains", base).limit(1).get();
+    if (!used.empty) continue;
+    const mine = files.filter((f) => f.name.startsWith(`${base}/`));
+    await Promise.all(mine.map((f) => f.delete({ ignoreNotFound: true })));
+    report.images += mine.length;
+  }
 
   // Saved meals (M2 creates them; written here so the purge never leaves dangling references).
   const meals = await db.collection("meals").get();

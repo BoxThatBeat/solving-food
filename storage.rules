@@ -1,7 +1,8 @@
 rules_version = '2';
 
 // Cloud Storage rules (TECHNICAL_SPECS §10 "Storage rules").
-//   recipes/{recipeId}/**         recipe images: public read (share links), allowlisted write, WebP ≤ 2 MB
+//   recipes/{recipeId}/**         recipe images: public read (share links), allowlisted write, WebP (JPEG where the
+//                                 browser can't encode WebP) ≤ 2 MB
 //   recipe-drop/{uid}/{file}      drop folder: the owner uploads .cook files (≤ 1 MB) and the images they
 //                                 reference (≤ 10 MB); only functions read and delete
 // Everything else (imports/ arrives in M4) is denied.
@@ -19,7 +20,7 @@ service firebase.storage {
       allow read: if true;
       allow create, update: if allowed()
         && request.resource.size <= 2 * 1024 * 1024
-        && request.resource.contentType == 'image/webp';
+        && request.resource.contentType.matches('image/(webp|jpeg)');
       allow delete: if allowed();
     }
 

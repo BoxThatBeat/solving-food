@@ -13,11 +13,17 @@ export function SheetContent({
   description,
   children,
   className,
+  headerExtra,
+  footer,
 }: {
   title: string;
   description?: string;
   children: React.ReactNode;
   className?: string;
+  /** Controls next to the close button (e.g. Reset). */
+  headerExtra?: React.ReactNode;
+  /** A sticky action bar under the scrolling body (e.g. "Show 14 recipes"). */
+  footer?: React.ReactNode;
 }) {
   return (
     <Dialog.Portal>
@@ -32,6 +38,8 @@ export function SheetContent({
       >
         <div className="flex flex-none items-center justify-between gap-2 border-b-bw bg-base px-4 pt-3.5 pb-3">
           <Dialog.Title className="m-0 font-display font-normal text-[1.375rem]">{title}</Dialog.Title>
+          <span className="ml-auto" />
+          {headerExtra}
           <Dialog.Close
             aria-label="Close"
             className="grid size-[2.375rem] cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink shadow-hard-sm"
@@ -47,6 +55,9 @@ export function SheetContent({
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           {children}
         </div>
+        {footer ? (
+          <div className="flex-none border-t-bw bg-base px-4 pt-3 pb-[max(1.375rem,env(safe-area-inset-bottom))]">{footer}</div>
+        ) : null}
       </Dialog.Content>
     </Dialog.Portal>
   );

@@ -10,10 +10,10 @@ import type { MemberDoc } from "@solving-food/core";
 import { db } from "@/firebase/app";
 import { useLiveQuery } from "@/data/live";
 import { useActiveHousehold } from "@/data/households";
-import { useReadySession } from "@/session/useSession";
+import { useReadySession, useSession } from "@/session/useSession";
 import { useOnline } from "@/hooks/useOnline";
 import { cn } from "@/lib/utils";
-import { NotificationBanners } from "./notifications";
+import { NotificationBanners, NotificationFeed } from "./notifications";
 import { HouseholdSheet } from "./HouseholdSheet";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "./ui/sheet";
 import { Wordmark } from "./Wordmark";
@@ -259,7 +259,36 @@ function SideNav() {
   );
 }
 
+/** Signed-out (or not yet set up) visitors on a shared recipe page: the wordmark and a sign-in link, no navigation. */
+function PublicShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-dvh flex-col bg-pg text-ink">
+      <header className="flex flex-none items-center justify-between gap-2 border-b-bw bg-base px-4 pt-[max(0.5rem,env(safe-area-inset-top))] pb-2 md:px-7">
+        <Link to="/" aria-label="Solving Food" className="no-underline">
+          <Wordmark />
+        </Link>
+        <Link
+          to="/sign-in"
+          className="rounded-ui border-2 border-line bg-base px-3 py-2 text-[0.8125rem] font-extrabold text-ink no-underline shadow-hard-sm"
+        >
+          Sign in
+        </Link>
+      </header>
+      <main id="main" className="min-w-0 flex-1">
+        {children}
+      </main>
+      <NotificationBanners className="bottom-6" />
+    </div>
+  );
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const session = useSession();
+  if (session.status !== "ready") return <PublicShell>{children}</PublicShell>;
+  return <ReadyShell uid={session.user.uid}>{children}</ReadyShell>;
+}
+
+function ReadyShell({ children, uid }: { children: React.ReactNode; uid: string }) {
   return (
     <div className="flex min-h-dvh bg-pg text-ink">
       <SideRail />
@@ -273,6 +302,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </main>
         <TabBar />
       </div>
+      <NotificationFeed uid={uid} />
       <NotificationBanners className="bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-7" />
     </div>
   );

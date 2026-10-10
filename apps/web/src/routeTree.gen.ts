@@ -20,6 +20,8 @@ import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
 import { Route as SignInFinishRouteImport } from './routes/sign-in/finish'
 import { Route as WelcomeIndexRouteImport } from './routes/welcome/index'
 import { Route as WelcomeHouseholdRouteImport } from './routes/welcome/household'
+import { Route as AppIngredientsIndexRouteImport } from './routes/_app/ingredients/index'
+import { Route as AppIngredientsIdRouteImport } from './routes/_app/ingredients/$id'
 import { Route as AppMealsIndexRouteImport } from './routes/_app/meals/index'
 import { Route as AppRecipesIndexRouteImport } from './routes/_app/recipes/index'
 import { Route as AppRecipesNewRouteImport } from './routes/_app/recipes/new'
@@ -95,6 +97,16 @@ const WelcomeHouseholdRoute = WelcomeHouseholdRouteImport.update({
   id: '/welcome/household',
   path: '/welcome/household',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppIngredientsIndexRoute = AppIngredientsIndexRouteImport.update({
+  id: '/ingredients/',
+  path: '/ingredients/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppIngredientsIdRoute = AppIngredientsIdRouteImport.update({
+  id: '/ingredients/$id',
+  path: '/ingredients/$id',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppMealsIndexRoute = AppMealsIndexRouteImport.update({
   id: '/meals/',
@@ -213,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/welcome/household': typeof WelcomeHouseholdRoute
   '/sign-in/': typeof SignInIndexRoute
   '/welcome/': typeof WelcomeIndexRoute
+  '/ingredients/$id': typeof AppIngredientsIdRoute
   '/recipes/new': typeof AppRecipesNewRoute
   '/recipes/trash': typeof AppRecipesTrashRoute
   '/settings/brands': typeof AppSettingsBrandsRoute
@@ -225,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/settings/tools': typeof AppSettingsToolsRoute
   '/settings/weights': typeof AppSettingsWeightsRoute
   '/supply/$id': typeof AppSupplyIdRoute
+  '/ingredients/': typeof AppIngredientsIndexRoute
   '/meals/': typeof AppMealsIndexRoute
   '/recipes/': typeof AppRecipesIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
@@ -246,6 +260,7 @@ export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
   '/sign-in': typeof SignInIndexRoute
   '/welcome': typeof WelcomeIndexRoute
+  '/ingredients/$id': typeof AppIngredientsIdRoute
   '/recipes/new': typeof AppRecipesNewRoute
   '/recipes/trash': typeof AppRecipesTrashRoute
   '/settings/brands': typeof AppSettingsBrandsRoute
@@ -258,6 +273,7 @@ export interface FileRoutesByTo {
   '/settings/tools': typeof AppSettingsToolsRoute
   '/settings/weights': typeof AppSettingsWeightsRoute
   '/supply/$id': typeof AppSupplyIdRoute
+  '/ingredients': typeof AppIngredientsIndexRoute
   '/meals': typeof AppMealsIndexRoute
   '/recipes': typeof AppRecipesIndexRoute
   '/settings': typeof AppSettingsIndexRoute
@@ -281,6 +297,7 @@ export interface FileRoutesById {
   '/_app/': typeof AppIndexRoute
   '/sign-in/': typeof SignInIndexRoute
   '/welcome/': typeof WelcomeIndexRoute
+  '/_app/ingredients/$id': typeof AppIngredientsIdRoute
   '/_app/recipes/new': typeof AppRecipesNewRoute
   '/_app/recipes/trash': typeof AppRecipesTrashRoute
   '/_app/settings/brands': typeof AppSettingsBrandsRoute
@@ -293,6 +310,7 @@ export interface FileRoutesById {
   '/_app/settings/tools': typeof AppSettingsToolsRoute
   '/_app/settings/weights': typeof AppSettingsWeightsRoute
   '/_app/supply/$id': typeof AppSupplyIdRoute
+  '/_app/ingredients/': typeof AppIngredientsIndexRoute
   '/_app/meals/': typeof AppMealsIndexRoute
   '/_app/recipes/': typeof AppRecipesIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
@@ -316,6 +334,7 @@ export interface FileRouteTypes {
     | '/welcome/household'
     | '/sign-in/'
     | '/welcome/'
+    | '/ingredients/$id'
     | '/recipes/new'
     | '/recipes/trash'
     | '/settings/brands'
@@ -328,6 +347,7 @@ export interface FileRouteTypes {
     | '/settings/tools'
     | '/settings/weights'
     | '/supply/$id'
+    | '/ingredients/'
     | '/meals/'
     | '/recipes/'
     | '/settings/'
@@ -349,6 +369,7 @@ export interface FileRouteTypes {
     | '/'
     | '/sign-in'
     | '/welcome'
+    | '/ingredients/$id'
     | '/recipes/new'
     | '/recipes/trash'
     | '/settings/brands'
@@ -361,6 +382,7 @@ export interface FileRouteTypes {
     | '/settings/tools'
     | '/settings/weights'
     | '/supply/$id'
+    | '/ingredients'
     | '/meals'
     | '/recipes'
     | '/settings'
@@ -383,6 +405,7 @@ export interface FileRouteTypes {
     | '/_app/'
     | '/sign-in/'
     | '/welcome/'
+    | '/_app/ingredients/$id'
     | '/_app/recipes/new'
     | '/_app/recipes/trash'
     | '/_app/settings/brands'
@@ -395,6 +418,7 @@ export interface FileRouteTypes {
     | '/_app/settings/tools'
     | '/_app/settings/weights'
     | '/_app/supply/$id'
+    | '/_app/ingredients/'
     | '/_app/meals/'
     | '/_app/recipes/'
     | '/_app/settings/'
@@ -493,6 +517,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/welcome/household'
       preLoaderRoute: typeof WelcomeHouseholdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/ingredients/': {
+      id: '/_app/ingredients/'
+      path: '/ingredients'
+      fullPath: '/ingredients/'
+      preLoaderRoute: typeof AppIngredientsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/ingredients/$id': {
+      id: '/_app/ingredients/$id'
+      path: '/ingredients/$id'
+      fullPath: '/ingredients/$id'
+      preLoaderRoute: typeof AppIngredientsIdRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/meals/': {
       id: '/_app/meals/'
@@ -650,6 +688,7 @@ interface AppRouteChildren {
   AppHistoryRoute: typeof AppHistoryRoute
   AppPlanRoute: typeof AppPlanRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppIngredientsIdRoute: typeof AppIngredientsIdRoute
   AppRecipesNewRoute: typeof AppRecipesNewRoute
   AppRecipesTrashRoute: typeof AppRecipesTrashRoute
   AppSettingsBrandsRoute: typeof AppSettingsBrandsRoute
@@ -662,6 +701,7 @@ interface AppRouteChildren {
   AppSettingsToolsRoute: typeof AppSettingsToolsRoute
   AppSettingsWeightsRoute: typeof AppSettingsWeightsRoute
   AppSupplyIdRoute: typeof AppSupplyIdRoute
+  AppIngredientsIndexRoute: typeof AppIngredientsIndexRoute
   AppMealsIndexRoute: typeof AppMealsIndexRoute
   AppRecipesIndexRoute: typeof AppRecipesIndexRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
@@ -679,6 +719,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppHistoryRoute: AppHistoryRoute,
   AppPlanRoute: AppPlanRoute,
   AppIndexRoute: AppIndexRoute,
+  AppIngredientsIdRoute: AppIngredientsIdRoute,
   AppRecipesNewRoute: AppRecipesNewRoute,
   AppRecipesTrashRoute: AppRecipesTrashRoute,
   AppSettingsBrandsRoute: AppSettingsBrandsRoute,
@@ -691,6 +732,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsToolsRoute: AppSettingsToolsRoute,
   AppSettingsWeightsRoute: AppSettingsWeightsRoute,
   AppSupplyIdRoute: AppSupplyIdRoute,
+  AppIngredientsIndexRoute: AppIngredientsIndexRoute,
   AppMealsIndexRoute: AppMealsIndexRoute,
   AppRecipesIndexRoute: AppRecipesIndexRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,

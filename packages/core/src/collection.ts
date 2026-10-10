@@ -41,22 +41,22 @@ const csv = <T extends string>(values?: readonly T[]) =>
       return out.length ? [...new Set(out)] : undefined;
     });
 
-const num = z.coerce.number().int().positive().optional().catch(undefined);
+const num = z.coerce.number().int().positive().catch(undefined as never).optional();
 
 /** URL search params of a collection page. Everything optional; unknown values are dropped. */
 export const collectionSearchSchema = z.object({
-  q: z.string().optional().catch(undefined),
-  sort: z.enum(SORTS).optional().catch(undefined),
-  cuisine: csv(CUISINES).catch(undefined),
-  protein: csv(MAIN_PROTEINS).catch(undefined),
-  meal: csv(MEAL_TYPES).catch(undefined),
-  tags: csv().catch(undefined),
+  q: z.string().catch("").optional(),
+  sort: z.enum(SORTS).catch(undefined as never).optional(),
+  cuisine: csv(CUISINES).catch(undefined).optional(),
+  protein: csv(MAIN_PROTEINS).catch(undefined).optional(),
+  meal: csv(MEAL_TYPES).catch(undefined).optional(),
+  tags: csv().catch(undefined).optional(),
   minProtein: num,
   maxTotal: num,
   maxActive: num,
   minRating: num,
-  cooked: z.enum(["before", "never"]).optional().catch(undefined),
-  fav: z.coerce.boolean().optional().catch(undefined),
+  cooked: z.enum(["before", "never"]).catch(undefined as never).optional(),
+  fav: z.coerce.boolean().catch(false).optional(),
 });
 export type CollectionSearch = z.infer<typeof collectionSearchSchema>;
 

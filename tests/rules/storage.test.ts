@@ -39,6 +39,8 @@ describe("recipe images", () => {
   it("allowlisted users upload WebP ≤ 2 MB; anyone reads (share links)", async () => {
     await assertSucceeds(uploadBytes(ref(st(ALICE), "recipes/r1/img1/480.webp"), bytes(1000), { contentType: "image/webp" }));
     await assertSucceeds(getBytes(ref(anon(), "recipes/r1/img1/480.webp")));
+    // Safari can't encode WebP from a canvas; its JPEG variants are accepted too.
+    await assertSucceeds(uploadBytes(ref(st(ALICE), "recipes/r1/img2/480.webp"), bytes(1000), { contentType: "image/jpeg" }));
     await assertSucceeds(deleteObject(ref(st(ALICE), "recipes/r1/img1/480.webp")));
   });
 
@@ -46,6 +48,7 @@ describe("recipe images", () => {
     await assertFails(uploadBytes(ref(st(EVE), "recipes/r1/img1/480.webp"), bytes(10), { contentType: "image/webp" }));
     await assertFails(uploadBytes(ref(anon(), "recipes/r1/img1/480.webp"), bytes(10), { contentType: "image/webp" }));
     await assertFails(uploadBytes(ref(st(ALICE), "recipes/r1/img1/480.png"), bytes(10), { contentType: "image/png" }));
+    await assertFails(uploadBytes(ref(st(ALICE), "recipes/r1/img1/480.webp"), bytes(10), { contentType: "text/html" }));
     await assertFails(uploadBytes(ref(st(ALICE), "recipes/r1/img1/1920.webp"), bytes(2 * 1024 * 1024 + 1), { contentType: "image/webp" }));
   });
 });
