@@ -260,3 +260,26 @@ test("delete warns it's for everyone, moves to Trash (hidden from search), and T
   await expect(r.card(title)).toBeVisible();
   expect((await adminDb.doc(`recipes/${id}`).get()).data()).toMatchObject({ status: "active", version: 3 });
 });
+
+test("a photo added in the editor is resized in the browser to three WebP sizes and shown on the recipe", { tag: ["@R4.15"] }, async ({ page, household: _ }) => {
+  const { readFileSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const { ATTACHMENTS_DIR, bucket } = await import("../fixtures/recipes");
+  const title = uniqueTitle("Photographed Salad");
+  const id = await makeRecipe(title);
+  await page.goto(`/recipes/${id}/edit`);
+  const form = page.getByRole("form", { name: "Edit recipe" });
+  await form.getByLabel("Add photo").setInputFiles({ name: "salad.jpeg", mimeType: "image/jpeg", buffer: readFileSync(join(ATTACHMENTS_DIR, "IMG_6374.jpeg")) });
+  await expect(form.getByText("MAIN", { exact: true })).toBeVisible({ timeout: 20_000 });
+  await form.getByRole("button", { name: "Save recipe" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Saved as v2 for everyone" })).toBeVisible();
+  const img = detail(page).getByRole("img", { name: title });
+  await expect(img).toHaveAttribute("srcset", /480\.webp\S* 480w.*960\.webp\S* 960w.*1920\.webp\S* 1920w/);
+  await expect.poll(() => img.evaluate((e: HTMLImageElement) => e.complete && e.naturalWidth)).toBeGreaterThan(0);
+  const base = ((await adminDb.doc(`recipes/${id}`).get()).data()!.imagePaths as string[])[0]!;
+  expect(base).toMatch(new RegExp(`^recipes/${id}/`));
+  const [files] = await bucket().getFiles({ prefix: `${base}/` });
+  expect(files.map((f) => f.name.split("/").pop()).sort()).toEqual(["1920.webp", "480.webp", "960.webp"]);
+  // Each size within the 2 MB Storage rule.
+  for (const f of files) expect(Number(f.metadata.size)).toBeLessThan(2 * 1024 * 1024);
+});
