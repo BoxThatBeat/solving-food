@@ -3,7 +3,9 @@ rules_version = '2';
 // Solving Food security rules (TECHNICAL_SPECS §10).
 // M0: allowlist, users, directory, households (+ members).
 // M1: ingredients, recipes (+ versions), recipeIndex, households/*/favourites, notes, stats (read), and
-//     users/*/notifications. Everything else is denied until the milestone that introduces it adds its rules.
+//     users/*/notifications.
+// M2: meals (saved meals, global), households/*/periods, planItems, stores, sourcingRules, brandMappings,
+//     groceryLists. Everything else is denied until the milestone that introduces it adds its rules.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -33,6 +35,12 @@ service cloud.firestore {
     function isMember(hid) {
       return allowed() && exists(/databases/$(database)/documents/households/$(hid)/members/$(me()));
     }
+    // For writes: a member after this request. The creator's member doc is written in the household's creation
+    // batch together with the first period and the default stores (and only the creator can write it), so the
+    // creation batch passes and nothing else can use this to get in.
+    function isMemberAfter(hid) {
+      return allowed() && existsAfter(/databases/$(database)/documents/households/$(hid)/members/$(me()));
+    }
 
     // ---------- validation helpers
 
@@ -61,7 +69,7 @@ service cloud.firestore {
     function validHousehold(d) {
       return d.keys().hasOnly(['name', 'createdBy', 'periodDays', 'budgetCents', 'currency', 'timezone',
                                'defaultServings', 'plannedMealTypes', 'pcxStoreId', 'currentPeriodId',
-                               'settings', 'createdAt'])
+                               'defaultStoreId', 'settings', 'createdAt'])
         && d.keys().hasAll(['name', 'createdBy', 'periodDays', 'budgetCents', 'currency', 'timezone',
                             'defaultServings', 'plannedMealTypes', 'pcxStoreId'])
         && str(d.name, 1, 60) && d.name.trim().size() > 0
@@ -73,7 +81,9 @@ service cloud.firestore {
         && d.plannedMealTypes is list && d.plannedMealTypes.size() >= 1
         && d.plannedMealTypes.hasOnly(['breakfast', 'lunch', 'dinner'])
         && str(d.pcxStoreId, 1, 100)
-        && (!('settings' in d) || d.settings is map);
+        && (!('settings' in d) || d.settings is map)
+        && (!('currentPeriodId' in d) || d.currentPeriodId == null || str(d.currentPeriodId, 1, 200))
+        && (!('defaultStoreId' in d) || str(d.defaultStoreId, 1, 200));
     }
 
     // ---------- allowlist/{emailLower}: sign-up allowlist (R2.12)
@@ -238,6 +248,31 @@ service cloud.firestore {
       }
     }
 
+    // ---------- meals/{id} (§4.1, R5.2): saved meals, global like recipes; public get for share links (R4.21)
+
+    function validMealRecipes(l) {
+      return l is list && l.size() >= 1 && l.size() <= 12;
+    }
+    function validMeal(d) {
+      return d.keys().hasOnly(['name', 'recipes', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt'])
+        && d.keys().hasAll(['name', 'recipes', 'createdBy', 'updatedAt'])
+        && str(d.name, 1, 80) && d.name.trim().size() > 0
+        && validMealRecipes(d.recipes)
+        && d.updatedBy == me() && d.updatedAt == request.time;
+    }
+
+    match /meals/{id} {
+      allow get: if true;
+      allow list: if allowed();
+      allow create: if allowed() && validMeal(request.resource.data)
+        && request.resource.data.createdBy == me()
+        && request.resource.data.createdAt == request.time;
+      allow update: if allowed() && validMeal(request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.get('createdAt', null) == resource.data.get('createdAt', null);
+      allow delete: if allowed();
+    }
+
     // ---------- recipeIndex/{chunk} (§9): written by the index function only
 
     match /recipeIndex/{id} {
@@ -251,6 +286,22 @@ service cloud.firestore {
       allow update: if uid == me() && allowed()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dismissedAt'])
         && request.resource.data.dismissedAt == request.time;
+    }
+
+    function validPlanItem(d) {
+      return d.keys().hasOnly(['periodId', 'kind', 'mealType', 'servings', 'recipes', 'savedMealId', 'name',
+                               'leftoverSupplyId', 'sourcePlanItemId', 'coverage', 'status', 'carriedFromId', 'addedBy',
+                               'addedAt'])
+        && d.keys().hasAll(['periodId', 'kind', 'mealType', 'servings', 'recipes', 'coverage', 'status', 'addedBy'])
+        && str(d.periodId, 1, 200)
+        && d.kind in ['meal', 'leftover']
+        && d.mealType in ['breakfast', 'lunch', 'dinner', 'snack']
+        && d.servings is number && d.servings > 0 && d.servings <= 100
+        && d.recipes is list && d.recipes.size() <= 12 && (d.kind == 'leftover' || d.recipes.size() >= 1)
+        && d.coverage is map && d.coverage.keys().hasOnly(['breakfast', 'lunch', 'dinner'])
+        && d.status in ['planned', 'cooked', 'skipped', 'eaten']
+        && optStr(d, 'name', 80) && optStr(d, 'savedMealId', 200) && optStr(d, 'carriedFromId', 200)
+        && str(d.addedBy, 1, 200);
     }
 
     // ---------- households/{hid}
@@ -306,6 +357,74 @@ service cloud.firestore {
       // Cook stats: function-maintained (M3); members read them for filters and cards.
       match /stats/{id} {
         allow read: if isMember(hid);
+      }
+
+      // Periods (§7): ID = local start date; created at household creation and by the client's rollover
+      // transaction. The budget snapshot follows a budget change in Settings.
+      match /periods/{pid} {
+        allow read: if isMember(hid);
+        allow create, update: if isMemberAfter(hid)
+          && request.resource.data.keys().hasOnly(['start', 'end', 'budgetCents'])
+          && request.resource.data.keys().hasAll(['start', 'end', 'budgetCents'])
+          && request.resource.data.start is timestamp && request.resource.data.end is timestamp
+          && request.resource.data.end > request.resource.data.start
+          && request.resource.data.budgetCents is int && request.resource.data.budgetCents >= 0;
+      }
+
+      // Plan items (§4.2, R5.1): meals of 1..n recipes; members add, edit, and remove them.
+      match /planItems/{iid} {
+        allow read, delete: if isMember(hid);
+        // Cooking and eating change status through commands (M3); clients add planned items and edit them.
+        allow create: if isMemberAfter(hid) && validPlanItem(request.resource.data)
+          && request.resource.data.status == 'planned';
+        allow update: if isMember(hid) && validPlanItem(request.resource.data)
+          && request.resource.data.status == resource.data.status;
+      }
+
+      // Stores, sourcing rules, brand mappings (§4.2, §8, R7.3, R7.4).
+      match /stores/{sid} {
+        allow read, delete: if isMember(hid);
+        allow create, update: if isMemberAfter(hid)
+          && request.resource.data.keys().hasOnly(['name', 'kind', 'bulk'])
+          && request.resource.data.keys().hasAll(['name', 'kind', 'bulk'])
+          && str(request.resource.data.name, 1, 80)
+          && request.resource.data.kind in ['pcExpress', 'inStore']
+          && request.resource.data.bulk is bool;
+      }
+      match /sourcingRules/{rid} {
+        allow read, delete: if isMember(hid);
+        allow create, update: if isMember(hid)
+          && request.resource.data.keys().hasOnly(['match', 'storeId'])
+          && request.resource.data.match is map
+          && request.resource.data.match.size() == 1
+          && (str(request.resource.data.match.get('category', ''), 1, 40)
+              || str(request.resource.data.match.get('ingredientId', ''), 1, 200))
+          && str(request.resource.data.storeId, 1, 200);
+      }
+      match /brandMappings/{ingredientId} {
+        allow read, delete: if isMember(hid);
+        allow create, update: if isMember(hid)
+          && request.resource.data.keys().hasOnly(['productName', 'productCode', 'packAmount', 'packMeasure', 'storeId',
+                                                    'updatedBy', 'updatedAt'])
+          && request.resource.data.keys().hasAll(['productName', 'packAmount', 'packMeasure', 'storeId'])
+          && str(request.resource.data.productName, 1, 120)
+          && optStr(request.resource.data, 'productCode', 100)
+          && request.resource.data.packAmount is number && request.resource.data.packAmount > 0
+          && request.resource.data.packMeasure in ['weight', 'volume', 'count']
+          && str(request.resource.data.storeId, 1, 200);
+      }
+
+      // Grocery lists (§4.2, §8): the draft, and lists marked ordered by the Copy button (R7.5). Ticks are field
+      // updates on the items map. "received" is set by the receiveGroceries command function (M3).
+      match /groceryLists/{lid} {
+        allow read, delete: if isMember(hid);
+        allow create, update: if isMember(hid)
+          && request.resource.data.keys().hasOnly(['periodId', 'status', 'createdAt', 'orderedAt', 'orderedBy', 'items'])
+          && request.resource.data.keys().hasAll(['periodId', 'status', 'createdAt', 'items'])
+          && request.resource.data.status in ['draft', 'ordered']
+          && request.resource.data.items is map && request.resource.data.items.size() <= 400
+          && (request.resource.data.status == 'draft' || (request.resource.data.orderedAt is timestamp
+              && request.resource.data.orderedBy is string));
       }
     }
 
