@@ -96,3 +96,32 @@ export function pickActiveHousehold(
   if (activeHouseholdId && membershipHouseholdIds.includes(activeHouseholdId)) return activeHouseholdId;
   return membershipHouseholdIds[0] ?? null;
 }
+
+/** Kitchen tools offered as suggestions in Settings → Kitchen tools (R11.1), plus whatever the library's recipes use. */
+export const TOOL_SUGGESTIONS = [
+  "Instant Pot",
+  "Rice cooker",
+  "Food processor",
+  "Dutch oven",
+  "Sheet pans",
+  "Blender",
+  "Immersion blender",
+  "Wok",
+  "Cast iron pan",
+  "Sous vide",
+  "Stand mixer",
+  "Hand mixer",
+  "Air fryer",
+  "Slow cooker",
+  "Grill",
+  "Muffin tin",
+  "Baking dish",
+  "Stock pot",
+] as const;
+
+/** Household settings form (R11.5, R11.6, R11.11–R11.13): validated before the household document is updated. */
+export const householdSettingsInputSchema = newHouseholdInputSchema.extend({
+  periodDays: z.number().int().min(1, "At least 1 day").max(28, "At most 28 days"),
+  budgetCents: z.number().int().min(0, "Budget can't be negative").max(10_000_00, "That's a big budget: at most $10,000"),
+});
+export type HouseholdSettingsInput = z.infer<typeof householdSettingsInputSchema>;
