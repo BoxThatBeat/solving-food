@@ -23,8 +23,8 @@ When 1–3 are done, set `Status: done`; `pnpm e2e:coverage` then enforces the 2
 | Unit (`pnpm test`) | core 169 passed (11 files, incl. fast-check unit round trips and the skill check), web 7 passed |
 | Rules (`pnpm test:rules`) | 56 passed |
 | Functions on the emulators (`pnpm test:functions`) | 20 passed, incl. all 28 household recipes through the real `dropFolder` trigger (photos with spaces, summed tokens, no new ingredients, three image sizes) |
-| Playwright, phone-ios + desktop-1080p | 113 passed, 7 skipped (Chromium-only checks on WebKit), 0 failed; plus the editor photo test (2 passed) and the stacked-banner test |
-| Playwright, phone-android + desktop-firefox (smoke) + tablet + desktop-4k + desktop-4k-2x | 85 passed, 7 skipped, 0 failed |
+| Playwright, phone-ios + desktop-1080p (final run, fresh emulators) | 117 passed, 7 skipped (Chromium-only checks on WebKit), 0 failed; `recipe-edit.spec.ts` also 48/48 over `--repeat-each=3` |
+| Playwright, phone-android + desktop-firefox (smoke) + tablet + desktop-4k + desktop-4k-2x | 85 passed, 7 skipped, 0 failed (run before the last two editor/banner fixes, which the two main projects re-verified) |
 | `pnpm e2e:coverage` | M1 24/24 requirement IDs tagged |
 | Live | `pnpm ingredients:upload` wrote 475 then reported 475 unchanged on a re-run; `pnpm drop:recipes -- --email buitenwerfa@gmail.com` imported 28/28 as the owner (28 active, 19 with photos, 28 index summaries, 28 success notifications, 0 errors, 0 ingredients needing review); all 28 share pages render signed out at https://solvingfood.web.app with their photos; healthcheck ok |
 
@@ -237,6 +237,9 @@ conventions must match that README.
   and sits above sheets (z-60), so banners are announced and visible while a sheet is open.
 - **Filter URLs** use comma lists (`?cuisine=greek,thai`), not the router's default JSON arrays.
 - **Ingredient picker:** a blur-then-refocus no longer closes the suggestion list (found by the specs).
+- **Editor insert-ingredient chips** track the caret on every selection change and restore it synchronously (a
+  deferred restore landed after further typing on WebKit).
+- **Formatting:** tiny imperial amounts read "<0.1 oz" instead of "0 oz".
 
 ## Design-compare notes (phone 430×932, desktop 1920×1080, Latte)
 
