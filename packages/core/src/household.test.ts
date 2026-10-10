@@ -68,3 +68,47 @@ describe("household limits and the active household", () => {
     expect(pickActiveHousehold("a", [])).toBeNull();
   });
 });
+
+import { buildInvite, inviteEmailSchema, inviteInbox, leaveConsequence, nextActiveHousehold, searchDirectory } from "./household";
+
+describe("invites", () => {
+  it("normalises invite emails and rejects bad ones", () => {
+    expect(inviteEmailSchema.parse("  Sam@Example.COM ")).toBe("sam@example.com");
+    expect(inviteEmailSchema.safeParse("nope").success).toBe(false);
+    expect(inviteEmailSchema.safeParse("").success).toBe(false);
+  });
+
+  it("keys an invite by uid or by lower-cased email", () => {
+    const ctx = { householdName: "Silbrass Pvt", invitedBy: "u1", invitedByName: "Aaron" };
+    expect(buildInvite({ uid: "u2" }, ctx)).toEqual({ key: "u2", doc: { inviteeUid: "u2", ...ctx } });
+    expect(buildInvite({ email: "Sam@X.com" }, ctx)).toEqual({ key: "sam@x.com", doc: { inviteeEmailLower: "sam@x.com", ...ctx } });
+  });
+
+  it("shows one invite per household and none for households I'm in", () => {
+    const inv = [
+      { hid: "a", key: "u2", householdName: "A" },
+      { hid: "a", key: "sam@x.com", householdName: "A" },
+      { hid: "b", key: "u2", householdName: "B" },
+      { hid: "c", key: "u2", householdName: "C" },
+    ];
+    expect(inviteInbox(inv, ["c"]).map((i) => i.hid)).toEqual(["a", "b"]);
+  });
+
+  it("searches the directory by name, prefix matches first, skipping excluded people", () => {
+    const dir = [
+      { uid: "1", displayName: "Sam" },
+      { uid: "2", displayName: "Samantha" },
+      { uid: "3", displayName: "Isam" },
+      { uid: "4", displayName: "Aaron" },
+    ];
+    expect(searchDirectory(dir, "sam", new Set(["2"])).map((d) => d.uid)).toEqual(["1", "3"]);
+    expect(searchDirectory(dir, "  ", new Set())).toEqual([]);
+  });
+
+  it("warns the last member that leaving deletes the household (R2.13)", () => {
+    expect(leaveConsequence(1)).toBe("deletesHousehold");
+    expect(leaveConsequence(2)).toBe("leaves");
+    expect(nextActiveHousehold("a", ["a", "b"])).toBe("b");
+    expect(nextActiveHousehold("a", ["a"])).toBeNull();
+  });
+});

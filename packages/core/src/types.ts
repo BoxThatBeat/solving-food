@@ -282,6 +282,8 @@ export const inviteSchema = z
     inviteeEmailLower: z.email().optional(),
     householdName: z.string(),
     invitedBy: z.string(),
+    /** The inviter's display name, so the invitee (who can't read the household) sees who asked (M4). */
+    invitedByName: z.string().optional(),
     createdAt: timestamp,
   })
   .refine((v) => (v.inviteeUid ? 1 : 0) + (v.inviteeEmailLower ? 1 : 0) === 1, {
