@@ -42,7 +42,10 @@ export function combineSummaries(id: string, title: string, refs: readonly Recip
     fingerprint: "",
     createdAtMs,
     tools: [...new Set(found.flatMap((r) => r.tools ?? []))],
-    lines: found.flatMap((r) => r.lines ?? []),
+    lines: found.reduce<Record<string, number>>((acc, r) => {
+      for (const [k, v] of Object.entries(r.lines ?? {})) acc[k] = (acc[k] ?? 0) + v;
+      return acc;
+    }, {}),
     recipeIds: refs.map((r) => r.recipeId),
     missing: refs.filter((r) => !byId(r.recipeId)).map((r) => r.recipeId),
   };

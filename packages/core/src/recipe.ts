@@ -338,15 +338,17 @@ export interface RecipeSummary {
   createdAtMs: number;
   /** Tools the recipe needs ("has all tools" filter, R11.1). Absent on summaries written before M2. */
   tools?: string[];
-  /** `[ingredientId, canonical amount per serving]` for non-optional lines (cost per serving, R4.2). Absent before M2. */
-  lines?: Array<[string, number]>;
+  /** Canonical amount per serving by ingredient ID, non-optional lines (cost per serving, R4.2). Absent before M2. A map,
+   *  not pairs: Firestore can't store nested arrays. */
+  lines?: Record<string, number>;
 }
 
 /** Canonical amount per serving of each non-optional, non-vague line, summed per ingredient, rounded to 0.1. */
-export function summaryLines(r: Pick<RecipeDoc, "ingredients" | "servings">): Array<[string, number]> {
-  const m = new Map<string, number>();
-  for (const l of r.ingredients) if (!l.optional && l.canonicalAmount > 0) m.set(l.ingredientId, (m.get(l.ingredientId) ?? 0) + l.canonicalAmount / Math.max(1, r.servings));
-  return [...m.entries()].map(([id, a]) => [id, Math.round(a * 10) / 10] as [string, number]);
+export function summaryLines(r: Pick<RecipeDoc, "ingredients" | "servings">): Record<string, number> {
+  const m: Record<string, number> = {};
+  for (const l of r.ingredients) if (!l.optional && l.canonicalAmount > 0) m[l.ingredientId] = (m[l.ingredientId] ?? 0) + l.canonicalAmount / Math.max(1, r.servings);
+  for (const k of Object.keys(m)) m[k] = Math.round(m[k]! * 10) / 10;
+  return m;
 }
 
 /** Recipes that appear in the index (§9): trashed and pending-duplicate recipes are left out. */

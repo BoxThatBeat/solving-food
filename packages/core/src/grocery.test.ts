@@ -225,7 +225,7 @@ describe("prices", () => {
     expect(resolvePrice(ING.milk!, {}, live, est, now).source).toBe("estimate");
   });
   it("cost per serving", () => {
-    expect(costPerServing([["a", 100], ["b", 50]], (id) => (id === "a" ? 1.5 : 2))).toBe(250);
-    expect(costPerServing([["a", 100], ["c", 1]], (id) => (id === "a" ? 1 : null))).toBeNull();
+    expect(costPerServing({ a: 100, b: 50 }, (id) => (id === "a" ? 1.5 : 2))).toBe(250);
+    expect(costPerServing({ a: 100, c: 1 }, (id) => (id === "a" ? 1 : null))).toBeNull();
   });
 });

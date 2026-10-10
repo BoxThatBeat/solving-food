@@ -83,9 +83,9 @@ export function formatCents(cents: number): string {
  * excluded by the caller), without pack rounding: the "Cost per serving" filter and the Cheapest sort (R4.2).
  * Null when any line's price is unknown.
  */
-export function costPerServing(lines: ReadonlyArray<readonly [string, number]>, centsPerUnit: (ingredientId: string) => number | null): number | null {
+export function costPerServing(lines: Readonly<Record<string, number>>, centsPerUnit: (ingredientId: string) => number | null): number | null {
   let total = 0;
-  for (const [id, amount] of lines) {
+  for (const [id, amount] of Object.entries(lines)) {
     const c = centsPerUnit(id);
     if (c === null) return null;
     total += c * amount;

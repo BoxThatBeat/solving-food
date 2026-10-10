@@ -3,6 +3,7 @@
 // meals left empty) and, in every household, from planned plan items (deleting items left empty), favourites, notes,
 // and stats. Cook events, ratings, and history keep their stored titles. The index entry is removed by the index
 // function. Idempotent: every step tolerates having run before.
+import { coverageFor, type MealType } from "@solving-food/core";
 import { db, bucket } from "./admin";
 
 interface RecipeRef {
@@ -64,7 +65,11 @@ export async function cleanupDeletedRecipe(id: string): Promise<CleanupReport> {
         await p.ref.delete();
         report.planItemsDeleted++;
       } else {
-        await p.ref.update({ recipes: rest });
+        // The removed recipe's leftover portions no longer fill slots (R6.2).
+        const docs = await Promise.all(rest.map((r) => db.collection("recipes").doc(r.recipeId).get()));
+        const info = new Map(docs.map((d) => [d.id, { defaultLeftoverPortions: Number(d.data()?.defaultLeftoverPortions ?? 0), leftoverMealType: d.data()?.leftoverMealType as MealType | undefined }]));
+        const mealType = (p.data().mealType ?? "dinner") as MealType;
+        await p.ref.update({ recipes: rest, coverage: coverageFor({ kind: "meal", mealType, recipes: rest.map((r) => ({ recipeId: r.recipeId, servingsMultiplier: r.servingsMultiplier ?? 1 })) }, (id) => info.get(id)) });
         report.planItemsUpdated++;
       }
     }

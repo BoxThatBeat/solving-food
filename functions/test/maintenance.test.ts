@@ -45,9 +45,9 @@ describe("maintenance: 30-day trash purge and cleanup", () => {
 
   it("purges only recipes trashed more than 30 days ago, and the cleanup follows everywhere", async () => {
     const now = Date.now();
-    await db.doc("recipes/old").set(recipe("Old", { status: "trashed", trashedAt: new Date(now - 31 * DAY), trashedBy: "u1" }));
+    await db.doc("recipes/old").set(recipe("Old", { status: "trashed", trashedAt: new Date(now - 31 * DAY), trashedBy: "u1", defaultLeftoverPortions: 4, leftoverMealType: "lunch" }));
     await db.doc("recipes/recent").set(recipe("Recent", { status: "trashed", trashedAt: new Date(now - 5 * DAY), trashedBy: "u1", imagePaths: [] }));
-    await db.doc("recipes/keep").set(recipe("Keep", { imagePaths: [] })); // an image shared with a live recipe would be kept
+    await db.doc("recipes/keep").set(recipe("Keep", { imagePaths: [], defaultLeftoverPortions: 2, leftoverMealType: "breakfast" })); // an image shared with a live recipe would be kept
     await db.doc("recipes/old/versions/1").set({ title: "Old" });
     for (const size of [480, 960, 1920]) await bucket().file(`recipes/old/img1/${size}.webp`).save(Buffer.from("x"), { contentType: "image/webp" });
     // Two households reference it.
@@ -57,7 +57,8 @@ describe("maintenance: 30-day trash purge and cleanup", () => {
       await db.doc(`households/${hid}/notes/old`).set({ text: "n", updatedBy: "u1", updatedAt: new Date() });
       await db.doc(`households/${hid}/stats/recipe_old`).set({ timesCooked: 3, ratingSum: 0, ratingCount: 0 });
       await db.doc(`households/${hid}/planItems/solo`).set({ status: "planned", recipes: [{ recipeId: "old", servingsMultiplier: 1 }] });
-      await db.doc(`households/${hid}/planItems/pair`).set({ status: "planned", recipes: [{ recipeId: "old", servingsMultiplier: 1 }, { recipeId: "keep", servingsMultiplier: 1 }] });
+      // M2 plan items: a saved taco night of both recipes, with the meal-prep lunches the old one covered.
+      await db.doc(`households/${hid}/planItems/pair`).set({ periodId: "p1", kind: "meal", mealType: "dinner", servings: 4, savedMealId: "m2", name: "Mixed", status: "planned", coverage: { dinner: 1, lunch: 4, breakfast: 2 }, addedBy: "u1", recipes: [{ recipeId: "old", servingsMultiplier: 1 }, { recipeId: "keep", servingsMultiplier: 1 }] });
       await db.doc(`households/${hid}/planItems/done`).set({ status: "cooked", recipes: [{ recipeId: "old", servingsMultiplier: 1 }] });
       await db.doc(`households/${hid}/cookEvents/e1`).set({ recipeIds: ["old"], titles: ["Old"] });
     }
@@ -77,7 +78,10 @@ describe("maintenance: 30-day trash purge and cleanup", () => {
       expect((await db.doc(`households/${hid}/notes/old`).get()).exists).toBe(false);
       expect((await db.doc(`households/${hid}/stats/recipe_old`).get()).exists).toBe(false);
       expect((await db.doc(`households/${hid}/planItems/solo`).get()).exists).toBe(false);
-      expect((await db.doc(`households/${hid}/planItems/pair`).get()).data()!.recipes).toEqual([{ recipeId: "keep", servingsMultiplier: 1 }]);
+      const pair = (await db.doc(`households/${hid}/planItems/pair`).get()).data()!;
+      expect(pair.recipes).toEqual([{ recipeId: "keep", servingsMultiplier: 1 }]);
+      expect(pair.coverage).toEqual({ dinner: 1, breakfast: 2 }); // the old recipe's lunches no longer fill slots
+      expect(pair.savedMealId).toBe("m2");
       expect((await db.doc(`households/${hid}/planItems/done`).get()).exists).toBe(true); // history is kept
       expect((await db.doc(`households/${hid}/cookEvents/e1`).get()).data()!.titles).toEqual(["Old"]);
     }
@@ -92,6 +96,25 @@ describe("maintenance: 30-day trash purge and cleanup", () => {
     const r2 = await runMaintenance(Date.now() + 2 * DAY);
     expect(r2.dropFilesSwept).toBe(1);
     expect(await fileExists("recipe-drop/u1/stray.jpg")).toBe(false);
+  });
+});
+
+describe("maintenance refreshes stale index summaries (M2: tools and cost lines)", () => {
+  it("rewrites summaries that lack the M2 fields and leaves current ones alone", async () => {
+    await db.doc("recipes/fresh").set(recipe("Fresh", { imagePaths: [], tools: ["Wok"] }));
+    const chunk = await poll(async () => {
+      const r = (await db.doc("recipes/fresh").get()).data();
+      return typeof r?.indexChunk === "number" ? String(r.indexChunk) : null;
+    }, 30_000, "index chunk");
+    // Simulate a summary written before M2.
+    await poll(async () => (await db.doc(`recipeIndex/${chunk}`).get()).data()?.recipes?.fresh, 30_000, "summary");
+    await db.doc(`recipeIndex/${chunk}`).update({ "recipes.fresh.tools": FieldValue.delete(), "recipes.fresh.lines": FieldValue.delete() });
+    const report = await runMaintenance(Date.now());
+    expect(report.summariesRefreshed).toBeGreaterThanOrEqual(1);
+    const s = (await db.doc(`recipeIndex/${chunk}`).get()).data()!.recipes.fresh;
+    expect(s.tools).toEqual(["Wok"]);
+    expect(s.lines).toEqual({ egg: 50 });
+    expect((await runMaintenance(Date.now())).summariesRefreshed).toBe(0);
   });
 });
 
