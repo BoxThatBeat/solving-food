@@ -90,7 +90,7 @@ function parseQuantity(raw: string | undefined): CookQuantity {
 
 /** Splits the YAML front matter (`---` … `---`) or legacy `>> key: value` lines from the body. */
 export function splitFrontMatter(source: string): { frontMatter: Record<string, unknown>; body: string } {
-  const text = source.replace(/^﻿/, "").replace(/\r\n?/g, "\n");
+  const text = source.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
   const m = /^---[ \t]*\n([\s\S]*?)\n---[ \t]*(?:\n|$)([\s\S]*)$/.exec(text);
   if (m) {
     let data: unknown;
