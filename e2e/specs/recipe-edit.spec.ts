@@ -67,10 +67,11 @@ test("manual entry: title, fixed cuisine and protein lists, tags, tools, ingredi
   const step1 = form.getByRole("textbox", { name: "Step 1", exact: true });
   await step1.fill("Rub the ");
   await form.getByRole("button", { name: /^Insert chicken thigh/ }).click();
+  await expect(step1).toHaveValue(/^Rub the \{\{ing:[^}]+\}\}$/);
+  await expect(step1).toBeFocused(); // the chip puts the caret back in the step
   await step1.press("End");
   await step1.pressSequentially(" with ");
   await form.getByRole("button", { name: /^Insert garlic/ }).click();
-  // The chip puts the cursor back in the step on the next frame; let that land before moving to another field.
   await expect(step1).toHaveValue(/^Rub the \{\{ing:[^}]+\}\} with \{\{ing:[^}]+\}\}$/);
   await expect(step1).toBeFocused();
   await form.getByLabel("Step 1 timer minutes").fill("35");
@@ -208,8 +209,10 @@ test("saving a recipe that looks like an existing one asks: keep existing, keep 
   await form.getByLabel("Source URL").fill(`${url}?utm_source=newsletter`);
   await form.getByRole("button", { name: "Add ingredient" }).click();
   await pickIngredient(page, 1, "all-purpose flour", /^All-purpose flour/i);
-  // A random weight so this recipe's fingerprint matches nothing else; the source URL is what makes it a duplicate.
-  await form.getByLabel("Amount for ingredient 1").fill(String(100 + 10 * Math.floor(Math.random() * 90)));
+  // One serving of a random weight, so this recipe's fingerprint (amounts per serving, 5 g buckets) matches nothing
+  // else, not even another run of this test; the source URL is what makes it a duplicate.
+  await form.getByLabel("Servings").fill("1");
+  await form.getByLabel("Amount for ingredient 1").fill(String(1000 + 10 * Math.floor(Math.random() * 900)));
   await form.getByRole("combobox", { name: "Unit for ingredient 1" }).selectOption("g");
   await form.getByRole("textbox", { name: "Step 1", exact: true }).fill("Mix and cook.");
   await form.getByRole("button", { name: "Save recipe" }).click();

@@ -196,7 +196,12 @@ export function RecipeEditor({
   const [saving, setSaving] = React.useState(false);
   const [restorable, setRestorable] = React.useState<Draft | null>(null);
   const [uploading, setUploading] = React.useState(false);
-  const focusedStep = React.useRef<{ index: number; el: HTMLTextAreaElement } | null>(null);
+  // The step being written and its caret, tracked on every selection change: reading selectionStart at chip-tap time
+  // can be stale on WebKit once the textarea has lost focus to the chip.
+  const focusedStep = React.useRef<{ index: number; el: HTMLTextAreaElement; caret: number } | null>(null);
+  const trackCaret = (index: number) => (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
+    focusedStep.current = { index, el: e.currentTarget, caret: e.currentTarget.selectionStart };
+  };
 
   const form = useForm<FormInput, unknown, FormValues>({ resolver: zodResolver(formSchema), defaultValues: toForm(recipe), mode: "onTouched" });
   const { register, control, handleSubmit, setValue, getValues, reset, formState } = form;
@@ -287,20 +292,22 @@ export function RecipeEditor({
 
   const insertIngredient = (lineId: string) => {
     const f = focusedStep.current;
-    const target = f ?? { index: Math.max(0, steps.fields.length - 1), el: null as unknown as HTMLTextAreaElement };
+    const target = f ?? { index: Math.max(0, steps.fields.length - 1), el: null as unknown as HTMLTextAreaElement, caret: 0 };
     const name = `steps.${target.index}.text` as const;
     const cur = getValues(name) ?? "";
     const token = placeholder(lineId);
-    const at = f?.el ? f.el.selectionStart : cur.length;
+    const at = f ? Math.min(f.caret, cur.length) : cur.length;
     const next = `${cur.slice(0, at)}${cur && at > 0 && !/\s$/.test(cur.slice(0, at)) ? " " : ""}${token}${cur.slice(at)}`;
     setValue(name, next, { shouldDirty: true });
-    requestAnimationFrame(() => {
-      if (f?.el) {
-        f.el.focus();
-        const pos = next.indexOf(token, at) + token.length;
-        f.el.setSelectionRange(pos, pos);
-      }
-    });
+    // setValue writes the registered textarea's value synchronously, so the caret can go back right away. (Deferring
+    // it to the next frame let it land after further typing when frames are delayed: background tabs, WebKit.)
+    if (f?.el) {
+      const pos = next.indexOf(token, at) + token.length;
+      if (f.el.value !== next) f.el.value = next;
+      f.el.focus();
+      f.el.setSelectionRange(pos, pos);
+      focusedStep.current = { ...f, caret: pos };
+    }
   };
 
   const addLine = () => {
@@ -476,7 +483,11 @@ export function RecipeEditor({
                   rows={3}
                   aria-label={`Step ${k + 1}`}
                   placeholder="What to do. Insert ingredients with the chips above."
-                  onFocus={(e) => (focusedStep.current = { index: k, el: e.currentTarget })}
+                  onFocus={trackCaret(k)}
+                  onSelect={trackCaret(k)}
+                  onKeyUp={trackCaret(k)}
+                  onInput={trackCaret(k)}
+                  onClick={trackCaret(k)}
                   className="text-sm shadow-none"
                 />
                 {text.includes("{{ing:") ? <p className="m-0 text-xs leading-snug font-semibold text-sub">Reads: {preview}</p> : null}
