@@ -1,6 +1,6 @@
 # Solving Food — Technical Specification
 
-> Status: Draft v0.5 · Companion to `PRODUCT_REQUIREMENTS.md` (v0.5) · Last updated: 2026-10-10 (M1)
+> Status: Draft v0.5 · Companion to `PRODUCT_REQUIREMENTS.md` (v0.5) · Last updated: 2026-10-10 (M2)
 
 ---
 
@@ -92,6 +92,8 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Functions invocations | 2M / month | < 10,000 / month | 200× |
 | Storage-trigger invocations (`dropFolder`) | counted in the 2M above | every finalized object fires it: each `.cook` and photo dropped, plus 3 per recipe image stored (480/960/1920) and 3 per photo added in the editor. ~10 per imported recipe; < 1,000 / month. Non-drop paths return in milliseconds | — |
 | Firestore-trigger invocations (`recipeIndex`, `recipeCleanup`, `ingredientRecipes`) | counted in the 2M above | one per recipe or ingredient write; the one-off 475-ingredient seed upload was 475 | — |
+| Weekly maintenance reads (M2: index summary refresh) | in the 50,000 reads / day | every active recipe + the index chunks once a week: ~30 now, ≤ 2,000 at the design scale | 25× on that day |
+| Plan, rollover, grocery (M2) | no functions | client-only: listeners on the period's plan items, stores, rules, mappings, lists; rollover is a client transaction (§7); price estimates are bundled in the web app (no reads) | — |
 | `sharp` image resizing in `dropFolder` | Cloud Run 180k vCPU-s, 360k GiB-s / month | 512 MiB, ~2–8 s per imported photo: < 500 GiB-s / month | 700× |
 | Storage | 5 GB-month (US regions) | ~1 GB of images for 2,000 recipes | 5× |
 | Storage egress | 100 GB / month (N. America) | < 5 GB (images cached by the service worker) | 20× |
@@ -180,10 +182,13 @@ recipes/{recipeId}                                // source of truth (structured
   createdBy, updatedBy, version, createdAt, updatedAt
 recipes/{recipeId}/versions/{version}             // full snapshot + editedBy, editedAt
 
-recipeIndex/{chunkN}                              // ≤ ~500 compact summaries per doc (§9)
+recipeIndex/{chunkN}                              // ≤ ~500 compact summaries per doc (§9); from M2 each also has
+                                                  // tools[] and lines {ingredientId: canonical per serving} (a map:
+                                                  // Firestore can't store nested arrays) for the tools and cost filters
 
 meals/{mealId}                                    // SAVED meals only (R5.2); unsaved meals live inside plan items
-  name, recipes: [{ recipeId, servingsMultiplier }], createdBy, updatedAt
+  name, recipes: [{ recipeId, servingsMultiplier }],   // 1..12 recipes, multiplier 0.5–10
+  createdBy, updatedBy, createdAt, updatedAt
 
 prices/{pcxStoreId}_{productCode}                 // PC Express price at one store
   productName, priceCents, packAmount, packMeasure, pcxStoreId, productCode, fetchedAt
@@ -204,6 +209,8 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
                                  defaultServings,                          // plan items are scaled to this (R11.12)
                                  plannedMealTypes: ("breakfast"|"lunch"|"dinner")[],   // default all three (R11.13)
                                  pcxStoreId,                               // PC Express store for prices; default Loblaws Greenbank Road
+                                 defaultStoreId,                           // store for items no mapping or rule sends elsewhere (§8);
+                                                                           // set with the default stores (M2)
                                  currentPeriodId, settings: { scoreWeights{}, tools[],
                                  preferences: { likes[], dislikes[], diets[] },
                                  proteinGoals: { breakfast?, lunch?, dinner?, snack? } }   // g per serving; absent = off
@@ -212,6 +219,9 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
                                  // key = uid for directory invites, or the lower-cased email for email invites (R2.4)
 
   stores/{storeId}               name, kind: "pcExpress"|"inStore", bulk: bool   // Costco: inStore, bulk
+                                 // seeded as stores/pc-express and stores/costco with the household (or by the client
+                                 // bootstrap for households created before M2)
+  sourcingRules/{id}             // id = cat_<category> or ing_<ingredientId>: one rule per target
   sourcingRules/{id}             match: { category? | ingredientId? }, storeId
   brandMappings/{ingredientId}   productName, productCode?, packAmount, packMeasure, storeId
 
@@ -219,23 +229,29 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
   notes/{recipeId}               text, updatedBy                            // household's recipe notes
   stats/{type_targetId}          timesCooked, lastCookedAt, ratingSum, ratingCount   // function-maintained
 
-  periods/{periodId}             start, end, budgetCents                    // snapshot at creation
+  periods/{periodId}             start, end, budgetCents                    // snapshot at creation; follows a budget change
+                                                                           // made in Settings during the period. ID = local
+                                                                           // start date ("2026-10-05"), so rollovers are idempotent
   planItems/{itemId}             periodId, kind: "meal"|"leftover", mealType, servings,
                                  recipes: [{ recipeId, servingsMultiplier }],   // kind=meal: the meal itself (R5.1), 1..n recipes
                                  savedMealId?, name?,                        // set when created from / saved as a Meals-list meal (R5.8)
                                  leftoverSupplyId?, sourcePlanItemId?,       // kind=leftover → the batch they came from
                                  coverage: { breakfast?, lunch?, dinner? },   // slots it fills (R6.2)
-                                 status: planned|cooked|skipped|eaten, carriedFromId?, addedBy
+                                 status: planned|cooked|skipped|eaten, carriedFromId?, addedBy, addedAt
+                                 // carried copies have ID <newPeriodId>_<fromItemId>; the original stays in its period
 
   cookEvents/{eventId}           planItemId?, recipeIds[], titles[], cookedBy, cookedAt,   // titles survive recipe deletion
                                  used: [{ ingredientId, canonicalAmount }], leftoverPortions,
                                  reviewStatus: "pending"|"done", ratedBy[]
   ratings/{ratingId}             uid, cookEventId, targetType: "recipe"|"meal", targetId, score
 
-  groceryLists/{listId}          periodId, status: draft|ordered|received, createdAt, orderedAt?, receivedAt?,
-                                 items: { [itemId]: { ingredientId?, freeText?, amount, measure,
-                                          packs, productName, storeId, estPriceCents,
+  groceryLists/{listId}          periodId, status: draft|ordered|received, createdAt, orderedAt?, orderedBy?, receivedAt?,
+                                 items: { [itemId]: { ingredientId?, freeText?, amount, measure,   // amount: canonical bought
+                                          need?, packAmount?, packLabel?,                        // shortfall, pack (canonical), "400 g"
+                                          packs, productName, storeId, estPriceCents, priceSource?,
                                           source: plan|manual|cadence, checked, checkedBy? } }
+                                 // the current draft is groceryLists/draft; Copy moves its items into a new list
+                                 // with status ordered (Undo moves them back and deletes it)
                                  // status → ordered when the Copy button is used (R7.5); items on ordered lists count as "incoming" (§8)
 
   supply/{supplyId}              // ingredientId, or "leftover_{eventId}"
@@ -362,13 +378,16 @@ Firestore writes queue up offline, but callable functions don't. So every action
 
 `households/{hid}.currentPeriodId` points to the active period. When any member opens the app after `period.end` (midnight in the household's `timezone`), the client runs a **Firestore transaction**. It creates the next period (length `periodDays`, with a budget snapshot), copies uncooked `planned` items into it with `carriedFromId`, and advances `currentPeriodId`. The transaction makes this idempotent, so two members opening the app at once can't create two periods. No scheduler is needed. Transactions need a connection, so a device that is offline keeps showing the ended period with a "period ended, will roll over when online" note, and all its other actions still work.
 
-**Creating meals (R5.7, R5.8):** every `kind: "meal"` plan item is created by `<CreateMealSheet>`: multi-select recipes (via `<CollectionView>` with Suggested first) or pick a saved meal, choose `mealType` and `servings` (default `household.defaultServings`, R11.12), optionally name it and tick "Save as meal", which also writes a `meals/{id}` document and sets `savedMealId`. "Add to plan" on a recipe opens the same sheet with that recipe preselected. Each recipe is scaled by `servings × servingsMultiplier`. The user can change servings and meal type on the plan item afterwards. Ratings and `stats` for meals key on `savedMealId`, so unsaved meals only rate their recipes.
+Implementation (M2, `apps/web/src/data/plan.ts` `bootstrapHousehold`, periods in `packages/core/period.ts`): the check runs on app open, on focus, when the connection returns, and at the moment the period ends. A period runs from local midnight on its start date for `periodDays` days (DST-safe: a 7-day period can be 167 or 169 hours) and its document ID is the start date, so concurrent rollovers write the same document. When nobody opened the app for a while, the next period is the one containing now, aligned to the old boundaries. Carried items get the ID `<newPeriodId>_<fromItemId>` and the originals stay in their period as history. The household's first period is written in its creation batch; households created before M2 get it (and the default stores) from the same bootstrap. A new period length applies from the next period; a budget change in Settings also updates the current period's snapshot.
+
+**Creating meals (R5.7, R5.8):** every `kind: "meal"` plan item is created by `<CreateMealSheet>`: multi-select recipes (via `<CollectionView>` with Suggested first) or pick a saved meal, choose `mealType` and `servings` (default `household.defaultServings`, R11.12), optionally name it and tick "Save as meal", which also writes a `meals/{id}` document and sets `savedMealId`. "Add to plan" on a recipe opens the same sheet with that recipe preselected. Each recipe is scaled by `servings × servingsMultiplier`. The user can change servings and meal type on the plan item afterwards (which recomputes its coverage). The sheet has two steps: pick (recipes with multipliers, or a saved meal) and details (meal type, servings, name + Save as meal, budget impact). Ratings and `stats` for meals key on `savedMealId`, so unsaved meals only rate their recipes.
 
 ### Coverage & leftovers
 
 Each plan item has a `coverage` map: how many slots of each meal type it fills. This drives the period coverage strip (R6.2) without assigning anything to a day. The strip shows one row per entry in `household.plannedMealTypes` (R11.13); a plan item for a meal type that's turned off still exists and still counts in the list, it just has no row.
 
-- An ordinary dinner covers `{ dinner: 1 }`.
+- An ordinary dinner covers `{ dinner: 1 }`. A snack covers nothing (snacks have no row).
+- Leftover portions are summed across the meal's recipes and not scaled by servings (the recipe's own estimate; M3 confirms the real count).
 - A **meal-prep recipe** with `defaultLeftoverPortions: 4, leftoverMealType: "lunch"` covers `{ dinner: 1, lunch: 4 }` as soon as it's planned, so the strip shows the lunches as planned straight away.
 - When the batch is cooked, `finishCooking` uses the **confirmed** leftover count. It creates one plan item per portion (`leftoverSupplyId`, `sourcePlanItemId`, `coverage: { lunch: 1 }`) and moves the batch's own coverage back to `{ dinner: 1 }`. Leftovers therefore **fill slots automatically** and are never tied to a day.
 - Marking a leftover eaten sets its plan item to `eaten`, which shows as a solid cell in the strip. Leftovers still uneaten at period end roll over like any other planned item, as long as they haven't expired.
@@ -377,7 +396,7 @@ Each plan item has a `coverage` map: how many slots of each meal type it fills. 
 
 `spent = Σ marginal cost of planned items`, where marginal cost prices only the **shortfall packs** the grocery builder would buy (§8). Ingredients already in supply, or **incoming** on an ordered-but-not-received list, cost nothing. Manual and staple items are excluded (R6.4). The meter shows `budget − spent` and turns red below zero. Adding meals is never blocked.
 
-By design the meter is a *"what will the next order cost"* gauge (R6.3): after a grocery list is confirmed as received, the planned meals are covered and `spent` drops back toward zero. Pack rounding makes the cost order-dependent (the first recipe that needs flour pays for the whole bag), which is accepted. Actual spend for a period is `Σ estPriceCents` of the period's received lists and is shown on History (R10.3).
+By design the meter is a *"what will the next order cost"* gauge (R6.3): after a grocery list is confirmed as received, the planned meals are covered and `spent` drops back toward zero. Pack rounding makes the cost order-dependent (the first recipe that needs flour pays for the whole bag), which is accepted. Each plan item shows its own share in `addedAt` order ("+$3.91 to buy"); the shares sum to `spent`. Actual spend for a period is `Σ estPriceCents` of the period's received lists and is shown on History (R10.3).
 
 ### Suggestion score
 
@@ -438,11 +457,13 @@ packs     = ceil(shortfall / packSize)
 → store: brandMapping.storeId → ingredient sourcing rule → category sourcing rule → household default store
 ```
 
-Regenerating keeps manual items and checked-off state. The list is a Firestore document, so every member sees ticks live, which matters at Costco. Expired lots don't count as supply (R8.15), so the builder buys replacements for them.
+Regenerating keeps manual items and checked-off state. The list is a Firestore document, so every member sees ticks live, which matters at Costco.
+
+Implementation (M2, `packages/core/grocery.ts`, Grocery page): the current draft is `groceryLists/draft`. While the Grocery page is open it writes the field-level difference between the stored draft and the generated plan lines (`mergeDraft`); plan lines are keyed by ingredient ID, manual ones `manual_<id>`. Manual lines are free text or an ingredient bought in whole packs; they don't count against the budget (R6.4). Store resolution falls through a rule or mapping that points at a deleted store. Expired lots don't count as supply (R8.15), so the builder buys replacements for them.
 
 Store resolution starts with the brand mapping because a mapping pinned to a specific PC Express product must never be sent to Costco by a broader category rule.
 
-**Copy button:** copies only the `pcExpress` store items and sets the list's `status` to `ordered` (R7.5), with an **Undo** in the confirmation toast that sets it back to `draft`:
+**Copy button:** copies only the `pcExpress` store items and sets the list's `status` to `ordered` (R7.5), with an **Undo** in the confirmation toast that sets it back to `draft`. In M2 the draft's items move into a new list document with `status: ordered`, `orderedAt`, `orderedBy` (all stores: an in-store checklist such as Costco's travels with the order and stays tickable there), and Undo moves them back. If the browser refuses the clipboard, a sheet shows the text to copy by hand. Lines read `- <product>, <pack> × <packs>`, or `- <product>, <grams>` without a pack:
 
 ```
 Please add these to my PC Express cart:
@@ -469,7 +490,7 @@ PC Express has **no official public API**. Third-party scrapers exist, but they'
 **Price refresh & resolution:**
 
 1. A **weekly scheduled maintenance function** (the project's one Cloud Scheduler job, shared with the trash purge in §4.4) collects every distinct `(pcxStoreId, productCode)` pair across households and refreshes `prices/{pcxStoreId}_{productCode}`.
-2. Prices are resolved in this order: **live price** for the household's store (fetched ≤ 14 days ago) → **`data/price-estimates.json`** (per-ingredient $/kg or $/unit) → unknown. Unknown prices count as $0, and the item is marked "price unknown" on the meter.
+2. Prices are resolved in this order: **live price** for the household's store (fetched ≤ 14 days ago) → **`data/price-estimates.json`** (per-ingredient price of a pack: `priceCents`, `packAmount`, `packMeasure`, plus a derived `centsPerUnit`) → unknown. Unknown prices count as $0, and the item is marked "price unknown" on the meter. The estimates are bundled into the web app (no Firestore reads, works offline); `pnpm prices:check` keeps them complete for the seed.
 3. If a fetch or sign-in fails, the function logs it, leaves old prices in place, and posts an error notification to the **project owner**, whose uid is set in the function's config (`OWNER_UID` parameter). The app falls back to estimates automatically as prices age.
 
 ---
@@ -632,6 +653,10 @@ match /households/{hid} {
   match /supply/{doc=**}     { allow read: if isMember(hid); }                           // write: functions only
   match /{coll}/{id}         { allow read: if isMember(hid);
                                allow write: if isMember(hid) && !(coll in FUNCTION_ONLY); }
+  // As built (M2): each household collection has its own match with shape checks. Periods, plan items, and stores
+  // use isMemberAfter(hid) (existsAfter on the member doc) for writes, so the creation batch can write the first
+  // period and the default stores. Clients create plan items as planned and can't change their status (M3's commands
+  // do). Grocery lists are draft or ordered (with orderedAt and orderedBy); received is set by the command function.
 }
 match /{path=**}/members/{uid} { allow read: if allowed() && resource.data.uid == me(); } // "my households" query (filters on the uid field)
 match /{path=**}/invites/{key} { allow read: if allowed() && (key == me() || key == email()); }
@@ -687,7 +712,7 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 ```
 /                → redirect: /plan if the current period has items, else /recipes
 /plan  /recipes  /recipes/new  /recipes/trash  /recipes/:id  /recipes/:id/edit  /recipes/:id/cook
-/meals  /meals/:id  /meals/:id/cook  /supply  /supply/:id  /grocery  /history
+/meals  /meals/:id  /meals/:id/cook  /supply  /supply/:id  /grocery  /history       (/meals/:id renders signed out too)
 /settings/{household,members,brands,stores,tools,preferences,weights,theme,data}
 /drop            (upload .cook files, see import results)
 /not-invited     (signed in with an address that isn't on the allowlist)
@@ -701,7 +726,7 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 
 - **`<CollectionView>`**: shared search, filter, and sort for Recipes, Meals, Plan, and History, with a **Suggested** sort. Filter state lives in the URL.
 - **`<CreateMealSheet>`**: the Plan page's primary action (R5.7). Tabs *Recipes* (multi-select `<CollectionView>`, Suggested sort first, selected recipes pinned at the top with per-recipe multiplier) and *Saved meals*; then meal type, servings, optional name + "Save as meal" (R5.8); Add to plan.
-- **`<BudgetMeter>`**: sticky on the Plan page; turns red below zero.
+- **`<BudgetMeter>`**: sticky on the Plan page (a compact bar on phones, a card in the desktop's right column); turns red below zero; shows "n prices unknown".
 - **`<SupplyBadge>`**: the "have / need" chip next to recipe ingredients.
 - **`<CoverageStrip>`**: the period coverage view (R6.2). One row per meal type, one cell per day, filled left to right from plan items' `coverage`. Cooked or eaten cells are solid, planned cells are outlined, and overflow shows as "+n". Cells aren't interactive.
 - **`<ExpiryBadge>`**: on planned meals (R6.7).

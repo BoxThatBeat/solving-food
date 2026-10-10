@@ -35,84 +35,84 @@ M1 done (recipes exist to plan). `data/price-estimates.json` filled for the seed
 
 ### 1. Periods
 
-- [ ] `packages/core/period.ts`: `periodBounds(start, periodDays, timezone)` using `Temporal` polyfill or
+- [x] `packages/core/period.ts`: `periodBounds(start, periodDays, timezone)` using `Temporal` polyfill or
       `date-fns-tz`; `nextPeriod()`; `isEnded(period, now, timezone)`.
-- [ ] `apps/web/src/plan/rollover.ts`: on app open and on focus, if `period.end < now` run the Firestore
+- [x] `apps/web/src/plan/rollover.ts`: on app open and on focus, if `period.end < now` run the Firestore
       transaction from spec §7 (create next period with budget snapshot, carry `planned` items with
       `carriedFromId`, advance `currentPeriodId`). Skip when offline with the "period ended" note.
-- [ ] Household creation (M0) now also creates the first period.
+- [x] Household creation (M0) now also creates the first period.
 
 ### 2. Settings
 
-- [ ] `/settings/household`: name, period length, budget, timezone picker, default servings, planned meal
+- [x] `/settings/household`: name, period length, budget, timezone picker, default servings, planned meal
       types toggles (all per R11.x). Zod-validated; writes `households/{hid}` fields.
-- [ ] `/settings/tools`: chip list of owned equipment with suggestions (Instant Pot, food processor, sous vide,
+- [x] `/settings/tools`: chip list of owned equipment with suggestions (Instant Pot, food processor, sous vide,
       stand mixer, air fryer, …). Recipe detail now flags missing tools (R4.14) and `<CollectionView>` gets
       the "has all tools" filter.
 
 ### 3. Meals
 
-- [ ] `packages/core/meal.ts` schema for **saved** meals; `meals` collection rules (allowlisted CRUD, public get).
-- [ ] `/meals`: `<CollectionView>` over a small meal index (built client-side from the `meals` collection;
+- [x] `packages/core/meal.ts` schema for **saved** meals; `meals` collection rules (allowlisted CRUD, public get).
+- [x] `/meals`: `<CollectionView>` over a small meal index (built client-side from the `meals` collection;
       no function needed at this scale). `/meals/:id`: recipes with servings multipliers, total time, favourite,
       share, "Add to plan" (opens `<CreateMealSheet>` with the saved meal selected), edit name/recipes.
       There is no standalone "new meal" page: saved meals are born from the create flow (R5.8).
       Prototype page "Meals".
-- [ ] Deleting a recipe (M1 cleanup) removes it from saved meals and from plan items' recipe lists; verify
+- [x] Deleting a recipe (M1 cleanup) removes it from saved meals and from plan items' recipe lists; verify
       with a functions test.
 
 ### 4. Plan page
 
-- [ ] `packages/core/plan.ts`: `planItem` schema (`kind`, `recipes[]`, `savedMealId?`, spec §4.2);
+- [x] `packages/core/plan.ts`: `planItem` schema (`kind`, `recipes[]`, `savedMealId?`, spec §4.2);
       `coverageFor(item, recipes, household)` → `{ dinner: 1, lunch: n }` per spec §7 (leftover portions summed
       across the item's recipes); `stripModel(items, period, plannedMealTypes)` → rows, filled cells, counts,
       overflow.
-- [ ] `<CreateMealSheet>` (R5.7, R5.8): primary button on `/plan`. Tab *Recipes*: `<CollectionView>` in
+- [x] `<CreateMealSheet>` (R5.7, R5.8): primary button on `/plan`. Tab *Recipes*: `<CollectionView>` in
       multi-select mode, Suggested sort first (placeholder order until M5), selected recipes pinned at the top
       with a per-recipe multiplier. Tab *Saved meals*. Then meal type (from `plannedMealTypes` + snack),
       servings (default `defaultServings`), optional name + "Save as meal" toggle. "Add to plan" writes the
       plan item (and the `meals/{id}` doc when saving). Preselect support for the recipe shortcut.
-- [ ] `/plan`: `<CoverageStrip>` (non-interactive, labelled day cells, solid = cooked/eaten, outlined =
+- [x] `/plan`: `<CoverageStrip>` (non-interactive, labelled day cells, solid = cooked/eaten, outlined =
       planned, overflow "+n"), `<BudgetMeter>` (sticky; see §6), the plan list with `<CollectionView>`
       (filter/sort the planned items), empty state from the prototype with Create meal, per-item sheet to
       change servings/meal type, "Save as meal" for unsaved multi-recipe items, remove.
-- [ ] "Add to plan" buttons on recipe pages and cards (preselect in `<CreateMealSheet>`) and on saved meals.
-- [ ] Landing redirect now real: `/` → `/plan` when the current period has items.
-- [ ] Desktop layouts: 2 columns at `lg`, 3 at `xl` (plan · suggestions placeholder · budget/protein summary
+- [x] "Add to plan" buttons on recipe pages and cards (preselect in `<CreateMealSheet>`) and on saved meals.
+- [x] Landing redirect now real: `/` → `/plan` when the current period has items.
+- [x] Desktop layouts: 2 columns at `lg`, 3 at `xl` (plan · suggestions placeholder · budget/protein summary
       placeholder) matching the prototype's desktop mode.
 
 ### 5. Stores, sourcing rules, brand mappings
 
-- [ ] `/settings/stores`: list with kind (`pcExpress` | `inStore`) and `bulk` flag; seeded on household
+- [x] `/settings/stores`: list with kind (`pcExpress` | `inStore`) and `bulk` flag; seeded on household
       creation with "PC Express (Loblaws Greenbank Road)" and "Costco (in store, bulk)"; default store setting.
       PC Express store picker is M5; for now the store has a name and the default `pcxStoreId` from core config.
-- [ ] Sourcing rules: by category or by ingredient → store. UI on the same page.
-- [ ] `/settings/brands`: table of ingredient → product name, pack amount + measure, store. Manual entry
+- [x] Sourcing rules: by category or by ingredient → store. UI on the same page.
+- [x] `/settings/brands`: table of ingredient → product name, pack amount + measure, store. Manual entry
       now; M5 adds the PC Express product search. Prototype "Settings → Brands".
 
 ### 6. Prices and budget (estimates)
 
-- [ ] `data/price-estimates.json`: `$ per kg` or `$ per unit` per seeded ingredient (CAD, Ottawa, rough).
+- [x] `data/price-estimates.json`: `$ per kg` or `$ per unit` per seeded ingredient (CAD, Ottawa, rough).
       Script to flag ingredients without an estimate.
-- [ ] `packages/core/pricing.ts`: `resolvePrice(ingredient, mapping?, livePrices?, estimates)` → cents per
+- [x] `packages/core/pricing.ts`: `resolvePrice(ingredient, mapping?, livePrices?, estimates)` → cents per
       canonical unit with a `source` tag (`live` | `estimate` | `unknown`). Live is always undefined until M5.
-- [ ] `packages/core/budget.ts`: `marginalCost(item, supply, incoming, mappings, prices)` using shortfall packs
+- [x] `packages/core/budget.ts`: `marginalCost(item, supply, incoming, mappings, prices)` using shortfall packs
       from the grocery builder; `spent(plan, …)`; "price unknown" count for the meter.
-- [ ] `<BudgetMeter>`: `budget − spent`, red below zero, "n prices unknown" hint; never blocks adding.
+- [x] `<BudgetMeter>`: `budget − spent`, red below zero, "n prices unknown" hint; never blocks adding.
 
 ### 7. Grocery builder and page
 
-- [ ] `packages/core/grocery.ts`: `buildList({ planItems, recipes, meals, ingredients, supply, incoming,
+- [x] `packages/core/grocery.ts`: `buildList({ planItems, recipes, meals, ingredients, supply, incoming,
       mappings, rules, stores, manualItems })` implementing the spec §8 formula (needs − unexpired supply −
       incoming, pack size from mapping → default pack → raw, store resolution order, free-use excluded).
       Deterministic item IDs (`ingredientId` or `manual_<uuid>`) so regeneration preserves ticks.
-- [ ] `/grocery`: generated list grouped by store, per-item tick (field update on the items map, live for
+- [x] `/grocery`: generated list grouped by store, per-item tick (field update on the items map, live for
       everyone), manual add (ingredient picker or free text), regenerate (keeps manual items and ticks),
       quantities in metric + imperial with pack counts and product names. Costco section as an in-store
       checklist. Prototype "Grocery" page, phase "order".
-- [ ] Copy button: formats the `pcExpress` section as in spec §8, copies to clipboard, sets `status: ordered`
+- [x] Copy button: formats the `pcExpress` section as in spec §8, copies to clipboard, sets `status: ordered`
       + `orderedAt`, toast with Undo (back to `draft`). "Mark ordered without copying" for completeness.
-- [ ] Ordered lists feed `incoming` into the builder and the budget. Receiving is M3.
+- [x] Ordered lists feed `incoming` into the builder and the budget. Receiving is M3.
 
 ## Data & rules introduced
 
@@ -134,8 +134,11 @@ All member read/write per the generic rule; `meals` global.
 - [ ] Owner plans a 7-day period on a phone in under 10 minutes using Create meal: three one-recipe dinners,
       one three-recipe taco night saved as a meal, and one dinner from that saved meal; sees 5/7 and a budget
       that goes down, copies the list into ChatGPT, and it reads cleanly.
-- [ ] Two members see each other's ticks on the Grocery page live.
-- [ ] Period rolls over on the configured boundary with uncooked items carried.
+      (The same flow passes in Playwright on phone-ios and phone-android: meals.spec.ts, plan.spec.ts, grocery.spec.ts.
+      The timed run on a real phone and pasting into ChatGPT are the owner's.)
+- [x] Two members see each other's ticks on the Grocery page live. (grocery.spec.ts "ticks show up live", NFR5.)
+- [x] Period rolls over on the configured boundary with uncooked items carried. (rollover.spec.ts, incl. two members
+      at once; boundaries across DST in packages/core/src/period.test.ts.)
 
 ## Risks and notes
 

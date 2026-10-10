@@ -61,3 +61,24 @@ test("sign-in fits a 360 px phone without horizontal scroll", { tag: ["@NFR6"] }
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
   await ctx.close();
 });
+
+test("the Plan page: one column on phones, two at lg, three at xl (plan · suggestions · budget)", { tag: ["@NFR6"] }, async ({ page, household }) => {
+  void household;
+  const width = page.viewportSize()!.width;
+  await page.goto("/plan");
+  await expect(page.getByTestId("coverage-strip")).toBeVisible({ timeout: 20_000 });
+  const x = async (name: string) => (await page.getByRole(name === "Suggested" ? "heading" : "region", { name }).first().boundingBox())!;
+  const strip = (await page.getByTestId("coverage-strip").boundingBox())!;
+  const suggested = await x("Suggested");
+  const protein = await x("Protein per serving");
+  if (width >= 1440) {
+    expect(suggested.x).toBeGreaterThan(strip.x + strip.width - 1);
+    expect(protein.x).toBeGreaterThan(suggested.x + suggested.width - 1);
+  } else if (width >= 1024) {
+    expect(suggested.x).toBeGreaterThan(strip.x + strip.width - 1);
+    expect(Math.abs(protein.x - suggested.x)).toBeLessThan(2);
+  } else {
+    expect(Math.abs(suggested.x - strip.x)).toBeLessThan(2);
+    expect(suggested.y).toBeGreaterThan(strip.y);
+  }
+});
