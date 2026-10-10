@@ -521,11 +521,7 @@ export async function markEaten(ctx: Ctx, p: CommandPayload<"markEaten">): Promi
   return undefined;
 }
 
-// ---------- importHousehold (§13): M4
-
-export async function importHousehold(): Promise<Outcome> {
-  throw new CommandError("Importing household data arrives with M4");
-}
+// ---------- importHousehold (§13) runs outside the transaction: see ../importHousehold.ts
 
 export async function runHandler(ctx: Ctx, c: AnyCommand): Promise<Outcome> {
   switch (c.type) {
@@ -550,6 +546,6 @@ export async function runHandler(ctx: Ctx, c: AnyCommand): Promise<Outcome> {
     case "markEaten":
       return markEaten(ctx, c.payload);
     case "importHousehold":
-      return importHousehold();
+      throw new CommandError("importHousehold isn't applied in a transaction");
   }
 }

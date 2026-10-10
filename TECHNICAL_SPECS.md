@@ -100,6 +100,10 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Hosting transfer | 360 MB / day | < 50 MB / day | 7× |
 | Cloud Scheduler | 3 jobs / **billing account** | 1 (weekly maintenance: price refresh + trash purge) | 2 spare |
 | Command trigger (`commands`, M3) | counted in the 2M above | one per supply change, cook, review, eaten: ~20–60 / day per household; each runs one transaction (~5–30 reads, ~5–40 writes) | — |
+| Empty-household cleanup (`householdCleanup`, M4) | counted in the 2M above | one per member removal or leave: < 20 / month. Only an emptied household does work: a recursive delete of its documents (one write each; a year-old household is ~5,000) | — |
+| Household import (`importHousehold` command, M4) | in the 20,000 writes / day | one delete per existing household document plus one write per imported document: a year-old household is ~5,000 + ~5,000 writes, a quarter of a day's free writes. Rare (manual, Settings → Data). An import of a household with more than ~9,000 documents should be split over two days (logged as `importHousehold` with `writes` / `deletes`) | ~2× at the worst |
+| Household download (M4) | in the 50,000 reads / day | one read per document (the page shows the estimate first, from count queries: one read per 1,000 entries); a year-old household is ~5,000 reads. Rare | 10× |
+| Commands function memory (M4) | Cloud Run 360k GiB-s / month | raised to 512 MiB / 300 s for imports; other commands still finish in ~1 s: ~60 / day × 0.5 GiB-s ≈ 1,000 GiB-s / month | 300× |
 | Timer callables (`scheduleTimer`, `cancelTimer`, M3) | counted in the 2M above | one per timer start, pause, adjust, cancel: < 3,000 / month | — |
 | Cloud Tasks (queue `timers`, created by the `timers` task function's deploy, M3) | 1M operations / month | < 2,000 (cooking timers: enqueue + delete) | 500× |
 | Cloud Messaging (web push) | free | < 2,000 pushes / month | — |

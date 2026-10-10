@@ -12,7 +12,8 @@
 
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { z } from "zod";
-import { cooklangFilename } from "./cooklang";
+import { cooklangFilename, recipeToCooklang } from "./cooklang";
+import type { RecipeContent } from "./recipe";
 import { ratingId, statsId } from "./commands";
 
 export const EXPORT_SCHEMA = "solving-food/household";
@@ -452,4 +453,61 @@ export function matchRecipe(
   const fp = r.fingerprint ? byFingerprint(r.fingerprint) : undefined;
   if (fp) return { kind: "fingerprint", id: fp };
   return { kind: "create" };
+}
+
+// ---------- gathering (the browser's Download, and the functions tests)
+
+type RawDoc = { id: string; data: Record<string, unknown> };
+
+/** How `gatherExport` reads: the web app backs it with the Firestore SDK, tests with the Admin SDK. */
+export interface ExportReader {
+  household(): Promise<Record<string, unknown> | null>;
+  /** All documents of `households/{hid}/{collection}`. */
+  list(collection: ExportCollection | "supply"): Promise<RawDoc[]>;
+  /** All documents of `households/{hid}/supply/{supplyId}/transactions`. */
+  transactions(supplyId: string): Promise<RawDoc[]>;
+  recipe(id: string): Promise<Record<string, unknown> | null>;
+  meal(id: string): Promise<Record<string, unknown> | null>;
+}
+
+export type ExportProgress = (step: string, done: number, total: number) => void;
+
+/** Reads everything an export holds (§13), in order, reporting progress. */
+export async function gatherExport(hid: string, reader: ExportReader, nowMs: number, progress: ExportProgress = () => undefined): Promise<ExportInput> {
+  const hh = await reader.household();
+  if (!hh) throw new ExportError("That household can't be read.");
+  const steps = EXPORT_COLLECTIONS.length + 3;
+  let step = 0;
+  const collections: ExportInput["collections"] = {};
+  for (const c of EXPORT_COLLECTIONS) {
+    progress(c, step++, steps);
+    collections[c] = await reader.list(c);
+  }
+  progress("supply", step++, steps);
+  const supplyDocs = await reader.list("supply");
+  const supply: ExportInput["supply"] = [];
+  for (const [i, s] of supplyDocs.entries()) {
+    progress(`supply history ${i + 1}/${supplyDocs.length}`, step, steps);
+    supply.push({ ...s, transactions: await reader.transactions(s.id) });
+  }
+  step++;
+  progress("recipes", step++, steps);
+  const { recipeIds, mealIds } = referencedIds(collections);
+  const meals: ExportMeal[] = [];
+  for (const id of mealIds) {
+    const m = await reader.meal(id);
+    if (!m) continue;
+    const parsed = exportMealSchema.safeParse({ id, name: m.name, recipes: m.recipes });
+    if (!parsed.success) continue;
+    meals.push(parsed.data);
+    for (const r of parsed.data.recipes) recipeIds.add(r.recipeId);
+  }
+  const recipes: ExportInput["recipes"] = [];
+  for (const id of recipeIds) {
+    const r = await reader.recipe(id);
+    if (!r || typeof r.title !== "string") continue;
+    recipes.push({ id, title: r.title, fingerprint: typeof r.fingerprint === "string" ? r.fingerprint : null, cook: recipeToCooklang(r as unknown as RecipeContent) });
+  }
+  progress("zip", step, steps);
+  return { household: { id: hid, data: hh }, collections, supply, recipes, meals, nowMs };
 }

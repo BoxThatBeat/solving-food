@@ -7,6 +7,7 @@ import { db } from "../admin";
 import { notify } from "../notify";
 import { runHandler, type Ctx } from "./handlers";
 import { CommandError, SupplyStore } from "./store";
+import { runImport } from "../importHousehold";
 
 export { CommandError } from "./store";
 
@@ -55,6 +56,12 @@ export async function applyCommand(hid: string, cmdId: string, nowMs = Date.now(
     cmd = parseCommand(data as { type: unknown; payload: unknown });
   } catch (e) {
     return fail(zodMessage(e));
+  }
+
+  // An import replaces the whole household: it runs outside the single command transaction (§13).
+  if (cmd.type === "importHousehold") {
+    const r = await runImport(hid, cmdId, uid, cmd.payload.path);
+    return { status: r.status, ...(r.error ? { error: r.error } : {}), ...(r.result ? { result: r.result } : {}) };
   }
 
   // A review written offline can reach the server together with (or before) its finishCooking: apply that first.

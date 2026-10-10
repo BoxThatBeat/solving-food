@@ -13,6 +13,7 @@ import { conversionChanged, recomputeRecipesUsing } from "./recipes";
 import { DROP_PREFIX, handleDropObject } from "./dropFolder";
 import { runMaintenance } from "./maintenance";
 import { applyCommand } from "./commands";
+import { cleanupIfEmpty } from "./households";
 import { cancelTimer as cancelTimerLogic, fireTimer, scheduleTimer as scheduleTimerLogic, type TimerTask } from "./timers";
 
 // Keep every function small and cheap: free tier is a hard requirement (PRD NFR2).
@@ -59,10 +60,19 @@ export const maintenance = onSchedule({ schedule: "every monday 04:00", timeZone
   logger.info("maintenance", report);
 });
 
-/** Supply commands (§6): every supply change, cook event, rating, and stat goes through here. */
-export const commands = onDocumentCreated({ document: "households/{hid}/commands/{id}", retry: false }, async (event) => {
+/**
+ * Supply commands (§6): every supply change, cook event, rating, and stat goes through here. 512 MiB and 5 minutes
+ * for importHousehold (§13), which unzips an export and rewrites the household; other commands take about a second.
+ */
+export const commands = onDocumentCreated({ document: "households/{hid}/commands/{id}", retry: false, memory: "512MiB", timeoutSeconds: 300 }, async (event) => {
   const r = await applyCommand(event.params.hid, event.params.id);
   logger.info("command", { hid: event.params.hid, id: event.params.id, ...r });
+});
+
+/** Empty-household cleanup (§10, R2.13): the last member leaving deletes the household and all of its data. */
+export const householdCleanup = onDocumentDeleted({ document: "households/{hid}/members/{uid}", timeoutSeconds: 300 }, async (event) => {
+  const r = await cleanupIfEmpty(event.params.hid);
+  if (r.status !== "kept") logger.info("household cleanup", { hid: event.params.hid, ...r });
 });
 
 function timerUid(auth: { uid: string; token: { email_verified?: boolean } } | undefined): string {

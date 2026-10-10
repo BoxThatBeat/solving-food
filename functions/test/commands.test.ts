@@ -275,10 +275,4 @@ describe("cooking, review, leftovers, eaten", () => {
     expect((await supply("rice"))!.canonicalAmount).toBe(before - 300);
     expect((await db.doc(`households/${HID}/cookEvents/ev-off`).get()).data()!.reviewStatus).toBe("done");
   });
-
-  it("importHousehold is a placeholder until M4", async () => {
-    const r = await command("importHousehold", { path: "imports/x.zip" });
-    expect(r.status).toBe("failed");
-    expect(r.error).toMatch(/M4/);
-  });
 });

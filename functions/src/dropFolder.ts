@@ -129,7 +129,8 @@ export async function handleDropObject(objectName: string, generation: string | 
   return outcome;
 }
 
-async function importCook(uid: string, fileName: string, text: string, opts: DropOptions): Promise<DropOutcome> {
+/** Parses a .cook file into recipe content: unknown ingredients are created (needsReview) on the way (M1 pipeline). */
+export async function prepareCookRecipe(uid: string, text: string) {
   const ing = await ingredientData();
   const result = cooklangToRecipe(text, { resolve: (n) => resolveIngredientName(n, ing.index) });
   const warnings = [...result.warnings];
@@ -154,10 +155,42 @@ async function importCook(uid: string, fileName: string, text: string, opts: Dro
 
   const content = result.content;
   const derived = deriveRecipe(content, lookupOf(lookupMap));
+  return { content, derived, warnings, frontMatter: result.frontMatter };
+}
+
+/**
+ * Recreates a recipe from an export's .cook file under its original ID (household import, §13): active, version 1,
+ * no duplicate review (the export says this household used it) and no image (the export carries none).
+ */
+export async function createRecipeFromCook(uid: string, id: string, text: string): Promise<{ title: string; warnings: string[] }> {
+  const { content, derived, warnings } = await prepareCookRecipe(uid, text);
+  content.imagePaths = [];
+  const recipe: Record<string, unknown> = {
+    ...content,
+    ...derived,
+    status: "active",
+    createdBy: uid,
+    updatedBy: uid,
+    version: 1,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+  const batch = db.batch();
+  const ref = db.collection("recipes").doc(id);
+  batch.set(ref, recipe);
+  batch.set(ref.collection("versions").doc("1"), { ...recipe, editedBy: uid, editedAt: FieldValue.serverTimestamp() });
+  await batch.commit();
+  return { title: content.title, warnings };
+}
+
+async function importCook(uid: string, fileName: string, text: string, opts: DropOptions): Promise<DropOutcome> {
+  const prepared = await prepareCookRecipe(uid, text);
+  const { content, derived } = prepared;
+  const warnings = prepared.warnings;
   const id = db.collection("recipes").doc().id;
 
   // Image: URL → download; relative path → a file uploaded next to the .cook.
-  const image = result.frontMatter.image;
+  const image = prepared.frontMatter.image;
   if (image) {
     try {
       let data: Buffer | null = null;
