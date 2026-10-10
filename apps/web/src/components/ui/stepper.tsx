@@ -12,6 +12,8 @@ export function Stepper({
   label,
   labelledBy,
   className,
+  decLabel,
+  incLabel,
 }: {
   value: number;
   onChange: (v: number) => void;
@@ -23,6 +25,9 @@ export function Stepper({
   label: string;
   labelledBy?: string;
   className?: string;
+  /** Button names; default "Decrease <label>" / "Increase <label>". */
+  decLabel?: string;
+  incLabel?: string;
 }) {
   const lower = label.toLowerCase();
   const clamp = (v: number) => Math.min(max, Math.max(min, Math.round(v * 1000) / 1000));
@@ -30,7 +35,7 @@ export function Stepper({
     <div role="group" aria-label={labelledBy ? undefined : label} aria-labelledby={labelledBy} className={cn("flex flex-none overflow-hidden rounded-ui border-2 border-line bg-base", className)}>
       <button
         type="button"
-        aria-label={`Less ${lower}`}
+        aria-label={decLabel ?? `Decrease ${lower}`}
         disabled={value <= min}
         onClick={() => onChange(clamp(value - step))}
         className="grid size-11 cursor-pointer place-items-center bg-pg text-ink disabled:cursor-not-allowed disabled:opacity-40"
@@ -42,7 +47,7 @@ export function Stepper({
       </output>
       <button
         type="button"
-        aria-label={`More ${lower}`}
+        aria-label={incLabel ?? `Increase ${lower}`}
         disabled={value >= max}
         onClick={() => onChange(clamp(value + step))}
         className="grid size-11 cursor-pointer place-items-center bg-pg text-ink disabled:cursor-not-allowed disabled:opacity-40"

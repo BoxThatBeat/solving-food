@@ -228,7 +228,7 @@ function PlanItemBody({ v, hid, uid, recipes, plannedMealTypes, close }: { v: Pl
         <span id="pi-servings" className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">
           SERVINGS
         </span>
-        <Stepper label="Servings" labelledBy="pi-servings" value={servings} min={1} max={SERVINGS_MAX} onChange={setServings} />
+        <Stepper label="Servings" decLabel="Fewer servings" incLabel="More servings" labelledBy="pi-servings" value={servings} min={1} max={SERVINGS_MAX} onChange={setServings} />
       </div>
       {it.savedMealId ? (
         <p className="m-0 text-[0.8125rem] font-semibold">

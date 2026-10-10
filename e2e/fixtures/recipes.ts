@@ -85,6 +85,11 @@ async function ingredientMap(): Promise<Map<string, IngredientDoc>> {
   return ingredientCache;
 }
 
+/** Drops the cached ingredient list (after a spec creates an ingredient of its own). */
+export function forgetIngredients(): void {
+  ingredientCache = null;
+}
+
 /** Recipe content from Cooklang text, with overrides (no image, no source URL unless given). */
 export async function contentFromCook(text: string, overrides: Partial<RecipeContent> = {}): Promise<RecipeContent> {
   const map = await ingredientMap();

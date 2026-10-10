@@ -103,7 +103,7 @@ function HouseholdForm({ hid, household }: { hid: string; household: HouseholdDo
             </span>
             <span className="font-mono text-[0.625rem] font-bold text-sub uppercase">Recipes are planned for this many</span>
           </span>
-          <Stepper label="Default servings" labelledBy="hs-servings" value={form.defaultServings} min={1} max={SERVINGS_MAX} onChange={(v) => setForm((f) => ({ ...f, defaultServings: v }))} />
+          <Stepper label="Default servings" decLabel="Fewer servings" incLabel="More servings" labelledBy="hs-servings" value={form.defaultServings} min={1} max={SERVINGS_MAX} onChange={(v) => setForm((f) => ({ ...f, defaultServings: v }))} />
         </div>
       </Card>
 

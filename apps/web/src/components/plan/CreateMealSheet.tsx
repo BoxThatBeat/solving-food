@@ -357,7 +357,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
           </span>
           <span className="text-[0.75rem] font-semibold text-sub">Each recipe is scaled to this</span>
         </span>
-        <Stepper label="Servings" labelledBy="cm-servings" value={effectiveServings} min={1} max={SERVINGS_MAX} onChange={setServings} />
+        <Stepper label="Servings" decLabel="Fewer servings" incLabel="More servings" labelledBy="cm-servings" value={effectiveServings} min={1} max={SERVINGS_MAX} onChange={setServings} />
       </div>
 
       {canName ? (
