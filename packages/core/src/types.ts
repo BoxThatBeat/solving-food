@@ -506,7 +506,8 @@ export const commandSchema = z.object({
   payload: z.record(z.string(), z.unknown()),
   uid: z.string(),
   createdAt: timestamp,
-  status: z.enum(["pending", "applied", "failed"]),
+  /** `running`: an importHousehold the function has claimed (it runs outside a single transaction, §13). */
+  status: z.enum(["pending", "running", "applied", "failed"]),
   error: z.string().optional(),
   appliedAt: timestamp.optional(),
   /** A no-op outcome worth showing ("already cooked"). */

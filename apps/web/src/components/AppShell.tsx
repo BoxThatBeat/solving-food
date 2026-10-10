@@ -10,6 +10,10 @@ import type { MemberDoc } from "@solving-food/core";
 import { db } from "@/firebase/app";
 import { useLiveQuery } from "@/data/live";
 import { useActiveHousehold } from "@/data/households";
+import { InviteBanner } from "./households/Invites";
+import { consumeSelfLeft } from "./households/removal";
+import { useNotify } from "./notifications-context";
+import { isPublicPath } from "@/session/publicPaths";
 import { useReadySession, useSession } from "@/session/useSession";
 import { useOnline } from "@/hooks/useOnline";
 import { cn } from "@/lib/utils";
@@ -329,11 +333,35 @@ function PublicShell({ children }: { children: React.ReactNode }) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const session = useSession();
-  if (session.status !== "ready") return <PublicShell>{children}</PublicShell>;
+  const pathname = usePathname();
+  if (session.status !== "ready") {
+    // Left or removed from the last household (or signed out elsewhere): the route guard is about to redirect; pages
+    // inside the shell need a ready session, so render nothing meanwhile.
+    if (!isPublicPath(pathname)) return null;
+    return <PublicShell>{children}</PublicShell>;
+  }
   return <ReadyShell uid={session.user.uid}>{children}</ReadyShell>;
 }
 
+/** "You're no longer in X": the active household dropped out of my memberships (removed by someone, R2.5). */
+function RemovalNotice() {
+  const s = useReadySession();
+  const hh = useActiveHousehold();
+  const notify = useNotify();
+  const prev = React.useRef<{ id: string; name: string } | null>(null);
+  React.useEffect(() => {
+    const p = prev.current;
+    if (p && p.id !== s.activeHouseholdId && !s.householdIds.includes(p.id) && !consumeSelfLeft(p.id)) {
+      notify({ kind: "info", message: p.name ? `You're no longer a member of ${p.name}.` : "You're no longer a member of that household." });
+    }
+    prev.current = { id: s.activeHouseholdId, name: hh.data?.name ?? (p?.id === s.activeHouseholdId ? p.name : "") };
+  }, [s.activeHouseholdId, s.householdIds, hh.data?.name, notify]);
+  return null;
+}
+
 function ReadyShell({ children, uid }: { children: React.ReactNode; uid: string }) {
+  const s = useReadySession();
+  const pathname = usePathname();
   return (
     <PlanSheetProvider>
     <div className="flex min-h-dvh bg-pg text-ink">
@@ -343,12 +371,14 @@ function ReadyShell({ children, uid }: { children: React.ReactNode; uid: string 
         <div className="md:hidden">
           <PhoneHeader />
         </div>
+        {pathname === "/settings" ? null : <InviteBanner me={{ uid: s.user.uid, email: s.user.email, displayName: s.displayName }} householdIds={s.householdIds} />}
         <main id="main" className="min-w-0 flex-1">
           {children}
         </main>
         <TabBar />
       </div>
       <NotificationFeed uid={uid} />
+      <RemovalNotice />
       <NotificationBanners className="bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-7" />
     </div>
     </PlanSheetProvider>

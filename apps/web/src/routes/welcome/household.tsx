@@ -1,22 +1,23 @@
 import * as React from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { collection, doc, increment, serverTimestamp, Timestamp, writeBatch } from "firebase/firestore";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { signOut } from "firebase/auth";
 import { Minus, Plus } from "lucide-react";
 import {
   CURRENCY,
   DEFAULT_BUDGET_CENTS,
   DEFAULT_PERIOD_DAYS,
+  MAX_HOUSEHOLDS_CREATED,
   PLANNABLE_MEAL_TYPES,
   SERVINGS_MAX,
-  buildNewHousehold,
+  canCreateHousehold,
   defaultHouseholdInput,
-  DEFAULT_STORES,
-  firstPeriod,
   newHouseholdInputSchema,
   type NewHouseholdInput,
   type PlannableMealType,
 } from "@solving-food/core";
-import { db } from "@/firebase/app";
+import { auth } from "@/firebase/app";
+import { createHousehold, HouseholdActionError, useMyInvites } from "@/data/households";
+import { InviteList } from "@/components/households/Invites";
 import { AuthLayout, FieldError } from "@/components/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -25,8 +26,9 @@ import { Label } from "@/components/ui/label";
 import { requireStatus } from "@/session/guards";
 import { cn } from "@/lib/utils";
 
+// First run (no household yet: join by invite or create one) and, from the household sheet, another household (R2.2).
 export const Route = createFileRoute("/welcome/household")({
-  beforeLoad: ({ context }) => requireStatus(context.session, ["needsHousehold"]),
+  beforeLoad: ({ context }) => requireStatus(context.session, ["needsHousehold", "ready"]),
   component: CreateHouseholdPage,
 });
 
@@ -50,10 +52,16 @@ function timezoneOptions(selected: string): string[] {
   return zones.includes(selected) ? zones : [selected, ...zones];
 }
 
-// First household (Planning/M0 §5, M2 §1/§5): one batch writes households/{hid}, members/{uid}, the first period, the
-// default stores, and bumps users/{uid}.householdsCreated; the rules check the counter (R2.3) and the creator's member doc.
+// One batch writes households/{hid}, members/{uid}, the first period, the default stores, and bumps
+// users/{uid}.householdsCreated; the rules check the counter (R2.3) and the creator's member doc (data/households.ts).
 function CreateHouseholdPage() {
-  const { user, displayName } = Route.useRouteContext();
+  const ctx = Route.useRouteContext();
+  const { user, displayName, profile } = ctx;
+  const ready = ctx.status === "ready";
+  const memberOf = React.useMemo(() => (ctx.status === "ready" ? ctx.householdIds : []), [ctx]);
+  const invites = useMyInvites(user.uid, user.email, memberOf);
+  const navigate = useNavigate();
+  const atLimit = !canCreateHousehold(profile.householdsCreated);
   const [form, setForm] = React.useState<NewHouseholdInput>(() => defaultHouseholdInput(detectTimezone()));
   const [error, setError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
@@ -75,32 +83,50 @@ function CreateHouseholdPage() {
     setError(null);
     setBusy(true);
     try {
-      const { household, member } = buildNewHousehold(parsed.data, { uid: user.uid, displayName });
-      const hRef = doc(collection(db, "households"));
-      const batch = writeBatch(db);
-      // The first plan period starts today (Planning/M2 §1) and the default stores exist from the start (§5).
-      const p = firstPeriod(Date.now(), household.periodDays, household.timezone);
-      batch.set(hRef, { ...household, currentPeriodId: p.id, createdAt: serverTimestamp() });
-      batch.set(doc(hRef, "members", user.uid), { ...member, joinedAt: serverTimestamp() });
-      batch.update(doc(db, "users", user.uid), { householdsCreated: increment(1), activeHouseholdId: hRef.id });
-      batch.set(doc(hRef, "periods", p.id), { start: Timestamp.fromMillis(p.startMs), end: Timestamp.fromMillis(p.endMs), budgetCents: household.budgetCents });
-      for (const st of DEFAULT_STORES) batch.set(doc(hRef, "stores", st.id), { name: st.name, kind: st.kind, bulk: st.bulk });
-      await batch.commit();
-      // The membership listener flips the session to ready; the router lands on Recipes.
+      await createHousehold(parsed.data, { uid: user.uid, displayName });
+      // First run: the membership listener flips the session to ready and the router lands on Recipes. Another
+      // household: it's now the active one; start from its (empty) landing page.
+      if (ready) await navigate({ to: "/" });
     } catch (err) {
       console.error(err);
-      setError("Couldn't create the household. Check your connection and try again.");
+      setError(err instanceof HouseholdActionError ? err.message : "Couldn't create the household. Check your connection and try again.");
       setBusy(false);
     }
   }
 
+  const hasInvites = !!invites?.length;
   return (
     <AuthLayout>
+      {hasInvites ? (
+        <Card className="gap-4 p-4">
+          <div className="flex flex-col gap-1">
+            <span className="kicker">{ready ? "Invites" : `Welcome, ${displayName}`}</span>
+            <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">{ready ? "You're invited" : "Join a household"}</h1>
+          </div>
+          <InviteList invites={invites!} me={{ uid: user.uid, email: user.email, displayName }} onJoined={() => (ready ? void navigate({ to: "/" }) : undefined)} />
+        </Card>
+      ) : null}
       <Card className="gap-4 p-4">
         <div className="flex flex-col gap-1">
-          <span className="kicker">Welcome, {displayName} · step 2 of 2</span>
-          <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">Create your household</h1>
+          <span className="kicker">
+            {ready
+              ? `New household · ${profile.householdsCreated} of ${MAX_HOUSEHOLDS_CREATED} created`
+              : hasInvites
+                ? "Or start your own"
+                : `Welcome, ${displayName} · step 2 of 2`}
+          </span>
+          {ready || hasInvites ? (
+            <h2 className="m-0 font-display text-[1.75rem] leading-[0.95] font-normal">{ready ? "Create a household" : "Create your household"}</h2>
+          ) : (
+            <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">Create your household</h1>
+          )}
         </div>
+        {atLimit ? (
+          <p role="note" className="m-0 rounded-ui border-2 border-line bg-peach-soft p-3 text-[0.8125rem] font-semibold">
+            You&apos;ve created {profile.householdsCreated} of {MAX_HOUSEHOLDS_CREATED} households, the most anyone can. One you
+            created stops counting when it&apos;s deleted (its last member leaves).
+          </p>
+        ) : null}
         <form className="flex flex-col gap-4" onSubmit={submit} noValidate>
           <div className="flex flex-col gap-2">
             <Label htmlFor="hh-name">Household name</Label>
@@ -176,10 +202,22 @@ function CreateHouseholdPage() {
             SETTINGS
           </p>
           <FieldError id="hh-error">{error}</FieldError>
-          <Button type="submit" size="lg" disabled={busy}>
+          <Button type="submit" size="lg" disabled={busy || atLimit}>
             {busy ? "Creating…" : "Create household"}
           </Button>
         </form>
+        {ready ? (
+          <Link to="/" className="self-center text-sm font-extrabold text-ink">
+            Cancel
+          </Link>
+        ) : (
+          <p className="m-0 font-mono text-[0.6875rem] font-semibold text-sub">
+            SIGNED IN AS {user.email.toUpperCase()} ·{" "}
+            <button type="button" className="cursor-pointer bg-transparent p-0 font-mono font-bold text-ink underline" onClick={() => void signOut(auth)}>
+              SIGN OUT
+            </button>
+          </p>
+        )}
       </Card>
     </AuthLayout>
   );

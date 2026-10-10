@@ -4,7 +4,8 @@ import { auth } from "@/firebase/app";
 import { PageBody, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
-import { useActiveHousehold } from "@/data/households";
+import { useActiveHousehold, useMyInvites } from "@/data/households";
+import { InviteList } from "@/components/households/Invites";
 import { useReadySession } from "@/session/useSession";
 
 export const Route = createFileRoute("/_app/settings/")({
@@ -28,6 +29,7 @@ function SettingsPage() {
   const hh = useActiveHousehold();
   const navigate = useNavigate();
   const name = hh.data?.name ?? "";
+  const invites = useMyInvites(s.user.uid, s.user.email, s.householdIds);
   return (
     <PageBody>
       <PageHeader title="Settings" kicker={`Household · ${name} · theme is per user`} />
@@ -49,6 +51,15 @@ function SettingsPage() {
             </Link>
           ))}
         </nav>
+        <div className="flex flex-col gap-4">
+        <Card>
+          <CardTitle>Invites</CardTitle>
+          {invites?.length ? (
+            <InviteList invites={invites} me={{ uid: s.user.uid, email: s.user.email, displayName: s.displayName }} />
+          ) : (
+            <p className="m-0 text-[0.8125rem] font-semibold text-sub">{invites ? "No open invites." : "Loading…"}</p>
+          )}
+        </Card>
         <Card>
           <CardTitle>Account</CardTitle>
           <span className="font-mono text-[0.6875rem] leading-snug font-semibold text-sub uppercase">
@@ -65,6 +76,7 @@ function SettingsPage() {
             Sign out
           </Button>
         </Card>
+        </div>
       </div>
     </PageBody>
   );
