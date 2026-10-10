@@ -86,8 +86,7 @@ free) for Firestore and Storage.
 
 ## Open items
 
-- **$1/month budget alert**: not verifiable from the CLI (Budget API disabled on the billing project). Confirm in
-  Google Cloud console → Billing → Budgets & alerts.
+- ~~$1/month budget alert~~ confirmed by the owner 2026-10-09 (not verifiable from the CLI; Budget API disabled on the billing project).
 - ~~VAPID key~~ recorded above, 2026-10-09.
 - **GitHub deploy**: `firebase init hosting:github` was run 2026-10-09. Repo secret `FIREBASE_SERVICE_ACCOUNT_SOLVINGFOOD`
   exists; the two generated workflows in `.github/workflows/` are to be merged into the M0 CI design.
