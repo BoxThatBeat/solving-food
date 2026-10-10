@@ -82,7 +82,7 @@ export const UNASSIGNED_STORE = "unassigned";
 const EPS = 1e-9;
 
 /** Canonical requirements of the planned items, free-use, optional, and vague lines excluded (R8.14). */
-export function needsFor(items: readonly PlanItemInput[], ctx: Pick<BuildContext, "recipes" | "ingredients">): Map<string, number> {
+export function needsFor(items: readonly PlanItemInput[], ctx: { recipes: BuildContext["recipes"]; ingredients: (id: string) => Pick<GroceryIngredient, "freeUse"> | undefined }): Map<string, number> {
   const needs = new Map<string, number>();
   for (const it of items) {
     if (it.status !== "planned") continue;

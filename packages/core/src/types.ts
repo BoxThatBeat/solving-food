@@ -362,16 +362,34 @@ export const planItemSchema = z.object({
 });
 export type PlanItemDoc = z.infer<typeof planItemSchema>;
 
+const usedLine = z.object({ ingredientId: id, canonicalAmount: z.number() });
 export const cookEventSchema = z.object({
   planItemId: id.optional(),
+  periodId: id.optional(),
+  savedMealId: id.optional(),
+  /** The meal's name or recipe titles joined, kept so history survives deletions. */
+  title: z.string().optional(),
   recipeIds: z.array(id),
   titles: z.array(z.string()),
+  mealType: z.enum(MEAL_TYPES).optional(),
+  servings: z.number().positive().optional(),
   cookedBy: z.string(),
   cookedAt: timestamp,
-  used: z.array(z.object({ ingredientId: id, canonicalAmount: z.number() })),
+  /** The recipe defaults at the planned servings (what the review pre-fills); after a review, the confirmed amounts. */
+  used: z.array(usedLine),
+  /** The recipe defaults as cooked, kept for "deviations from the recipe" (R10.1). */
+  defaults: z.array(usedLine).optional(),
+  /** What the ledger actually took per ingredient (less than `used` when supply ran short). */
+  deducted: z.array(usedLine).optional(),
+  /** Per-lot takes, so a review that used less puts it back where it came from. */
+  takes: z.array(z.object({ ingredientId: id, lotId: id, amount: z.number() })).optional(),
   leftoverPortions: nonNegInt,
+  leftoverSupplyId: id.optional(),
+  leftoverPlanItemIds: z.array(id).optional(),
   reviewStatus: z.enum(["pending", "done"]),
+  reviewedBy: z.string().optional(),
   ratedBy: z.array(z.string()),
+  note: z.string().optional(),
 });
 export type CookEventDoc = z.infer<typeof cookEventSchema>;
 
@@ -381,6 +399,7 @@ export const ratingSchema = z.object({
   targetType: z.enum(["recipe", "meal"]),
   targetId: id,
   score: z.number().int().min(1).max(10),
+  createdAt: timestamp.optional(),
 });
 export type RatingDoc = z.infer<typeof ratingSchema>;
 
@@ -408,6 +427,9 @@ export const groceryItemSchema = z.object({
   source: z.enum(["plan", "manual", "cadence"]),
   checked: z.boolean(),
   checkedBy: z.string().optional(),
+  /** Set by receiveGroceries: canonical amount that arrived (0 = didn't arrive) and the ingredient actually bought. */
+  receivedAmount: z.number().min(0).optional(),
+  receivedIngredientId: id.optional(),
 });
 export type GroceryItem = z.infer<typeof groceryItemSchema>;
 
@@ -419,6 +441,9 @@ export const groceryListSchema = z.object({
   orderedAt: timestamp.optional(),
   orderedBy: z.string().optional(),
   receivedAt: timestamp.optional(),
+  receivedBy: z.string().optional(),
+  /** Σ estimated cost of what arrived (prices at the time): the period's spend (R10.3). */
+  receivedCents: z.number().int().min(0).optional(),
   items: z.record(z.string(), groceryItemSchema),
 });
 export type GroceryListDoc = z.infer<typeof groceryListSchema>;
@@ -440,7 +465,13 @@ export const supplySchema = z.object({
   canonicalAmount: z.number().min(0),
   canonicalUnit: z.enum(["g", "count"]),
   lots: z.array(lotSchema),
-  nextExpiry: timestamp.optional(),
+  nextExpiry: timestamp.nullable().optional(),
+  /** Leftover batches: the cook event they came from and the meal type they fill. */
+  cookEventId: id.optional(),
+  leftoverMealType: z.enum(MEAL_TYPES).optional(),
+  /** Set when a consumption found less than it needed ("check the amount"); cleared by a correction or purchase. */
+  shortAt: timestamp.nullable().optional(),
+  updatedAt: timestamp.optional(),
 });
 export type SupplyDoc = z.infer<typeof supplySchema>;
 
@@ -461,6 +492,7 @@ export const transactionSchema = z.object({
   kind: z.enum(TRANSACTION_KINDS),
   lotId: id,
   ref: z.object({ type: z.string(), id: id }).optional(),
+  commandId: id.optional(),
   uid: z.string(),
   note: z.string().optional(),
   createdAt: timestamp,
@@ -474,12 +506,17 @@ export const commandSchema = z.object({
   createdAt: timestamp,
   status: z.enum(["pending", "applied", "failed"]),
   error: z.string().optional(),
+  appliedAt: timestamp.optional(),
+  /** A no-op outcome worth showing ("already cooked"). */
+  result: z.string().optional(),
 });
 export type CommandDoc = z.infer<typeof commandSchema>;
 
 export const cadenceSchema = z.object({
-  avgIntervalDays: z.number().positive(),
+  /** EMA of purchase gaps; null until bought twice (the client uses the seed's defaultCadenceDays). */
+  avgIntervalDays: z.number().positive().nullable(),
   lastPurchasedAt: timestamp,
+  purchaseCount: nonNegInt.optional(),
   snoozedUntil: timestamp.optional(),
 });
 export type CadenceDoc = z.infer<typeof cadenceSchema>;
