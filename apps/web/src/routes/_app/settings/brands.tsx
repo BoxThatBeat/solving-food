@@ -108,7 +108,9 @@ function MappingForm({
   const measures: Measure[] = ingredient?.allowedMeasures ? (enterableMeasures(ingredient).length ? enterableMeasures(ingredient) : ingredient.allowedMeasures) : ["weight", "volume", "count"];
   const [measure, setMeasure] = React.useState<Measure>(initial?.m?.packMeasure ?? measures[0] ?? "weight");
   const m = measures.includes(measure) ? measure : (measures[0] ?? "weight");
-  const [storeId, setStoreId] = React.useState(initial?.m?.storeId ?? defaultStoreId ?? stores[0]?.id ?? "");
+  const [chosenStore, setStoreId] = React.useState(initial?.m?.storeId ?? "");
+  // Stores arrive with a listener: fall back to the default store (or the first) until one is chosen.
+  const storeId = chosenStore || (defaultStoreId && stores.some((x) => x.id === defaultStoreId) ? defaultStoreId : (stores[0]?.id ?? ""));
   const [error, setError] = React.useState<string | null>(null);
   const n = Number(amount);
 

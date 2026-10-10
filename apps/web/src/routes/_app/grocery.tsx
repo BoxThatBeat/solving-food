@@ -321,10 +321,13 @@ function AddItem({ stores, defaultStoreId, onAdd }: { stores: readonly StoreEntr
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!picked && !text.trim()) return;
-    await onAdd({ ...(picked ? { ingredientId: picked.id } : { freeText: text.trim() }), packs, ...(storeId ? { storeId } : {}) }, picked ?? undefined);
+    const input = { ...(picked ? { ingredientId: picked.id } : { freeText: text.trim() }), packs, ...(storeId ? { storeId } : {}) };
+    const ingredient = picked ?? undefined;
+    // Clear first: the write may resolve after the next item has been typed.
     setText("");
     setPicked(null);
     setPacks(1);
+    await onAdd(input, ingredient);
   };
   return (
     <form onSubmit={submit} className="flex max-w-[60rem] flex-col gap-2" aria-label="Add to the list">
