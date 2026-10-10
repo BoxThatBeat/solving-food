@@ -5,7 +5,10 @@ rules_version = '2';
 // M1: ingredients, recipes (+ versions), recipeIndex, households/*/favourites, notes, stats (read), and
 //     users/*/notifications.
 // M2: meals (saved meals, global), households/*/periods, planItems, stores, sourcingRules, brandMappings,
-//     groceryLists. Everything else is denied until the milestone that introduces it adds its rules.
+//     groceryLists.
+// M3: households/*/commands (create), and member reads of the function-only supply (+ transactions), cookEvents,
+//     ratings, stats, cadence; users/*/devices (web-push tokens) and users/*/timers (read). Everything else is
+//     denied until the milestone that introduces it adds its rules.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -288,6 +291,44 @@ service cloud.firestore {
         && request.resource.data.dismissedAt == request.time;
     }
 
+    // ---------- users/{uid}/devices (§11): web-push targets for timers; users/{uid}/timers: written by functions
+
+    match /users/{uid}/devices/{token} {
+      allow read, delete: if uid == me() && allowed();
+      allow create, update: if uid == me() && allowed()
+        && request.resource.data.keys().hasOnly(['platform', 'createdAt', 'lastSeenAt'])
+        && str(request.resource.data.platform, 1, 40)
+        && request.resource.data.lastSeenAt == request.time;
+    }
+    match /users/{uid}/timers/{timerId} {
+      allow read: if uid == me() && allowed();
+    }
+
+    // ---------- commands (§6): the only way clients change supply, cook events, ratings, stats, and cadence.
+    // The function validates the full payload with the shared zod schemas; rules check the envelope and the
+    // payload's keys per type.
+    function payloadKeys(t) {
+      return t == 'addSupply' ? ['ingredientId', 'amount', 'location', 'entered']
+        : t == 'receiveGroceries' ? ['listId', 'items']
+        : t == 'finishCooking' ? ['cookEventId', 'planItemId', 'savedMealId', 'recipes', 'servings', 'mealType', 'title']
+        : t == 'submitReview' ? ['cookEventId', 'ratings', 'used', 'leftoverPortions', 'savedMealId', 'note']
+        : t == 'correctSupply' ? ['supplyId', 'target', 'ingredientId', 'note']
+        : t in ['discard', 'freeze', 'thaw'] ? ['supplyId', 'lotId', 'amount']
+        : t == 'extendExpiry' ? ['supplyId', 'lotId', 'until']
+        : t == 'markEaten' ? ['planItemId']
+        : t == 'importHousehold' ? ['path']
+        : [];
+    }
+    function validCommand(d) {
+      return d.keys().hasOnly(['type', 'payload', 'uid', 'createdAt', 'status'])
+        && d.keys().hasAll(['type', 'payload', 'uid', 'createdAt', 'status'])
+        && d.type in ['addSupply', 'receiveGroceries', 'finishCooking', 'submitReview', 'correctSupply', 'discard',
+                      'extendExpiry', 'freeze', 'thaw', 'markEaten', 'importHousehold']
+        && d.payload is map && d.payload.keys().hasOnly(payloadKeys(d.type))
+        && d.status == 'pending'
+        && d.createdAt == request.time;
+    }
+
     function validPlanItem(d) {
       return d.keys().hasOnly(['periodId', 'kind', 'mealType', 'servings', 'recipes', 'savedMealId', 'name',
                                'leftoverSupplyId', 'sourcePlanItemId', 'coverage', 'status', 'carriedFromId', 'addedBy',
@@ -354,9 +395,27 @@ service cloud.firestore {
           && request.resource.data.updatedAt == request.time;
       }
 
-      // Cook stats: function-maintained (M3); members read them for filters and cards.
+      // Function-only collections (§4.2, §10): members read, only the command function writes.
       match /stats/{id} {
         allow read: if isMember(hid);
+      }
+      match /supply/{doc=**} {
+        allow read: if isMember(hid);
+      }
+      match /cookEvents/{id} {
+        allow read: if isMember(hid);
+      }
+      match /ratings/{id} {
+        allow read: if isMember(hid);
+      }
+      match /cadence/{id} {
+        allow read: if isMember(hid);
+      }
+
+      // Commands (§6): a member writes their own, pending, with a valid envelope; nobody edits or deletes them.
+      match /commands/{cid} {
+        allow read: if isMember(hid);
+        allow create: if isMember(hid) && request.resource.data.uid == me() && validCommand(request.resource.data);
       }
 
       // Periods (§7): ID = local start date; created at household creation and by the client's rollover
@@ -417,8 +476,10 @@ service cloud.firestore {
       // Grocery lists (§4.2, §8): the draft, and lists marked ordered by the Copy button (R7.5). Ticks are field
       // updates on the items map. "received" is set by the receiveGroceries command function (M3).
       match /groceryLists/{lid} {
-        allow read, delete: if isMember(hid);
-        allow create, update: if isMember(hid)
+        allow read: if isMember(hid);
+        // A received list is history (its cost is the period's spend, R10.3): no edits or deletes.
+        allow delete: if isMember(hid) && resource.data.status != 'received';
+        allow create, update: if isMember(hid) && (resource == null || resource.data.status != 'received')
           && request.resource.data.keys().hasOnly(['periodId', 'status', 'createdAt', 'orderedAt', 'orderedBy', 'items'])
           && request.resource.data.keys().hasAll(['periodId', 'status', 'createdAt', 'items'])
           && request.resource.data.status in ['draft', 'ordered']

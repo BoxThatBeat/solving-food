@@ -1,7 +1,8 @@
 // Cloud Functions for Firebase (2nd gen), region us-east1 (TECHNICAL_SPECS §1–2).
 import { setGlobalOptions } from "firebase-functions/v2";
-import { onRequest } from "firebase-functions/v2/https";
-import { onDocumentDeleted, onDocumentWritten } from "firebase-functions/v2/firestore";
+import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
+import { onTaskDispatched } from "firebase-functions/v2/tasks";
+import { onDocumentCreated, onDocumentDeleted, onDocumentWritten } from "firebase-functions/v2/firestore";
 import { onObjectFinalized } from "firebase-functions/v2/storage";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { logger } from "firebase-functions";
@@ -11,6 +12,8 @@ import { cleanupDeletedRecipe } from "./recipeCleanup";
 import { conversionChanged, recomputeRecipesUsing } from "./recipes";
 import { DROP_PREFIX, handleDropObject } from "./dropFolder";
 import { runMaintenance } from "./maintenance";
+import { applyCommand } from "./commands";
+import { cancelTimer as cancelTimerLogic, fireTimer, scheduleTimer as scheduleTimerLogic, type TimerTask } from "./timers";
 
 // Keep every function small and cheap: free tier is a hard requirement (PRD NFR2).
 setGlobalOptions({ region: REGION, maxInstances: 2, memory: "256MiB" });
@@ -54,4 +57,40 @@ export const dropFolder = onObjectFinalized({ bucket: STORAGE_BUCKET, memory: "5
 export const maintenance = onSchedule({ schedule: "every monday 04:00", timeZone: "America/Toronto", timeoutSeconds: 540 }, async () => {
   const report = await runMaintenance();
   logger.info("maintenance", report);
+});
+
+/** Supply commands (§6): every supply change, cook event, rating, and stat goes through here. */
+export const commands = onDocumentCreated({ document: "households/{hid}/commands/{id}", retry: false }, async (event) => {
+  const r = await applyCommand(event.params.hid, event.params.id);
+  logger.info("command", { hid: event.params.hid, id: event.params.id, ...r });
+});
+
+function timerUid(auth: { uid: string; token: { email_verified?: boolean } } | undefined): string {
+  if (!auth || auth.token.email_verified !== true) throw new HttpsError("unauthenticated", "Sign in first");
+  return auth.uid;
+}
+
+/** Cooking timers (§12): schedule or reschedule the push for a running timer. */
+export const scheduleTimer = onCall({ cors: true }, async (req) => {
+  const uid = timerUid(req.auth);
+  const d = (req.data ?? {}) as Record<string, unknown>;
+  try {
+    const taskId = await scheduleTimerLogic(uid, { timerId: String(d.timerId ?? ""), endsAt: Number(d.endsAt), label: String(d.label ?? "Timer"), title: d.title ? String(d.title) : undefined, link: String(d.link ?? "/") });
+    return { taskId };
+  } catch (e) {
+    throw new HttpsError("invalid-argument", (e as Error).message);
+  }
+});
+
+/** Pause or cancel a timer: its push won't fire. */
+export const cancelTimer = onCall({ cors: true }, async (req) => {
+  const uid = timerUid(req.auth);
+  await cancelTimerLogic(uid, String((req.data as { timerId?: unknown })?.timerId ?? ""));
+  return { ok: true };
+});
+
+/** The `timers` Cloud Tasks queue's handler: sends the push when a timer ends. */
+export const timers = onTaskDispatched({ retryConfig: { maxAttempts: 3, minBackoffSeconds: 10 }, rateLimits: { maxConcurrentDispatches: 6 } }, async (req) => {
+  const r = await fireTimer(req.data as TimerTask);
+  logger.info("timer", r);
 });

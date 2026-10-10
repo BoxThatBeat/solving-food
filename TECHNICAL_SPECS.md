@@ -99,7 +99,9 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Storage egress | 100 GB / month (N. America) | < 5 GB (images cached by the service worker) | 20× |
 | Hosting transfer | 360 MB / day | < 50 MB / day | 7× |
 | Cloud Scheduler | 3 jobs / **billing account** | 1 (weekly maintenance: price refresh + trash purge) | 2 spare |
-| Cloud Tasks | 1M operations / month | < 2,000 (cooking timers) | 500× |
+| Command trigger (`commands`, M3) | counted in the 2M above | one per supply change, cook, review, eaten: ~20–60 / day per household; each runs one transaction (~5–30 reads, ~5–40 writes) | — |
+| Timer callables (`scheduleTimer`, `cancelTimer`, M3) | counted in the 2M above | one per timer start, pause, adjust, cancel: < 3,000 / month | — |
+| Cloud Tasks (queue `timers`, created by the `timers` task function's deploy, M3) | 1M operations / month | < 2,000 (cooking timers: enqueue + delete) | 500× |
 | Cloud Messaging (web push) | free | < 2,000 pushes / month | — |
 | Secret Manager | 6 active secret versions, 10,000 accesses / month | 2 secrets (PC Express credentials), ~500 accesses | 20× |
 | Cloud Build (function deploys) | 2,500 build-minutes / month | ~10 deploys × ~2 min | 100× |
@@ -367,8 +369,16 @@ Firestore writes queue up offline, but callable functions don't. So every action
 - **Expired lots** (R8.15) are excluded from every client-side calculation: available supply, projected supply, "can make", ingredient badges, the grocery builder, and `supplyUtilisation` / `missingIngredients` in scoring. They stay in the document until the user answers the **Still good / Threw it out** prompt (`<ExpiredLotPrompt>`, §12). Nothing discards them automatically.
 - **Projected supply** (the bracketed number in R8.4) = `Σ unexpired lots − Σ requirements of planned, uncooked items in the current period`. It's computed on the client from live data.
 - **Transaction history** uses a paginated query (`orderBy(createdAt desc).limit(25)` + `startAfter`) with infinite scroll (R8.7).
-- **Negative supply:** allowed in the ledger, shown as 0, and prompts the user to check the amount.
+- **Negative supply (as built, M3):** a lot never goes below zero. Consumption beyond what the lots hold takes what there is, notes "short by n" on the transaction, and sets the supply doc's `shortAt`, which shows a "check the amount" flag until a correction or purchase clears it. A stored deficit was dropped because the next purchase would either pay it off (wrong: the new bag is full) or keep it forever.
 - **Double-finish guard:** `finishCooking` is a no-op if the plan item is already `cooked`, e.g. when two members finish the same meal.
+
+**As built (M3):** `functions/src/commands/` (dispatcher `commands`, `onDocumentCreated`, `retry: false`). The handler re-reads the command inside the transaction and skips anything not `pending`, so a command applies at most once; no-op outcomes ("already cooked", "already received") are stored in the command's `result`. Failures set `status: failed` and `error` and post an error banner to the issuer. Command payloads use canonical amounts and epoch-ms instants (`packages/core/commands.ts`); `finishCooking` carries a client-chosen `cookEventId` so the cook view can open the review at once. The ledger math is `packages/core/ledger.ts` (FEFO, corrections, discards, freeze/thaw splits `<lotId>-f<n>` / `-t<n>`, Still good, refunds). Details:
+
+- `finishCooking` stores on the cook event `defaults` (the recipe amounts at the planned servings, which the review pre-fills), `deducted` (what the ledger actually took) and per-lot `takes`; `submitReview` corrects against `deducted` (used more → FEFO take; used less → put back into the lots it came from). It also bumps `stats/*.timesCooked` and `lastCookedAt` at cooking time, so "made n times" doesn't wait for a review; ratings update `ratingSum`/`ratingCount` (re-rating replaces).
+- Leftover plan items have `recipes: []` (their food is already cooked, so they add nothing to the grocery list or budget), `name` = the meal's title, `leftoverSupplyId`, ID `<cookEventId>_lo<n>`, and go into the household's current period.
+- `markEaten`: leftover → one portion out of its lot; cooked meal → status only; a planned snack → its recipe amounts come out of supply (kind `eaten`); a planned non-snack meal is refused ("cook it first").
+- `receiveGroceries`: lines not mentioned arrived as listed (R7.8); missing lines have amount 0. Each bought tracked ingredient gets a lot `<commandId>-<itemId>` in its default location (frozen from the start when that is the freezer), plus the freeze split. The list gets `receivedAt`, `receivedBy`, `receivedCents` (estimated cost of what arrived, pro rata) and per-line `receivedAmount`. Cadence keeps `purchaseCount` alongside the EMA; `avgIntervalDays` is null until the second purchase.
+- Thawing gives the lot a fresh expiry of 2 days from thawing (the original fresh date has usually passed); the frozen expiry stays on the lot.
 
 ---
 
