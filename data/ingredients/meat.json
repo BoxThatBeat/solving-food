@@ -1,0 +1,815 @@
+[
+  {
+    "id": "chicken-breast",
+    "name": "chicken breast",
+    "aliases": [
+      "boneless skinless chicken breast",
+      "skinless chicken breast",
+      "boneless chicken breast",
+      "chicken breast fillet",
+      "skinless boneless chicken breast"
+    ],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 175,
+    "proteinPer100g": 22.5,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 270
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "chicken-thigh",
+    "name": "chicken thigh",
+    "aliases": [
+      "boneless skinless chicken thigh",
+      "boneless chicken thigh",
+      "skinless chicken thigh",
+      "skinless boneless chicken thigh",
+      "chicken thigh fillet"
+    ],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 110,
+    "proteinPer100g": 19.7,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 270
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "bone-in-chicken-thigh",
+    "name": "bone-in chicken thigh",
+    "aliases": ["bone in skin on chicken thigh", "skin-on chicken thigh"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 160,
+    "proteinPer100g": 17.3,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 270
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "chicken-drumstick",
+    "name": "chicken drumstick",
+    "aliases": ["chicken leg", "drumstick"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 115,
+    "proteinPer100g": 18.1,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 270
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "chicken-wing",
+    "name": "chicken wing",
+    "aliases": ["chicken wingette", "party wing", "split chicken wing"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 45,
+    "proteinPer100g": 17.5,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 270
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "whole-chicken",
+    "name": "whole chicken",
+    "aliases": ["roasting chicken", "whole roasting chicken", "whole fryer chicken"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 1800,
+    "proteinPer100g": 18.6,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 365
+    },
+    "defaultPackAmount": 1,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cooked-chicken",
+    "name": "cooked chicken",
+    "aliases": [
+      "rotisserie chicken",
+      "shredded chicken",
+      "shredded cooked chicken",
+      "chopped cooked chicken",
+      "diced cooked chicken",
+      "leftover chicken"
+    ],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.59,
+    "proteinPer100g": 27,
+    "shelfLifeDays": {
+      "fridge": 4,
+      "freezer": 120
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "ground-chicken",
+    "name": "ground chicken",
+    "aliases": ["lean ground chicken", "extra lean ground chicken"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 17.4,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 120
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "ground-turkey",
+    "name": "ground turkey",
+    "aliases": ["lean ground turkey", "extra lean ground turkey"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 19.7,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 120
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "lean-ground-beef",
+    "name": "lean ground beef",
+    "aliases": ["ground beef", "ground chuck"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 19.4,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 120
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "extra-lean-ground-beef",
+    "name": "extra lean ground beef",
+    "aliases": ["ground sirloin"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 21,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 120
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "medium-ground-beef",
+    "name": "medium ground beef",
+    "aliases": ["regular ground beef"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 17.5,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 120
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "ground-pork",
+    "name": "ground pork",
+    "aliases": ["lean ground pork", "minced pork"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 16.9,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 120
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "ground-lamb",
+    "name": "ground lamb",
+    "aliases": [],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 16.6,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 120
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "stewing-beef",
+    "name": "stewing beef",
+    "aliases": ["stew beef", "beef stew meat", "stewing beef cube", "beef stewing cube"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.6,
+    "proteinPer100g": 19.5,
+    "shelfLifeDays": {
+      "fridge": 3,
+      "freezer": 300
+    },
+    "defaultPackAmount": 680,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "sirloin-steak",
+    "name": "sirloin steak",
+    "aliases": ["top sirloin steak", "sirloin", "top sirloin"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 250,
+    "proteinPer100g": 21,
+    "shelfLifeDays": {
+      "fridge": 4,
+      "freezer": 300
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "striploin-steak",
+    "name": "striploin steak",
+    "aliases": ["new york strip steak", "strip steak", "strip loin steak", "ny strip steak", "striploin"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 300,
+    "proteinPer100g": 21,
+    "shelfLifeDays": {
+      "fridge": 4,
+      "freezer": 300
+    },
+    "defaultPackAmount": 600,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "ribeye-steak",
+    "name": "ribeye steak",
+    "aliases": ["rib eye steak", "ribeye", "rib steak"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 350,
+    "proteinPer100g": 19,
+    "shelfLifeDays": {
+      "fridge": 4,
+      "freezer": 300
+    },
+    "defaultPackAmount": 700,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "flank-steak",
+    "name": "flank steak",
+    "aliases": ["flank"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 21,
+    "shelfLifeDays": {
+      "fridge": 4,
+      "freezer": 300
+    },
+    "defaultPackAmount": 700,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "beef-roast",
+    "name": "beef roast",
+    "aliases": [
+      "pot roast",
+      "chuck roast",
+      "blade roast",
+      "beef chuck roast",
+      "cross rib roast",
+      "beef pot roast",
+      "sirloin tip roast"
+    ],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 19.5,
+    "shelfLifeDays": {
+      "fridge": 4,
+      "freezer": 365
+    },
+    "defaultPackAmount": 1500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pork-tenderloin",
+    "name": "pork tenderloin",
+    "aliases": [],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 500,
+    "proteinPer100g": 21,
+    "shelfLifeDays": {
+      "fridge": 4,
+      "freezer": 180
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pork-chop",
+    "name": "pork chop",
+    "aliases": [
+      "boneless pork chop",
+      "pork loin chop",
+      "centre cut pork chop",
+      "center cut pork chop",
+      "bone-in pork chop"
+    ],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 180,
+    "proteinPer100g": 21,
+    "shelfLifeDays": {
+      "fridge": 4,
+      "freezer": 180
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pork-loin-roast",
+    "name": "pork loin roast",
+    "aliases": ["pork loin", "boneless pork loin"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 21,
+    "shelfLifeDays": {
+      "fridge": 4,
+      "freezer": 180
+    },
+    "defaultPackAmount": 1500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pork-shoulder",
+    "name": "pork shoulder",
+    "aliases": [
+      "pork butt",
+      "pork shoulder blade roast",
+      "pork shoulder roast",
+      "boston butt",
+      "pork butt roast"
+    ],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 17,
+    "shelfLifeDays": {
+      "fridge": 4,
+      "freezer": 180
+    },
+    "defaultPackAmount": 2000,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pork-rib",
+    "name": "pork ribs",
+    "aliases": [
+      "pork back ribs",
+      "back ribs",
+      "baby back ribs",
+      "baby back pork ribs",
+      "rack of ribs",
+      "pork rib rack"
+    ],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 900,
+    "proteinPer100g": 17.3,
+    "shelfLifeDays": {
+      "fridge": 4,
+      "freezer": 180
+    },
+    "defaultPackAmount": 1500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pork-side-rib",
+    "name": "pork side ribs",
+    "aliases": ["spareribs", "spare ribs", "pork spareribs", "side ribs", "pork spare ribs"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 15.5,
+    "shelfLifeDays": {
+      "fridge": 4,
+      "freezer": 180
+    },
+    "defaultPackAmount": 1500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pork-sausage",
+    "name": "pork sausage",
+    "aliases": ["sausage", "fresh sausage", "mild sausage", "sausage link"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 100,
+    "proteinPer100g": 14,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 60
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "italian-sausage",
+    "name": "italian sausage",
+    "aliases": ["mild italian sausage", "hot italian sausage", "sweet italian sausage"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 100,
+    "proteinPer100g": 14.3,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 60
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "breakfast-sausage",
+    "name": "breakfast sausage",
+    "aliases": ["breakfast link", "pork breakfast sausage", "breakfast sausage link"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 25,
+    "proteinPer100g": 14,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 60
+    },
+    "defaultPackAmount": 375,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "bacon",
+    "name": "bacon",
+    "aliases": ["bacon strip", "sliced bacon", "bacon slice", "side bacon", "strip of bacon"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 25,
+    "proteinPer100g": 12,
+    "shelfLifeDays": {
+      "fridge": 7,
+      "freezer": 30
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "peameal-bacon",
+    "name": "peameal bacon",
+    "aliases": ["back bacon", "canadian bacon"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 30,
+    "proteinPer100g": 20,
+    "shelfLifeDays": {
+      "fridge": 7,
+      "freezer": 30
+    },
+    "defaultPackAmount": 700,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cooked-ham",
+    "name": "cooked ham",
+    "aliases": ["ham", "diced ham", "deli ham", "sliced ham", "black forest ham", "cubed ham", "chopped ham"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume", "count"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.6,
+    "unitWeightG": 25,
+    "proteinPer100g": 20,
+    "shelfLifeDays": {
+      "fridge": 5,
+      "freezer": 60
+    },
+    "defaultPackAmount": 400,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "deli-turkey",
+    "name": "deli turkey",
+    "aliases": ["sliced turkey", "sliced turkey breast", "deli turkey breast", "smoked turkey breast"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 25,
+    "proteinPer100g": 17,
+    "shelfLifeDays": {
+      "fridge": 5,
+      "freezer": 60
+    },
+    "defaultPackAmount": 300,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pepperoni",
+    "name": "pepperoni",
+    "aliases": ["sliced pepperoni", "pepperoni slice"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume", "count"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.5,
+    "unitWeightG": 2,
+    "proteinPer100g": 20,
+    "shelfLifeDays": {
+      "fridge": 21,
+      "freezer": 180
+    },
+    "defaultPackAmount": 300,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "salami",
+    "name": "salami",
+    "aliases": ["genoa salami", "sliced salami"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 8,
+    "proteinPer100g": 22,
+    "shelfLifeDays": {
+      "fridge": 21,
+      "freezer": 60
+    },
+    "defaultPackAmount": 175,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "hot-dog",
+    "name": "hot dog",
+    "aliases": ["wiener", "hot dog wiener", "frank", "frankfurter"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 50,
+    "proteinPer100g": 11,
+    "shelfLifeDays": {
+      "fridge": 14,
+      "freezer": 60
+    },
+    "defaultPackAmount": 450,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "whole-turkey",
+    "name": "whole turkey",
+    "aliases": ["turkey", "roasting turkey"],
+    "category": "meat",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 6000,
+    "proteinPer100g": 21,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 365
+    },
+    "defaultPackAmount": 1,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  }
+]

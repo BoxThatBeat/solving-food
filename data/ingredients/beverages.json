@@ -1,0 +1,299 @@
+[
+  {
+    "id": "water",
+    "name": "water",
+    "aliases": [
+      "cold water",
+      "warm water",
+      "hot water",
+      "boiling water",
+      "lukewarm water",
+      "ice water",
+      "tap water",
+      "room temperature water"
+    ],
+    "category": "beverages",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "pantry": null
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": true,
+    "needsReview": false
+  },
+  {
+    "id": "orange-juice",
+    "name": "orange juice",
+    "aliases": ["oj", "fresh orange juice", "orange juice not from concentrate"],
+    "category": "beverages",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.04,
+    "proteinPer100g": 0.7,
+    "shelfLifeDays": {
+      "fridge": 7
+    },
+    "defaultPackAmount": 1750,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "apple-juice",
+    "name": "apple juice",
+    "aliases": ["unsweetened apple juice"],
+    "category": "beverages",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.04,
+    "proteinPer100g": 0.1,
+    "shelfLifeDays": {
+      "pantry": 365,
+      "fridge": 10
+    },
+    "defaultPackAmount": 1890,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "ground-coffee",
+    "name": "ground coffee",
+    "aliases": ["coffee", "coffee grounds", "ground coffee beans"],
+    "category": "beverages",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.34,
+    "proteinPer100g": 12,
+    "shelfLifeDays": {
+      "pantry": 150
+    },
+    "defaultPackAmount": 925,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 21,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "coffee-bean",
+    "name": "coffee beans",
+    "aliases": ["whole bean coffee", "whole coffee beans"],
+    "category": "beverages",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.36,
+    "proteinPer100g": 12,
+    "shelfLifeDays": {
+      "pantry": 180
+    },
+    "defaultPackAmount": 907,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "instant-coffee",
+    "name": "instant coffee",
+    "aliases": ["instant coffee granules", "instant espresso powder", "espresso powder"],
+    "category": "beverages",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.12,
+    "proteinPer100g": 12.2,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 200,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "black-tea",
+    "name": "black tea",
+    "aliases": ["tea", "tea bag", "black tea bag", "orange pekoe tea", "orange pekoe"],
+    "category": "beverages",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 2.5,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 72,
+    "defaultPackMeasure": "count",
+    "defaultCadenceDays": 30,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "green-tea",
+    "name": "green tea",
+    "aliases": ["green tea bag"],
+    "category": "beverages",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 2,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 20,
+    "defaultPackMeasure": "count",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "herbal-tea",
+    "name": "herbal tea",
+    "aliases": ["herbal tea bag", "chamomile tea", "peppermint tea"],
+    "category": "beverages",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 2,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 20,
+    "defaultPackMeasure": "count",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "sparkling-water",
+    "name": "sparkling water",
+    "aliases": ["soda water", "carbonated water", "club soda", "seltzer"],
+    "category": "beverages",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume", "count"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1,
+    "unitWeightG": 355,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 12,
+    "defaultPackMeasure": "count",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "white-wine",
+    "name": "white wine",
+    "aliases": ["dry white wine", "cooking white wine"],
+    "category": "beverages",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.99,
+    "proteinPer100g": 0.1,
+    "shelfLifeDays": {
+      "pantry": 730,
+      "fridge": 5
+    },
+    "defaultPackAmount": 750,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "red-wine",
+    "name": "red wine",
+    "aliases": ["dry red wine", "cooking red wine"],
+    "category": "beverages",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.99,
+    "proteinPer100g": 0.1,
+    "shelfLifeDays": {
+      "pantry": 730,
+      "fridge": 5
+    },
+    "defaultPackAmount": 750,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "beer",
+    "name": "beer",
+    "aliases": ["lager", "ale"],
+    "category": "beverages",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume", "count"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.01,
+    "unitWeightG": 355,
+    "proteinPer100g": 0.5,
+    "shelfLifeDays": {
+      "pantry": 180
+    },
+    "defaultPackAmount": 6,
+    "defaultPackMeasure": "count",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "ginger-ale",
+    "name": "ginger ale",
+    "aliases": [],
+    "category": "beverages",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume", "count"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.04,
+    "unitWeightG": 355,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "pantry": 270
+    },
+    "defaultPackAmount": 12,
+    "defaultPackMeasure": "count",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  }
+]

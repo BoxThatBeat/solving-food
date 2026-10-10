@@ -1,0 +1,396 @@
+[
+  {
+    "id": "whole-wheat-bread",
+    "name": "whole wheat bread",
+    "aliases": [
+      "bread",
+      "sandwich bread",
+      "brown bread",
+      "sliced bread",
+      "bread slice",
+      "slice of bread",
+      "100% whole wheat bread"
+    ],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 32,
+    "proteinPer100g": 12.5,
+    "shelfLifeDays": {
+      "pantry": 5,
+      "freezer": 90
+    },
+    "defaultPackAmount": 675,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 4,
+    "freezable": true,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "white-bread",
+    "name": "white bread",
+    "aliases": ["white sandwich bread", "sliced white bread"],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 28,
+    "proteinPer100g": 9,
+    "shelfLifeDays": {
+      "pantry": 5,
+      "freezer": 90
+    },
+    "defaultPackAmount": 675,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "multigrain-bread",
+    "name": "multigrain bread",
+    "aliases": ["whole grain bread", "seeded bread"],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 35,
+    "proteinPer100g": 13.4,
+    "shelfLifeDays": {
+      "pantry": 5,
+      "freezer": 90
+    },
+    "defaultPackAmount": 600,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "sourdough-bread",
+    "name": "sourdough bread",
+    "aliases": ["sourdough", "sourdough loaf"],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 40,
+    "proteinPer100g": 9.4,
+    "shelfLifeDays": {
+      "pantry": 4,
+      "freezer": 90
+    },
+    "defaultPackAmount": 680,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "baguette",
+    "name": "baguette",
+    "aliases": ["french bread", "french stick"],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 280,
+    "proteinPer100g": 10.7,
+    "shelfLifeDays": {
+      "pantry": 2,
+      "freezer": 90
+    },
+    "defaultPackAmount": 1,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "hamburger-bun",
+    "name": "hamburger bun",
+    "aliases": ["burger bun", "hamburger roll", "brioche bun"],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 55,
+    "proteinPer100g": 9.4,
+    "shelfLifeDays": {
+      "pantry": 5,
+      "freezer": 90
+    },
+    "defaultPackAmount": 8,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "hot-dog-bun",
+    "name": "hot dog bun",
+    "aliases": ["hot dog roll", "sausage bun"],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 45,
+    "proteinPer100g": 9.4,
+    "shelfLifeDays": {
+      "pantry": 5,
+      "freezer": 90
+    },
+    "defaultPackAmount": 8,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "dinner-roll",
+    "name": "dinner roll",
+    "aliases": ["white dinner roll", "kaiser roll", "bun", "crusty roll"],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 35,
+    "proteinPer100g": 9.8,
+    "shelfLifeDays": {
+      "pantry": 4,
+      "freezer": 90
+    },
+    "defaultPackAmount": 12,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "flour-tortilla",
+    "name": "flour tortilla",
+    "aliases": [
+      "tortilla",
+      "large flour tortilla",
+      "wrap",
+      "tortilla wrap",
+      "flour wrap",
+      "small flour tortilla",
+      "soft tortilla"
+    ],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 50,
+    "proteinPer100g": 8.5,
+    "shelfLifeDays": {
+      "pantry": 7,
+      "freezer": 180
+    },
+    "defaultPackAmount": 10,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "whole-wheat-tortilla",
+    "name": "whole wheat tortilla",
+    "aliases": ["whole wheat wrap", "whole wheat flour tortilla", "whole grain tortilla"],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 50,
+    "proteinPer100g": 9.5,
+    "shelfLifeDays": {
+      "pantry": 7,
+      "freezer": 180
+    },
+    "defaultPackAmount": 10,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "corn-tortilla",
+    "name": "corn tortilla",
+    "aliases": ["soft corn tortilla", "small corn tortilla"],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 26,
+    "proteinPer100g": 5.7,
+    "shelfLifeDays": {
+      "pantry": 7,
+      "freezer": 180
+    },
+    "defaultPackAmount": 30,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pita",
+    "name": "pita",
+    "aliases": ["pita bread", "pita pocket", "whole wheat pita"],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 60,
+    "proteinPer100g": 9.1,
+    "shelfLifeDays": {
+      "pantry": 5,
+      "freezer": 90
+    },
+    "defaultPackAmount": 6,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "naan",
+    "name": "naan",
+    "aliases": ["naan bread", "garlic naan", "mini naan"],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 90,
+    "proteinPer100g": 9,
+    "shelfLifeDays": {
+      "pantry": 5,
+      "freezer": 90
+    },
+    "defaultPackAmount": 4,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "english-muffin",
+    "name": "english muffin",
+    "aliases": ["whole wheat english muffin"],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 57,
+    "proteinPer100g": 8.9,
+    "shelfLifeDays": {
+      "pantry": 5,
+      "freezer": 90
+    },
+    "defaultPackAmount": 6,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "bagel",
+    "name": "bagel",
+    "aliases": ["plain bagel", "everything bagel", "sesame bagel"],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 95,
+    "proteinPer100g": 10,
+    "shelfLifeDays": {
+      "pantry": 5,
+      "freezer": 90
+    },
+    "defaultPackAmount": 6,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "croissant",
+    "name": "croissant",
+    "aliases": ["butter croissant", "mini croissant"],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 57,
+    "proteinPer100g": 8.2,
+    "shelfLifeDays": {
+      "pantry": 2,
+      "freezer": 90
+    },
+    "defaultPackAmount": 6,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pizza-dough",
+    "name": "pizza dough",
+    "aliases": ["fresh pizza dough", "refrigerated pizza dough", "store-bought pizza dough"],
+    "category": "bakery",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 7.7,
+    "shelfLifeDays": {
+      "fridge": 5,
+      "freezer": 90
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pizza-crust",
+    "name": "pizza crust",
+    "aliases": ["prebaked pizza crust", "thin pizza crust", "flatbread crust"],
+    "category": "bakery",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 340,
+    "proteinPer100g": 9,
+    "shelfLifeDays": {
+      "pantry": 7,
+      "freezer": 90
+    },
+    "defaultPackAmount": 2,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  }
+]

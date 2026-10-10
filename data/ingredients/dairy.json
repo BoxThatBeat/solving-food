@@ -1,0 +1,940 @@
+[
+  {
+    "id": "milk",
+    "name": "milk",
+    "aliases": ["2% milk", "partly skimmed milk", "2 percent milk", "low fat milk", "cow's milk"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.03,
+    "proteinPer100g": 3.3,
+    "shelfLifeDays": {
+      "fridge": 7,
+      "freezer": 90
+    },
+    "defaultPackAmount": 4000,
+    "defaultPackMeasure": "volume",
+    "defaultCadenceDays": 4,
+    "freezable": true,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "whole-milk",
+    "name": "whole milk",
+    "aliases": ["homogenized milk", "homo milk", "3.25% milk", "full fat milk"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.03,
+    "proteinPer100g": 3.2,
+    "shelfLifeDays": {
+      "fridge": 7,
+      "freezer": 90
+    },
+    "defaultPackAmount": 4000,
+    "defaultPackMeasure": "volume",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "1-milk",
+    "name": "1% milk",
+    "aliases": ["1 percent milk"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.03,
+    "proteinPer100g": 3.4,
+    "shelfLifeDays": {
+      "fridge": 7,
+      "freezer": 90
+    },
+    "defaultPackAmount": 4000,
+    "defaultPackMeasure": "volume",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "skim-milk",
+    "name": "skim milk",
+    "aliases": ["skimmed milk", "fat free milk", "nonfat milk"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.03,
+    "proteinPer100g": 3.4,
+    "shelfLifeDays": {
+      "fridge": 7,
+      "freezer": 90
+    },
+    "defaultPackAmount": 4000,
+    "defaultPackMeasure": "volume",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "chocolate-milk",
+    "name": "chocolate milk",
+    "aliases": [],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.04,
+    "proteinPer100g": 3.2,
+    "shelfLifeDays": {
+      "fridge": 7
+    },
+    "defaultPackAmount": 2000,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "buttermilk",
+    "name": "buttermilk",
+    "aliases": ["cultured buttermilk"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.03,
+    "proteinPer100g": 3.3,
+    "shelfLifeDays": {
+      "fridge": 14,
+      "freezer": 90
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "volume",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "half-and-half",
+    "name": "half and half",
+    "aliases": ["10% cream", "half-and-half cream", "cereal cream"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.01,
+    "proteinPer100g": 3,
+    "shelfLifeDays": {
+      "fridge": 10,
+      "freezer": 120
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "volume",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "table-cream",
+    "name": "table cream",
+    "aliases": ["18% cream", "coffee cream", "light cream"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.01,
+    "proteinPer100g": 2.7,
+    "shelfLifeDays": {
+      "fridge": 10,
+      "freezer": 120
+    },
+    "defaultPackAmount": 473,
+    "defaultPackMeasure": "volume",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "whipping-cream",
+    "name": "whipping cream",
+    "aliases": ["heavy cream", "35% cream", "heavy whipping cream", "double cream"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1,
+    "proteinPer100g": 2.8,
+    "shelfLifeDays": {
+      "fridge": 10,
+      "freezer": 120
+    },
+    "defaultPackAmount": 473,
+    "defaultPackMeasure": "volume",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "sour-cream",
+    "name": "sour cream",
+    "aliases": ["light sour cream", "14% sour cream", "regular sour cream"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.97,
+    "proteinPer100g": 2.4,
+    "shelfLifeDays": {
+      "fridge": 21
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "butter",
+    "name": "butter",
+    "aliases": ["salted butter", "butter salted", "melted butter", "softened butter"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.96,
+    "proteinPer100g": 0.9,
+    "shelfLifeDays": {
+      "fridge": 60,
+      "freezer": 270
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 21,
+    "freezable": true,
+    "isStaple": true,
+    "freeUse": true,
+    "needsReview": false
+  },
+  {
+    "id": "unsalted-butter",
+    "name": "unsalted butter",
+    "aliases": ["sweet butter", "unsalted butter softened", "melted unsalted butter"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.96,
+    "proteinPer100g": 0.9,
+    "shelfLifeDays": {
+      "fridge": 60,
+      "freezer": 270
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 45,
+    "freezable": true,
+    "isStaple": true,
+    "freeUse": true,
+    "needsReview": false
+  },
+  {
+    "id": "margarine",
+    "name": "margarine",
+    "aliases": ["soft margarine", "non-hydrogenated margarine", "vegan butter", "plant butter"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.96,
+    "proteinPer100g": 0.2,
+    "shelfLifeDays": {
+      "fridge": 150,
+      "freezer": 365
+    },
+    "defaultPackAmount": 907,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 30,
+    "freezable": true,
+    "isStaple": true,
+    "freeUse": true,
+    "needsReview": false
+  },
+  {
+    "id": "egg",
+    "name": "egg",
+    "aliases": ["large egg", "whole egg", "egg large", "fresh egg"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 50,
+    "proteinPer100g": 12.6,
+    "shelfLifeDays": {
+      "fridge": 35
+    },
+    "defaultPackAmount": 18,
+    "defaultPackMeasure": "count",
+    "defaultCadenceDays": 7,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "egg-white",
+    "name": "egg white",
+    "aliases": ["liquid egg white", "large egg white", "carton egg white"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume", "count"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.03,
+    "unitWeightG": 33,
+    "proteinPer100g": 10.9,
+    "shelfLifeDays": {
+      "fridge": 7,
+      "freezer": 365
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "volume",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cheddar-cheese",
+    "name": "cheddar cheese",
+    "aliases": [
+      "cheddar",
+      "medium cheddar",
+      "mild cheddar",
+      "shredded cheddar",
+      "shredded cheddar cheese",
+      "medium cheddar cheese",
+      "mild cheddar cheese",
+      "grated cheddar",
+      "grated cheddar cheese",
+      "white cheddar"
+    ],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.47,
+    "proteinPer100g": 24.9,
+    "shelfLifeDays": {
+      "fridge": 42,
+      "freezer": 180
+    },
+    "defaultPackAmount": 800,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 21,
+    "freezable": true,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "old-cheddar-cheese",
+    "name": "old cheddar cheese",
+    "aliases": [
+      "sharp cheddar cheese",
+      "sharp cheddar",
+      "old cheddar",
+      "extra old cheddar",
+      "extra old cheddar cheese",
+      "extra sharp cheddar",
+      "aged cheddar",
+      "shredded sharp cheddar cheese"
+    ],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.47,
+    "proteinPer100g": 24.9,
+    "shelfLifeDays": {
+      "fridge": 42,
+      "freezer": 180
+    },
+    "defaultPackAmount": 400,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "marble-cheese",
+    "name": "marble cheese",
+    "aliases": ["marble cheddar", "marbled cheddar", "colby cheese"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.47,
+    "proteinPer100g": 24,
+    "shelfLifeDays": {
+      "fridge": 42,
+      "freezer": 180
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "mozzarella-cheese",
+    "name": "mozzarella cheese",
+    "aliases": [
+      "mozzarella",
+      "shredded mozzarella",
+      "part skim mozzarella",
+      "shredded mozzarella cheese",
+      "grated mozzarella",
+      "part-skim mozzarella cheese",
+      "pizza mozzarella"
+    ],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.47,
+    "proteinPer100g": 22.2,
+    "shelfLifeDays": {
+      "fridge": 28,
+      "freezer": 180
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "fresh-mozzarella",
+    "name": "fresh mozzarella",
+    "aliases": ["bocconcini", "fresh mozzarella ball", "mozzarella ball", "buffalo mozzarella"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 15,
+    "proteinPer100g": 18,
+    "shelfLifeDays": {
+      "fridge": 14
+    },
+    "defaultPackAmount": 200,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "parmesan-cheese",
+    "name": "parmesan cheese",
+    "aliases": [
+      "parmesan",
+      "parmigiano reggiano",
+      "grated parmesan",
+      "grated parmesan cheese",
+      "shredded parmesan",
+      "freshly grated parmesan",
+      "parmigiano",
+      "grana padano"
+    ],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.42,
+    "proteinPer100g": 35.8,
+    "shelfLifeDays": {
+      "fridge": 90,
+      "freezer": 240
+    },
+    "defaultPackAmount": 250,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "feta-cheese",
+    "name": "feta cheese",
+    "aliases": ["feta", "crumbled feta", "crumbled feta cheese", "greek feta", "block feta"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.63,
+    "proteinPer100g": 14.2,
+    "shelfLifeDays": {
+      "fridge": 30,
+      "freezer": 90
+    },
+    "defaultPackAmount": 400,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cream-cheese",
+    "name": "cream cheese",
+    "aliases": [
+      "spreadable cream cheese",
+      "cream cheese spread",
+      "brick cream cheese",
+      "plain cream cheese",
+      "softened cream cheese",
+      "light cream cheese"
+    ],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.98,
+    "proteinPer100g": 6.2,
+    "shelfLifeDays": {
+      "fridge": 21,
+      "freezer": 60
+    },
+    "defaultPackAmount": 250,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cottage-cheese",
+    "name": "cottage cheese",
+    "aliases": ["2% cottage cheese", "1% cottage cheese", "small curd cottage cheese"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.95,
+    "proteinPer100g": 11.1,
+    "shelfLifeDays": {
+      "fridge": 10
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "ricotta-cheese",
+    "name": "ricotta cheese",
+    "aliases": ["ricotta", "part skim ricotta"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.05,
+    "proteinPer100g": 11.3,
+    "shelfLifeDays": {
+      "fridge": 10,
+      "freezer": 60
+    },
+    "defaultPackAmount": 475,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "swiss-cheese",
+    "name": "swiss cheese",
+    "aliases": ["sliced swiss cheese", "emmental", "jarlsberg"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume", "count"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.47,
+    "unitWeightG": 21,
+    "proteinPer100g": 27,
+    "shelfLifeDays": {
+      "fridge": 30,
+      "freezer": 180
+    },
+    "defaultPackAmount": 300,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "monterey-jack-cheese",
+    "name": "monterey jack cheese",
+    "aliases": ["monterey jack", "jack cheese", "pepper jack cheese"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.47,
+    "proteinPer100g": 24.5,
+    "shelfLifeDays": {
+      "fridge": 30,
+      "freezer": 180
+    },
+    "defaultPackAmount": 400,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "tex-mex-cheese",
+    "name": "tex mex cheese",
+    "aliases": [
+      "mexican cheese blend",
+      "shredded tex mex cheese",
+      "mexican blend cheese",
+      "taco cheese",
+      "tex-mex shredded cheese"
+    ],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.47,
+    "proteinPer100g": 23,
+    "shelfLifeDays": {
+      "fridge": 30,
+      "freezer": 180
+    },
+    "defaultPackAmount": 320,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "goat-cheese",
+    "name": "goat cheese",
+    "aliases": ["chevre", "soft goat cheese", "crumbled goat cheese"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.6,
+    "proteinPer100g": 18.5,
+    "shelfLifeDays": {
+      "fridge": 14,
+      "freezer": 90
+    },
+    "defaultPackAmount": 113,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "brie-cheese",
+    "name": "brie cheese",
+    "aliases": ["brie", "camembert"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 20.8,
+    "shelfLifeDays": {
+      "fridge": 21
+    },
+    "defaultPackAmount": 200,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cheese-slice",
+    "name": "cheese slice",
+    "aliases": [
+      "processed cheese slice",
+      "american cheese",
+      "cheese single",
+      "kraft single",
+      "processed cheese"
+    ],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 21,
+    "proteinPer100g": 16,
+    "shelfLifeDays": {
+      "fridge": 60
+    },
+    "defaultPackAmount": 24,
+    "defaultPackMeasure": "count",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "string-cheese",
+    "name": "string cheese",
+    "aliases": ["cheese string", "cheestring", "mozzarella stick"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 21,
+    "proteinPer100g": 24,
+    "shelfLifeDays": {
+      "fridge": 30
+    },
+    "defaultPackAmount": 16,
+    "defaultPackMeasure": "count",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "greek-yogurt",
+    "name": "greek yogurt",
+    "aliases": [
+      "plain greek yogurt",
+      "greek yoghurt",
+      "plain greek yoghurt",
+      "0% greek yogurt",
+      "nonfat plain greek yogurt",
+      "2% plain greek yogurt",
+      "plain 0% greek yogurt"
+    ],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.03,
+    "proteinPer100g": 10.3,
+    "shelfLifeDays": {
+      "fridge": 14,
+      "freezer": 60
+    },
+    "defaultPackAmount": 750,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 7,
+    "freezable": true,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "vanilla-greek-yogurt",
+    "name": "vanilla greek yogurt",
+    "aliases": ["vanilla greek yoghurt"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.03,
+    "proteinPer100g": 8.6,
+    "shelfLifeDays": {
+      "fridge": 14,
+      "freezer": 60
+    },
+    "defaultPackAmount": 750,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "plain-yogurt",
+    "name": "plain yogurt",
+    "aliases": [
+      "yogurt",
+      "natural yogurt",
+      "plain yoghurt",
+      "yoghurt",
+      "balkan yogurt",
+      "balkan style yogurt",
+      "plain balkan yogurt"
+    ],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.03,
+    "proteinPer100g": 4.5,
+    "shelfLifeDays": {
+      "fridge": 14,
+      "freezer": 60
+    },
+    "defaultPackAmount": 750,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 14,
+    "freezable": true,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "vanilla-yogurt",
+    "name": "vanilla yogurt",
+    "aliases": ["vanilla yoghurt"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.03,
+    "proteinPer100g": 3.9,
+    "shelfLifeDays": {
+      "fridge": 14,
+      "freezer": 60
+    },
+    "defaultPackAmount": 650,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "oat-milk",
+    "name": "oat milk",
+    "aliases": ["oat beverage", "oat drink", "unsweetened oat milk"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.03,
+    "proteinPer100g": 1,
+    "shelfLifeDays": {
+      "fridge": 10
+    },
+    "defaultPackAmount": 1750,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "almond-milk",
+    "name": "almond milk",
+    "aliases": ["almond beverage", "unsweetened almond milk", "almond drink"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.02,
+    "proteinPer100g": 0.5,
+    "shelfLifeDays": {
+      "fridge": 10
+    },
+    "defaultPackAmount": 1890,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "soy-milk",
+    "name": "soy milk",
+    "aliases": ["soy beverage", "soya milk", "soy drink"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.03,
+    "proteinPer100g": 2.9,
+    "shelfLifeDays": {
+      "fridge": 10
+    },
+    "defaultPackAmount": 1890,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "crescent-roll",
+    "name": "crescent roll",
+    "aliases": [
+      "refrigerator crescent rolls",
+      "refrigerated crescent rolls",
+      "crescent roll dough",
+      "pillsbury crescent rolls",
+      "crescent dough",
+      "refrigerated crescent dinner rolls"
+    ],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 28,
+    "proteinPer100g": 7,
+    "shelfLifeDays": {
+      "fridge": 30,
+      "freezer": 60
+    },
+    "defaultPackAmount": 8,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "refrigerated-biscuit-dough",
+    "name": "refrigerated biscuit dough",
+    "aliases": ["refrigerated biscuits", "pillsbury biscuits", "canned biscuits"],
+    "category": "dairy",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 60,
+    "proteinPer100g": 7,
+    "shelfLifeDays": {
+      "fridge": 30,
+      "freezer": 60
+    },
+    "defaultPackAmount": 8,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  }
+]

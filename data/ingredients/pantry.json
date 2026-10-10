@@ -1,0 +1,1507 @@
+[
+  {
+    "id": "olive-oil",
+    "name": "olive oil",
+    "aliases": ["extra virgin olive oil", "evoo", "virgin olive oil", "light olive oil", "pure olive oil"],
+    "category": "pantry",
+    "defaultLocation": "cupboard",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.92,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "cupboard": 540
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "volume",
+    "defaultCadenceDays": 30,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": true,
+    "needsReview": false
+  },
+  {
+    "id": "vegetable-oil",
+    "name": "vegetable oil",
+    "aliases": ["oil", "cooking oil", "neutral oil", "vegetable cooking oil", "neutral cooking oil"],
+    "category": "pantry",
+    "defaultLocation": "cupboard",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.92,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "cupboard": 365
+    },
+    "defaultPackAmount": 1890,
+    "defaultPackMeasure": "volume",
+    "defaultCadenceDays": 45,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": true,
+    "needsReview": false
+  },
+  {
+    "id": "canola-oil",
+    "name": "canola oil",
+    "aliases": [],
+    "category": "pantry",
+    "defaultLocation": "cupboard",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.92,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "cupboard": 365
+    },
+    "defaultPackAmount": 1890,
+    "defaultPackMeasure": "volume",
+    "defaultCadenceDays": 60,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": true,
+    "needsReview": false
+  },
+  {
+    "id": "avocado-oil",
+    "name": "avocado oil",
+    "aliases": [],
+    "category": "pantry",
+    "defaultLocation": "cupboard",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.92,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "cupboard": 365
+    },
+    "defaultPackAmount": 750,
+    "defaultPackMeasure": "volume",
+    "defaultCadenceDays": 60,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": true,
+    "needsReview": false
+  },
+  {
+    "id": "sesame-oil",
+    "name": "sesame oil",
+    "aliases": ["toasted sesame oil", "pure sesame oil"],
+    "category": "pantry",
+    "defaultLocation": "cupboard",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.92,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "cupboard": 365
+    },
+    "defaultPackAmount": 250,
+    "defaultPackMeasure": "volume",
+    "defaultCadenceDays": 180,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": true,
+    "needsReview": false
+  },
+  {
+    "id": "coconut-oil",
+    "name": "coconut oil",
+    "aliases": ["virgin coconut oil", "melted coconut oil"],
+    "category": "pantry",
+    "defaultLocation": "cupboard",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.92,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "cupboard": 730
+    },
+    "defaultPackAmount": 800,
+    "defaultPackMeasure": "volume",
+    "defaultCadenceDays": 120,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": true,
+    "needsReview": false
+  },
+  {
+    "id": "cooking-spray",
+    "name": "cooking spray",
+    "aliases": ["nonstick cooking spray", "nonstick spray", "oil spray", "canola oil spray", "baking spray"],
+    "category": "pantry",
+    "defaultLocation": "cupboard",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "cupboard": 730
+    },
+    "defaultPackAmount": 170,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 60,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": true,
+    "needsReview": false
+  },
+  {
+    "id": "canned-diced-tomato",
+    "name": "canned diced tomatoes",
+    "aliases": ["diced tomatoes", "can diced tomatoes", "fire roasted diced tomatoes", "canned tomatoes"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.02,
+    "proteinPer100g": 0.8,
+    "shelfLifeDays": {
+      "pantry": 540
+    },
+    "defaultPackAmount": 796,
+    "defaultPackMeasure": "volume",
+    "defaultCadenceDays": 21,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "canned-crushed-tomato",
+    "name": "canned crushed tomatoes",
+    "aliases": ["crushed tomatoes"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.03,
+    "proteinPer100g": 1.6,
+    "shelfLifeDays": {
+      "pantry": 540
+    },
+    "defaultPackAmount": 796,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "canned-whole-tomato",
+    "name": "canned whole tomatoes",
+    "aliases": [
+      "whole peeled tomatoes",
+      "san marzano tomatoes",
+      "whole tomatoes",
+      "canned whole peeled tomatoes"
+    ],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.02,
+    "proteinPer100g": 0.8,
+    "shelfLifeDays": {
+      "pantry": 540
+    },
+    "defaultPackAmount": 796,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "tomato-paste",
+    "name": "tomato paste",
+    "aliases": ["canned tomato paste"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.1,
+    "proteinPer100g": 4.3,
+    "shelfLifeDays": {
+      "pantry": 540
+    },
+    "defaultPackAmount": 156,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "tomato-sauce",
+    "name": "tomato sauce",
+    "aliases": ["passata", "tomato passata", "canned tomato sauce", "strained tomatoes"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.03,
+    "proteinPer100g": 1.2,
+    "shelfLifeDays": {
+      "pantry": 540
+    },
+    "defaultPackAmount": 680,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pasta-sauce",
+    "name": "pasta sauce",
+    "aliases": ["marinara sauce", "spaghetti sauce", "marinara", "tomato pasta sauce", "jarred pasta sauce"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.05,
+    "proteinPer100g": 1.5,
+    "shelfLifeDays": {
+      "pantry": 540
+    },
+    "defaultPackAmount": 650,
+    "defaultPackMeasure": "volume",
+    "defaultCadenceDays": 21,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pizza-sauce",
+    "name": "pizza sauce",
+    "aliases": [],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.05,
+    "proteinPer100g": 1.6,
+    "shelfLifeDays": {
+      "pantry": 540
+    },
+    "defaultPackAmount": 213,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "canned-chickpea",
+    "name": "canned chickpeas",
+    "aliases": ["chickpeas", "garbanzo beans", "canned garbanzo beans", "chickpeas drained and rinsed"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.69,
+    "proteinPer100g": 7,
+    "shelfLifeDays": {
+      "pantry": 1095
+    },
+    "defaultPackAmount": 540,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "canned-black-bean",
+    "name": "canned black beans",
+    "aliases": ["black beans"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.73,
+    "proteinPer100g": 6.9,
+    "shelfLifeDays": {
+      "pantry": 1095
+    },
+    "defaultPackAmount": 540,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "canned-kidney-bean",
+    "name": "canned kidney beans",
+    "aliases": ["red kidney beans", "kidney beans", "dark red kidney beans"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.7,
+    "proteinPer100g": 6,
+    "shelfLifeDays": {
+      "pantry": 1095
+    },
+    "defaultPackAmount": 540,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "canned-white-bean",
+    "name": "canned white beans",
+    "aliases": [
+      "cannellini beans",
+      "white kidney beans",
+      "white beans",
+      "navy beans",
+      "great northern beans"
+    ],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.7,
+    "proteinPer100g": 6.8,
+    "shelfLifeDays": {
+      "pantry": 1095
+    },
+    "defaultPackAmount": 540,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "canned-lentil",
+    "name": "canned lentils",
+    "aliases": ["lentils drained and rinsed"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.84,
+    "proteinPer100g": 7.5,
+    "shelfLifeDays": {
+      "pantry": 1095
+    },
+    "defaultPackAmount": 540,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "baked-bean",
+    "name": "baked beans",
+    "aliases": ["canned baked beans", "beans in tomato sauce", "pork and beans"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.07,
+    "proteinPer100g": 4.8,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 398,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "refried-bean",
+    "name": "refried beans",
+    "aliases": ["canned refried beans"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1,
+    "proteinPer100g": 5.4,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 398,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "canned-corn",
+    "name": "canned corn",
+    "aliases": ["corn niblets", "canned corn kernels", "whole kernel corn", "niblets"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.69,
+    "proteinPer100g": 2.3,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 341,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "canned-pumpkin",
+    "name": "canned pumpkin",
+    "aliases": [
+      "pumpkin puree",
+      "pure pumpkin puree",
+      "pure pumpkin",
+      "canned pumpkin puree",
+      "100% pure pumpkin"
+    ],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.04,
+    "proteinPer100g": 1.1,
+    "shelfLifeDays": {
+      "pantry": 540,
+      "fridge": 5
+    },
+    "defaultPackAmount": 796,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "coconut-milk",
+    "name": "coconut milk",
+    "aliases": ["canned coconut milk", "full fat coconut milk", "light coconut milk"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.96,
+    "proteinPer100g": 2,
+    "shelfLifeDays": {
+      "pantry": 540,
+      "fridge": 5
+    },
+    "defaultPackAmount": 400,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "chicken-broth",
+    "name": "chicken broth",
+    "aliases": [
+      "chicken stock",
+      "low sodium chicken broth",
+      "reduced sodium chicken broth",
+      "sodium reduced chicken broth",
+      "chicken bone broth",
+      "low-sodium chicken stock"
+    ],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1,
+    "proteinPer100g": 1.1,
+    "shelfLifeDays": {
+      "pantry": 365,
+      "fridge": 5,
+      "freezer": 120
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "volume",
+    "defaultCadenceDays": 21,
+    "freezable": true,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "beef-broth",
+    "name": "beef broth",
+    "aliases": ["beef stock", "sodium reduced beef broth", "low sodium beef broth"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1,
+    "proteinPer100g": 1.1,
+    "shelfLifeDays": {
+      "pantry": 365,
+      "fridge": 5,
+      "freezer": 120
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "volume",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "vegetable-broth",
+    "name": "vegetable broth",
+    "aliases": ["vegetable stock", "veggie broth", "sodium reduced vegetable broth"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1,
+    "proteinPer100g": 0.2,
+    "shelfLifeDays": {
+      "pantry": 365,
+      "fridge": 5,
+      "freezer": 120
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "volume",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "chicken-bouillon-powder",
+    "name": "chicken bouillon powder",
+    "aliases": [
+      "chicken bouillon",
+      "chicken soup base",
+      "chicken stock powder",
+      "chicken bouillon cube",
+      "chicken stock cube"
+    ],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.6,
+    "proteinPer100g": 16,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 200,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "canned-tuna",
+    "name": "canned tuna",
+    "aliases": [
+      "tuna",
+      "flaked tuna",
+      "chunk light tuna",
+      "solid white tuna",
+      "canned tuna in water",
+      "albacore tuna",
+      "flaked light tuna"
+    ],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 120,
+    "proteinPer100g": 25.5,
+    "shelfLifeDays": {
+      "pantry": 1095
+    },
+    "defaultPackAmount": 4,
+    "defaultPackMeasure": "count",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "canned-salmon",
+    "name": "canned salmon",
+    "aliases": ["canned pink salmon", "canned sockeye salmon"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 213,
+    "proteinPer100g": 23,
+    "shelfLifeDays": {
+      "pantry": 1095
+    },
+    "defaultPackAmount": 2,
+    "defaultPackMeasure": "count",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "peanut-butter",
+    "name": "peanut butter",
+    "aliases": [
+      "smooth peanut butter",
+      "creamy peanut butter",
+      "natural peanut butter",
+      "smooth natural peanut butter"
+    ],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.08,
+    "proteinPer100g": 22.5,
+    "shelfLifeDays": {
+      "pantry": 180
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 21,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "crunchy-peanut-butter",
+    "name": "crunchy peanut butter",
+    "aliases": ["chunky peanut butter", "crunchy natural peanut butter"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.08,
+    "proteinPer100g": 22.5,
+    "shelfLifeDays": {
+      "pantry": 180
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "almond-butter",
+    "name": "almond butter",
+    "aliases": ["natural almond butter", "smooth almond butter"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.08,
+    "proteinPer100g": 21,
+    "shelfLifeDays": {
+      "pantry": 180
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "tahini",
+    "name": "tahini",
+    "aliases": ["sesame paste", "tahini paste"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.01,
+    "proteinPer100g": 17,
+    "shelfLifeDays": {
+      "pantry": 180
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "hazelnut-spread",
+    "name": "hazelnut spread",
+    "aliases": ["chocolate hazelnut spread", "nutella"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.15,
+    "proteinPer100g": 6.3,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 725,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "strawberry-jam",
+    "name": "strawberry jam",
+    "aliases": ["jam", "strawberry jelly", "strawberry preserves", "jelly", "raspberry jam"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.35,
+    "proteinPer100g": 0.4,
+    "shelfLifeDays": {
+      "pantry": 365,
+      "fridge": 180
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "honey",
+    "name": "honey",
+    "aliases": ["liquid honey", "pure honey", "raw honey", "creamed honey"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.42,
+    "proteinPer100g": 0.3,
+    "shelfLifeDays": {
+      "pantry": null
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 45,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "maple-syrup",
+    "name": "maple syrup",
+    "aliases": ["pure maple syrup", "amber maple syrup", "canadian maple syrup"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.32,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "pantry": 365,
+      "fridge": 365
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "volume",
+    "defaultCadenceDays": 45,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pancake-syrup",
+    "name": "pancake syrup",
+    "aliases": ["table syrup", "syrup"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.37,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 750,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "hemp-heart",
+    "name": "hemp hearts",
+    "aliases": ["hemp seeds", "shelled hemp seeds", "hulled hemp seeds"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.68,
+    "proteinPer100g": 31.6,
+    "shelfLifeDays": {
+      "pantry": 365,
+      "freezer": 730
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 45,
+    "freezable": true,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pepita",
+    "name": "pepitas",
+    "aliases": ["pumpkin seeds", "shelled pumpkin seeds", "roasted pepitas", "raw pepitas"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.55,
+    "proteinPer100g": 30,
+    "shelfLifeDays": {
+      "pantry": 180,
+      "freezer": 365
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "sunflower-seed",
+    "name": "sunflower seeds",
+    "aliases": ["shelled sunflower seeds", "sunflower kernels", "roasted sunflower seeds"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.59,
+    "proteinPer100g": 21,
+    "shelfLifeDays": {
+      "pantry": 180,
+      "freezer": 365
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "chia-seed",
+    "name": "chia seeds",
+    "aliases": ["chia", "black chia seeds"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.81,
+    "proteinPer100g": 16.5,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "ground-flaxseed",
+    "name": "ground flaxseed",
+    "aliases": [
+      "flaxseed meal",
+      "ground flax",
+      "milled flaxseed",
+      "flax meal",
+      "ground flax seed",
+      "milled flax"
+    ],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.47,
+    "proteinPer100g": 18.3,
+    "shelfLifeDays": {
+      "pantry": 90,
+      "freezer": 365
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "sesame-seed",
+    "name": "sesame seeds",
+    "aliases": ["white sesame seeds", "toasted sesame seeds"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.61,
+    "proteinPer100g": 17.7,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 200,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "almond",
+    "name": "almonds",
+    "aliases": ["whole almonds", "raw almonds", "roasted almonds"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.6,
+    "proteinPer100g": 21.2,
+    "shelfLifeDays": {
+      "pantry": 270,
+      "freezer": 730
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "sliced-almond",
+    "name": "sliced almonds",
+    "aliases": ["flaked almonds", "toasted sliced almonds"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.39,
+    "proteinPer100g": 21.2,
+    "shelfLifeDays": {
+      "pantry": 270,
+      "freezer": 730
+    },
+    "defaultPackAmount": 200,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "slivered-almond",
+    "name": "slivered almonds",
+    "aliases": ["blanched slivered almonds"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.46,
+    "proteinPer100g": 21.2,
+    "shelfLifeDays": {
+      "pantry": 270,
+      "freezer": 730
+    },
+    "defaultPackAmount": 200,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "walnut",
+    "name": "walnuts",
+    "aliases": ["walnut halves", "chopped walnuts", "walnut pieces"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.5,
+    "proteinPer100g": 15.2,
+    "shelfLifeDays": {
+      "pantry": 180,
+      "freezer": 365
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pecan",
+    "name": "pecans",
+    "aliases": ["pecan halves", "chopped pecans", "pecan pieces"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.46,
+    "proteinPer100g": 9.2,
+    "shelfLifeDays": {
+      "pantry": 180,
+      "freezer": 730
+    },
+    "defaultPackAmount": 250,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cashew",
+    "name": "cashews",
+    "aliases": ["raw cashews", "roasted cashews", "cashew pieces"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.58,
+    "proteinPer100g": 18.2,
+    "shelfLifeDays": {
+      "pantry": 180,
+      "freezer": 365
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "peanut",
+    "name": "peanuts",
+    "aliases": ["roasted peanuts", "salted peanuts", "dry roasted peanuts"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.62,
+    "proteinPer100g": 25.8,
+    "shelfLifeDays": {
+      "pantry": 180,
+      "freezer": 365
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pine-nut",
+    "name": "pine nuts",
+    "aliases": ["pignoli", "toasted pine nuts"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.57,
+    "proteinPer100g": 13.7,
+    "shelfLifeDays": {
+      "pantry": 60,
+      "freezer": 180
+    },
+    "defaultPackAmount": 100,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "raisin",
+    "name": "raisins",
+    "aliases": ["sultanas", "golden raisins", "seedless raisins"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.7,
+    "proteinPer100g": 3.1,
+    "shelfLifeDays": {
+      "pantry": 180
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "dried-cranberry",
+    "name": "dried cranberries",
+    "aliases": ["craisins", "sweetened dried cranberries"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.5,
+    "proteinPer100g": 0.1,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "medjool-date",
+    "name": "medjool dates",
+    "aliases": ["dates", "pitted dates", "pitted medjool dates"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 24,
+    "proteinPer100g": 1.8,
+    "shelfLifeDays": {
+      "pantry": 180,
+      "fridge": 365
+    },
+    "defaultPackAmount": 907,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "dried-red-lentil",
+    "name": "dried red lentils",
+    "aliases": ["red lentils", "split red lentils", "red split lentils"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.81,
+    "proteinPer100g": 24.6,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "dried-green-lentil",
+    "name": "dried green lentils",
+    "aliases": ["green lentils", "brown lentils", "lentils", "dry lentils"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.81,
+    "proteinPer100g": 24.6,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "ranch-dressing-mix",
+    "name": "ranch dressing mix",
+    "aliases": [
+      "ranch seasoning",
+      "ranch seasoning mix",
+      "dry ranch dressing mix",
+      "ranch dip mix",
+      "hidden valley ranch seasoning"
+    ],
+    "category": "pantry",
+    "defaultLocation": "cupboard",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.6,
+    "proteinPer100g": 7,
+    "shelfLifeDays": {
+      "cupboard": 730
+    },
+    "defaultPackAmount": 28,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "boxed-macaroni-and-cheese",
+    "name": "boxed macaroni and cheese",
+    "aliases": ["kraft dinner", "kd", "mac and cheese", "boxed mac and cheese", "macaroni and cheese dinner"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 225,
+    "proteinPer100g": 13,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 12,
+    "defaultPackMeasure": "count",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "breadcrumb",
+    "name": "breadcrumbs",
+    "aliases": [
+      "bread crumbs",
+      "fine dry bread crumbs",
+      "dry bread crumbs",
+      "plain breadcrumbs",
+      "plain bread crumbs",
+      "fine breadcrumbs",
+      "dried breadcrumbs",
+      "fine bread crumbs",
+      "dry breadcrumbs",
+      "italian breadcrumbs",
+      "seasoned bread crumbs"
+    ],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.46,
+    "proteinPer100g": 13.4,
+    "shelfLifeDays": {
+      "pantry": 180,
+      "freezer": 365
+    },
+    "defaultPackAmount": 425,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 90,
+    "freezable": true,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "panko",
+    "name": "panko",
+    "aliases": ["panko bread crumbs", "panko breadcrumbs", "japanese bread crumbs"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.25,
+    "proteinPer100g": 12,
+    "shelfLifeDays": {
+      "pantry": 180
+    },
+    "defaultPackAmount": 227,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "taco-shell",
+    "name": "taco shell",
+    "aliases": ["hard taco shell", "crunchy taco shell"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 13,
+    "proteinPer100g": 7,
+    "shelfLifeDays": {
+      "pantry": 90
+    },
+    "defaultPackAmount": 12,
+    "defaultPackMeasure": "count",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cracker",
+    "name": "cracker",
+    "aliases": ["soda cracker", "saltine cracker", "saltine"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 3,
+    "proteinPer100g": 9,
+    "shelfLifeDays": {
+      "pantry": 180
+    },
+    "defaultPackAmount": 450,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "tortilla-chip",
+    "name": "tortilla chips",
+    "aliases": ["corn tortilla chips", "nacho chips"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 7,
+    "shelfLifeDays": {
+      "pantry": 90
+    },
+    "defaultPackAmount": 300,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "potato-chip",
+    "name": "potato chips",
+    "aliases": ["chips", "plain potato chips"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 6.6,
+    "shelfLifeDays": {
+      "pantry": 60
+    },
+    "defaultPackAmount": 235,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "popcorn-kernel",
+    "name": "popcorn kernels",
+    "aliases": ["popping corn", "popcorn"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.85,
+    "proteinPer100g": 11,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 850,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pesto",
+    "name": "pesto",
+    "aliases": ["basil pesto", "jarred pesto", "pesto sauce"],
+    "category": "pantry",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.97,
+    "proteinPer100g": 5,
+    "shelfLifeDays": {
+      "fridge": 14,
+      "freezer": 180
+    },
+    "defaultPackAmount": 190,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "hummus",
+    "name": "hummus",
+    "aliases": ["houmous", "plain hummus"],
+    "category": "pantry",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.02,
+    "proteinPer100g": 7.9,
+    "shelfLifeDays": {
+      "fridge": 7
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "protein-powder",
+    "name": "protein powder",
+    "aliases": ["whey protein powder", "whey protein", "vanilla protein powder"],
+    "category": "pantry",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.38,
+    "proteinPer100g": 78,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 907,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  }
+]

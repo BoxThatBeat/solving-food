@@ -1,0 +1,597 @@
+[
+  {
+    "id": "white-rice",
+    "name": "white rice",
+    "aliases": [
+      "long grain rice",
+      "long grain white rice",
+      "rice",
+      "white long grain rice",
+      "uncooked white rice"
+    ],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.78,
+    "proteinPer100g": 7.1,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 4000,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "jasmine-rice",
+    "name": "jasmine rice",
+    "aliases": ["thai jasmine rice", "white jasmine rice", "uncooked jasmine rice"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.8,
+    "proteinPer100g": 7,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 8000,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 45,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "basmati-rice",
+    "name": "basmati rice",
+    "aliases": ["white basmati rice"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.8,
+    "proteinPer100g": 7.5,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 4000,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "brown-rice",
+    "name": "brown rice",
+    "aliases": ["long grain brown rice"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.8,
+    "proteinPer100g": 7.9,
+    "shelfLifeDays": {
+      "pantry": 180
+    },
+    "defaultPackAmount": 2000,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "arborio-rice",
+    "name": "arborio rice",
+    "aliases": ["risotto rice", "carnaroli rice"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.85,
+    "proteinPer100g": 6.5,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "wild-rice",
+    "name": "wild rice",
+    "aliases": ["wild rice blend"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.68,
+    "proteinPer100g": 14.7,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "quinoa",
+    "name": "quinoa",
+    "aliases": ["white quinoa", "uncooked quinoa", "tricolour quinoa", "tri-color quinoa", "red quinoa"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.72,
+    "proteinPer100g": 14.1,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 2000,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 90,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "couscous",
+    "name": "couscous",
+    "aliases": ["pearl couscous", "israeli couscous"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.73,
+    "proteinPer100g": 12.8,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pearl-barley",
+    "name": "pearl barley",
+    "aliases": ["barley", "pot barley"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.84,
+    "proteinPer100g": 9.9,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "spaghetti",
+    "name": "spaghetti",
+    "aliases": ["spaghetti noodle", "spaghettini", "spaghetti pasta"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 13,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 21,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "whole-wheat-spaghetti",
+    "name": "whole wheat spaghetti",
+    "aliases": ["whole grain spaghetti"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 14.6,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "linguine",
+    "name": "linguine",
+    "aliases": ["linguini", "linguine pasta"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 13,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "fettuccine",
+    "name": "fettuccine",
+    "aliases": ["fettuccine pasta", "fettuccini"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 13,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "penne",
+    "name": "penne",
+    "aliases": ["penne pasta", "penne rigate"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.38,
+    "proteinPer100g": 13,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cavatappi-pasta",
+    "name": "cavatappi pasta",
+    "aliases": ["cavatappi", "cellentani"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.4,
+    "proteinPer100g": 13,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "elbow-macaroni",
+    "name": "elbow macaroni",
+    "aliases": ["macaroni", "elbow pasta", "macaroni noodle", "elbow macaroni pasta"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.44,
+    "proteinPer100g": 13,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 30,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "rotini",
+    "name": "rotini",
+    "aliases": ["rotini pasta", "fusilli", "fusilli pasta"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.38,
+    "proteinPer100g": 13,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "farfalle",
+    "name": "farfalle",
+    "aliases": ["bow tie pasta", "farfalle pasta", "bowtie pasta"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.33,
+    "proteinPer100g": 13,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "rigatoni",
+    "name": "rigatoni",
+    "aliases": ["rigatoni pasta"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.33,
+    "proteinPer100g": 13,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "orzo",
+    "name": "orzo",
+    "aliases": ["orzo pasta"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.75,
+    "proteinPer100g": 13,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "lasagna-noodle",
+    "name": "lasagna noodle",
+    "aliases": ["lasagna", "lasagne noodle", "lasagna sheet", "oven ready lasagna noodle", "lasagne"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 20,
+    "proteinPer100g": 13,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "egg-noodle",
+    "name": "egg noodle",
+    "aliases": ["wide egg noodle", "broad egg noodle"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.16,
+    "proteinPer100g": 14.2,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 340,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "rice-noodle",
+    "name": "rice noodle",
+    "aliases": ["rice vermicelli", "rice stick noodle", "pad thai noodle", "vermicelli"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 6,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "ramen-noodle",
+    "name": "ramen noodle",
+    "aliases": ["instant ramen", "instant noodle", "ramen"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 85,
+    "proteinPer100g": 10,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 12,
+    "defaultPackMeasure": "count",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "rolled-oat",
+    "name": "rolled oats",
+    "aliases": [
+      "old-fashioned oats",
+      "old-fashioned rolled oats",
+      "large flake oats",
+      "large flake rolled oats",
+      "oats",
+      "whole grain rolled oats",
+      "old fashioned oatmeal"
+    ],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.38,
+    "proteinPer100g": 13.2,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 2500,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 30,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "quick-oat",
+    "name": "quick oats",
+    "aliases": ["quick cooking oats", "quick-cooking rolled oats", "quick oatmeal", "instant oats"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.34,
+    "proteinPer100g": 13.2,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "steel-cut-oat",
+    "name": "steel cut oats",
+    "aliases": ["irish oats"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.68,
+    "proteinPer100g": 13,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "breakfast-cereal",
+    "name": "breakfast cereal",
+    "aliases": ["cereal", "cold cereal", "cheerios", "corn flakes"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.12,
+    "proteinPer100g": 8,
+    "shelfLifeDays": {
+      "pantry": 180
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 10,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "granola",
+    "name": "granola",
+    "aliases": ["granola cereal"],
+    "category": "grains",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.52,
+    "proteinPer100g": 9,
+    "shelfLifeDays": {
+      "pantry": 180
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  }
+]

@@ -328,7 +328,7 @@ describe("household isolation (R2.8, NFR4)", () => {
   });
 });
 
-describe("everything else is denied in M0", () => {
+describe("everything not yet introduced is denied", () => {
   it("unknown top-level and household collections", async () => {
     await profile(ALICE, 1);
     await seed(async (db) => {
@@ -336,8 +336,9 @@ describe("everything else is denied in M0", () => {
       await setDoc(doc(db, "households", "hA", "members", ALICE.uid), { uid: ALICE.uid, displayName: "a", joinedAt: new Date() });
     });
     const db = dbAs(ALICE);
-    await assertFails(setDoc(doc(db, "recipes", "r1"), { title: "x" }));
+    await assertFails(setDoc(doc(db, "recipes", "r1"), { title: "x" })); // invalid recipe, no version snapshot
     await assertFails(getDoc(doc(db, "prices", "p1")));
+    await assertFails(setDoc(doc(db, "meals", "m1"), { name: "x" }));
     await assertFails(setDoc(doc(db, "households", "hA", "supply", "s1"), { canonicalAmount: 1 }));
     await assertFails(setDoc(doc(db, "households", "hA", "planItems", "p1"), { status: "planned" }));
     await assertFails(setDoc(doc(db, "users", ALICE.uid, "notifications", "n1"), { message: "x" }));

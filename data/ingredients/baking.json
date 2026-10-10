@@ -1,0 +1,957 @@
+[
+  {
+    "id": "all-purpose-flour",
+    "name": "all-purpose flour",
+    "aliases": [
+      "flour",
+      "plain flour",
+      "white flour",
+      "unbleached all-purpose flour",
+      "unbleached flour",
+      "ap flour"
+    ],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.53,
+    "proteinPer100g": 10.3,
+    "shelfLifeDays": {
+      "pantry": 240,
+      "freezer": 730
+    },
+    "defaultPackAmount": 2500,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 30,
+    "freezable": true,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "whole-wheat-flour",
+    "name": "whole wheat flour",
+    "aliases": ["whole wheat all purpose flour", "whole grain flour", "wholemeal flour"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.51,
+    "proteinPer100g": 13.2,
+    "shelfLifeDays": {
+      "pantry": 90,
+      "fridge": 180,
+      "freezer": 365
+    },
+    "defaultPackAmount": 2500,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 90,
+    "freezable": true,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "bread-flour",
+    "name": "bread flour",
+    "aliases": ["strong flour", "white bread flour"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.54,
+    "proteinPer100g": 12,
+    "shelfLifeDays": {
+      "pantry": 240,
+      "freezer": 730
+    },
+    "defaultPackAmount": 2500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cake-and-pastry-flour",
+    "name": "cake and pastry flour",
+    "aliases": ["cake flour", "pastry flour"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.45,
+    "proteinPer100g": 8.2,
+    "shelfLifeDays": {
+      "pantry": 240,
+      "freezer": 730
+    },
+    "defaultPackAmount": 2500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "oat-flour",
+    "name": "oat flour",
+    "aliases": ["gluten free oat flour", "ground oats"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.39,
+    "proteinPer100g": 13.6,
+    "shelfLifeDays": {
+      "pantry": 90,
+      "freezer": 365
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "almond-flour",
+    "name": "almond flour",
+    "aliases": ["almond meal", "ground almonds", "blanched almond flour"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.41,
+    "proteinPer100g": 21.4,
+    "shelfLifeDays": {
+      "pantry": 90,
+      "fridge": 180,
+      "freezer": 365
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "white-sugar",
+    "name": "white sugar",
+    "aliases": [
+      "sugar",
+      "granulated sugar",
+      "white granulated sugar",
+      "cane sugar",
+      "granulated white sugar"
+    ],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.85,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "pantry": null
+    },
+    "defaultPackAmount": 2000,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 30,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": true,
+    "needsReview": false
+  },
+  {
+    "id": "brown-sugar",
+    "name": "brown sugar",
+    "aliases": [
+      "light brown sugar",
+      "golden brown sugar",
+      "golden yellow sugar",
+      "packed brown sugar",
+      "dark brown sugar",
+      "packed light brown sugar"
+    ],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.93,
+    "proteinPer100g": 0.1,
+    "shelfLifeDays": {
+      "pantry": null
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 45,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": true,
+    "needsReview": false
+  },
+  {
+    "id": "icing-sugar",
+    "name": "icing sugar",
+    "aliases": ["powdered sugar", "confectioners sugar", "confectioner's sugar"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.51,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "pantry": null
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 120,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "baking-powder",
+    "name": "baking powder",
+    "aliases": [],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.93,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 450,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 120,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "baking-soda",
+    "name": "baking soda",
+    "aliases": ["bicarbonate of soda", "sodium bicarbonate"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.95,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "pantry": 540
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 180,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cornstarch",
+    "name": "cornstarch",
+    "aliases": ["corn starch"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.54,
+    "proteinPer100g": 0.3,
+    "shelfLifeDays": {
+      "pantry": null
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 180,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cream-of-tartar",
+    "name": "cream of tartar",
+    "aliases": [],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.61,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "pantry": null
+    },
+    "defaultPackAmount": 100,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "vanilla-extract",
+    "name": "vanilla extract",
+    "aliases": [
+      "pure vanilla extract",
+      "vanilla",
+      "pure vanilla",
+      "vanilla essence",
+      "imitation vanilla extract"
+    ],
+    "category": "baking",
+    "defaultLocation": "cupboard",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.88,
+    "proteinPer100g": 0.1,
+    "shelfLifeDays": {
+      "cupboard": null
+    },
+    "defaultPackAmount": 250,
+    "defaultPackMeasure": "volume",
+    "defaultCadenceDays": 180,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "almond-extract",
+    "name": "almond extract",
+    "aliases": ["pure almond extract"],
+    "category": "baking",
+    "defaultLocation": "cupboard",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.88,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "cupboard": null
+    },
+    "defaultPackAmount": 43,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "peppermint-extract",
+    "name": "peppermint extract",
+    "aliases": ["pure peppermint extract", "mint extract"],
+    "category": "baking",
+    "defaultLocation": "cupboard",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.88,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "cupboard": null
+    },
+    "defaultPackAmount": 43,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cocoa-powder",
+    "name": "cocoa powder",
+    "aliases": [
+      "unsweetened cocoa powder",
+      "cocoa",
+      "unsweetened cocoa",
+      "dutch process cocoa powder",
+      "dutch processed cocoa",
+      "baking cocoa"
+    ],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.37,
+    "proteinPer100g": 19.6,
+    "shelfLifeDays": {
+      "pantry": 730
+    },
+    "defaultPackAmount": 227,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 120,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "chocolate-chip",
+    "name": "chocolate chips",
+    "aliases": [
+      "semi-sweet chocolate chips",
+      "semisweet chocolate chips",
+      "chocolate morsels",
+      "semi-sweet chocolate morsels",
+      "chipits"
+    ],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.72,
+    "proteinPer100g": 4.9,
+    "shelfLifeDays": {
+      "pantry": 540
+    },
+    "defaultPackAmount": 900,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 60,
+    "freezable": false,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "dark-chocolate-chip",
+    "name": "dark chocolate chips",
+    "aliases": ["bittersweet chocolate chips", "dark chocolate morsels", "dark chocolate chunks"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.72,
+    "proteinPer100g": 5.5,
+    "shelfLifeDays": {
+      "pantry": 540
+    },
+    "defaultPackAmount": 300,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "mini-chocolate-chip",
+    "name": "mini chocolate chips",
+    "aliases": [
+      "mini semi-sweet chocolate chips",
+      "mini semisweet chocolate chips",
+      "miniature chocolate chips"
+    ],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.72,
+    "proteinPer100g": 4.9,
+    "shelfLifeDays": {
+      "pantry": 540
+    },
+    "defaultPackAmount": 300,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "white-chocolate-chip",
+    "name": "white chocolate chips",
+    "aliases": ["white chocolate morsels", "white chips"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.72,
+    "proteinPer100g": 5.9,
+    "shelfLifeDays": {
+      "pantry": 540
+    },
+    "defaultPackAmount": 300,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "milk-chocolate-chip",
+    "name": "milk chocolate chips",
+    "aliases": ["milk chocolate morsels"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.72,
+    "proteinPer100g": 7,
+    "shelfLifeDays": {
+      "pantry": 540
+    },
+    "defaultPackAmount": 300,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "baking-chocolate",
+    "name": "baking chocolate",
+    "aliases": [
+      "semi-sweet baking chocolate",
+      "semisweet chocolate square",
+      "baker's chocolate",
+      "unsweetened baking chocolate",
+      "bittersweet baking chocolate"
+    ],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 28,
+    "proteinPer100g": 4.9,
+    "shelfLifeDays": {
+      "pantry": 540
+    },
+    "defaultPackAmount": 225,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "candy-cane-kiss",
+    "name": "candy cane kisses",
+    "aliases": ["hershey's candy cane kisses", "candy cane hershey kisses"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 4.5,
+    "proteinPer100g": 2.4,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 283,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "chocolate-kiss",
+    "name": "chocolate kisses",
+    "aliases": ["hershey's kisses", "hershey kisses", "milk chocolate kisses"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 4.6,
+    "proteinPer100g": 7,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 283,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "chocolate-cake-mix",
+    "name": "chocolate cake mix",
+    "aliases": ["devil's food cake mix", "chocolate fudge cake mix", "box of chocolate cake mix"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume", "count"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.46,
+    "unitWeightG": 432,
+    "proteinPer100g": 5.3,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 432,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "vanilla-cake-mix",
+    "name": "vanilla cake mix",
+    "aliases": ["white cake mix", "yellow cake mix"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume", "count"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.46,
+    "unitWeightG": 432,
+    "proteinPer100g": 4.5,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 432,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "brownie-mix",
+    "name": "brownie mix",
+    "aliases": ["fudge brownie mix", "box of brownie mix"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume", "count"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.6,
+    "unitWeightG": 500,
+    "proteinPer100g": 4.5,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pancake-mix",
+    "name": "pancake mix",
+    "aliases": [
+      "pancake and waffle mix",
+      "buttermilk pancake mix",
+      "complete pancake mix",
+      "biscuit mix",
+      "bisquick"
+    ],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.53,
+    "proteinPer100g": 9.5,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 905,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "unsweetened-coconut",
+    "name": "unsweetened coconut",
+    "aliases": [
+      "unsweetened coconut flakes",
+      "unsweetened shredded coconut",
+      "desiccated coconut",
+      "unsweetened flaked coconut",
+      "unsweetened desiccated coconut"
+    ],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.33,
+    "proteinPer100g": 6.9,
+    "shelfLifeDays": {
+      "pantry": 180,
+      "freezer": 365
+    },
+    "defaultPackAmount": 400,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "sweetened-shredded-coconut",
+    "name": "sweetened shredded coconut",
+    "aliases": [
+      "shredded coconut",
+      "sweetened coconut flakes",
+      "flaked coconut",
+      "sweetened flaked coconut",
+      "coconut flakes"
+    ],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.39,
+    "proteinPer100g": 2.9,
+    "shelfLifeDays": {
+      "pantry": 180,
+      "freezer": 365
+    },
+    "defaultPackAmount": 400,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "active-dry-yeast",
+    "name": "active dry yeast",
+    "aliases": ["yeast", "dry yeast", "traditional yeast", "active yeast"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.63,
+    "proteinPer100g": 40.4,
+    "shelfLifeDays": {
+      "pantry": 365,
+      "fridge": 120
+    },
+    "defaultPackAmount": 113,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "instant-yeast",
+    "name": "instant yeast",
+    "aliases": ["quick rise yeast", "rapid rise yeast", "bread machine yeast", "quick-rise instant yeast"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.63,
+    "proteinPer100g": 40.4,
+    "shelfLifeDays": {
+      "pantry": 365,
+      "fridge": 120
+    },
+    "defaultPackAmount": 113,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "sweetened-condensed-milk",
+    "name": "sweetened condensed milk",
+    "aliases": ["condensed milk", "eagle brand milk"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.29,
+    "proteinPer100g": 7.9,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 300,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "evaporated-milk",
+    "name": "evaporated milk",
+    "aliases": ["canned evaporated milk", "evaporated 2% milk"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.06,
+    "proteinPer100g": 6.8,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 370,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "molasses",
+    "name": "molasses",
+    "aliases": ["fancy molasses", "blackstrap molasses", "cooking molasses"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.42,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "corn-syrup",
+    "name": "corn syrup",
+    "aliases": ["light corn syrup", "white corn syrup", "golden corn syrup"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 1.38,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "pantry": null
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "volume",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "unflavoured-gelatin",
+    "name": "unflavoured gelatin",
+    "aliases": ["unflavored gelatin", "gelatin", "gelatin powder", "knox gelatine", "gelatine"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.64,
+    "proteinPer100g": 85.6,
+    "shelfLifeDays": {
+      "pantry": 1095
+    },
+    "defaultPackAmount": 28,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "sprinkle",
+    "name": "sprinkles",
+    "aliases": ["rainbow sprinkles", "nonpareils", "jimmies"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.8,
+    "proteinPer100g": 1.5,
+    "shelfLifeDays": {
+      "pantry": 1095
+    },
+    "defaultPackAmount": 100,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "marshmallow",
+    "name": "marshmallows",
+    "aliases": ["mini marshmallows", "miniature marshmallows", "large marshmallows"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume", "count"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.21,
+    "unitWeightG": 7,
+    "proteinPer100g": 1.8,
+    "shelfLifeDays": {
+      "pantry": 180
+    },
+    "defaultPackAmount": 400,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "graham-cracker-crumb",
+    "name": "graham cracker crumbs",
+    "aliases": ["graham crumbs", "graham wafer crumbs"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.36,
+    "proteinPer100g": 6.9,
+    "shelfLifeDays": {
+      "pantry": 180
+    },
+    "defaultPackAmount": 400,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cornmeal",
+    "name": "cornmeal",
+    "aliases": ["yellow cornmeal", "corn meal", "polenta", "fine cornmeal"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.66,
+    "proteinPer100g": 7.1,
+    "shelfLifeDays": {
+      "pantry": 365,
+      "freezer": 730
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "vegetable-shortening",
+    "name": "vegetable shortening",
+    "aliases": ["shortening", "all vegetable shortening", "crisco"],
+    "category": "baking",
+    "defaultLocation": "pantry",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.87,
+    "proteinPer100g": 0,
+    "shelfLifeDays": {
+      "pantry": 365
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  }
+]

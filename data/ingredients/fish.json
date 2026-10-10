@@ -1,0 +1,270 @@
+[
+  {
+    "id": "salmon-fillet",
+    "name": "salmon fillet",
+    "aliases": [
+      "salmon",
+      "atlantic salmon",
+      "atlantic salmon fillet",
+      "skin-on salmon fillet",
+      "salmon portion",
+      "fresh salmon"
+    ],
+    "category": "fish",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 170,
+    "proteinPer100g": 20.4,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 90
+    },
+    "defaultPackAmount": 908,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "large-shrimp",
+    "name": "large shrimp",
+    "aliases": [
+      "shrimp",
+      "raw shrimp",
+      "jumbo shrimp",
+      "extra large shrimp",
+      "prawn",
+      "raw large shrimp",
+      "peeled shrimp",
+      "frozen shrimp",
+      "peeled and deveined shrimp"
+    ],
+    "category": "fish",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 14,
+    "proteinPer100g": 20.1,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 180
+    },
+    "defaultPackAmount": 907,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cooked-shrimp",
+    "name": "cooked shrimp",
+    "aliases": ["shrimp ring", "cooked peeled shrimp"],
+    "category": "fish",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 10,
+    "proteinPer100g": 24,
+    "shelfLifeDays": {
+      "fridge": 3,
+      "freezer": 180
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cod-fillet",
+    "name": "cod fillet",
+    "aliases": ["cod", "atlantic cod", "pacific cod"],
+    "category": "fish",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 150,
+    "proteinPer100g": 17.8,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 240
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "haddock-fillet",
+    "name": "haddock fillet",
+    "aliases": ["haddock"],
+    "category": "fish",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 150,
+    "proteinPer100g": 16.3,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 240
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "tilapia-fillet",
+    "name": "tilapia fillet",
+    "aliases": ["tilapia"],
+    "category": "fish",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 115,
+    "proteinPer100g": 20.1,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 240
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "halibut-fillet",
+    "name": "halibut fillet",
+    "aliases": ["halibut"],
+    "category": "fish",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 170,
+    "proteinPer100g": 18.6,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 240
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "sole-fillet",
+    "name": "sole fillet",
+    "aliases": ["sole"],
+    "category": "fish",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 100,
+    "proteinPer100g": 12.4,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 240
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "rainbow-trout-fillet",
+    "name": "rainbow trout fillet",
+    "aliases": ["trout", "trout fillet", "rainbow trout", "steelhead trout"],
+    "category": "fish",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 150,
+    "proteinPer100g": 20.5,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 90
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "smoked-salmon",
+    "name": "smoked salmon",
+    "aliases": ["lox", "cold smoked salmon", "sliced smoked salmon"],
+    "category": "fish",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 18.3,
+    "shelfLifeDays": {
+      "fridge": 14,
+      "freezer": 60
+    },
+    "defaultPackAmount": 300,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "scallop",
+    "name": "scallop",
+    "aliases": ["sea scallop", "bay scallop"],
+    "category": "fish",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 30,
+    "proteinPer100g": 12,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 90
+    },
+    "defaultPackAmount": 454,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "mussel",
+    "name": "mussel",
+    "aliases": ["pei mussel", "fresh mussel"],
+    "category": "fish",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 15,
+    "proteinPer100g": 11.9,
+    "shelfLifeDays": {
+      "fridge": 2,
+      "freezer": 90
+    },
+    "defaultPackAmount": 907,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  }
+]

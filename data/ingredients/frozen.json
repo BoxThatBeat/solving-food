@@ -1,0 +1,587 @@
+[
+  {
+    "id": "frozen-broccoli",
+    "name": "frozen broccoli",
+    "aliases": ["frozen chopped broccoli", "frozen broccoli florets", "frozen broccoli cuts"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.6,
+    "proteinPer100g": 2.8,
+    "shelfLifeDays": {
+      "freezer": 300
+    },
+    "defaultPackAmount": 750,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "frozen-pea",
+    "name": "frozen peas",
+    "aliases": ["peas", "green peas", "frozen green peas", "sweet peas"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.57,
+    "proteinPer100g": 5.2,
+    "shelfLifeDays": {
+      "freezer": 300
+    },
+    "defaultPackAmount": 750,
+    "defaultPackMeasure": "weight",
+    "defaultCadenceDays": 30,
+    "freezable": true,
+    "isStaple": true,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "frozen-corn",
+    "name": "frozen corn",
+    "aliases": ["frozen corn kernels", "frozen whole kernel corn", "corn", "corn kernels"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.58,
+    "proteinPer100g": 3,
+    "shelfLifeDays": {
+      "freezer": 300
+    },
+    "defaultPackAmount": 750,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "frozen-mixed-vegetable",
+    "name": "frozen mixed vegetables",
+    "aliases": ["mixed vegetables", "frozen mixed veggies", "mixed veggies", "frozen vegetable medley"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.57,
+    "proteinPer100g": 2.6,
+    "shelfLifeDays": {
+      "freezer": 300
+    },
+    "defaultPackAmount": 750,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "frozen-spinach",
+    "name": "frozen spinach",
+    "aliases": ["frozen chopped spinach"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.66,
+    "proteinPer100g": 4,
+    "shelfLifeDays": {
+      "freezer": 300
+    },
+    "defaultPackAmount": 300,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "frozen-cauliflower",
+    "name": "frozen cauliflower",
+    "aliases": ["frozen cauliflower florets"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.55,
+    "proteinPer100g": 1.6,
+    "shelfLifeDays": {
+      "freezer": 300
+    },
+    "defaultPackAmount": 750,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "cauliflower-rice",
+    "name": "cauliflower rice",
+    "aliases": ["riced cauliflower", "frozen cauliflower rice", "frozen riced cauliflower"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.5,
+    "proteinPer100g": 1.9,
+    "shelfLifeDays": {
+      "freezer": 300
+    },
+    "defaultPackAmount": 340,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "frozen-stir-fry-vegetable",
+    "name": "frozen stir fry vegetables",
+    "aliases": ["stir fry vegetables", "frozen stir-fry mix", "stir fry vegetable mix"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.5,
+    "proteinPer100g": 2,
+    "shelfLifeDays": {
+      "freezer": 300
+    },
+    "defaultPackAmount": 750,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "edamame",
+    "name": "edamame",
+    "aliases": ["frozen edamame", "shelled edamame"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.66,
+    "proteinPer100g": 11,
+    "shelfLifeDays": {
+      "freezer": 300
+    },
+    "defaultPackAmount": 500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "frozen-mixed-berry",
+    "name": "frozen mixed berries",
+    "aliases": ["mixed berries", "frozen berries", "frozen berry blend"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.6,
+    "proteinPer100g": 0.7,
+    "shelfLifeDays": {
+      "freezer": 300
+    },
+    "defaultPackAmount": 1500,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "frozen-blueberry",
+    "name": "frozen blueberries",
+    "aliases": ["frozen wild blueberries", "wild blueberries"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.65,
+    "proteinPer100g": 0.4,
+    "shelfLifeDays": {
+      "freezer": 300
+    },
+    "defaultPackAmount": 600,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "frozen-strawberry",
+    "name": "frozen strawberries",
+    "aliases": ["frozen whole strawberries"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.6,
+    "proteinPer100g": 0.4,
+    "shelfLifeDays": {
+      "freezer": 300
+    },
+    "defaultPackAmount": 600,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "frozen-raspberry",
+    "name": "frozen raspberries",
+    "aliases": [],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.55,
+    "proteinPer100g": 0.7,
+    "shelfLifeDays": {
+      "freezer": 300
+    },
+    "defaultPackAmount": 600,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "frozen-mango",
+    "name": "frozen mango",
+    "aliases": ["frozen mango chunks"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.7,
+    "proteinPer100g": 0.8,
+    "shelfLifeDays": {
+      "freezer": 300
+    },
+    "defaultPackAmount": 600,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "chicken-nugget",
+    "name": "chicken nuggets",
+    "aliases": ["frozen chicken nuggets", "breaded chicken nuggets"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 18,
+    "proteinPer100g": 15,
+    "shelfLifeDays": {
+      "freezer": 180
+    },
+    "defaultPackAmount": 907,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "chicken-strip",
+    "name": "chicken strips",
+    "aliases": [
+      "breaded chicken strips",
+      "chicken fingers",
+      "frozen chicken strips",
+      "breaded chicken tenders"
+    ],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 40,
+    "proteinPer100g": 15,
+    "shelfLifeDays": {
+      "freezer": 180
+    },
+    "defaultPackAmount": 907,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "fish-stick",
+    "name": "fish sticks",
+    "aliases": ["breaded fish sticks", "fish fingers"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 28,
+    "proteinPer100g": 11,
+    "shelfLifeDays": {
+      "freezer": 180
+    },
+    "defaultPackAmount": 700,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "breaded-fish-fillet",
+    "name": "breaded fish fillet",
+    "aliases": ["frozen breaded fish", "battered fish fillet"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 110,
+    "proteinPer100g": 12,
+    "shelfLifeDays": {
+      "freezer": 180
+    },
+    "defaultPackAmount": 700,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "french-fry",
+    "name": "french fries",
+    "aliases": ["frozen french fries", "fries", "frozen fries", "oven fries"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 2.7,
+    "shelfLifeDays": {
+      "freezer": 365
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "hash-brown",
+    "name": "hash browns",
+    "aliases": ["frozen hash browns", "shredded hash browns", "hash brown patties"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.38,
+    "proteinPer100g": 2,
+    "shelfLifeDays": {
+      "freezer": 365
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "frozen-pizza",
+    "name": "frozen pizza",
+    "aliases": ["frozen pizza pie"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 450,
+    "proteinPer100g": 10,
+    "shelfLifeDays": {
+      "freezer": 365
+    },
+    "defaultPackAmount": 1,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "ice-cream",
+    "name": "ice cream",
+    "aliases": ["vanilla ice cream", "chocolate ice cream"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.56,
+    "proteinPer100g": 3.5,
+    "shelfLifeDays": {
+      "freezer": 60
+    },
+    "defaultPackAmount": 1500,
+    "defaultPackMeasure": "volume",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "frozen-waffle",
+    "name": "frozen waffles",
+    "aliases": ["eggo waffles", "toaster waffles"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 35,
+    "proteinPer100g": 6.5,
+    "shelfLifeDays": {
+      "freezer": 240
+    },
+    "defaultPackAmount": 8,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "perogy",
+    "name": "perogies",
+    "aliases": ["frozen perogies", "pierogi", "pierogies", "cheddar perogies"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 30,
+    "proteinPer100g": 6,
+    "shelfLifeDays": {
+      "freezer": 365
+    },
+    "defaultPackAmount": 907,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "puff-pastry",
+    "name": "puff pastry",
+    "aliases": ["frozen puff pastry", "puff pastry sheet"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 7.3,
+    "shelfLifeDays": {
+      "freezer": 365
+    },
+    "defaultPackAmount": 397,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "pie-shell",
+    "name": "pie shell",
+    "aliases": ["frozen pie crust", "pie crust", "deep dish pie shell", "frozen pie shell"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 180,
+    "proteinPer100g": 5.7,
+    "shelfLifeDays": {
+      "freezer": 240
+    },
+    "defaultPackAmount": 2,
+    "defaultPackMeasure": "count",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "whipped-topping",
+    "name": "whipped topping",
+    "aliases": ["frozen whipped topping", "cool whip"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "volume"],
+    "canonicalUnit": "g",
+    "densityGPerMl": 0.3,
+    "proteinPer100g": 1,
+    "shelfLifeDays": {
+      "freezer": 365,
+      "fridge": 14
+    },
+    "defaultPackAmount": 1000,
+    "defaultPackMeasure": "volume",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "frozen-meatball",
+    "name": "frozen meatballs",
+    "aliases": ["meatballs", "frozen cooked meatballs", "cooked meatballs"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 25,
+    "proteinPer100g": 14,
+    "shelfLifeDays": {
+      "freezer": 120
+    },
+    "defaultPackAmount": 907,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  },
+  {
+    "id": "frozen-burger-patty",
+    "name": "frozen burger patties",
+    "aliases": ["burger patties", "hamburger patties", "frozen hamburger patties", "beef burger patties"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight", "count"],
+    "canonicalUnit": "g",
+    "unitWeightG": 113,
+    "proteinPer100g": 16,
+    "shelfLifeDays": {
+      "freezer": 120
+    },
+    "defaultPackAmount": 1360,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false
+  }
+]

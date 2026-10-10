@@ -1,8 +1,9 @@
 rules_version = '2';
 
-// Solving Food security rules, M0 subset (TECHNICAL_SPECS §10, Planning/M0 §2).
-// Collections: allowlist, users, directory, households (+ members). Everything else is denied until the milestone
-// that introduces it adds its rules.
+// Solving Food security rules (TECHNICAL_SPECS §10).
+// M0: allowlist, users, directory, households (+ members).
+// M1: ingredients, recipes (+ versions), recipeIndex, households/*/favourites, notes, stats (read), and
+//     users/*/notifications. Everything else is denied until the milestone that introduces it adds its rules.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -50,6 +51,12 @@ service cloud.firestore {
     }
     function validDisplayName(n) {
       return str(n, 1, 40) && n.trim().size() > 0;
+    }
+    function optStr(d, k, max) {
+      return !(k in d) || str(d[k], 0, max);
+    }
+    function optNum(d, k) {
+      return !(k in d) || (d[k] is number && d[k] >= 0);
     }
     function validHousehold(d) {
       return d.keys().hasOnly(['name', 'createdBy', 'periodDays', 'budgetCents', 'currency', 'timezone',
@@ -119,6 +126,133 @@ service cloud.firestore {
         && request.resource.data.displayNameLower == request.resource.data.displayName.lower();
     }
 
+
+    // ---------- ingredients/{id} (§4.1, §5): public get for share-link pages; allowlisted users list and edit
+
+    function validIngredient(d) {
+      return d.keys().hasOnly(['name', 'aliases', 'category', 'defaultLocation', 'allowedMeasures', 'canonicalUnit',
+                               'densityGPerMl', 'unitWeightG', 'proteinPer100g', 'shelfLifeDays', 'defaultPackAmount',
+                               'defaultPackMeasure', 'defaultCadenceDays', 'freezable', 'isStaple', 'freeUse',
+                               'needsReview', 'createdBy', 'updatedBy', 'updatedAt'])
+        && d.keys().hasAll(['name', 'aliases', 'category', 'defaultLocation', 'allowedMeasures', 'canonicalUnit',
+                            'shelfLifeDays', 'freezable', 'isStaple', 'freeUse', 'needsReview'])
+        && str(d.name, 1, 80)
+        && d.aliases is list && d.aliases.size() <= 40
+        && str(d.category, 1, 40)
+        && d.defaultLocation in ['pantry', 'cupboard', 'fridge', 'freezer']
+        && d.allowedMeasures is list && d.allowedMeasures.size() >= 1
+        && d.allowedMeasures.hasOnly(['weight', 'volume', 'count'])
+        && d.canonicalUnit in ['g', 'count']
+        && optNum(d, 'densityGPerMl') && optNum(d, 'unitWeightG') && optNum(d, 'proteinPer100g')
+        && optNum(d, 'defaultPackAmount') && optNum(d, 'defaultCadenceDays')
+        && (!('defaultPackMeasure' in d) || d.defaultPackMeasure in ['weight', 'volume', 'count'])
+        && d.shelfLifeDays is map
+        && d.freezable is bool && d.isStaple is bool && d.freeUse is bool && d.needsReview is bool
+        && d.updatedBy == me() && d.updatedAt == request.time;
+    }
+
+    match /ingredients/{id} {
+      allow get: if true;
+      allow list: if allowed();
+      allow create: if allowed() && validIngredient(request.resource.data)
+        && request.resource.data.createdBy == me();
+      allow update: if allowed() && validIngredient(request.resource.data)
+        && request.resource.data.get('createdBy', null) == resource.data.get('createdBy', null);
+    }
+
+    // ---------- recipes/{id} (§4.1, §4.4, §9): the global library
+
+    function validRecipe(d) {
+      return d.keys().hasOnly(['title', 'slug', 'servings', 'prepMin', 'cookMin', 'cuisine', 'mainProtein', 'tags',
+                               'tools', 'ingredients', 'steps', 'prepTasks', 'defaultLeftoverPortions',
+                               'leftoverMealType', 'proteinPerServingG', 'proteinApproximate', 'notes', 'sourceUrl',
+                               'sourceUrlCanonical', 'fingerprint', 'ingredientIds', 'imagePaths', 'indexChunk',
+                               'status', 'possibleDuplicateOf', 'trashedAt', 'trashedBy', 'createdBy', 'updatedBy',
+                               'version', 'createdAt', 'updatedAt'])
+        && d.keys().hasAll(['title', 'slug', 'servings', 'prepMin', 'cookMin', 'cuisine', 'mainProtein', 'tags',
+                            'tools', 'ingredients', 'steps', 'prepTasks', 'defaultLeftoverPortions', 'fingerprint',
+                            'ingredientIds', 'imagePaths', 'status', 'createdBy', 'updatedBy', 'version',
+                            'createdAt', 'updatedAt'])
+        && str(d.title, 1, 200) && str(d.slug, 1, 100)
+        && d.servings is int && d.servings >= 1 && d.servings <= 100
+        && d.prepMin is int && d.prepMin >= 0 && d.cookMin is int && d.cookMin >= 0
+        && d.cuisine in ['american', 'british', 'canadian', 'caribbean', 'chinese', 'french', 'greek', 'indian',
+                         'italian', 'japanese', 'korean', 'mediterranean', 'mexican', 'middle-eastern', 'nordic',
+                         'spanish', 'thai', 'vietnamese', 'other']
+        && d.mainProtein in ['beef', 'pork', 'chicken', 'turkey', 'lamb', 'fish', 'seafood', 'eggs', 'tofu',
+                             'legumes', 'dairy', 'none']
+        && d.tags is list && d.tags.size() <= 30
+        && d.tools is list && d.tools.size() <= 30
+        && d.ingredients is list && d.ingredients.size() <= 100
+        && d.steps is list && d.steps.size() <= 100
+        && d.prepTasks is list && d.prepTasks.size() <= 50
+        && d.ingredientIds is list && d.ingredientIds.size() <= 100
+        && d.imagePaths is list && d.imagePaths.size() <= 10
+        && d.defaultLeftoverPortions is int && d.defaultLeftoverPortions >= 0
+        && optStr(d, 'notes', 5000) && optStr(d, 'sourceUrl', 2000) && optStr(d, 'sourceUrlCanonical', 2000)
+        && str(d.fingerprint, 1, 40)
+        && d.status in ['active', 'pendingDuplicateReview', 'trashed']
+        && d.version is int
+        && d.updatedBy == me() && d.updatedAt == request.time;
+    }
+    // Trashing stamps who and when; any other status carries no trash fields (§4.4).
+    function validTrashState(d, before) {
+      return d.status == 'trashed'
+        ? (before != null && before.status == 'trashed'
+            ? d.trashedAt == before.trashedAt && d.trashedBy == before.trashedBy
+            : d.trashedAt == request.time && d.trashedBy == me())
+        : !('trashedAt' in d) && !('trashedBy' in d);
+    }
+
+    match /recipes/{id} {
+      allow get: if true;                     // share links work without an account (R4.21)
+      allow list: if allowed();
+      // Version 1 with its snapshot in the same batch; the index function assigns indexChunk (§9).
+      allow create: if allowed() && validRecipe(request.resource.data)
+        && request.resource.data.status == 'active'
+        && request.resource.data.version == 1
+        && request.resource.data.createdBy == me()
+        && request.resource.data.createdAt == request.time
+        && !('indexChunk' in request.resource.data)
+        && !('possibleDuplicateOf' in request.resource.data)
+        && validTrashState(request.resource.data, null)
+        && existsAfter(/databases/$(database)/documents/recipes/$(id)/versions/1);
+      // Every save (edits, trash, restore, keep both) bumps the version by one and writes its snapshot (§9).
+      allow update: if allowed() && validRecipe(request.resource.data)
+        && request.resource.data.version == resource.data.version + 1
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.get('indexChunk', null) == resource.data.get('indexChunk', null)
+        && (request.resource.data.status != 'pendingDuplicateReview' || resource.data.status == 'pendingDuplicateReview')
+        && validTrashState(request.resource.data, resource.data)
+        && existsAfter(/databases/$(database)/documents/recipes/$(id)/versions/$(string(request.resource.data.version)));
+      // Hard delete only for an import discarded in duplicate review (§9); the purge is a function.
+      allow delete: if allowed() && resource.data.status == 'pendingDuplicateReview';
+
+      match /versions/{v} {
+        allow read: if allowed();
+        allow create: if allowed()
+          && v == string(getAfter(/databases/$(database)/documents/recipes/$(id)).data.version)
+          && request.resource.data.editedBy == me()
+          && request.resource.data.editedAt == request.time;
+      }
+    }
+
+    // ---------- recipeIndex/{chunk} (§9): written by the index function only
+
+    match /recipeIndex/{id} {
+      allow read: if allowed();
+    }
+
+    // ---------- users/{uid}/notifications (§12, R12.1): created by functions; the owner reads and dismisses
+
+    match /users/{uid}/notifications/{id} {
+      allow read, delete: if uid == me() && allowed();
+      allow update: if uid == me() && allowed()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dismissedAt'])
+        && request.resource.data.dismissedAt == request.time;
+    }
+
     // ---------- households/{hid}
 
     match /households/{hid} {
@@ -147,6 +281,31 @@ service cloud.firestore {
           && request.resource.data.joinedAt == request.time
           && !exists(/databases/$(database)/documents/households/$(hid))
           && getAfter(/databases/$(database)/documents/households/$(hid)).data.createdBy == me();
+      }
+
+      // Favourites (R4.6): one doc per target, keyed "<type>_<targetId>".
+      match /favourites/{fid} {
+        allow read, delete: if isMember(hid);
+        allow create: if isMember(hid)
+          && request.resource.data.keys().hasOnly(['type', 'targetId'])
+          && request.resource.data.type in ['recipe', 'meal']
+          && str(request.resource.data.targetId, 1, 200)
+          && fid == request.resource.data.type + '_' + request.resource.data.targetId;
+      }
+
+      // The household's notes on a recipe (R4.8), keyed by recipe ID.
+      match /notes/{recipeId} {
+        allow read, delete: if isMember(hid);
+        allow create, update: if isMember(hid)
+          && request.resource.data.keys().hasOnly(['text', 'updatedBy', 'updatedAt'])
+          && str(request.resource.data.text, 0, 5000)
+          && request.resource.data.updatedBy == me()
+          && request.resource.data.updatedAt == request.time;
+      }
+
+      // Cook stats: function-maintained (M3); members read them for filters and cards.
+      match /stats/{id} {
+        allow read: if isMember(hid);
       }
     }
 

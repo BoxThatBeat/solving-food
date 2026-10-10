@@ -1,27 +1,78 @@
-// Storage rules: M0 denies everything (recipe images, drop folder, imports arrive in M1/M4).
+// Storage rules (TECHNICAL_SPECS §10): public recipe images with allowlisted WebP uploads ≤ 2 MB; the drop folder takes
+// .cook files ≤ 1 MB and images ≤ 10 MB in the uploader's own folder; nothing else.
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { afterAll, beforeAll, describe, it } from "vitest";
-import { assertFails, initializeTestEnvironment, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
-import { getBytes, ref, uploadString, type FirebaseStorage } from "firebase/storage";
+import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
+import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
+import { deleteObject, getBytes, ref, uploadBytes, uploadString, type FirebaseStorage } from "firebase/storage";
+import { doc, setDoc, type Firestore } from "firebase/firestore";
 
-const rules = readFileSync(fileURLToPath(new URL("../../storage.rules", import.meta.url)), "utf8");
+const storageRules = readFileSync(fileURLToPath(new URL("../../storage.rules", import.meta.url)), "utf8");
+const firestoreRules = readFileSync(fileURLToPath(new URL("../../firestore.rules", import.meta.url)), "utf8");
 const [host, port] = (process.env.FIREBASE_STORAGE_EMULATOR_HOST ?? "127.0.0.1:9199").split(":");
+const [fsHost, fsPort] = (process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080").split(":");
 let env: RulesTestEnvironment;
+
+const ALICE = { uid: "alice", email: "alice@example.com" };
+const EVE = { uid: "eve", email: "eve@example.com" };
+const st = (u: { uid: string; email: string }) =>
+  env.authenticatedContext(u.uid, { email: u.email, email_verified: true }).storage() as unknown as FirebaseStorage;
+const anon = () => env.unauthenticatedContext().storage() as unknown as FirebaseStorage;
+const bytes = (n: number) => new Uint8Array(n);
 
 beforeAll(async () => {
   env = await initializeTestEnvironment({
     projectId: "solvingfood",
-    storage: { rules, host: host ?? "127.0.0.1", port: Number(port ?? 9199) },
+    storage: { rules: storageRules, host: host ?? "127.0.0.1", port: Number(port ?? 9199) },
+    firestore: { rules: firestoreRules, host: fsHost ?? "127.0.0.1", port: Number(fsPort ?? 8080) },
   });
 });
 afterAll(async () => env?.cleanup());
+beforeEach(async () => {
+  await env.clearFirestore();
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore() as unknown as Firestore, "allowlist", ALICE.email), { addedBy: "seed", addedAt: new Date() });
+  });
+});
 
-describe("storage (M0: deny all)", () => {
-  it("signed-in users can't upload or read anything", async () => {
-    const st = env.authenticatedContext("alice", { email: "alice@example.com", email_verified: true }).storage() as unknown as FirebaseStorage;
-    await assertFails(uploadString(ref(st, "recipe-drop/alice/x.cook"), ">> title: x"));
-    await assertFails(uploadString(ref(st, "recipes/r1/480.webp"), "x"));
-    await assertFails(getBytes(ref(st, "recipes/r1/480.webp")));
+describe("recipe images", () => {
+  it("allowlisted users upload WebP ≤ 2 MB; anyone reads (share links)", async () => {
+    await assertSucceeds(uploadBytes(ref(st(ALICE), "recipes/r1/img1/480.webp"), bytes(1000), { contentType: "image/webp" }));
+    await assertSucceeds(getBytes(ref(anon(), "recipes/r1/img1/480.webp")));
+    await assertSucceeds(deleteObject(ref(st(ALICE), "recipes/r1/img1/480.webp")));
+  });
+
+  it("refuses non-allowlisted users, signed-out uploads, other types, and big files", async () => {
+    await assertFails(uploadBytes(ref(st(EVE), "recipes/r1/img1/480.webp"), bytes(10), { contentType: "image/webp" }));
+    await assertFails(uploadBytes(ref(anon(), "recipes/r1/img1/480.webp"), bytes(10), { contentType: "image/webp" }));
+    await assertFails(uploadBytes(ref(st(ALICE), "recipes/r1/img1/480.png"), bytes(10), { contentType: "image/png" }));
+    await assertFails(uploadBytes(ref(st(ALICE), "recipes/r1/img1/1920.webp"), bytes(2 * 1024 * 1024 + 1), { contentType: "image/webp" }));
+  });
+});
+
+describe("drop folder (R4.16)", () => {
+  it("the owner uploads .cook files ≤ 1 MB and images ≤ 10 MB into their own folder", async () => {
+    await assertSucceeds(uploadString(ref(st(ALICE), "recipe-drop/alice/baked-feta-pasta.cook"), "---\ntitle: x\n---\n"));
+    await assertSucceeds(uploadBytes(ref(st(ALICE), "recipe-drop/alice/Pasted image 1.png"), bytes(3_000_000), { contentType: "image/png" }));
+  });
+
+  it("refuses other folders, other file types, big files, non-allowlisted users", async () => {
+    await assertFails(uploadString(ref(st(ALICE), "recipe-drop/bob/x.cook"), "x"));
+    await assertFails(uploadString(ref(st(ALICE), "recipe-drop/alice/x.txt"), "x", undefined, { contentType: "text/plain" }));
+    await assertFails(uploadBytes(ref(st(ALICE), "recipe-drop/alice/x.cook"), bytes(1024 * 1024 + 1)));
+    await assertFails(uploadBytes(ref(st(ALICE), "recipe-drop/alice/x.png"), bytes(10 * 1024 * 1024 + 1), { contentType: "image/png" }));
+    await assertFails(uploadString(ref(st(EVE), "recipe-drop/eve/x.cook"), "x"));
+  });
+
+  it("nobody reads or deletes drop files from a client (functions only)", async () => {
+    await assertFails(getBytes(ref(st(ALICE), "recipe-drop/alice/baked-feta-pasta.cook")));
+    await assertFails(deleteObject(ref(st(ALICE), "recipe-drop/alice/baked-feta-pasta.cook")));
+  });
+});
+
+describe("everything else", () => {
+  it("is denied", async () => {
+    await assertFails(uploadString(ref(st(ALICE), "imports/h1/x.json"), "{}"));
+    await assertFails(getBytes(ref(anon(), "other/x")));
   });
 });
