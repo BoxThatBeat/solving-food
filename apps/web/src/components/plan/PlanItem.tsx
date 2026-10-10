@@ -69,7 +69,7 @@ export function PlanItemCard({ v, recipes, onOpen, hid }: { v: PlanItemView; rec
             {it.status === "planned" ? "To cook" : it.status}
           </Badge>
         </div>
-        {!multi ? <span className="font-mono text-[0.625rem] font-semibold text-sub">{recipeMeta(recipes.get(it.recipes[0]?.recipeId ?? ""))}</span> : null}
+        {!multi ? <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">{recipeMeta(recipes.get(it.recipes[0]?.recipeId ?? ""))}</span> : null}
         <div className="flex flex-wrap gap-1">
           <Badge className="bg-s0 uppercase">{it.servings} servings</Badge>
           {it.carriedFromId ? <Badge className="bg-peach text-onc uppercase">Carried over</Badge> : null}
@@ -94,7 +94,7 @@ export function PlanItemCard({ v, recipes, onOpen, hid }: { v: PlanItemView; rec
                       {rec?.title ?? "Recipe"}
                       {r.servingsMultiplier !== 1 ? ` ×${r.servingsMultiplier}` : ""}
                     </span>
-                    <span className="font-mono text-[0.625rem] font-semibold text-sub">{recipeMeta(rec)}</span>
+                    <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">{recipeMeta(rec)}</span>
                   </span>
                   <span aria-hidden className="text-sub">
                     →
