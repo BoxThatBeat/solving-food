@@ -139,6 +139,7 @@ function MembersPage() {
 
         <div className="flex flex-col gap-4">
           <InviteByName
+            ready={!!hh.data}
             directory={directory}
             exclude={new Set([...memberIds, ...invitedUids])}
             invited={invitedUids}
@@ -152,6 +153,7 @@ function MembersPage() {
             }}
           />
           <InviteByEmail
+            ready={!!hh.data}
             onInvite={async (email) => {
               await inviteByEmail(hh.id, email, ctx);
               notify({ kind: "success", message: `Invited ${email}. They can sign in with that address now and will see the invite.` });
@@ -215,11 +217,13 @@ function MembersPage() {
 }
 
 function InviteByName({
+  ready,
   directory,
   exclude,
   invited,
   onInvite,
 }: {
+  ready: boolean;
   directory: Array<{ uid: string; displayName: string }> | undefined;
   exclude: Set<string>;
   invited: Set<string>;
@@ -254,7 +258,7 @@ function InviteByName({
                 size="sm"
                 variant={done ? "chip" : "primary"}
                 className={cn("shadow-none", done && "bg-s0")}
-                disabled={done}
+                disabled={done || !ready}
                 aria-label={done ? `${m.displayName} invited` : `Invite ${m.displayName}`}
                 onClick={async () => {
                   setSent((s) => new Set(s).add(m.uid));
@@ -277,7 +281,7 @@ function InviteByName({
   );
 }
 
-function InviteByEmail({ onInvite }: { onInvite: (email: string) => Promise<void> }) {
+function InviteByEmail({ ready, onInvite }: { ready: boolean; onInvite: (email: string) => Promise<void> }) {
   const [email, setEmail] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
@@ -319,7 +323,7 @@ function InviteByEmail({ onInvite }: { onInvite: (email: string) => Promise<void
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? "invite-email-error" : undefined}
           />
-          <Button type="submit" disabled={busy}>
+          <Button type="submit" disabled={busy || !ready}>
             {busy ? "Sending…" : "Invite"}
           </Button>
         </div>

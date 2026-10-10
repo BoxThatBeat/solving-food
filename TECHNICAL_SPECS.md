@@ -223,8 +223,10 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
                                  preferences: { likes[], dislikes[], diets[] },
                                  proteinGoals: { breakfast?, lunch?, dinner?, snack? } }   // g per serving; absent = off
   members/{uid}                  uid, displayName, joinedAt                // no roles; uid duplicated for the collection-group query
-  invites/{inviteeKey}           inviteeUid? | inviteeEmailLower?, householdName, invitedBy, createdAt
+  invites/{inviteeKey}           inviteeUid? | inviteeEmailLower?, householdName, invitedBy, invitedByName, createdAt
                                  // key = uid for directory invites, or the lower-cased email for email invites (R2.4)
+                                 // invitedByName (M4): the invitee can't read the household, so the invite carries who
+                                 // asked; householdName must equal the household's name when written
 
   stores/{storeId}               name, kind: "pcExpress"|"inStore", bulk: bool   // Costco: inStore, bulk
                                  // seeded as stores/pc-express and stores/costco with the household (or by the client
@@ -279,7 +281,8 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
     delta, kind: purchase|cook|correction|discard|freeze|thaw|leftover|eaten|extendExpiry,
     lotId, ref?: { type, id }, uid, note?, commandId, createdAt
 
-  commands/{cmdId}               type, payload, uid, createdAt, status: pending|applied|failed, error?, result?, appliedAt?
+  commands/{cmdId}               type, payload, uid, createdAt, status: pending|running|applied|failed, error?, result?, appliedAt?
+                                 // running (M4): an importHousehold the function has claimed (it runs outside one transaction)
   cadence/{ingredientId}         avgIntervalDays (null until bought twice), lastPurchasedAt, purchaseCount, snoozedUntil?
 ```
 
@@ -640,6 +643,14 @@ The manual editor runs this check before saving. Drop imports are flagged `pendi
 - **Remove or leave:** any member can delete any `members/*` document (no roles, R2.5). Before a user deletes their **own** document, the client checks whether they're the last member and shows the warning from R2.13.
 - **Empty household cleanup:** an `onDocumentDeleted(households/*/members/*)` function checks whether any members remain. If none do, it deletes the household document and all of its subcollections (`recursiveDelete`) and decrements `users/{createdBy}.householdsCreated`. It's the only household-level function besides commands, and it's idempotent, so two simultaneous leaves are safe.
 
+**As built (M4):**
+
+- **Invite by email when the address is already allowlisted:** rules only let you read your own allowlist entry, so the client can't check "if missing". It writes the batch (allowlist entry + invite); if the rules refuse it (the entry exists, so the create is an update), it writes the invite alone (`apps/web/src/data/households.ts`).
+- **Accept** deletes both possible invite keys (uid and address) for that household and sets `activeHouseholdId` to it, in the same batch as the member doc. Invites for a household you're already in are hidden (`inviteInbox` in core). Invites can't be edited; members cancel them, the invitee declines by deleting.
+- **Invite rules:** `invitedBy == me`, `invitedByName` a display name, `householdName ==` the household's name, key = `inviteeUid` (not yourself, not an existing member) or a lower-cased address = `inviteeEmailLower`. Collection-group reads check the `inviteeUid` / `inviteeEmailLower` fields the queries filter on (single-field collection-group index overrides in `firestore.indexes.json`).
+- **Leaving** sets `activeHouseholdId` to another membership (or null) before deleting the member doc. Removal elsewhere shows "You're no longer a member of X" and the shell switches; with no household left the router goes to `/welcome/household`, which lists invites above the create form. That page also creates further households from the household sheet ("+ New household (n of 3 created)"); at 3 the sheet and the page explain the limit, and a rules refusal shows the same message.
+- **Cleanup** (`functions/src/households.ts`, trigger `householdCleanup`): only the transaction that still finds the household document deletes it and decrements the creator's counter (floor 0); then `recursiveDelete` removes the subcollections and the Storage prefix `imports/{hid}/` is emptied. A member joining meanwhile keeps the household.
+
 ### Security rules (sketch)
 
 ```
@@ -743,6 +754,7 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 /meals  /meals/:id  /meals/:id/cook  /supply  /supply/:id  /grocery  /history       (/meals/:id renders signed out too)
 /plan/:itemId/cook  (cook a planned meal)   /review/:eventId  (the review flow for a cook event)       (M3)
 /settings/{household,members,brands,stores,tools,preferences,weights,theme,data}
+/welcome/household  (first run: join by invite or create; signed in: create another household, M4)
 /drop            (upload .cook files, see import results)
 /not-invited     (signed in with an address that isn't on the allowlist)
 ```
@@ -870,6 +882,12 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
   3. Matches each referenced recipe by ID, then by fingerprint. Missing recipes are created from the included `.cook` files.
   4. Deletes the upload, and posts a success or error notification.
 - Members aren't part of an import. The importing household keeps its current members.
+
+**As built (M4):** `packages/core/src/export.ts` holds the format (`household.json` schema `solving-food/household` v1, zod), `gatherExport` (the reads, behind an `ExportReader` the web app backs with the Firestore SDK), `buildExport` / `zipExport` / `readExportZip` (fflate), `exportSummary`, `referencedIds`, `remapExport`, `reconcileSupply`, and `matchRecipe`. Timestamps are `{ "__ts": ms }` in JSON. The zip has `household.json`, `meals.json`, and `recipes/<slug>-<id>.cook`. Household fields exported: period length, budget, currency, timezone, servings, meal types, PC Express store, default store, current period, settings; the importing household keeps its **name, creator, and creation date**. Collections: stores, sourcing rules, brand mappings, favourites, notes, stats, periods, plan items, grocery lists (received ones included), cook events, ratings, cadence, and supply with transactions. Never exported: members, invites, commands, `users/*/devices`, `users/*/timers`.
+
+- **The page** (Settings → Data) shows a read estimate from count queries, downloads with a progress line, and for an import shows the file's summary (household, export date, format version, counts) before the confirm dialog. The upload goes to `imports/{hid}/{uuid}.zip`.
+- **The function** (`functions/src/importHousehold.ts`, dispatched by `commands` but outside its transaction; the `commands` function now has 512 MiB and 300 s) claims the command (`pending → running`), accepts only a path in `imports/{thisHousehold}/`, validates the zip with the same schema, resolves recipes (same ID → kept; else an active recipe with the same fingerprint → references remapped, including the IDs of favourites, notes, stats, and ratings that embed the recipe; else recreated from its `.cook` through the drop-folder parser under the original ID, active, without image or duplicate review) and saved meals (recreated under their ID when missing), deletes every household subcollection except members, invites, and the running command, writes the documents with a BulkWriter, keeps Σ transactions == amount per supply doc (a hand-edited file gets an `import-reconcile` correction), updates the household's fields, deletes the upload, marks the command applied with a summary, and notifies the importer (success or error banner). The plan's "mark needsReview if fingerprint-matched" was dropped: recipes have no review flag, and a fingerprint match is the same recipe by definition.
+- An import's rules-free writes are confined to the importer's own household (they're a member), so the schema checks shapes and IDs but doesn't police field values beyond that.
 
 ---
 

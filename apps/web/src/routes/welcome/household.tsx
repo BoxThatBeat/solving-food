@@ -24,6 +24,7 @@ import { Card } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requireStatus } from "@/session/guards";
+import { useSession } from "@/session/useSession";
 import { cn } from "@/lib/utils";
 
 // First run (no household yet: join by invite or create one) and, from the household sheet, another household (R2.2).
@@ -62,6 +63,13 @@ function CreateHouseholdPage() {
   const invites = useMyInvites(user.uid, user.email, memberOf);
   const navigate = useNavigate();
   const atLimit = !canCreateHousehold(profile.householdsCreated);
+  // First run: once a household is joined or created the session turns ready; this route allows ready too (for another
+  // household), so move on to the app explicitly.
+  const session = useSession();
+  const firstRun = React.useRef(!ready);
+  React.useEffect(() => {
+    if (firstRun.current && session.status === "ready") void navigate({ to: "/" });
+  }, [session.status, navigate]);
   const [form, setForm] = React.useState<NewHouseholdInput>(() => defaultHouseholdInput(detectTimezone()));
   const [error, setError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);

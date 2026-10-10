@@ -48,7 +48,7 @@ test("Done cooking subtracts the recipe's amounts right away and records leftove
   expect(stats).toMatchObject({ timesCooked: 1, ratingSum: 8, ratingCount: 1 });
 });
 
-test("a review can wait: Pending reviews on the Plan page; another member finishes it and others add their rating (R9.4)", { tag: ["@R9.4", "@R5.3"] }, async ({ page, household, secondMember }) => {
+test("a review can wait: Pending reviews on the Plan page; another member finishes it and others add their rating (R9.4, R2.7)", { tag: ["@R9.4", "@R5.3", "@R2.7"] }, async ({ page, household, secondMember }) => {
   const r = await makeCookRecipe("Later review", { leftovers: 0 });
   const pid = await seedPeriod(household.hid);
   const itemId = await seedPlanItem(household.hid, pid, [r.id]);
