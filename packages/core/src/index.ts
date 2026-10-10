@@ -11,3 +11,4 @@ export * from "./ingredient";
 export * from "./recipe";
 export * from "./dedupe";
 export * from "./cooklang";
+export * from "./collection";
