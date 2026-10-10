@@ -242,7 +242,8 @@ export function RecipeDetail({
           {recipe.title}
         </h1>
         <div className="-mt-1.5 flex flex-wrap gap-[0.3125rem]" aria-label="Tags">
-          <Badge className="rounded-[3px] border-[1.5px] bg-blue text-onc uppercase">{taxonomyLabel(recipe.mainProtein)}</Badge>
+          {/* The prototype's blue with dark text is 3.6:1; lightened toward white it passes AA in every flavour (dark text on it). */}
+          <Badge className="rounded-[3px] border-[1.5px] bg-[color-mix(in_srgb,var(--blue)_55%,white)] text-[#4c4f69] uppercase">{taxonomyLabel(recipe.mainProtein)}</Badge>
           {meals.map((t) => (
             <Badge key={t} className="rounded-[3px] border-[1.5px] bg-s0 text-ink uppercase">
               {t}

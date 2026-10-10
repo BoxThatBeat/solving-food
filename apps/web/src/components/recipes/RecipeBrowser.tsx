@@ -93,6 +93,7 @@ export function RecipeBrowser({
       {pendingCount > 0 ? (
         <button
           type="button"
+          data-testid="duplicate-banner"
           onClick={() => setReview(true)}
           className="flex max-w-[60rem] cursor-pointer items-center gap-2.5 rounded-ui border-2 border-dashed border-line bg-base px-3 py-[0.5625rem] text-left text-[0.8125rem] font-bold text-ink"
         >

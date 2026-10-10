@@ -182,7 +182,7 @@ function DropPage() {
           <li>Drop the file here (with its photo, if the photo is a file rather than a link). The file is deleted once it&apos;s imported.</li>
           <li>
             Or upload from a terminal (the project owner, signed in to gcloud):
-            <pre className="mt-1.5 overflow-x-auto rounded-ui border-2 border-line bg-pg p-2.5 font-mono text-[0.6875rem] leading-relaxed whitespace-pre">
+            <pre className="mt-1.5 rounded-ui border-2 border-line bg-pg p-2.5 font-mono text-[0.6875rem] leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
               gcloud storage cp photo.jpg recipe.cook gs://{BUCKET}/recipe-drop/{s.user.uid}/
             </pre>
           </li>

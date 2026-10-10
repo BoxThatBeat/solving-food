@@ -184,7 +184,11 @@ function NavList({ compact }: { compact?: boolean }) {
               ) : (
                 <>
                   <span>{p.label}</span>
-                  {counts[p.to] ? <span className="font-mono text-[0.6875rem] font-bold">{counts[p.to]}</span> : null}
+                  {counts[p.to] ? (
+                    <span className="font-mono text-[0.6875rem] font-bold" data-testid="nav-count">
+                      {counts[p.to]}
+                    </span>
+                  ) : null}
                 </>
               )}
             </Link>

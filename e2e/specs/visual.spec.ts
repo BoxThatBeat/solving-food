@@ -38,6 +38,8 @@ for (const flavour of ["latte", "mocha"] as const) {
     await page.goto("/recipes?cuisine=greek&protein=dairy&sort=name");
     const cards = page.getByRole("list", { name: "Recipes" }).getByRole("heading", { level: 3 });
     await expect(cards).toHaveText(["Greek Salad", "Tzatziki Sauce"]);
+    // Hide what depends on the rest of the run (library totals, imports waiting for review), whenever it renders.
+    await page.addStyleTag({ content: "[data-testid=recipe-count],[data-testid=nav-count]{visibility:hidden!important}[data-testid=duplicate-banner]{display:none!important}" });
     await expect.poll(() => page.locator("img").evaluateAll((imgs) => imgs.every((i) => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0))).toBe(true);
     // Wait for the live data the shell shows: household name and its member list.
     const wide = page.viewportSize()!.width >= 1024;

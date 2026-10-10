@@ -21,7 +21,7 @@ export function ToggleChip({
       {...props}
     >
       {children}
-      {count !== undefined ? <span className="font-mono text-[0.625rem] font-bold opacity-75">{count}</span> : null}
+      {count !== undefined ? <span className="font-mono text-[0.625rem] font-bold">{count}</span> : null}
     </button>
   );
 }

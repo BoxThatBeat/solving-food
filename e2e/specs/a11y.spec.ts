@@ -1,10 +1,12 @@
-// @axe-core/playwright scan of the M0 pages: no serious or critical violations; keyboard reaches the navigation.
+// @axe-core/playwright scan of the M0 and M1 pages: no serious or critical violations; keyboard reaches the navigation.
 import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
 import { allowlist } from "../fixtures/admin";
 import { expect, signInWithEmailLink, test } from "../fixtures/test";
 
 async function expectNoSeriousViolations(page: Page, label: string) {
+  // Sheets fade their overlay in; contrast measured mid-animation is meaningless.
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"));
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
   const bad = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
   expect(bad.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`), label).toEqual([]);
@@ -60,6 +62,9 @@ test("the More sheet and household sheet are accessible dialogs", async ({ page,
 
 test("keyboard alone reaches and follows the primary navigation", async ({ page, household }) => {
   void household;
+  // From a short page: on Recipes the phone tab bar comes after every recipe card in tab order.
+  await page.goto("/plan");
+  await expect(page.locator("h1")).toBeVisible();
   const nav = page.getByRole("navigation", { name: "Primary" });
   const target = nav.getByRole("link", { name: "Supply", exact: true });
   for (let i = 0; i < 25; i++) {
@@ -69,4 +74,39 @@ test("keyboard alone reaches and follows the primary navigation", async ({ page,
   await expect(target).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.getByRole("heading", { level: 1, name: "Supply" })).toBeVisible();
+});
+
+test("recipe pages and sheets (M1) in Latte and Mocha", async ({ page, household, browser }) => {
+  test.slow(); // 17 full-page scans
+  void household;
+  const { makeRecipe, seedRecipeId, uniqueTitle } = await import("../fixtures/recipes");
+  const id = await seedRecipeId("Garlic Rice and Chicken");
+  await makeRecipe(uniqueTitle("A11y Trashed"), { status: "trashed", extra: { trashedAt: new Date(), trashedBy: household.uid } });
+  await makeRecipe(uniqueTitle("A11y Pending"), { status: "pendingDuplicateReview" });
+  for (const flavour of ["latte", "mocha"] as const) {
+    if (flavour === "mocha") {
+      await page.goto("/settings/theme");
+      await page.getByRole("button", { name: "Mocha" }).click();
+    }
+    for (const path of ["/recipes", `/recipes/${id}`, `/recipes/${id}/edit`, "/recipes/new", "/recipes/trash", "/drop", "/meals"]) {
+      await page.goto(path);
+      await expect(page.locator("h1").first()).toBeVisible();
+      if (path === "/recipes/trash") await expect(page.getByRole("list", { name: "Trashed recipes" })).toBeVisible();
+      await expectNoSeriousViolations(page, `${path} (${flavour})`);
+    }
+    await page.goto("/recipes");
+    await page.getByRole("button", { name: /^Filter and sort/ }).click();
+    await expect(page.getByRole("dialog", { name: "Filter & sort" })).toBeVisible();
+    await expectNoSeriousViolations(page, `filter sheet (${flavour})`);
+    await page.goto("/recipes?review=1");
+    await expect(page.getByRole("dialog", { name: "Needs review" })).toBeVisible();
+    await expectNoSeriousViolations(page, `review sheet (${flavour})`);
+  }
+  // The share page as a visitor sees it.
+  const visitor = await browser.newContext();
+  const v = await visitor.newPage();
+  await v.goto(`/recipes/${id}`);
+  await expect(v.locator("#recipe-title")).toBeVisible();
+  await expectNoSeriousViolations(v, "shared recipe, signed out");
+  await visitor.close();
 });
