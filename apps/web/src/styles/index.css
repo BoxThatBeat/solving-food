@@ -30,7 +30,7 @@
  */
 :root {
   --ink: #4c4f69;
-  --sub: #6c6f85;
+  --sub: #5c5f77; /* AA contrast; see src/theme/tokens.ts */
   --base: #eff1f5;
   --mantle: #e6e9ef;
   --pg: #dce0e8;
@@ -53,6 +53,9 @@
 
 /* Breakpoints (TECHNICAL_SPECS §12): md 768, lg 1024, xl 1440 (1080p), 3xl 2200 (4K at low OS scaling). */
 @theme {
+  /* `text-base` is the --base colour token here (prototype naming), so drop Tailwind's font-size of that name. */
+  --text-base: initial;
+  --text-base--line-height: initial;
   --breakpoint-xl: 90rem;
   --breakpoint-2xl: 120rem;
   --breakpoint-3xl: 137.5rem;
@@ -145,6 +148,8 @@
   /* Fluid root size: rem-based text, spacing, borders, and shadows scale smoothly from phone to 4K (spec §12). */
   html {
     font-size: clamp(16px, 0.3vw + 12px, 22px);
+    /* The prototype sets type with the \`font:\` shorthand, which resets line-height to normal (~1.1 for Archivo). */
+    line-height: 1.15;
     background: var(--pg);
     color: var(--ink);
     -webkit-text-size-adjust: 100%;

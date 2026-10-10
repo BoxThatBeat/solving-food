@@ -7,7 +7,7 @@
     "dev": "VITE_USE_EMULATORS=true vite",
     "dev:live": "vite",
     "build": "vite build",
-    "build:e2e": "VITE_USE_EMULATORS=true vite build --outDir dist-e2e",
+    "build:e2e": "VITE_USE_EMULATORS=true VITE_FIRESTORE_LONG_POLLING=true vite build --outDir dist-e2e",
     "preview": "vite preview",
     "preview:e2e": "vite preview --outDir dist-e2e --port 4173 --strictPort",
     "test": "vitest run",

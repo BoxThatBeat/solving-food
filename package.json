@@ -7,7 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm --filter @solving-food/functions build && firebase emulators:exec --ui --only auth,firestore,storage,functions --import .emulator-data --export-on-exit \"pnpm seed:allowlist:emulator && pnpm --filter @solving-food/web dev\"",
+    "dev": "bash scripts/dev.sh",
     "build": "pnpm -r build",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
@@ -17,7 +17,7 @@
     "test:functions": "pnpm --filter @solving-food/functions build && firebase emulators:exec --only functions,firestore \"pnpm --filter @solving-food/functions test\"",
     "e2e": "bash scripts/e2e.sh",
     "e2e:coverage": "pnpm --filter @solving-food/e2e coverage",
-    "emulators": "pnpm --filter @solving-food/functions build && firebase emulators:start --import .emulator-data --export-on-exit",
+    "emulators": "pnpm --filter @solving-food/functions build && firebase emulators:start --only auth,firestore,storage,functions",
     "seed:allowlist": "tsx scripts/seed-allowlist.ts",
     "seed:allowlist:emulator": "tsx scripts/seed-allowlist.ts --emulator",
     "deploy": "pnpm build && firebase deploy --only hosting,functions,firestore,storage"

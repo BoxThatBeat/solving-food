@@ -5,7 +5,7 @@ describe("themeVars", () => {
   it("maps Latte + green to the prototype's tokens with the Classic look", () => {
     expect(themeVars({ flavour: "latte", accent: "green" })).toEqual({
       ink: "#4c4f69",
-      sub: "#6c6f85",
+      sub: "#5c5f77",
       base: "#eff1f5",
       mantle: "#e6e9ef",
       pg: "#dce0e8",

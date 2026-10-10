@@ -40,7 +40,7 @@ function SettingsPage() {
               className="flex items-center justify-between gap-3 rounded-ui border-bw bg-base px-3.5 py-3 text-ink no-underline shadow-hard"
             >
               <span className="flex flex-col gap-0.5">
-                <span className="text-base font-extrabold">{sec.label}</span>
+                <span className="text-[1rem] font-extrabold">{sec.label}</span>
                 <span className="text-xs font-semibold text-sub">{sec.sub}</span>
               </span>
               <span aria-hidden className="text-lg font-extrabold">

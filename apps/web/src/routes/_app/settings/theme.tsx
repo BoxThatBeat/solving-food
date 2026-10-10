@@ -16,8 +16,8 @@ export const Route = createFileRoute("/_app/settings/theme")({
 function ThemePage() {
   const [theme, setTheme] = useTheme();
   const notify = useNotify();
-  const save = (t: typeof theme) =>
-    setTheme(t).catch(() => notify({ kind: "error", message: "Couldn't save your theme. It applies on this device only." }));
+  const save = (patch: Partial<typeof theme>) =>
+    setTheme(patch).catch(() => notify({ kind: "error", message: "Couldn't save your theme. It applies on this device only." }));
   return (
     <PageBody>
       <Link to="/settings" className="inline-flex items-center gap-1 self-start text-sm font-extrabold">
@@ -40,7 +40,7 @@ function ThemePage() {
                   key={f}
                   type="button"
                   aria-pressed={on}
-                  onClick={() => save({ ...theme, flavour: f })}
+                  onClick={() => save({ flavour: f })}
                   className={cn(
                     "flex cursor-pointer flex-col items-stretch gap-[0.3125rem] rounded-ui border-2 border-line p-[0.4375rem] text-xs font-extrabold",
                     on ? "bg-acc text-onc" : "bg-base text-ink shadow-hard-sm",
@@ -65,7 +65,7 @@ function ThemePage() {
                   aria-pressed={on}
                   aria-label={ACCENT_LABELS[a]}
                   title={ACCENT_LABELS[a]}
-                  onClick={() => save({ ...theme, accent: a })}
+                  onClick={() => save({ accent: a })}
                   className={cn(
                     "grid aspect-square cursor-pointer place-items-center rounded-ui border-2 border-line p-0 text-[#303446]",
                     !on && "shadow-hard-sm",

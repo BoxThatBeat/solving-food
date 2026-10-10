@@ -125,8 +125,7 @@ function CreateHouseholdPage() {
                 </button>
                 <output
                   aria-live="polite"
-                  aria-label="Default servings"
-                  className="grid min-w-14 place-items-center border-x-2 border-line font-mono text-base font-extrabold"
+                  className="grid min-w-14 place-items-center border-x-2 border-line font-mono text-[1rem] font-extrabold"
                 >
                   {form.defaultServings}
                 </output>

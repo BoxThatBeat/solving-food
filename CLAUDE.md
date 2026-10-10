@@ -32,6 +32,8 @@ near line 815 switches them).
   `@catppuccin/palette` guesses. **Catppuccin Latte is the default flavour and the reference** for every
   design decision and screenshot baseline. Its values: ink `#4c4f69`, sub `#6c6f85`, base `#eff1f5`,
   mantle `#e6e9ef`, pg `#dce0e8`, s0 `#ccd0da`, onc `#4c4f69`, desk `#bcc0cc`, scrim `rgba(76,79,105,.55)`.
+  (M0 exception: the app uses sub `#5c5f77`, Catppuccin Latte Subtext 1, because `#6c6f85` fails WCAG AA for
+  small text on Latte backgrounds.)
   Accents come from the prototype's `ACCENTS` list (green `#a6da95` is the default). The other three flavours
   stay selectable per PRD R11.9 using the same table; build Latte first and verify it pixel-close before
   touching the others.

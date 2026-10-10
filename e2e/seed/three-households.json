@@ -1,0 +1,14 @@
+{
+  "households/{prefix}-a": {
+    "name": "Cottage", "createdBy": "{uid}", "periodDays": 7, "budgetCents": 20000, "currency": "CAD",
+    "timezone": "America/Toronto", "defaultServings": 4, "plannedMealTypes": ["dinner"],
+    "pcxStoreId": "loblaws-greenbank-road", "currentPeriodId": null, "createdAt": "$NOW"
+  },
+  "households/{prefix}-a/members/{uid}": { "uid": "{uid}", "displayName": "Aaron", "joinedAt": "$NOW" },
+  "households/{prefix}-b": {
+    "name": "Parents", "createdBy": "{uid}", "periodDays": 7, "budgetCents": 20000, "currency": "CAD",
+    "timezone": "America/Toronto", "defaultServings": 2, "plannedMealTypes": ["lunch", "dinner"],
+    "pcxStoreId": "loblaws-greenbank-road", "currentPeriodId": null, "createdAt": "$NOW"
+  },
+  "households/{prefix}-b/members/{uid}": { "uid": "{uid}", "displayName": "Aaron", "joinedAt": "$NOW" }
+}

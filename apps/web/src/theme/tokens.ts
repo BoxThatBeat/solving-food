@@ -16,7 +16,9 @@ export interface FlavourTokens {
 }
 
 export const FLAV: Record<Flavour, FlavourTokens> = {
-  latte: { ink: "#4c4f69", sub: "#6c6f85", base: "#eff1f5", mantle: "#e6e9ef", pg: "#dce0e8", s0: "#ccd0da", onc: "#4c4f69", desk: "#bcc0cc", scrim: "rgba(76,79,105,.55)" },
+  // Latte `sub` is Catppuccin Latte Subtext 1 (#5c5f77) instead of the prototype's #6c6f85, which fails WCAG AA
+  // (3.7–4.4:1) for small text on every Latte background. Deviation recorded in Planning/M0-skeleton.md.
+  latte: { ink: "#4c4f69", sub: "#5c5f77", base: "#eff1f5", mantle: "#e6e9ef", pg: "#dce0e8", s0: "#ccd0da", onc: "#4c4f69", desk: "#bcc0cc", scrim: "rgba(76,79,105,.55)" },
   frappe: { ink: "#c6d0f5", sub: "#a5adce", base: "#303446", mantle: "#292c3c", pg: "#232634", s0: "#414559", onc: "#232634", desk: "#1a1c26", scrim: "rgba(0,0,0,.6)" },
   macchiato: { ink: "#cad3f5", sub: "#a5adcb", base: "#24273a", mantle: "#1e2030", pg: "#181926", s0: "#363a4f", onc: "#181926", desk: "#11121c", scrim: "rgba(0,0,0,.6)" },
   mocha: { ink: "#cdd6f4", sub: "#a6adc8", base: "#1e1e2e", mantle: "#181825", pg: "#11111b", s0: "#313244", onc: "#11111b", desk: "#0a0a11", scrim: "rgba(0,0,0,.65)" },

@@ -17,6 +17,8 @@ export default tseslint.config(
       "e2e/test-results/**",
       "e2e/playwright-report/**",
       ".emulator-data/**",
+      ".playwright-cli/**",
+      "scripts/design-serve.mjs", // dev-only helper for design comparison, not app code
     ],
   },
   js.configs.recommended,
@@ -53,6 +55,11 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
     },
+  },
+  {
+    // Playwright fixtures must destructure `{}` when they use no other fixtures.
+    files: ["e2e/**/*.ts"],
+    rules: { "no-empty-pattern": "off" },
   },
   {
     // TanStack Router route modules export `Route` next to their components; the router plugin handles HMR.

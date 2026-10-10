@@ -17,10 +17,19 @@ export const auth = getAuth(app);
 // Offline: persistent cache shared across tabs (TECHNICAL_SPECS §12 "Offline").
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+  // E2E builds only (VITE_FIRESTORE_LONG_POLLING): Playwright's Linux WebKit stalls the Listen stream to the
+  // emulator, so the e2e build forces long polling. Production keeps the SDK's automatic detection.
+  ...(import.meta.env.VITE_FIRESTORE_LONG_POLLING === "true" ? { experimentalForceLongPolling: true } : {}),
 });
 
 if (useEmulators) {
   connectAuthEmulator(auth, `http://${EMULATORS.host}:${EMULATORS.auth}`, { disableWarnings: true });
   connectFirestoreEmulator(db, EMULATORS.host, EMULATORS.firestore);
   // Storage and Functions clients connect to their emulators where M1+ first create them.
+
+  // E2E hook (emulator builds only; the branch is compiled out of production): lets specs make direct Firestore
+  // calls from the page, e.g. to prove the rules refuse a 4th household (R2.3) or another household's data (NFR4).
+  void import("firebase/firestore").then((fs) => {
+    (window as unknown as { __sfTest: unknown }).__sfTest = { db, auth, fs };
+  });
 }

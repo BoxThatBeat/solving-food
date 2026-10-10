@@ -57,6 +57,25 @@ function wasAllowed(uid: string): boolean {
   }
 }
 
+/** Last known memberships per uid, for offline cold starts where the cached collection-group result can be empty. */
+const HOUSEHOLDS_KEY = "sf.households";
+
+function rememberHouseholds(uid: string, ids: string[]): void {
+  try {
+    localStorage.setItem(HOUSEHOLDS_KEY, JSON.stringify({ uid, ids }));
+  } catch {
+    /* ignore */
+  }
+}
+function rememberedHouseholds(uid: string): string[] | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(HOUSEHOLDS_KEY) ?? "null") as { uid?: string; ids?: unknown } | null;
+    return v?.uid === uid && Array.isArray(v.ids) ? v.ids.filter((x): x is string => typeof x === "string") : null;
+  } catch {
+    return null;
+  }
+}
+
 function isOffline(): boolean {
   return typeof navigator !== "undefined" && navigator.onLine === false;
 }
@@ -177,8 +196,8 @@ export class SessionStore {
         { includeMetadataChanges: true },
         (snap) => {
           if (snap.exists()) this.profile = snap.data() as UserDoc;
-          else if (settledMissing(snap)) this.profile = null;
-          else return;
+          else if (!snap.metadata.fromCache) this.profile = null;
+          else return; // offline cache miss: don't send a known user to first-run setup
           this.derive();
         },
         onError,
@@ -188,7 +207,7 @@ export class SessionStore {
         { includeMetadataChanges: true },
         (snap) => {
           if (snap.exists()) this.directory = snap.data() as DirectoryDoc;
-          else if (settledMissing(snap)) this.directory = null;
+          else if (!snap.metadata.fromCache) this.directory = null;
           else return;
           this.derive();
         },
@@ -198,12 +217,22 @@ export class SessionStore {
         query(collectionGroup(db, "members"), where("uid", "==", uid)),
         { includeMetadataChanges: true },
         (snap) => {
-          if (snap.empty && !settledMissing(snap)) return;
           // members/{uid} lives at households/{hid}/members/{uid}
-          this.householdIds = snap.docs
+          // Only memberships the server has acknowledged: the shell's listeners on a household are refused by the
+          // rules until its creation batch (household + member doc) has actually been committed.
+          const ids = snap.docs
+            .filter((d) => !d.metadata.hasPendingWrites)
             .map((d) => d.ref.parent.parent?.id)
             .filter((id): id is string => !!id)
             .sort();
+          if (ids.length === 0 && snap.metadata.fromCache) {
+            const remembered = isOffline() ? rememberedHouseholds(uid) : null;
+            if (!remembered) return; // wait for the server
+            this.householdIds = remembered;
+          } else {
+            this.householdIds = ids;
+            if (!snap.metadata.fromCache) rememberHouseholds(uid, ids);
+          }
           this.derive();
         },
         onError,
