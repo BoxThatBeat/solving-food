@@ -2,7 +2,7 @@
 
 > Everything here is **non-secret** (the Firebase web config is shipped to browsers by design).
 > Secrets (PC Express credentials) live only in Secret Manager; see "Secrets" below.
-> Last verified: 2026-10-09
+> Last verified: 2026-10-09 (M0)
 
 ## Decision: one project, no dev
 
@@ -50,6 +50,38 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
 | First household name | **Silbrass Pvt** |
 | PC Express account email | `buitenwerfa@gmail.com` (password only in Secret Manager, never here) |
 
+## Cloud setup done in M0 (2026-10-09)
+
+- **APIs enabled** (`gcloud services enable`): Cloud Functions, Cloud Build, Artifact Registry, Eventarc, Cloud Tasks,
+  Secret Manager, Cloud Scheduler, Cloud Run, Pub/Sub, Firebase Rules, Firebase Storage. The first `firebase deploy`
+  also enabled `firebaseextensions.googleapis.com` (free, used only for the CLI's extensions check).
+- **Artifact Registry cleanup policy**: `firebase functions:artifacts:setpolicy --location us-east1 --days 1`
+  on `gcf-artifacts` (keeps function images under the free 0.5 GB).
+- **Owner allowlist entry**: `allowlist/buitenwerfa@gmail.com` created with `pnpm seed:allowlist` (uses
+  `gcloud auth print-access-token` against the Firestore REST API when there are no ADC credentials). Re-running is a
+  no-op. Add more people with `pnpm seed:allowlist -- --email someone@example.com` (or, from M4, invite in the app).
+- **Deploy service account** `github-action-1409507284@solvingfood.iam.gserviceaccount.com` (the key in the
+  `FIREBASE_SERVICE_ACCOUNT_SOLVINGFOOD` repo secret). `firebase init hosting:github` gave it Hosting admin,
+  Cloud Functions developer, Auth admin, Run viewer, API keys viewer, and Service Usage consumer. M0 added what
+  `firebase deploy --only hosting,functions,firestore,storage` needs: `roles/cloudfunctions.admin` (public invoker),
+  `roles/run.admin`, `roles/firebaserules.admin`, `roles/datastore.indexAdmin`, `roles/artifactregistry.reader`,
+  `roles/firebaseextensions.viewer`, and `roles/iam.serviceAccountUser` on the default compute service account
+  `28493041173-compute@developer.gserviceaccount.com` (the 2nd gen functions runtime identity).
+- **Deployed**: Hosting (`apps/web/dist`), Firestore rules + indexes, Storage rules (deny all), and the `healthcheck`
+  function at https://us-east1-solvingfood.cloudfunctions.net/healthcheck.
+
+## CI/CD (GitHub Actions)
+
+- `.github/workflows/checks.yml`: on PRs and pushes to `master`: lint, typecheck, unit tests, build, requirement-tag
+  coverage, rules + functions tests on the emulators, the Playwright suite (2 shards), and a Hosting preview channel
+  for PRs from this repo. Every step runs in the Nix dev shell, so CI has the same toolchain and browsers as local.
+- `.github/workflows/deploy.yml`: after Checks succeed on a push to `master` (or by manual dispatch), builds and runs
+  `firebase deploy --only hosting,functions,firestore,storage`, then smoke-checks the site and `healthcheck`.
+- **Branch protection (owner, in GitHub):** Settings → Branches → Add branch ruleset (or classic rule) for `master`:
+  require a pull request, require status checks to pass: `Lint, types, unit, coverage`,
+  `Rules and functions (emulator)`, `Playwright (shard 1/2)`, `Playwright (shard 2/2)`. Do this after the M0
+  commits are pushed and Checks has run once, so the check names are offered in the picker.
+
 ## Local toolchain
 
 This repo has a Nix dev shell (`flake.nix`) with Node 24, pnpm, `firebase-tools`,
@@ -88,7 +120,7 @@ free) for Firestore and Storage.
 
 - ~~$1/month budget alert~~ confirmed by the owner 2026-10-09 (not verifiable from the CLI; Budget API disabled on the billing project).
 - ~~VAPID key~~ recorded above, 2026-10-09.
-- **GitHub deploy**: `firebase init hosting:github` was run 2026-10-09. Repo secret `FIREBASE_SERVICE_ACCOUNT_SOLVINGFOOD`
-  exists; the two generated workflows in `.github/workflows/` are to be merged into the M0 CI design.
+- ~~**GitHub deploy**~~: the generated workflows were replaced by `checks.yml` and `deploy.yml` in M0 (see CI/CD above).
+- **Branch protection** on `master`: owner to set up (see CI/CD above).
 - ~~gcloud login~~ done 2026-10-09: `gcloud auth list` shows `buitenwerfa@gmail.com` active, project `solvingfood`.
   (Interactive logins must run in a normal terminal, not through the Claude session, which has no stdin.)

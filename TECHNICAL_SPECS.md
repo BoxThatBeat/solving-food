@@ -97,6 +97,9 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Cloud Tasks | 1M operations / month | < 2,000 (cooking timers) | 500× |
 | Cloud Messaging (web push) | free | < 2,000 pushes / month | — |
 | Secret Manager | 6 active secret versions, 10,000 accesses / month | 2 secrets (PC Express credentials), ~500 accesses | 20× |
+| Cloud Build (function deploys) | 2,500 build-minutes / month | ~10 deploys × ~2 min | 100× |
+| Artifact Registry | 0.5 GB storage | one image per function; cleanup policy deletes images older than 1 day | — |
+| Cloud Run (2nd gen functions run on it) | 2M requests, 180k vCPU-s / month | same as Functions invocations; 256 MiB, max 2 instances | 200× |
 
 ---
 
