@@ -90,6 +90,5 @@ free) for Firestore and Storage.
   Google Cloud console → Billing → Budgets & alerts.
 - **VAPID key**: Firebase console → Project settings → Cloud Messaging → Web Push certificates → Generate key pair,
   then fill in the table above.
-- **gcloud login**: `gcloud auth login` must be run in a normal terminal (not through the Claude session, which
-  has no stdin for the verification code): `cd ~/git/solving-food && gcloud auth login`. Only needed for the
-  drop-folder upload helper in the Claude skill; everything else uses the Firebase CLI.
+- ~~gcloud login~~ done 2026-10-09: `gcloud auth list` shows `buitenwerfa@gmail.com` active, project `solvingfood`.
+  (Interactive logins must run in a normal terminal, not through the Claude session, which has no stdin.)

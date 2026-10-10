@@ -7,6 +7,31 @@
 - `SETUP.md` holds every non-secret Firebase fact (project ID, web config, bucket, region, owner email).
   Read it before touching Firebase. Keep it current when anything there changes.
 - `THOUGHTS.md` is the original brain dump. Later lines override earlier ones. It is history, not spec.
+- `Planning/` holds one plan per milestone (`M0-skeleton.md` … `M5-smarts.md`) plus `README.md` with the
+  order and conventions. Before starting any implementation work, read the current milestone's plan. Tick its
+  checkboxes as tasks land, and edit the plan (in the same commit) when the work deviates from it.
+
+## Design reference: `claude-design-result/`
+
+`claude-design-result/Solving Food.dc.html` is a **Claude Design prototype of the full app, every page, in one
+file**. Open it in a browser (it loads `support.js` next to it). It is the visual and interaction reference
+for implementation: layout per page, component shapes, spacing, type, colour tokens, sheet and toast
+behaviour, and the phone / tablet / desktop / 4K variants (the "device" prop at the top of the script block
+near line 815 switches them).
+
+- **Match it**, don't reinvent it. When the PRD or spec and the design disagree on *behaviour*, the documents
+  win and the design gets a note; when they disagree on *appearance*, the design wins.
+- **Pages** in the prototype: plan, recipes, meals, supply, grocery, history, settings. **Sheets:** filter,
+  supply item, plan item, more, household, confirm purchase, add. **Cooking phases:** mise, steps, review.
+  **Grocery phases:** order, receipt (with the Costco in-store checklist and the freeze step).
+- **Type:** Archivo (500–900) and Archivo Black for display, JetBrains Mono for numbers and amounts.
+- **Tokens** (CSS variables in the file): `--base`, `--mantle`, `--pg`, `--desk`, `--ink`, `--sub`, `--acc`,
+  `--onc` (text on accent), `--line`, `--bw` (border width), `--r` (radius), `--sh` (hard shadow), `--tt`.
+  Reproduce these as the app's theme variables so the Catppuccin flavour and accent map one-to-one.
+- The prototype also has a **"look"** switch (Quiet / Classic / Loud) that scales border weight, shadow, and
+  radius. Ship **Classic**; keep the token structure so the others could be added later.
+- Data and state in the prototype are mock. Never copy its data model; the Firestore model in the spec is the
+  truth. Treat the prototype's "Sam" user, sample recipes, and prices as placeholders.
 
 ## Git
 

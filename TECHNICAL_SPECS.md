@@ -871,9 +871,9 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | M0 | Skeleton | Monorepo, the `solvingfood` Firebase project (Blaze + alerts, `us-east1`, see `SETUP.md`), emulators, PWA shell, theme, email-link auth with allowlist, a single household created automatically for the first user (all data is nested under a household from day one), CI (lint, unit, rules, functions), Playwright harness (fixtures, seed data, project matrix, requirement-tag check) |
 | M1 | Recipes | Ingredient seed data (incl. free-use flags, default packs, default cadence), taxonomies, structured editor, versioning, Trash + purge + cleanup, search index, notification banners, drop folder + Claude skill, dedupe, share links |
 | M2 | Plan + Grocery | Periods & rollover, household settings (timezone, servings, meal types), meals, Plan page with coverage strip, budget meter (estimates), brand mappings, stores, grocery builder with incoming, copy button marks ordered |
-| M3 | Supply & Cooking | Commands, ledger, manual add, confirmation with freeze prompt, cooking views and layouts, timers with push, Done cooking → review corrections, leftovers, projected supply, expiry and the expired-lot prompt |
+| M3 | Supply & Cooking | Commands, ledger, manual add, confirmation with freeze prompt, cooking views and layouts, timers with push, Done cooking → review corrections, leftovers, projected supply, expiry and the expired-lot prompt, History page and stats, supply-based recipe filters |
 | M4 | Households | Directory, invites by name and email, multiple households (≤ 3), member management, last-member deletion, data download & import |
 | M5 | Smarts | Suggestions & weights, expiry badges and alerts, optimiser, staples cadence, PC Express module (auth, store and product search, weekly maintenance job) |
 
-Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix.
+Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix. The detailed, task-level plan for each milestone lives in `Planning/`.
 
