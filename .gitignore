@@ -1,0 +1,24 @@
+# nix / direnv
+.direnv/
+result
+result-*
+
+# node
+node_modules/
+dist/
+.pnpm-store/
+
+# firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+*-debug.log
+.runtimeconfig.json
+
+# local env (never commit secrets; the web config in SETUP.md is public by design)
+.env.local
+.env.*.local
+
+# misc
+.DS_Store

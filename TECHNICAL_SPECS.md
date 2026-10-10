@@ -93,7 +93,7 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Storage | 5 GB-month (US regions) | ~1 GB of images for 2,000 recipes | 5× |
 | Storage egress | 100 GB / month (N. America) | < 5 GB (images cached by the service worker) | 20× |
 | Hosting transfer | 360 MB / day | < 50 MB / day | 7× |
-| Cloud Scheduler | 3 jobs / **billing account** | 1 per project (weekly maintenance: price refresh + trash purge), so dev + prod = 2 | 1 spare |
+| Cloud Scheduler | 3 jobs / **billing account** | 1 (weekly maintenance: price refresh + trash purge) | 2 spare |
 | Cloud Tasks | 1M operations / month | < 2,000 (cooking timers) | 500× |
 | Cloud Messaging (web push) | free | < 2,000 pushes / month | — |
 | Secret Manager | 6 active secret versions, 10,000 accesses / month | 2 secrets (PC Express credentials), ~500 accesses | 20× |
@@ -756,10 +756,10 @@ Firestore `persistentLocalCache` (multi-tab) caches data and queues writes. Toge
 
 ## 13. Deployment & Operations
 
-- **Environments:** `solving-food-dev` and `solving-food-prod` Firebase projects (both Blaze with budget alerts, both expected to cost $0). Local development runs entirely on the **Emulator Suite**.
-- **CI/CD:** GitHub Actions runs lint, type-check, unit, property, rules, and functions (emulator) tests, plus the requirement-tag coverage check, on every PR. **The Playwright suite does not run in CI** (§14.1): it runs on the developer's machine before merging, to stay inside GitHub's free Actions minutes. Merging to `main` deploys to prod. PRs get Hosting preview channels.
+- **Environments:** a **single Firebase project, `solvingfood`** (Blaze, budget alert, expected to cost $0), used as production. There is no dev project: the app is used by one family, and local development and every automated test run entirely on the **Emulator Suite**. Project facts and the web config are in `SETUP.md`.
+- **CI/CD:** GitHub Actions runs lint, type-check, unit, property, rules, and functions (emulator) tests, the requirement-tag coverage check, and the Playwright suite (§14.1) on every PR. The repo is public, so Actions minutes are unlimited. Merging to `master` deploys to the project. PRs get Hosting preview channels.
 - **Monitoring:** Cloud Functions logs and error reporting, the $1 budget alert, and an alert if the weekly maintenance job fails twice in a row.
-- **Secrets:** PC Express credentials are set with `firebase functions:secrets:set` in each project. The dev project and the emulators use the PC Express stub (§14.1), not real credentials.
+- **Secrets:** PC Express credentials are set by the owner with `firebase functions:secrets:set PCX_EMAIL` / `PCX_PASSWORD`. The emulators use the PC Express stub (§14.1), never real credentials.
 
 ### Household data download & import
 
@@ -787,7 +787,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 
 **Coverage rule:** every user-facing PRD requirement (R2.x–R12.x, NFR5, NFR6) has at least one Playwright test. Each test is tagged with the requirement IDs it covers (e.g. `test('budget goes negative and turns red', { tag: ['@R6.5'] }, …)`), and a script (`pnpm e2e:coverage`, run locally and in CI since it only reads the spec files) fails if a user-facing requirement has no tagged test.
 
-**Where it runs:** the suite runs **locally** (`pnpm e2e`), not in GitHub Actions. A full run of this matrix against the emulators on every PR would exhaust the 2,000 free Actions minutes of a private repo within a few PRs, and NFR2's spirit applies to CI as much as to Firebase. A PR is merged only after the author has run the relevant specs locally and pasted the Playwright summary into the PR description. The full matrix is run locally before each prod deploy.
+**Where it runs:** in **GitHub Actions** on every PR and on merge, against the Emulator Suite. The repo is public, so Actions minutes are free. It also runs locally with `pnpm e2e` for development.
 
 #### Environment
 
@@ -856,12 +856,11 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 - **Artifacts:** trace, video, and screenshots are kept on first retry. The HTML report is uploaded from CI.
 - **Flake policy:** CI allows 1 retry, and any test that passes only on retry is reported. A test that is flaky twice in a week is fixed or quarantined (`test.fixme`) with an issue.
 
-#### Running the suite
+#### CI
 
-- **Before opening a PR:** `pnpm e2e --project=phone-ios --project=desktop-1080p` plus any specs the change touches. The Playwright summary goes in the PR description.
-- **Before a prod deploy:** `pnpm e2e` (the full matrix, including 4K and visual baselines) locally. The deploy is blocked by a checklist item, not by CI.
-- **In CI (GitHub Actions):** only the cheap layers run: lint, type-check, unit and property tests, rules tests, functions tests on the emulator, and `pnpm e2e:coverage`. Together these take a few minutes and fit comfortably in the free tier.
-- Visual baseline updates (`--update-snapshots`) happen only in a dedicated PR, so changes are reviewed as images. Baselines are generated on Linux (the same OS as the emulator image) so they're stable across developer machines.
+- **Every PR:** lint, type-check, unit and property tests, rules tests, functions tests on the emulator, `pnpm e2e:coverage`, then `@smoke` on all Playwright projects plus the full suite on `phone-ios` and `desktop-1080p`, sharded across 4 runners.
+- **Merge to `master`:** the full matrix, including 4K and visual baselines, must pass before deploying.
+- Visual baseline updates (`--update-snapshots`) happen only in a dedicated PR, so changes are reviewed as images. Baselines are generated on Linux (the CI runner OS) so they're stable across developer machines; the local dev shell is also Linux.
 
 ---
 
@@ -869,12 +868,12 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 
 | # | Milestone | Scope |
 |---|---|---|
-| M0 | Skeleton | Monorepo, Firebase projects (Blaze + alerts, `us-east1`), emulators, PWA shell, theme, email-link auth with allowlist, a single household created automatically for the first user (all data is nested under a household from day one), CI (lint, unit, rules, functions), Playwright harness (fixtures, seed data, project matrix, requirement-tag check) |
+| M0 | Skeleton | Monorepo, the `solvingfood` Firebase project (Blaze + alerts, `us-east1`, see `SETUP.md`), emulators, PWA shell, theme, email-link auth with allowlist, a single household created automatically for the first user (all data is nested under a household from day one), CI (lint, unit, rules, functions), Playwright harness (fixtures, seed data, project matrix, requirement-tag check) |
 | M1 | Recipes | Ingredient seed data (incl. free-use flags, default packs, default cadence), taxonomies, structured editor, versioning, Trash + purge + cleanup, search index, notification banners, drop folder + Claude skill, dedupe, share links |
 | M2 | Plan + Grocery | Periods & rollover, household settings (timezone, servings, meal types), meals, Plan page with coverage strip, budget meter (estimates), brand mappings, stores, grocery builder with incoming, copy button marks ordered |
 | M3 | Supply & Cooking | Commands, ledger, manual add, confirmation with freeze prompt, cooking views and layouts, timers with push, Done cooking → review corrections, leftovers, projected supply, expiry and the expired-lot prompt |
 | M4 | Households | Directory, invites by name and email, multiple households (≤ 3), member management, last-member deletion, data download & import |
 | M5 | Smarts | Suggestions & weights, expiry badges and alerts, optimiser, staples cadence, PC Express module (auth, store and product search, weekly maintenance job) |
 
-Each milestone is done only when the Playwright specs for its requirements (§14.1) pass locally across the project matrix.
+Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix.
 
