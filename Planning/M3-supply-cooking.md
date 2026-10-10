@@ -1,6 +1,37 @@
 # M3 — Supply & Cooking
 
-Status: not started
+Status: in progress
+
+All work-breakdown tasks are built, tested, and deployed (2026-10-10); every M3 requirement ID has a tagged Playwright
+test (40/40). The exit criteria need the owner's real kitchen, phone, and tablet (see "What's left for the owner");
+then set `Status: done` and `pnpm e2e:coverage` enforces the M3 IDs.
+
+## Verification (2026-10-10)
+
+| Layer | Result |
+|---|---|
+| Lint, typecheck | clean |
+| Unit (`pnpm test`) | core 251 passed (21 files; new: ledger incl. fast-check properties Σ transactions == Σ lots / no negative lot / unique lots and the FEFO order invariant, expiry incl. DST, cooking + review net effect property, projected supply and coverage, cadence, pending reviews, timers, history stats, commands, projection, free-use list), web 7 passed |
+| Rules (`pnpm test:rules`) | 74 passed (8 new in `tests/rules/supply.test.ts`) |
+| Functions on the emulators | 33 passed (12 new: every command handler, idempotent repeats, failed validation with banner, finishCooking + submitReview net effect, out-of-order offline review, timer schedule / cancel / reschedule / fire with the stub queue and push payload) |
+| Playwright desktop-1080p | 125 passed, 2 skipped, 1 failed → fixed (a M2 meals spec clicked "Edit", which gave way to "Cook"); a final full re-run was stopped by the session (machine low on memory, 7 GB) and not repeated |
+| Playwright phone-ios | 119 passed, 6 skipped, 3 failed → all fixed and re-run green (a11y contrast on small red/peach/blue badges, a unit picker that missed a late-loading ingredient, iPhone install prompt covering the timer controls in a spec) |
+| Playwright phone-android | 128 passed, 1 skipped, 0 failed |
+| Playwright tablet, desktop-firefox, 4K | not run for M3 (the stopped run above was the last step); cooking.spec.ts covers the tablet layouts by resizing in the other projects |
+| `pnpm e2e:coverage` | M3 40/40 requirement IDs tagged |
+| Live | `pnpm run deploy` (hosting, functions incl. new `commands`, `scheduleTimer`, `cancelTimer`, `timers`, Firestore rules + indexes, Storage rules); site 200, healthcheck ok, `/sw.js` imports `/push-sw.js`, Cloud Tasks queue `timers` RUNNING in us-east1 |
+
+## What's left for the owner
+
+1. The exit criteria below, on real devices: receive a PC Express order (with a Costco chicken freeze split) and check
+   Supply against the fridge; cook a two-recipe meal from the tablet with a timer that alerts the locked phone (install
+   the PWA on the iPhone first: Share → Add to Home Screen; allow notifications on the first timer); review from the
+   phone; check an expired lot's prompt; finish a meal in airplane mode and reconnect.
+2. Sign-off on feel (Supply, cooking, review, History, confirm groceries).
+3. Run the remaining Playwright projects once (`pnpm e2e --project=tablet --project=desktop-firefox
+   --project=desktop-4k --project=desktop-4k-2x`, and a final `--project=desktop-1080p`), one at a time on this
+   machine, or let CI do it after pushing.
+4. Push `master` (still open from M0–M2), plus the M1 skill import test and M2's phone checks.
 
 ## Goal
 
@@ -145,3 +176,75 @@ the functions; document in `SETUP.md`).
 - iOS web push needs the PWA installed and iOS 16.4+; test on the real phone early in Phase B.
 - Cloud Tasks in the emulator is limited; the stub queue must be faithful about schedule/cancel semantics.
 - FEFO with mixed frozen/fresh lots: freezing a part of a lot splits it; keep lot splitting in core with tests.
+
+## Deviations and decisions (2026-10-10)
+
+- **Lots never go negative.** Consumption beyond what the lots hold takes what there is, notes "short by n" on the
+  transaction, and flags the supply doc (`shortAt`, "Check amount" on the row). A stored deficit would either be paid
+  off by the next purchase or linger forever (spec §6 updated).
+- **Cook events carry `defaults`, `deducted`, and per-lot `takes`.** The review pre-fills the defaults; corrections are
+  against what was actually deducted; "used less" goes back into the lots it came from (core `refund`). `finishCooking`
+  takes a client-chosen `cookEventId` so the review opens at once, even offline.
+- **"Made n times" counts at Done cooking**, not at review (stats `timesCooked` / `lastCookedAt` in `finishCooking`);
+  ratings go to `stats` in `submitReview`, one rating per person and target (re-rating replaces).
+- **Leftover plan items have no recipes** (`recipes: []`, `name` = the meal): their food is cooked, so they add nothing
+  to the grocery list or budget. They go into the current period, ID `<eventId>_lo<n>`; the cooked meal's own
+  coverage drops to its one slot. Rollover carries a leftover only while its batch hasn't expired.
+- **markEaten:** leftover → one portion; cooked meal → status only; planned snack → its recipe amounts come out of
+  supply; a planned dinner is refused ("cook it first"). On the Supply page, "Ate one" uses a planned leftover item if
+  there is one, else a correction.
+- **Thawing** gives a fresh use-by of 2 days from thawing (the prototype's "use within 2 days"); the original fresh
+  date has usually passed. Freezing or thawing part of a lot splits it (`<lotId>-f<n>` / `-t<n>`).
+- **Receiving:** lines not touched arrived as listed (R7.8); quantities are in packs (or multiples of the raw amount);
+  a substitution is "Got something else instead" with the ingredient picker; the list stores `receivedCents` (pro rata
+  for changed quantities), which is the period's spend on History. A received list can't be edited or deleted.
+- **Cadence:** `purchaseCount` added, `avgIntervalDays` stays null until the second purchase (the client uses the seed
+  default until then). The "Are you out of X?" prompt itself is M5's staples task.
+- **Routes added:** `/plan/:itemId/cook` (cooking a planned meal; `/meals/:id/cook` is a saved meal from the Meals list,
+  `/recipes/:id/cook` a single recipe) and `/review/:eventId`. The review is a full-screen phase like the
+  prototype's, not a sheet.
+- **Timers:** alarm synthesised with Web Audio instead of a bundled WAV (nothing extra to cache offline). Cloud Tasks
+  and FCM are behind adapters with emulator stubs (`_stubTasks`, `_stubPushes`); the callables run against the
+  Functions emulator in e2e. Real web push can only be verified on a device (owner).
+- **Expiry dates** are local midnights: a lot bought on the 10th with a 7-day life is good through the 16th.
+  "Use soon" = 3 days or less. "Still good" extends by 3 days or to a picked date.
+- **"Can make" on the Recipes page** uses a bundled list of the seed's free-use ingredients (`data/free-use.json`,
+  `pnpm free-use:write`, unit test) instead of reading all 475 ingredients; ALMOST / "Use what's left" = at least 85 %
+  of the tracked grams. "Uses expiring" and the "Expiring first" sort stay for M5 (suggestions).
+- **Expiry badge (R6.7)** shows when the soonest-expiring unexpired lot a planned meal uses expires within the period or
+  within 3 days.
+- **Accessibility over parity:** small badges and panels use lightened red, peach, and blue (`bg-red-soft`,
+  `bg-peach-soft`, `bg-blue-soft`) because ink on the prototype's colours is 3.2–4.1:1. Recorded with the a11y scan
+  of every M3 page and sheet in Latte and Mocha.
+- **Review progress** follows the cook event when it reaches the server (no remount), so a review started offline or
+  right after Done cooking keeps the person's changes.
+- **Offline:** the cook view preloads the review route's code (Done cooking works with no signal before the service
+  worker has cached the app); the Plan page warms the photo cache for planned recipes.
+- **Functions emulator note:** `commands` runs in the Functions emulator during e2e; tests wait on command status
+  (`commandsSettled(hid, n)` waits for n commands to exist and settle).
+
+## Design-compare notes (phone 430×932, desktop 1920×1080, Latte)
+
+Compared with the prototype's Supply page (and its inline item detail), Plan (pending reviews, leftover and cooked
+items, Cook buttons, expiry badges), cook phases (order, mise, steps), review (rate, used, leftovers), grocery
+confirm and freeze step, and History. Matched: header kicker + Archivo Black title, location segmented control, filter
+chips, the purple LEFTOVERS card with "Ate one", supply rows with mono location/expiry badges and right-aligned mono
+amounts, the dashed expansion with PURCHASES / CORRECT IT / HISTORY, the cook top bar (✕, mono phase kicker, AWAKE,
+ink Done cooking), mise checklist, step card with STEP n OF N badge and green inline amount chips, progress segments,
+timer box, Back / Next step, review tabs and rating grids, ± used rows, leftovers ▲/▼, the confirm list with steppers
+and GOT IT, the blue BULK BUY freeze panel, History stat tiles and cooked rows with the teal score square.
+
+Intentional differences:
+
+- **Amounts show metric and imperial** everywhere (R8.13), so the projected figure sits under the current one instead
+  of beside it, and reads "(n after plan)" / "(need n more)".
+- **Expired lots** get their own prompt card (Still good · +3 days / Pick a date / Threw it out, R8.15) above the list;
+  the prototype only has "Threw it out" inside the row.
+- **Step mode layouts:** the prototype has one layout scaled up; the app adds phone landscape (step | ingredients and
+  timers), tablet portrait (next step + full ingredient checklist), and a three-pane wide layout (spec §12, R4.24).
+- **Timer box** has Pause / ±1 min / Cancel and shows other running timers; the prototype only has Start.
+- **Review ratings start empty** (the prototype preselects 8); the meal is only rated when it's saved, with "Save this
+  meal?" for unsaved multi-recipe meals; an optional note field sits on the leftovers step.
+- **Confirm groceries** adds "Got something else instead" (substitutions, R7.8) under each line.
+- **Soft red / peach / blue** on small text (see Deviations).
+- Not built (later milestones): "Use it or lose it" alerts, suggestion scoring, protein goals (M5).

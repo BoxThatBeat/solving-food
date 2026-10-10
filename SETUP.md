@@ -124,10 +124,9 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
 - **Cloud Tasks queue `timers`** (us-east1) is created by the first deploy of the `timers` function (the Cloud Tasks API
   was enabled in M0). Check it with `gcloud tasks queues describe timers --location us-east1`. Retries: 3 attempts,
   10 s minimum backoff; at most 6 concurrent dispatches. The callables enqueue with
-  `getFunctions().taskQueue("locations/us-east1/functions/timers")`; the default compute service account needs
-  `roles/cloudtasks.enqueuer` and `roles/iam.serviceAccountUser` on itself for that, which the Firebase CLI grants
-  when it deploys a task-queue function. If a timer push ever fails with PERMISSION_DENIED in the logs, grant those
-  two roles to `28493041173-compute@developer.gserviceaccount.com`.
+  `getFunctions().taskQueue("locations/us-east1/functions/timers")` as the default compute service account
+  `28493041173-compute@developer.gserviceaccount.com`, which has `roles/editor` (covers `cloudtasks.tasks.create`).
+  Verified after the M3 deploy: `gcloud tasks queues describe timers --location us-east1` → RUNNING.
 - **Web push:** FCM with the VAPID key above. The private half lives in the Firebase console (Project settings → Cloud
   Messaging → Web Push certificates); nothing to do unless it is rotated, in which case update `VAPID_KEY` in
   `apps/web/src/pwa/push.ts` and this file. Devices register on their first timer (`users/{uid}/devices/{token}`).
