@@ -50,13 +50,12 @@ export async function syncRecipeIndex(id: string, before: DocumentData | null, a
     const recipe = current.data() as RecipeDoc;
     let n = recipe.indexChunk;
     let assigned = false;
-    let chunk: IndexChunk | null = null;
     if (typeof n !== "number") {
       n = await findChunkWithRoom(tx);
       assigned = true;
     }
     const snap = await tx.get(chunkRef(n));
-    chunk = snap.exists ? (snap.data() as IndexChunk) : { count: 0, recipes: {} };
+    const chunk: IndexChunk = snap.exists ? (snap.data() as IndexChunk) : { count: 0, recipes: {} };
     const existing = chunk.recipes?.[id];
     const summary = isIndexed(recipe.status) ? recipeSummary(id, recipe) : null;
     const update: Record<string, unknown> = {};

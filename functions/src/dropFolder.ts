@@ -158,7 +158,6 @@ async function importCook(uid: string, fileName: string, text: string, opts: Dro
 
   // Image: URL → download; relative path → a file uploaded next to the .cook.
   const image = result.frontMatter.image;
-  let imageNote: string | null = null;
   if (image) {
     try {
       let data: Buffer | null = null;
@@ -176,8 +175,7 @@ async function importCook(uid: string, fileName: string, text: string, opts: Dro
       content.imagePaths = [await storeRecipeImage(id, data)];
       if (dropped) await bucket().file(dropped).delete({ ignoreNotFound: true });
     } catch (e) {
-      imageNote = `image couldn't be saved (${(e as Error).message})`;
-      warnings.push(imageNote);
+      warnings.push(`image couldn't be saved (${(e as Error).message})`);
     }
   }
 
