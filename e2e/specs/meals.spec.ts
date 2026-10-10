@@ -45,7 +45,7 @@ test("Save as meal later, from a planned item (R5.8)", { tag: ["@R5.8"] }, async
   const name = uniqueName("Dal + rice");
   const plan = new PlanPage(page);
   await plan.goto();
-  await plan.item(`${a.title} + ${b.title}`).getByRole("button", { name: /^Edit/ }).click();
+  await plan.item(`${a.title} + ${b.title}`).getByRole("button", { name: `${a.title} + ${b.title}`, exact: true }).click();
   const sheet = page.getByRole("dialog");
   await sheet.getByLabel("Meal name").fill(name);
   await sheet.getByRole("button", { name: "Save", exact: true }).click();
