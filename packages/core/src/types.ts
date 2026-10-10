@@ -1,0 +1,433 @@
+// Firestore document shapes (TECHNICAL_SPECS §4) as zod schemas plus inferred types. Shared by the web app and
+// functions. No Firebase imports: timestamps are accepted as anything Timestamp-like or a Date.
+
+import { z } from "zod";
+import {
+  CUISINES,
+  MAIN_PROTEINS,
+  MEAL_TYPES,
+  MEASURES,
+  PLANNABLE_MEAL_TYPES,
+  STORAGE_LOCATIONS,
+} from "./taxonomy";
+import { ACCENTS, FLAVOURS } from "./theme";
+import {
+  CURRENCY,
+  DISPLAY_NAME_MAX,
+  HOUSEHOLD_NAME_MAX,
+  MAX_HOUSEHOLDS_CREATED,
+  PERIOD_DAYS_MAX,
+  SERVINGS_MAX,
+} from "./config";
+
+/** Firestore Timestamp (anything with toMillis) or a JS Date. */
+export interface TimestampLike {
+  toMillis(): number;
+}
+export const timestamp = z.custom<TimestampLike | Date>(
+  (v) =>
+    v instanceof Date ||
+    (typeof v === "object" && v !== null && typeof (v as { toMillis?: unknown }).toMillis === "function"),
+  { message: "Expected a timestamp" },
+);
+
+const id = z.string().min(1).max(200);
+const nonNegInt = z.number().int().min(0);
+const cents = z.number().int();
+
+// ---------- 4.1 Global collections
+
+export const themeSchema = z.object({
+  flavour: z.enum(FLAVOURS),
+  accent: z.enum(ACCENTS),
+});
+
+export const userSchema = z.object({
+  email: z.email(),
+  activeHouseholdId: id.nullable(),
+  householdsCreated: nonNegInt.max(MAX_HOUSEHOLDS_CREATED),
+  theme: themeSchema,
+  createdAt: timestamp.optional(),
+});
+export type UserDoc = z.infer<typeof userSchema>;
+
+export const allowlistSchema = z.object({
+  addedBy: z.string().min(1),
+  addedAt: timestamp,
+  inviteHouseholdId: id.optional(),
+});
+export type AllowlistDoc = z.infer<typeof allowlistSchema>;
+
+export const displayNameSchema = z
+  .string()
+  .trim()
+  .min(1, "Enter a name")
+  .max(DISPLAY_NAME_MAX, `At most ${DISPLAY_NAME_MAX} characters`);
+
+export const directorySchema = z.object({
+  displayName: displayNameSchema,
+  displayNameLower: z.string(),
+});
+export type DirectoryDoc = z.infer<typeof directorySchema>;
+
+export const shelfLifeSchema = z.object({
+  pantry: nonNegInt.nullable().optional(),
+  cupboard: nonNegInt.nullable().optional(),
+  fridge: nonNegInt.nullable().optional(),
+  freezer: nonNegInt.nullable().optional(),
+});
+
+export const ingredientSchema = z.object({
+  name: z.string().min(1),
+  aliases: z.array(z.string()),
+  category: z.string().min(1),
+  defaultLocation: z.enum(STORAGE_LOCATIONS),
+  allowedMeasures: z.array(z.enum(MEASURES)).min(1),
+  canonicalUnit: z.enum(["g", "count"]),
+  densityGPerMl: z.number().positive().optional(),
+  unitWeightG: z.number().positive().optional(),
+  proteinPer100g: z.number().min(0).optional(),
+  shelfLifeDays: shelfLifeSchema,
+  defaultPackAmount: z.number().positive().optional(),
+  defaultPackMeasure: z.enum(MEASURES).optional(),
+  defaultCadenceDays: z.number().int().positive().optional(),
+  freezable: z.boolean(),
+  isStaple: z.boolean(),
+  freeUse: z.boolean(),
+  needsReview: z.boolean(),
+});
+export type IngredientDoc = z.infer<typeof ingredientSchema>;
+
+export const recipeIngredientSchema = z.object({
+  id: id,
+  ingredientId: id,
+  amount: z.number().min(0),
+  measure: z.string().min(1),
+  canonicalAmount: z.number().min(0),
+  displayText: z.string(),
+  optional: z.boolean(),
+});
+
+export const recipeStepSchema = z.object({
+  text: z.string().min(1),
+  ingredientRefs: z.array(id),
+  timerSeconds: z.number().int().positive().optional(),
+});
+
+export const prepTaskSchema = z.object({
+  text: z.string().min(1),
+  ingredientRefs: z.array(id),
+});
+
+export const RECIPE_STATUSES = ["active", "pendingDuplicateReview", "trashed"] as const;
+
+export const recipeSchema = z.object({
+  title: z.string().min(1),
+  slug: z.string().min(1),
+  servings: z.number().int().positive(),
+  prepMin: nonNegInt,
+  cookMin: nonNegInt,
+  cuisine: z.enum(CUISINES),
+  mainProtein: z.enum(MAIN_PROTEINS),
+  tags: z.array(z.string()),
+  tools: z.array(z.string()),
+  ingredients: z.array(recipeIngredientSchema),
+  steps: z.array(recipeStepSchema),
+  prepTasks: z.array(prepTaskSchema),
+  defaultLeftoverPortions: nonNegInt,
+  leftoverMealType: z.enum(MEAL_TYPES).optional(),
+  proteinPerServingG: z.number().min(0).optional(),
+  sourceUrl: z.url().optional(),
+  sourceUrlCanonical: z.string().optional(),
+  fingerprint: z.string(),
+  ingredientIds: z.array(id),
+  imagePaths: z.array(z.string()),
+  indexChunk: nonNegInt,
+  status: z.enum(RECIPE_STATUSES),
+  possibleDuplicateOf: id.optional(),
+  trashedAt: timestamp.optional(),
+  trashedBy: z.string().optional(),
+  createdBy: z.string(),
+  updatedBy: z.string(),
+  version: z.number().int().positive(),
+  createdAt: timestamp,
+  updatedAt: timestamp,
+});
+export type RecipeDoc = z.infer<typeof recipeSchema>;
+
+export const recipeVersionSchema = recipeSchema.extend({
+  editedBy: z.string(),
+  editedAt: timestamp,
+});
+export type RecipeVersionDoc = z.infer<typeof recipeVersionSchema>;
+
+export const mealSchema = z.object({
+  name: z.string().min(1),
+  recipes: z.array(z.object({ recipeId: id, servingsMultiplier: z.number().positive() })).min(1),
+  createdBy: z.string(),
+  updatedAt: timestamp,
+});
+export type MealDoc = z.infer<typeof mealSchema>;
+
+export const priceSchema = z.object({
+  productName: z.string(),
+  priceCents: cents.min(0),
+  packAmount: z.number().positive(),
+  packMeasure: z.enum(MEASURES),
+  pcxStoreId: z.string(),
+  productCode: z.string(),
+  fetchedAt: timestamp,
+});
+export type PriceDoc = z.infer<typeof priceSchema>;
+
+export const notificationSchema = z.object({
+  kind: z.enum(["info", "success", "error"]),
+  message: z.string().min(1),
+  link: z.string().optional(),
+  createdAt: timestamp,
+  dismissedAt: timestamp.optional(),
+});
+export type NotificationDoc = z.infer<typeof notificationSchema>;
+
+export const deviceSchema = z.object({
+  platform: z.string(),
+  createdAt: timestamp,
+  lastSeenAt: timestamp,
+});
+export type DeviceDoc = z.infer<typeof deviceSchema>;
+
+// ---------- 4.2 Household collections
+
+export const proteinGoalsSchema = z.object({
+  breakfast: z.number().min(0).optional(),
+  lunch: z.number().min(0).optional(),
+  dinner: z.number().min(0).optional(),
+  snack: z.number().min(0).optional(),
+});
+
+export const householdSettingsSchema = z.object({
+  scoreWeights: z.record(z.string(), z.number()),
+  tools: z.array(z.string()),
+  preferences: z.object({
+    likes: z.array(z.string()),
+    dislikes: z.array(z.string()),
+    diets: z.array(z.string()),
+  }),
+  proteinGoals: proteinGoalsSchema,
+});
+
+export const householdNameSchema = z
+  .string()
+  .trim()
+  .min(1, "Enter a name")
+  .max(HOUSEHOLD_NAME_MAX, `At most ${HOUSEHOLD_NAME_MAX} characters`);
+
+export const householdSchema = z.object({
+  name: householdNameSchema,
+  createdBy: z.string().min(1),
+  periodDays: z.number().int().min(1).max(PERIOD_DAYS_MAX),
+  budgetCents: cents.min(0),
+  currency: z.literal(CURRENCY),
+  timezone: z.string().min(1),
+  defaultServings: z.number().int().min(1).max(SERVINGS_MAX),
+  plannedMealTypes: z.array(z.enum(PLANNABLE_MEAL_TYPES)).min(1),
+  pcxStoreId: z.string().min(1),
+  currentPeriodId: id.nullable(),
+  settings: householdSettingsSchema,
+  createdAt: timestamp.optional(),
+});
+export type HouseholdDoc = z.infer<typeof householdSchema>;
+
+export const memberSchema = z.object({
+  uid: z.string().min(1),
+  displayName: displayNameSchema,
+  joinedAt: timestamp,
+});
+export type MemberDoc = z.infer<typeof memberSchema>;
+
+export const inviteSchema = z
+  .object({
+    inviteeUid: z.string().optional(),
+    inviteeEmailLower: z.email().optional(),
+    householdName: z.string(),
+    invitedBy: z.string(),
+    createdAt: timestamp,
+  })
+  .refine((v) => (v.inviteeUid ? 1 : 0) + (v.inviteeEmailLower ? 1 : 0) === 1, {
+    message: "An invite targets exactly one of inviteeUid or inviteeEmailLower",
+  });
+export type InviteDoc = z.infer<typeof inviteSchema>;
+
+export const storeSchema = z.object({
+  name: z.string().min(1),
+  kind: z.enum(["pcExpress", "inStore"]),
+  bulk: z.boolean(),
+});
+export type StoreDoc = z.infer<typeof storeSchema>;
+
+export const sourcingRuleSchema = z.object({
+  match: z.union([z.object({ category: z.string() }), z.object({ ingredientId: id })]),
+  storeId: id,
+});
+export type SourcingRuleDoc = z.infer<typeof sourcingRuleSchema>;
+
+export const brandMappingSchema = z.object({
+  productName: z.string().min(1),
+  productCode: z.string().optional(),
+  packAmount: z.number().positive(),
+  packMeasure: z.enum(MEASURES),
+  storeId: id,
+});
+export type BrandMappingDoc = z.infer<typeof brandMappingSchema>;
+
+export const favouriteSchema = z.object({
+  type: z.enum(["recipe", "meal"]),
+  targetId: id,
+});
+export type FavouriteDoc = z.infer<typeof favouriteSchema>;
+
+export const noteSchema = z.object({ text: z.string(), updatedBy: z.string() });
+export type NoteDoc = z.infer<typeof noteSchema>;
+
+export const statsSchema = z.object({
+  timesCooked: nonNegInt,
+  lastCookedAt: timestamp.optional(),
+  ratingSum: z.number().min(0),
+  ratingCount: nonNegInt,
+});
+export type StatsDoc = z.infer<typeof statsSchema>;
+
+export const periodSchema = z.object({
+  start: timestamp,
+  end: timestamp,
+  budgetCents: cents.min(0),
+});
+export type PeriodDoc = z.infer<typeof periodSchema>;
+
+export const coverageSchema = z.object({
+  breakfast: nonNegInt.optional(),
+  lunch: nonNegInt.optional(),
+  dinner: nonNegInt.optional(),
+});
+
+export const planItemSchema = z.object({
+  periodId: id,
+  mealId: id.optional(),
+  recipeId: id.optional(),
+  leftoverSupplyId: id.optional(),
+  mealType: z.enum(MEAL_TYPES),
+  servings: z.number().positive(),
+  coverage: coverageSchema,
+  status: z.enum(["planned", "cooked", "skipped", "eaten"]),
+  carriedFromId: id.optional(),
+  sourcePlanItemId: id.optional(),
+  addedBy: z.string(),
+});
+export type PlanItemDoc = z.infer<typeof planItemSchema>;
+
+export const cookEventSchema = z.object({
+  planItemId: id.optional(),
+  recipeIds: z.array(id),
+  titles: z.array(z.string()),
+  cookedBy: z.string(),
+  cookedAt: timestamp,
+  used: z.array(z.object({ ingredientId: id, canonicalAmount: z.number() })),
+  leftoverPortions: nonNegInt,
+  reviewStatus: z.enum(["pending", "done"]),
+  ratedBy: z.array(z.string()),
+});
+export type CookEventDoc = z.infer<typeof cookEventSchema>;
+
+export const ratingSchema = z.object({
+  uid: z.string(),
+  cookEventId: id,
+  targetType: z.enum(["recipe", "meal"]),
+  targetId: id,
+  score: z.number().int().min(1).max(10),
+});
+export type RatingDoc = z.infer<typeof ratingSchema>;
+
+export const groceryItemSchema = z.object({
+  ingredientId: id.optional(),
+  freeText: z.string().optional(),
+  amount: z.number().min(0),
+  measure: z.string(),
+  packs: z.number().min(0),
+  productName: z.string(),
+  storeId: id,
+  estPriceCents: cents.min(0).nullable(),
+  source: z.enum(["plan", "manual", "cadence"]),
+  checked: z.boolean(),
+  checkedBy: z.string().optional(),
+});
+
+export const groceryListSchema = z.object({
+  periodId: id,
+  status: z.enum(["draft", "ordered", "received"]),
+  createdAt: timestamp,
+  orderedAt: timestamp.optional(),
+  receivedAt: timestamp.optional(),
+  items: z.record(z.string(), groceryItemSchema),
+});
+export type GroceryListDoc = z.infer<typeof groceryListSchema>;
+
+export const lotSchema = z.object({
+  lotId: id,
+  amount: z.number().min(0),
+  location: z.enum(STORAGE_LOCATIONS),
+  acquiredAt: timestamp,
+  expiresFresh: timestamp.optional(),
+  expiresFrozen: timestamp.optional(),
+  frozenAt: timestamp.optional(),
+  expiryExtendedTo: timestamp.optional(),
+});
+
+export const supplySchema = z.object({
+  ingredientId: id.optional(),
+  label: z.string(),
+  canonicalAmount: z.number().min(0),
+  canonicalUnit: z.enum(["g", "count"]),
+  lots: z.array(lotSchema),
+  nextExpiry: timestamp.optional(),
+});
+export type SupplyDoc = z.infer<typeof supplySchema>;
+
+export const TRANSACTION_KINDS = [
+  "purchase",
+  "cook",
+  "correction",
+  "discard",
+  "freeze",
+  "thaw",
+  "leftover",
+  "eaten",
+  "extendExpiry",
+] as const;
+
+export const transactionSchema = z.object({
+  delta: z.number(),
+  kind: z.enum(TRANSACTION_KINDS),
+  lotId: id,
+  ref: z.object({ type: z.string(), id: id }).optional(),
+  uid: z.string(),
+  note: z.string().optional(),
+  createdAt: timestamp,
+});
+export type TransactionDoc = z.infer<typeof transactionSchema>;
+
+export const commandSchema = z.object({
+  type: z.string().min(1),
+  payload: z.record(z.string(), z.unknown()),
+  uid: z.string(),
+  createdAt: timestamp,
+  status: z.enum(["pending", "applied", "failed"]),
+  error: z.string().optional(),
+});
+export type CommandDoc = z.infer<typeof commandSchema>;
+
+export const cadenceSchema = z.object({
+  avgIntervalDays: z.number().positive(),
+  lastPurchasedAt: timestamp,
+  snoozedUntil: timestamp.optional(),
+});
+export type CadenceDoc = z.infer<typeof cadenceSchema>;

@@ -1,0 +1,39 @@
+{
+  "name": "solving-food",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.9.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @solving-food/functions build && firebase emulators:exec --ui --only auth,firestore,storage,functions --import .emulator-data --export-on-exit \"pnpm seed:allowlist:emulator && pnpm --filter @solving-food/web dev\"",
+    "build": "pnpm -r build",
+    "lint": "eslint . --max-warnings=0",
+    "format": "prettier --write .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter @solving-food/core --filter @solving-food/web test",
+    "test:rules": "firebase emulators:exec --only firestore,storage \"pnpm --filter @solving-food/rules-tests test\"",
+    "test:functions": "pnpm --filter @solving-food/functions build && firebase emulators:exec --only functions,firestore \"pnpm --filter @solving-food/functions test\"",
+    "e2e": "bash scripts/e2e.sh",
+    "e2e:coverage": "pnpm --filter @solving-food/e2e coverage",
+    "emulators": "pnpm --filter @solving-food/functions build && firebase emulators:start --import .emulator-data --export-on-exit",
+    "seed:allowlist": "tsx scripts/seed-allowlist.ts",
+    "seed:allowlist:emulator": "tsx scripts/seed-allowlist.ts --emulator",
+    "deploy": "pnpm build && firebase deploy --only hosting,functions,firestore,storage"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.0.0",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "firebase-admin": "^14.5.0",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.1",
+    "vitest": "^5.0.3"
+  }
+}

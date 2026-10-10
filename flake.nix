@@ -17,12 +17,18 @@
             firebase-tools      # firebase CLI (deploy, emulators, apps:sdkconfig, functions:secrets:set)
             google-cloud-sdk    # gcloud (Storage drop folder, Cloud Tasks, budgets)
             jdk21_headless      # the Firebase Emulator Suite needs a JRE
+            playwright-driver.browsers   # Chromium, Firefox, WebKit for the e2e suite (pin @playwright/test to this driver's version)
           ];
 
           shellHook = ''
             export CLOUDSDK_CORE_PROJECT=solvingfood
             # Keep firebase-tools from phoning home about updates inside the shell.
             export FIREBASE_TOOLS_NO_UPDATE_NOTIFIER=1
+            # Playwright on NixOS: use the nixpkgs browsers, never `playwright install`.
+            # @playwright/test in e2e/package.json is pinned to ${pkgs.playwright-driver.version}.
+            export PLAYWRIGHT_BROWSERS_PATH=${pkgs.playwright-driver.browsers}
+            export PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=true
+            export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
           '';
         };
       });

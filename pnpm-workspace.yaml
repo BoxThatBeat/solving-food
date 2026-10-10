@@ -1,0 +1,12 @@
+packages:
+  - apps/*
+  - packages/*
+  - functions
+  - e2e
+  - tests/*
+
+# pnpm 11+ blocks dependency build scripts unless they're listed here.
+allowBuilds:
+  esbuild: true
+  protobufjs: true
+  "@firebase/util": true

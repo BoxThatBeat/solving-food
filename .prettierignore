@@ -1,0 +1,7 @@
+pnpm-lock.yaml
+**/dist/
+**/dist-e2e/
+functions/lib/
+**/routeTree.gen.ts
+claude-design-result/
+*.md

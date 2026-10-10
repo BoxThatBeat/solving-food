@@ -22,3 +22,16 @@ ui-debug.log
 
 # misc
 .DS_Store
+
+# build outputs
+apps/web/dist-e2e/
+functions/lib/
+*.tsbuildinfo
+
+# emulator data exported by `pnpm dev` / `pnpm emulators`
+.emulator-data/
+
+# playwright
+e2e/test-results/
+e2e/playwright-report/
+e2e/.auth/
