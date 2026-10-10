@@ -111,8 +111,10 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   `defaultStoreId`. Nothing is written to the owner's household by a script.
 - **Price estimates** live in `data/price-estimates.json` and ship inside the web app; there is nothing to upload.
   After adding seed ingredients run `pnpm prices:check` (and `-- --write` to refresh `centsPerUnit`).
-- **Firestore emulator heap:** `scripts/e2e.sh` sets `JAVA_TOOL_OPTIONS=-Xmx3g` (a full two-project run ran the emulator
-  out of its default heap).
+- **Firestore emulator heap:** a single local run of phone-ios + desktop-1080p together (~190 tests on one emulator)
+  ran the Firestore emulator out of Java heap once specs created a fresh recipe per test. The specs now reuse their
+  recipes per worker; locally, run big project sets one at a time (CI shards already split them). Raising the heap with
+  `JAVA_TOOL_OPTIONS` is not an option: the Storage rules runtime treats the JVM's "Picked up …" line as an error.
 
 ## CI/CD (GitHub Actions)
 
