@@ -266,6 +266,7 @@ export function formatGrams(g: number): string {
 export function formatOunces(g: number): string {
   const oz = Math.max(0, g) / G_PER_OZ;
   if (oz === 0) return "0 oz";
+  if (oz < 0.05) return "<0.1 oz"; // a pinch of a spice: never "0 oz" for something that's there
   if (oz < 10) return `${clean(oz, 1)} oz`;
   if (oz < 15.95) return `${Math.round(oz)} oz`;
   const lb = oz / 16;

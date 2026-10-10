@@ -143,6 +143,8 @@ describe("formatting (R8.13)", () => {
     expect(formatOunces(1200)).toBe("2.6 lb");
     expect(formatOunces(2000)).toBe("4.4 lb");
     expect(formatOunces(10)).toBe("0.4 oz");
+    expect(formatOunces(0.5)).toBe("<0.1 oz");
+    expect(formatOunces(0)).toBe("0 oz");
   });
   it("matches the spec's examples", () => {
     expect(formatAmount(125.4, flour, { original: "1 cup flour" })).toBe("1 cup flour (125 g · 4.4 oz)");
