@@ -102,7 +102,18 @@ function GroceryPage() {
     await markOrdered(true);
   };
 
-  const tick = (listId: string, id: string, on: boolean) => tickItem(m.hid, listId, id, on, s.user.uid).catch((e) => notify({ kind: "error", message: `Couldn't tick it: ${(e as Error).message}` }));
+  const tick = (listId: string, id: string, on: boolean) => {
+    const fail = (e: unknown) => notify({ kind: "error", message: `Couldn't tick it: ${(e as Error).message}` });
+    // A plan line not yet in the stored draft (regeneration is debounced): write the whole line, ticked.
+    const shown = items[id];
+    if (listId === DRAFT_ID && shown && !draftItems?.[id] && m.periodId) {
+      const line: GroceryItem = { ...shown, checked: on };
+      if (on) line.checkedBy = s.user.uid;
+      else delete line.checkedBy;
+      return applyDraftChanges(m.hid, m.periodId, !!m.draft.data, m.draft.data?.periodId, { [id]: line }, []).catch(fail);
+    }
+    return tickItem(m.hid, listId, id, on, s.user.uid).catch(fail);
+  };
 
   return (
     <PageBody className="max-w-[112.5rem]">
@@ -148,9 +159,11 @@ function GroceryPage() {
       <AddItem
         stores={m.stores}
         defaultStoreId={m.household?.defaultStoreId}
-        onAdd={async (input) => {
+        onAdd={async (input, ingredient) => {
           if (!m.periodId) return;
-          const item = manualItem(input, m.ctx);
+          // The picked ingredient may not be one the plan uses yet: give the builder its document.
+          const ctx = ingredient ? { ...m.ctx, ingredients: (id: string) => (id === ingredient.id ? ingredient : m.ctx.ingredients(id)) } : m.ctx;
+          const item = manualItem(input, ctx);
           await addManualItem(m.hid, m.periodId, item, !!m.draft.data);
           notify({ kind: "success", message: `Added ${item.productName} to the list` });
         }}
@@ -298,7 +311,7 @@ function OrderedList({ id, list, stores, ingredients, onTick, onUndo }: { id: st
 }
 
 /** Manual additions (R7.6): free text, or an ingredient (priced and stored like plan lines, in packs). */
-function AddItem({ stores, defaultStoreId, onAdd }: { stores: readonly StoreEntry[]; defaultStoreId?: string | undefined; onAdd: (input: { ingredientId?: string; freeText?: string; packs: number; storeId?: string }) => Promise<void> }) {
+function AddItem({ stores, defaultStoreId, onAdd }: { stores: readonly StoreEntry[]; defaultStoreId?: string | undefined; onAdd: (input: { ingredientId?: string; freeText?: string; packs: number; storeId?: string }, ingredient?: IngredientEntry) => Promise<void> }) {
   const ing = useAllIngredients();
   const [text, setText] = React.useState("");
   const [picked, setPicked] = React.useState<IngredientEntry | null>(null);
@@ -308,7 +321,7 @@ function AddItem({ stores, defaultStoreId, onAdd }: { stores: readonly StoreEntr
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!picked && !text.trim()) return;
-    await onAdd({ ...(picked ? { ingredientId: picked.id } : { freeText: text.trim() }), packs, ...(storeId ? { storeId } : {}) });
+    await onAdd({ ...(picked ? { ingredientId: picked.id } : { freeText: text.trim() }), packs, ...(storeId ? { storeId } : {}) }, picked ?? undefined);
     setText("");
     setPicked(null);
     setPacks(1);
