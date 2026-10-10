@@ -1,6 +1,36 @@
 # M2 — Plan + Grocery
 
-Status: not started
+Status: in progress
+
+All 27 work-breakdown tasks are built and verified (2026-10-10), deployed, and every M2 requirement ID has a passing,
+tagged Playwright test. Only owner-side checks remain (see "What's left for the owner"); then set `Status: done` and
+`pnpm e2e:coverage` enforces the 27 M2 IDs.
+
+## Verification (2026-10-10)
+
+| Layer | Result |
+|---|---|
+| Lint, typecheck | clean |
+| Unit (`pnpm test`) | core 211 passed (15 files; new: period incl. DST and a fast-check tiling property, plan/coverage/strip, grocery builder incl. a pack-rounding property, pricing, budget, meal rows, cost/tools filters), web 7 passed |
+| Rules (`pnpm test:rules`) | 66 passed (10 new in `tests/rules/plan.test.ts`) |
+| Functions on the emulators | 21 passed (cleanup recomputes coverage and keeps `savedMealId`; maintenance refreshes stale summaries) |
+| Playwright phone-ios | 90 passed, 6 skipped, 0 failed |
+| Playwright desktop-1080p | 95 passed, 1 skipped, 0 failed |
+| Playwright phone-android | 95 passed, 1 skipped, 0 failed |
+| Playwright tablet + desktop-firefox (smoke) + desktop-4k + desktop-4k-2x | 33 passed, 6 skipped, 0 failed |
+| `pnpm e2e:coverage` | M2 27/27 requirement IDs tagged |
+| Live | `pnpm run deploy` (hosting, functions, Firestore rules, Storage rules); healthcheck ok; site 200; the maintenance job run once by hand refreshed all 28 live index summaries |
+
+Projects were run one at a time: a single run of phone-ios + desktop-1080p together ran the Firestore emulator out of
+heap (see Deviations). One WebKit flake seen once and passing 4/4 on repeat: recipes-browse "favourite from a card".
+
+## What's left for the owner
+
+1. Exit criterion 1 on a real phone: plan a 7-day period with Create meal (three one-recipe dinners, a three-recipe
+   taco night saved as a meal, a dinner from that saved meal), check 5/7 and the budget, Copy for ChatGPT and paste.
+   The first open after this deploy creates Silbrass Pvt's first period and default stores automatically.
+2. Sign-off on feel (Plan, Create meal, Meals, Grocery, Settings), as for M0/M1.
+3. Push `master` (first CI run; still open from M0/M1). Also still open from M1: the skill import test.
 
 ## Goal
 
