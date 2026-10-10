@@ -51,7 +51,12 @@ export default tseslint.config(
     plugins: { "react-hooks": reactHooks, "react-refresh": reactRefresh },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": ["warn", { allowConstantExport: true, allowExportNames: ["Route"] }],
+      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
     },
+  },
+  {
+    // TanStack Router route modules export `Route` next to their components; the router plugin handles HMR.
+    files: ["apps/web/src/routes/**/*.tsx"],
+    rules: { "react-refresh/only-export-components": "off" },
   },
 );

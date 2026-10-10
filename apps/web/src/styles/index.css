@@ -1,0 +1,182 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Self-hosted fonts (no Google Fonts at runtime). Latin subsets; OFL in /fonts/OFL.txt. */
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/archivo-latin-wght.woff2") format("woff2-variations");
+}
+@font-face {
+  font-family: "Archivo Black";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/archivo-black-latin-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("/fonts/jetbrains-mono-latin-wght.woff2") format("woff2-variations");
+}
+
+/*
+ * Theme tokens, named as in the design prototype. Defaults are Latte + green + the Classic look; src/theme/apply.ts
+ * overwrites them on <html> for the user's flavour and accent.
+ */
+:root {
+  --ink: #4c4f69;
+  --sub: #6c6f85;
+  --base: #eff1f5;
+  --mantle: #e6e9ef;
+  --pg: #dce0e8;
+  --s0: #ccd0da;
+  --onc: #4c4f69;
+  --desk: #bcc0cc;
+  --scrim: rgba(76, 79, 105, 0.55);
+  --line: var(--ink);
+  --acc: #a6da95;
+  --bw: 0.1875rem;
+  --sh: 0.25rem;
+  --r: 0.375rem;
+  --tt: none;
+  --tilt: 0deg;
+  --red: #ed8796;
+  --peach: #f5a97f;
+  --yellow: #eed49f;
+  --blue: #8aadf4;
+}
+
+/* Breakpoints (TECHNICAL_SPECS §12): md 768, lg 1024, xl 1440 (1080p), 3xl 2200 (4K at low OS scaling). */
+@theme {
+  --breakpoint-xl: 90rem;
+  --breakpoint-2xl: 120rem;
+  --breakpoint-3xl: 137.5rem;
+  --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Archivo Black", "Archivo", ui-sans-serif, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Prototype tokens as Tailwind colours (bg-base, text-ink, border-line …) plus the shadcn/ui token names. */
+@theme inline {
+  --color-ink: var(--ink);
+  --color-sub: var(--sub);
+  --color-base: var(--base);
+  --color-mantle: var(--mantle);
+  --color-pg: var(--pg);
+  --color-s0: var(--s0);
+  --color-onc: var(--onc);
+  --color-desk: var(--desk);
+  --color-scrim: var(--scrim);
+  --color-line: var(--line);
+  --color-acc: var(--acc);
+  --color-red: var(--red);
+  --color-peach: var(--peach);
+  --color-yellow: var(--yellow);
+  --color-blue: var(--blue);
+
+  --color-background: var(--pg);
+  --color-foreground: var(--ink);
+  --color-card: var(--base);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--base);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--acc);
+  --color-primary-foreground: var(--onc);
+  --color-secondary: var(--base);
+  --color-secondary-foreground: var(--ink);
+  --color-muted: var(--mantle);
+  --color-muted-foreground: var(--sub);
+  --color-accent: var(--acc);
+  --color-accent-foreground: var(--onc);
+  --color-destructive: var(--red);
+  --color-border: var(--line);
+  --color-input: var(--line);
+  --color-ring: var(--ink);
+
+  --radius-ui: var(--r);
+  --radius-sheet: calc(var(--r) * 2);
+  --shadow-hard: var(--sh) var(--sh) 0 var(--line);
+  --shadow-hard-sm: 0.125rem 0.125rem 0 var(--line);
+  --shadow-toast: 0.1875rem 0.1875rem 0 var(--acc);
+}
+
+/* Brutalist border at the look's weight: `border-bw` (all sides), `border-t-bw`, `border-r-bw`. */
+@utility border-bw {
+  border-style: solid;
+  border-width: var(--bw);
+  border-color: var(--line);
+}
+@utility border-t-bw {
+  border-top-style: solid;
+  border-top-width: var(--bw);
+  border-top-color: var(--line);
+}
+@utility border-r-bw {
+  border-right-style: solid;
+  border-right-width: var(--bw);
+  border-right-color: var(--line);
+}
+@utility border-b-bw {
+  border-bottom-style: solid;
+  border-bottom-width: var(--bw);
+  border-bottom-color: var(--line);
+}
+/* The prototype's "pressed" state for raised buttons. */
+@utility press {
+  &:active {
+    transform: translate(var(--sh), var(--sh));
+    box-shadow: none;
+  }
+}
+@utility kicker {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.6875rem;
+  letter-spacing: 0.0625rem;
+  text-transform: uppercase;
+}
+
+@layer base {
+  /* Fluid root size: rem-based text, spacing, borders, and shadows scale smoothly from phone to 4K (spec §12). */
+  html {
+    font-size: clamp(16px, 0.3vw + 12px, 22px);
+    background: var(--pg);
+    color: var(--ink);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    font-family: var(--font-sans);
+    background: var(--pg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  *,
+  ::before,
+  ::after {
+    border-color: var(--line);
+  }
+  a {
+    color: var(--ink);
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--sub);
+  }
+  :focus-visible {
+    outline: 0.1875rem solid var(--ink);
+    outline-offset: 0.125rem;
+  }
+  h1,
+  h2,
+  h3 {
+    text-transform: var(--tt);
+  }
+}
