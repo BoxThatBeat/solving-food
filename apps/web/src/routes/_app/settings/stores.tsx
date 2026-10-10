@@ -183,7 +183,7 @@ function StoreRow({ name, kind, bulk, isDefault, canDelete, onSave, onDefault, o
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
-        <Input aria-label="Store name" value={n} maxLength={80} onChange={(e) => setN(e.target.value)} className="min-w-[10rem] flex-1 border-2 py-2 shadow-none" />
+        <Input aria-label="Store name" value={n} maxLength={80} onChange={(e) => setN(e.target.value)} className="min-w-[10rem] flex-1 basis-full border-2 py-2 shadow-none sm:basis-auto" />
         <Select aria-label={`Kind of ${name}`} value={k} onChange={(e) => setK(e.target.value as StoreDoc["kind"])} className="w-auto border-2 py-2 shadow-none">
           <option value="pcExpress">PC Express</option>
           <option value="inStore">In store</option>

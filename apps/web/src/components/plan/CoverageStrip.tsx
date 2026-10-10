@@ -49,7 +49,7 @@ export function CoverageStrip({ rows, cells, todayIndex }: { rows: StripRow[]; c
                       "block h-6 rounded-[calc(var(--r)*0.5)]",
                       state === "cooked" && "border-2 border-line bg-acc",
                       state === "planned" && "border-2 border-line bg-base",
-                      state === "open" && "border-2 border-dashed border-sub/50 bg-transparent",
+                      state === "open" && "border-2 border-dashed border-sub/70 bg-transparent",
                     )}
                   >
                     <span className="sr-only">{STATE_TEXT[state]}</span>

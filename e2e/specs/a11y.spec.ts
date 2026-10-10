@@ -124,3 +124,25 @@ test("recipe pages and sheets (M1) in Latte and Mocha", async ({ page, household
   await expectNoSeriousViolations(v, "shared recipe, signed out");
   await visitor.close();
 });
+
+test("M2 pages and sheets: plan with a meal, Create meal, meals, grocery, household settings", async ({ page, household }) => {
+  test.slow();
+  const { makePlanRecipe, seedPeriod, seedPlanItem } = await import("../pages/plan");
+  const r = await makePlanRecipe("Accessible dinner");
+  const pid = await seedPeriod(household.hid);
+  await seedPlanItem(household.hid, pid, [r.id]);
+  for (const path of ["/plan", "/meals", "/grocery", "/settings/stores", "/settings/brands", "/settings/tools"]) {
+    await page.goto(path);
+    await expect(page.locator("h1").first()).toBeVisible();
+    if (path === "/grocery") await expect(page.getByText("Building the list…")).toHaveCount(0);
+    await expectNoSeriousViolations(page, path);
+  }
+  await page.goto("/plan");
+  await page.getByRole("button", { name: "+ Create meal" }).first().click();
+  await expect(page.getByRole("dialog", { name: "Create meal" })).toBeVisible();
+  await expectNoSeriousViolations(page, "Create meal sheet");
+  await page.getByRole("dialog").getByRole("checkbox").first().click();
+  await page.getByRole("button", { name: /^Next/ }).click();
+  await expect(page.getByRole("dialog", { name: "Add to plan" })).toBeVisible();
+  await expectNoSeriousViolations(page, "Add to plan sheet");
+});

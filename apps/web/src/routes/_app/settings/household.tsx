@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_app/settings/household")({
 const MEAL_LABELS: Record<PlannableMealType, string> = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner" };
 
 function zones(selected: string): string[] {
-  let z: string[] = [];
+  let z: string[];
   try {
     z = Intl.supportedValuesOf("timeZone");
   } catch {

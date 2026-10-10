@@ -19,6 +19,7 @@ import { HouseholdSheet } from "./HouseholdSheet";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "./ui/sheet";
 import { Wordmark } from "./Wordmark";
 import { PlanSheetProvider } from "./plan/PlanSheetProvider";
+import { useMeals, usePlanItems } from "@/data/plan";
 
 const page = (to: NavPage["to"]) => PAGES.find((p) => p.to === to)!;
 const MORE_PAGES = [page("/meals"), page("/history"), page("/settings")];
@@ -158,10 +159,13 @@ function HouseholdButton({ compact }: { compact?: boolean }) {
 
 function NavList({ compact }: { compact?: boolean }) {
   const pathname = usePathname();
-  // Counts beside nav items, as in the prototype. Only Recipes has one in M1; the identical recipeIndex listener the
-  // Recipes page uses is shared by the SDK, so this costs no extra reads.
+  // Counts beside nav items, as in the prototype: meals to cook this period, recipes, saved meals. The listeners are
+  // the same ones the pages use, shared by the SDK, so they cost no extra reads.
   const recipeCount = useRecipeIndex()?.length;
-  const counts: Partial<Record<NavPage["to"], number | undefined>> = { "/recipes": recipeCount };
+  const hh = useActiveHousehold();
+  const planned = usePlanItems(hh.id, hh.data?.currentPeriodId).docs?.filter((d) => d.data.status === "planned").length;
+  const meals = useMeals().docs?.length;
+  const counts: Partial<Record<NavPage["to"], number | undefined>> = { "/plan": planned, "/recipes": recipeCount, "/meals": meals };
   return (
     <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
       {PAGES.map((p) => {

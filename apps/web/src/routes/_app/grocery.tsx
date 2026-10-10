@@ -217,7 +217,7 @@ function lineSub(it: GroceryItem, ing: IngredientEntry | undefined): string {
   const name = ing?.name ?? it.ingredientId ?? "";
   const unit = it.measure || "g";
   const pack = it.packAmount
-    ? `${it.packs} × ${it.packLabel ? `${it.packLabel} (${formatCanonical(it.packAmount, unit, ing?.unitWeightG)})` : formatCanonical(it.packAmount, unit, ing?.unitWeightG)}`
+    ? `${it.packs} × ${it.packLabel && !/ k?g$/.test(it.packLabel) ? `${it.packLabel} (${formatCanonical(it.packAmount, unit, ing?.unitWeightG)})` : formatCanonical(it.packAmount, unit, ing?.unitWeightG)}`
     : formatCanonical(it.amount, unit, ing?.unitWeightG);
   if (it.source === "manual") return `${name} · added by hand · ${pack}`;
   return `${name} · need ${formatCanonical(it.need ?? it.amount, unit, ing?.unitWeightG)} → ${pack}`;
