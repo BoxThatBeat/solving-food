@@ -36,7 +36,8 @@ export function srcSetFor(base: string): string {
   return IMAGE_SIZES.map((w) => `${publicUrl(imageVariant(base, w))} ${w}w`).join(", ");
 }
 
-const SHORT_DATE = new Intl.DateTimeFormat("en-CA", { day: "numeric", month: "short" });
+// Day first, as the prototype writes dates ("LAST 21 SEP").
+const SHORT_DATE = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
 
 export function madeLine(f: HouseholdFacts): string {
   if (!f.timesCooked) return "NEVER COOKED HERE";

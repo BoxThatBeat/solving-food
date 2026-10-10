@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 import { RecipeImage } from "./RecipeImage";
 
 const DAY = 86_400_000;
-const DATE = new Intl.DateTimeFormat("en-CA", { day: "numeric", month: "short" });
+const DATE = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }); // "21 Sep", as the prototype
 const DATE_TIME = new Intl.DateTimeFormat("en-CA", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 
 export interface DetailContext {

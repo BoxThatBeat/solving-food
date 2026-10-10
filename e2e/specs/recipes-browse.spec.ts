@@ -187,7 +187,7 @@ test.describe("favourites and cards", () => {
     const id = await seedRecipeId("Greek Salad");
     await adminDb.doc(`households/${household.hid}/stats/recipe_${id}`).set({ timesCooked: 14, lastCookedAt: new Date("2026-09-21T18:00:00-04:00"), ratingSum: 120, ratingCount: 14 });
     await r.goto("?cuisine=greek");
-    await expect(r.card("Greek Salad")).toContainText(/MADE 14× · LAST (21 SEP|SEP 21)/i);
+    await expect(r.card("Greek Salad")).toContainText(/MADE 14× · LAST 21 SEP/i);
     await expect(r.card("Greek Salad")).toContainText("★ 8.6");
   });
 

@@ -13,7 +13,7 @@ import { keepBoth, keepExisting, keepNew, useRecipe, useRecipesWithStatus, type 
 import { lookupFromMap, useAllIngredients } from "@/data/ingredients";
 import { useReadySession } from "@/session/useSession";
 
-const DATE = new Intl.DateTimeFormat("en-CA", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+const DATE = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
 function Side({ label, r }: { label: string; r: RecipeDoc | null | undefined }) {
   return (
@@ -44,7 +44,9 @@ function Side({ label, r }: { label: string; r: RecipeDoc | null | undefined }) 
 function PendingItem({ id, recipe }: { id: string; recipe: StoredRecipe }) {
   const s = useReadySession();
   const notify = useNotify();
-  const existing = useRecipe(recipe.possibleDuplicateOf ?? null);
+  const live = useRecipe(recipe.possibleDuplicateOf ?? null);
+  // No recorded match (or it's been deleted): show "gone" rather than loading forever.
+  const existing = recipe.possibleDuplicateOf ? live : { ...live, data: null };
   const ing = useAllIngredients();
   const [busy, setBusy] = React.useState(false);
   const lookup = lookupFromMap(ing.byId);
