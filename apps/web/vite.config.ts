@@ -45,6 +45,8 @@ export default defineConfig({
         // Firebase reserved paths (auth handler) must reach the network.
         navigateFallbackDenylist: [/^\/__\//],
         cleanupOutdatedCaches: true,
+        // Timer push notifications (public/push-sw.js, TECHNICAL_SPECS §12).
+        importScripts: ["/push-sw.js"],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.pathname.startsWith("/fonts/"),

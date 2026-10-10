@@ -185,3 +185,9 @@
     text-transform: var(--tt);
   }
 }
+
+/* Step mode (TECHNICAL_SPECS §12): readable from a phone in hand, a propped-up tablet, or a TV. */
+.step-text {
+  font-size: clamp(1.5rem, 3vw, 4rem);
+  line-height: 1.22;
+}

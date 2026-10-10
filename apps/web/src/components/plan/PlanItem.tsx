@@ -1,7 +1,9 @@
 // A planned meal on the Plan page (PRD R5.1, R5.5, R6.1) and its sheet: change servings and meal type, save an
-// unsaved meal to Meals (R5.8), remove. Cooking arrives in M3.
+// unsaved meal to Meals (R5.8), remove. M3: Cook → opens the cook view; cooked meals, leftovers, and snacks can be
+// marked eaten (R9.5, `markEaten`); an expiry badge names the soonest-expiring ingredient the meal would use (R6.7);
+// leftovers show their use-by (R6.10).
 import * as React from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import {
   coverageFor,
@@ -20,6 +22,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Stepper } from "@/components/ui/stepper";
 import { useNotify } from "@/components/notifications-context";
 import { removePlanItem, restorePlanItem, saveItemAsMeal, updatePlanItem, type StoredPlanItem } from "@/data/plan";
+import { sendCommand } from "@/data/supply";
 import type { StoredRecipe } from "@/data/recipes";
 import { cn } from "@/lib/utils";
 import { MEAL_LABEL } from "./plan-sheet-context";
@@ -29,6 +32,12 @@ export interface PlanItemView {
   item: StoredPlanItem;
   title: string;
   cost: { cents: number; unknown: number } | undefined;
+  /** Shown status: a pending finishCooking / markEaten is applied optimistically. */
+  status: StoredPlanItem["status"];
+  /** "Salmon expires in 2 days" (R6.7). */
+  expiry?: string | undefined;
+  /** Leftovers: "use by 13 Oct" and whether the batch is already past it. */
+  leftover?: { useBy: string | null; expired: boolean } | undefined;
 }
 
 function recipeMeta(r: StoredRecipe | undefined): string {
@@ -37,15 +46,27 @@ function recipeMeta(r: StoredRecipe | undefined): string {
 }
 
 function costLine(v: PlanItemView): string {
-  if (v.item.status !== "planned") return v.item.status === "cooked" ? "COOKED" : v.item.status.toUpperCase();
+  if (v.status === "cooked") return "COOKED · MARK EATEN WHEN FINISHED";
+  if (v.status === "eaten") return "EATEN";
+  if (v.status !== "planned") return v.status.toUpperCase();
+  if (v.item.kind === "leftover") return "ALREADY PAID FOR";
   if (!v.cost) return "PRICING…";
   const unknown = v.cost.unknown ? ` · ${v.cost.unknown} PRICE${v.cost.unknown === 1 ? "" : "S"} UNKNOWN` : "";
   return v.cost.cents > 0 ? `+${formatCents(v.cost.cents)} TO BUY${unknown}` : `$0 · NOTHING EXTRA TO BUY${unknown}`;
 }
 
-export function PlanItemCard({ v, recipes, onOpen, hid }: { v: PlanItemView; recipes: Map<string, StoredRecipe>; onOpen: () => void; hid: string }) {
+export function PlanItemCard({ v, recipes, onOpen, hid, uid }: { v: PlanItemView; recipes: Map<string, StoredRecipe>; onOpen: () => void; hid: string; uid: string }) {
   const notify = useNotify();
+  const navigate = useNavigate();
   const it = v.item;
+  const status = v.status;
+  const leftover = it.kind === "leftover";
+  const canCook = status === "planned" && !leftover && it.recipes.length > 0;
+  const canEat = status === "cooked" || (status === "planned" && (leftover || it.mealType === "snack"));
+  const eat = () => {
+    sendCommand(hid, uid, "markEaten", { planItemId: v.id });
+    notify({ kind: "success", message: leftover ? `Ate a portion of ${v.title}` : `${v.title} marked eaten` });
+  };
   const multi = it.recipes.length > 1;
   const leftovers = (["lunch", "breakfast"] as const).filter((t) => t !== it.mealType && (it.coverage[t] ?? 0) > 0);
   const trashed = it.recipes.some((r) => recipes.get(r.recipeId)?.status === "trashed");
@@ -65,13 +86,17 @@ export function PlanItemCard({ v, recipes, onOpen, hid }: { v: PlanItemView; rec
           <button type="button" onClick={onOpen} className="cursor-pointer bg-transparent p-0 text-left text-[1.0625rem] leading-tight font-extrabold text-ink hover:underline">
             {v.title}
           </button>
-          <Badge className={cn("flex-none rounded-[calc(var(--r)*0.5)] px-1.5 py-1 text-[0.5625rem] uppercase", it.status === "planned" ? "bg-base" : "bg-acc text-onc")}>
-            {it.status === "planned" ? "To cook" : it.status}
+          <Badge className={cn("flex-none rounded-[calc(var(--r)*0.5)] px-1.5 py-1 text-[0.5625rem] uppercase", status === "planned" ? "bg-base" : "bg-acc text-onc")} data-testid="plan-item-status">
+            {status === "planned" ? (leftover ? "Leftover" : "To cook") : status}
           </Badge>
         </div>
-        {!multi ? <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">{recipeMeta(recipes.get(it.recipes[0]?.recipeId ?? ""))}</span> : null}
+        {leftover ? (
+          <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">Leftovers · 1 portion{v.leftover?.useBy ? ` · use by ${v.leftover.useBy}` : ""}</span>
+        ) : !multi ? (
+          <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">{recipeMeta(recipes.get(it.recipes[0]?.recipeId ?? ""))}</span>
+        ) : null}
         <div className="flex flex-wrap gap-1">
-          <Badge className="bg-s0 uppercase">{it.servings} servings</Badge>
+          {leftover ? null : <Badge className="bg-s0 uppercase">{it.servings} serving{it.servings === 1 ? "" : "s"}</Badge>}
           {it.carriedFromId ? <Badge className="bg-peach text-onc uppercase">Carried over</Badge> : null}
           {it.savedMealId ? <Badge className="bg-[color-mix(in_srgb,var(--blue)_55%,white)] text-[#4c4f69] uppercase">Saved meal</Badge> : null}
           {leftovers.map((t) => (
@@ -80,6 +105,12 @@ export function PlanItemCard({ v, recipes, onOpen, hid }: { v: PlanItemView; rec
             </Badge>
           ))}
           {trashed ? <Badge className="bg-red text-onc uppercase">Recipe in Trash</Badge> : null}
+          {v.expiry && status === "planned" ? (
+            <Badge className="bg-peach text-onc uppercase" data-testid="expiry-badge">
+              {v.expiry}
+            </Badge>
+          ) : null}
+          {v.leftover?.expired && status === "planned" ? <Badge className="bg-red text-onc uppercase">Past its use-by</Badge> : v.leftover && status === "planned" ? <Badge className="bg-peach text-onc uppercase">Eat soon</Badge> : null}
         </div>
       </div>
       {multi ? (
@@ -112,9 +143,21 @@ export function PlanItemCard({ v, recipes, onOpen, hid }: { v: PlanItemView; rec
         <button type="button" onClick={remove} aria-label={`Remove ${v.title} from the plan`} className="grid size-10 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink">
           <X aria-hidden className="size-4" strokeWidth={3} />
         </button>
-        <Button size="sm" variant="secondary" onClick={onOpen} aria-label={`Edit ${v.title}`} className="shadow-hard-sm">
-          Edit
-        </Button>
+        {canCook ? (
+          <Button size="sm" onClick={() => void navigate({ to: "/plan/$itemId/cook", params: { itemId: v.id } })} aria-label={`Cook ${v.title}`} className="shadow-hard-sm">
+            Cook →
+          </Button>
+        ) : null}
+        {canEat ? (
+          <Button size="sm" variant="secondary" onClick={eat} aria-label={leftover ? `Ate one: ${v.title}` : `Mark ${v.title} eaten`} className="shadow-hard-sm">
+            {leftover ? "Ate one" : status === "cooked" ? "Mark eaten" : "Ate it"}
+          </Button>
+        ) : null}
+        {!canCook && !canEat && status === "planned" ? (
+          <Button size="sm" variant="secondary" onClick={onOpen} aria-label={`Edit ${v.title}`} className="shadow-hard-sm">
+            Edit
+          </Button>
+        ) : null}
       </div>
     </article>
   );

@@ -88,7 +88,7 @@ test.describe("the plan list", () => {
     const id = await seedPlanItem(household.hid, pid, [r.id]);
     const plan = new PlanPage(page);
     await plan.goto();
-    await plan.item(r.title).getByRole("button", { name: `Edit ${r.title}` }).click();
+    await plan.item(r.title).getByRole("button", { name: r.title, exact: true }).click();
     const sheet = page.getByRole("dialog", { name: r.title });
     await sheet.getByRole("button", { name: "Breakfast", exact: true }).click();
     await sheet.getByRole("button", { name: "More servings" }).click();

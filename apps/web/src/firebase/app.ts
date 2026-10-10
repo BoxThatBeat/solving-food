@@ -7,6 +7,7 @@ import {
   persistentMultipleTabManager,
 } from "firebase/firestore";
 import { connectStorageEmulator, getStorage } from "firebase/storage";
+import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
 import { EMULATORS, firebaseConfig } from "./config";
 
 export const useEmulators = import.meta.env.VITE_USE_EMULATORS === "true";
@@ -25,6 +26,9 @@ export const db = initializeFirestore(app, {
 
 export const storage = getStorage(app);
 
+/** Callable functions (timer push, §12), in the project's region. */
+export const functions = getFunctions(app, "us-east1");
+
 /**
  * Public URL of a Storage object. Recipe images are publicly readable (storage.rules), so no download token or
  * extra round trip is needed: the URL is built directly and the service worker can cache it.
@@ -38,6 +42,7 @@ if (useEmulators) {
   connectAuthEmulator(auth, `http://${EMULATORS.host}:${EMULATORS.auth}`, { disableWarnings: true });
   connectFirestoreEmulator(db, EMULATORS.host, EMULATORS.firestore);
   connectStorageEmulator(storage, EMULATORS.host, EMULATORS.storage);
+  connectFunctionsEmulator(functions, EMULATORS.host, EMULATORS.functions);
 
   // E2E hook (emulator builds only; the branch is compiled out of production): lets specs make direct Firestore
   // calls from the page, e.g. to prove the rules refuse a 4th household (R2.3) or another household's data (NFR4).

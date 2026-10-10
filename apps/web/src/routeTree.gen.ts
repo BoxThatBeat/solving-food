@@ -26,6 +26,7 @@ import { Route as AppMealsIndexRouteImport } from './routes/_app/meals/index'
 import { Route as AppRecipesIndexRouteImport } from './routes/_app/recipes/index'
 import { Route as AppRecipesNewRouteImport } from './routes/_app/recipes/new'
 import { Route as AppRecipesTrashRouteImport } from './routes/_app/recipes/trash'
+import { Route as AppReviewEventIdRouteImport } from './routes/_app/review/$eventId'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsBrandsRouteImport } from './routes/_app/settings/brands'
 import { Route as AppSettingsDataRouteImport } from './routes/_app/settings/data'
@@ -40,6 +41,7 @@ import { Route as AppSupplyIndexRouteImport } from './routes/_app/supply/index'
 import { Route as AppSupplyIdRouteImport } from './routes/_app/supply/$id'
 import { Route as AppMealsIdIndexRouteImport } from './routes/_app/meals/$id/index'
 import { Route as AppMealsIdCookRouteImport } from './routes/_app/meals/$id/cook'
+import { Route as AppPlanItemIdCookRouteImport } from './routes/_app/plan_/$itemId/cook'
 import { Route as AppRecipesIdIndexRouteImport } from './routes/_app/recipes/$id/index'
 import { Route as AppRecipesIdCookRouteImport } from './routes/_app/recipes/$id/cook'
 import { Route as AppRecipesIdEditRouteImport } from './routes/_app/recipes/$id/edit'
@@ -128,6 +130,11 @@ const AppRecipesTrashRoute = AppRecipesTrashRouteImport.update({
   path: '/recipes/trash',
   getParentRoute: () => AppRoute,
 } as any)
+const AppReviewEventIdRoute = AppReviewEventIdRouteImport.update({
+  id: '/review/$eventId',
+  path: '/review/$eventId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
@@ -198,6 +205,11 @@ const AppMealsIdCookRoute = AppMealsIdCookRouteImport.update({
   path: '/meals/$id/cook',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPlanItemIdCookRoute = AppPlanItemIdCookRouteImport.update({
+  id: '/plan_/$itemId/cook',
+  path: '/plan/$itemId/cook',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppRecipesIdIndexRoute = AppRecipesIdIndexRouteImport.update({
   id: '/recipes/$id/',
   path: '/recipes/$id/',
@@ -228,6 +240,7 @@ export interface FileRoutesByFullPath {
   '/ingredients/$id': typeof AppIngredientsIdRoute
   '/recipes/new': typeof AppRecipesNewRoute
   '/recipes/trash': typeof AppRecipesTrashRoute
+  '/review/$eventId': typeof AppReviewEventIdRoute
   '/settings/brands': typeof AppSettingsBrandsRoute
   '/settings/data': typeof AppSettingsDataRoute
   '/settings/household': typeof AppSettingsHouseholdRoute
@@ -244,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof AppSettingsIndexRoute
   '/supply/': typeof AppSupplyIndexRoute
   '/meals/$id/cook': typeof AppMealsIdCookRoute
+  '/plan/$itemId/cook': typeof AppPlanItemIdCookRoute
   '/recipes/$id/cook': typeof AppRecipesIdCookRoute
   '/recipes/$id/edit': typeof AppRecipesIdEditRoute
   '/meals/$id/': typeof AppMealsIdIndexRoute
@@ -263,6 +277,7 @@ export interface FileRoutesByTo {
   '/ingredients/$id': typeof AppIngredientsIdRoute
   '/recipes/new': typeof AppRecipesNewRoute
   '/recipes/trash': typeof AppRecipesTrashRoute
+  '/review/$eventId': typeof AppReviewEventIdRoute
   '/settings/brands': typeof AppSettingsBrandsRoute
   '/settings/data': typeof AppSettingsDataRoute
   '/settings/household': typeof AppSettingsHouseholdRoute
@@ -279,6 +294,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AppSettingsIndexRoute
   '/supply': typeof AppSupplyIndexRoute
   '/meals/$id/cook': typeof AppMealsIdCookRoute
+  '/plan/$itemId/cook': typeof AppPlanItemIdCookRoute
   '/recipes/$id/cook': typeof AppRecipesIdCookRoute
   '/recipes/$id/edit': typeof AppRecipesIdEditRoute
   '/meals/$id': typeof AppMealsIdIndexRoute
@@ -300,6 +316,7 @@ export interface FileRoutesById {
   '/_app/ingredients/$id': typeof AppIngredientsIdRoute
   '/_app/recipes/new': typeof AppRecipesNewRoute
   '/_app/recipes/trash': typeof AppRecipesTrashRoute
+  '/_app/review/$eventId': typeof AppReviewEventIdRoute
   '/_app/settings/brands': typeof AppSettingsBrandsRoute
   '/_app/settings/data': typeof AppSettingsDataRoute
   '/_app/settings/household': typeof AppSettingsHouseholdRoute
@@ -316,6 +333,7 @@ export interface FileRoutesById {
   '/_app/settings/': typeof AppSettingsIndexRoute
   '/_app/supply/': typeof AppSupplyIndexRoute
   '/_app/meals/$id/cook': typeof AppMealsIdCookRoute
+  '/_app/plan_/$itemId/cook': typeof AppPlanItemIdCookRoute
   '/_app/recipes/$id/cook': typeof AppRecipesIdCookRoute
   '/_app/recipes/$id/edit': typeof AppRecipesIdEditRoute
   '/_app/meals/$id/': typeof AppMealsIdIndexRoute
@@ -337,6 +355,7 @@ export interface FileRouteTypes {
     | '/ingredients/$id'
     | '/recipes/new'
     | '/recipes/trash'
+    | '/review/$eventId'
     | '/settings/brands'
     | '/settings/data'
     | '/settings/household'
@@ -353,6 +372,7 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/supply/'
     | '/meals/$id/cook'
+    | '/plan/$itemId/cook'
     | '/recipes/$id/cook'
     | '/recipes/$id/edit'
     | '/meals/$id/'
@@ -372,6 +392,7 @@ export interface FileRouteTypes {
     | '/ingredients/$id'
     | '/recipes/new'
     | '/recipes/trash'
+    | '/review/$eventId'
     | '/settings/brands'
     | '/settings/data'
     | '/settings/household'
@@ -388,6 +409,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/supply'
     | '/meals/$id/cook'
+    | '/plan/$itemId/cook'
     | '/recipes/$id/cook'
     | '/recipes/$id/edit'
     | '/meals/$id'
@@ -408,6 +430,7 @@ export interface FileRouteTypes {
     | '/_app/ingredients/$id'
     | '/_app/recipes/new'
     | '/_app/recipes/trash'
+    | '/_app/review/$eventId'
     | '/_app/settings/brands'
     | '/_app/settings/data'
     | '/_app/settings/household'
@@ -424,6 +447,7 @@ export interface FileRouteTypes {
     | '/_app/settings/'
     | '/_app/supply/'
     | '/_app/meals/$id/cook'
+    | '/_app/plan_/$itemId/cook'
     | '/_app/recipes/$id/cook'
     | '/_app/recipes/$id/edit'
     | '/_app/meals/$id/'
@@ -560,6 +584,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRecipesTrashRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/review/$eventId': {
+      id: '/_app/review/$eventId'
+      path: '/review/$eventId'
+      fullPath: '/review/$eventId'
+      preLoaderRoute: typeof AppReviewEventIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/': {
       id: '/_app/settings/'
       path: '/settings'
@@ -658,6 +689,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMealsIdCookRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/plan_/$itemId/cook': {
+      id: '/_app/plan_/$itemId/cook'
+      path: '/plan/$itemId/cook'
+      fullPath: '/plan/$itemId/cook'
+      preLoaderRoute: typeof AppPlanItemIdCookRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/recipes/$id/': {
       id: '/_app/recipes/$id/'
       path: '/recipes/$id'
@@ -691,6 +729,7 @@ interface AppRouteChildren {
   AppIngredientsIdRoute: typeof AppIngredientsIdRoute
   AppRecipesNewRoute: typeof AppRecipesNewRoute
   AppRecipesTrashRoute: typeof AppRecipesTrashRoute
+  AppReviewEventIdRoute: typeof AppReviewEventIdRoute
   AppSettingsBrandsRoute: typeof AppSettingsBrandsRoute
   AppSettingsDataRoute: typeof AppSettingsDataRoute
   AppSettingsHouseholdRoute: typeof AppSettingsHouseholdRoute
@@ -707,6 +746,7 @@ interface AppRouteChildren {
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
   AppSupplyIndexRoute: typeof AppSupplyIndexRoute
   AppMealsIdCookRoute: typeof AppMealsIdCookRoute
+  AppPlanItemIdCookRoute: typeof AppPlanItemIdCookRoute
   AppRecipesIdCookRoute: typeof AppRecipesIdCookRoute
   AppRecipesIdEditRoute: typeof AppRecipesIdEditRoute
   AppMealsIdIndexRoute: typeof AppMealsIdIndexRoute
@@ -722,6 +762,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppIngredientsIdRoute: AppIngredientsIdRoute,
   AppRecipesNewRoute: AppRecipesNewRoute,
   AppRecipesTrashRoute: AppRecipesTrashRoute,
+  AppReviewEventIdRoute: AppReviewEventIdRoute,
   AppSettingsBrandsRoute: AppSettingsBrandsRoute,
   AppSettingsDataRoute: AppSettingsDataRoute,
   AppSettingsHouseholdRoute: AppSettingsHouseholdRoute,
@@ -738,6 +779,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsIndexRoute: AppSettingsIndexRoute,
   AppSupplyIndexRoute: AppSupplyIndexRoute,
   AppMealsIdCookRoute: AppMealsIdCookRoute,
+  AppPlanItemIdCookRoute: AppPlanItemIdCookRoute,
   AppRecipesIdCookRoute: AppRecipesIdCookRoute,
   AppRecipesIdEditRoute: AppRecipesIdEditRoute,
   AppMealsIdIndexRoute: AppMealsIdIndexRoute,

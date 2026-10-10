@@ -30,6 +30,9 @@ import {
   DEFAULT_STORES,
   firstPeriod,
   isEnded,
+  lotFromDoc,
+  unexpiredAmount,
+  type StoredLotLike,
   newMeal,
   nextPeriod,
   type BrandMappingDoc,
@@ -139,7 +142,8 @@ export type BootstrapResult = "ok" | "rolled" | "offline" | "error";
 /**
  * Runs when the app opens, regains focus, or comes back online. If the current period has ended (or there is none
  * yet), one transaction creates the next period with a budget snapshot, carries every still-planned item into it
- * with `carriedFromId`, and advances `currentPeriodId`; deterministic IDs make concurrent runs harmless. Households
+ * with `carriedFromId` (leftovers only while their batch hasn't expired), and advances `currentPeriodId`; deterministic
+ * IDs make concurrent runs harmless. Households
  * created before M2 also get the default stores here. Needs a connection; offline the ended period stays.
  */
 export async function bootstrapHousehold(hid: string, now = Date.now()): Promise<BootstrapResult> {
@@ -176,6 +180,12 @@ export async function bootstrapHousehold(hid: string, now = Date.now()): Promise
         const s = await tx.get(doc(db, "households", hid, "planItems", id));
         const item = s.data() as StoredPlanItem | undefined;
         if (!item || item.status !== "planned" || item.periodId !== curId) continue;
+        // Leftovers roll over only while their batch is still good (spec §7): an expired or eaten-up batch stays behind.
+        if (item.kind === "leftover" && item.leftoverSupplyId) {
+          const lo = (await tx.get(doc(db, "households", hid, "supply", item.leftoverSupplyId))).data() as { lots?: StoredLotLike[] } | undefined;
+          const lots = (lo?.lots ?? []).map((l) => lotFromDoc(l, millis));
+          if (unexpiredAmount(lots, now) <= 0) continue;
+        }
         const c = await tx.get(doc(db, "households", hid, "planItems", carriedItemId(bounds.id, id)));
         carry.push({ from: item, fromId: id, exists: c.exists() });
       }
@@ -406,4 +416,15 @@ export async function undoOrder(hid: string, listId: string): Promise<void> {
   }
   b.delete(ref);
   await b.commit();
+}
+
+/**
+ * "Save this meal?" from the review flow (R5.8): writes the saved meal and points the plan item at it. Returns the new
+ * meal's ID at once (writes queue offline); a plan item that's gone since is skipped.
+ */
+export function saveMealFromReview(hid: string, planItemId: string | undefined, name: string, recipes: readonly RecipeRef[], uid: string): string {
+  const mRef = doc(collection(db, "meals"));
+  void setDoc(mRef, { ...newMeal(name, recipes, uid), createdAt: serverTimestamp(), updatedAt: serverTimestamp() }).catch((e) => console.error("save meal failed", e));
+  if (planItemId) void updateDoc(doc(db, "households", hid, "planItems", planItemId), { savedMealId: mRef.id, name: name.trim() }).catch(() => undefined);
+  return mRef.id;
 }

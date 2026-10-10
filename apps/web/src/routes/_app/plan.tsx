@@ -1,4 +1,5 @@
-// The Plan page (PRD R6.1–R6.6, R5.1–R5.7; TECHNICAL_SPECS §7, §12). Phone: sticky budget meter, header with Create
+// The Plan page (PRD R6.1–R6.10, R5.1–R5.7, R9.4, R8.15; TECHNICAL_SPECS §7, §12). M3 adds pending reviews, expired-lot
+// prompts, Cook / eaten actions, expiry badges, and leftover items. Phone: sticky budget meter, header with Create
 // meal, coverage strip, the period's meals by meal type. lg: two columns; xl: plan · suggestions · budget/protein,
 // as the prototype's desktop mode.
 import * as React from "react";
@@ -7,6 +8,11 @@ import {
   applyCollection,
   collectionSearchSchema,
   dayOfPeriod,
+  daysLeft,
+  earliestExpiringUse,
+  expiresPhrase,
+  mealRequirements,
+  USE_SOON_DAYS,
   formatPeriodRange,
   formatProtein,
   MEAL_TYPE_ORDER,
@@ -34,6 +40,9 @@ import { usePlanModel } from "@/data/planModel";
 import { useHouseholdFacts } from "@/data/householdRecipes";
 import { millis } from "@/data/plan";
 import { useRecipeIndex } from "@/search/useRecipeSearch";
+import { ExpiredLotPrompts } from "@/components/supply/ExpiredLotPrompt";
+import { dateText, expiredEntries, itemExpiry, unitFor } from "@/components/supply/format";
+import { PendingReviews } from "@/components/cook/PendingReviews";
 import { useOnline } from "@/hooks/useOnline";
 import { useReadySession } from "@/session/useSession";
 
@@ -58,13 +67,45 @@ function PlanPage() {
   const startMs = millis(m.period?.start);
   const endMs = millis(m.period?.end);
   const cells = React.useMemo(() => (startMs && endMs ? periodCells(startMs, endMs, tz) : []), [startMs, endMs, tz]);
-  const rows = React.useMemo(() => stripModel(m.items.map((i) => i.data), cells.length, m.household?.plannedMealTypes ?? []), [m.items, cells.length, m.household?.plannedMealTypes]);
   const ended = endMs !== null && now >= endMs;
 
   const titleOf = React.useCallback((id: string) => m.recipes.get(id)?.title ?? byId.get(id)?.title, [m.recipes, byId]);
+  // Pending commands show at once: a finished meal reads as cooked, an eaten one as eaten (§6 optimistic view).
+  const optimistic = React.useMemo(() => {
+    const out = new Map<string, "cooked" | "eaten">();
+    for (const p of m.supply.pendingCommands) {
+      if (p.command.type === "finishCooking" && p.command.payload.planItemId) out.set(p.command.payload.planItemId, "cooked");
+      if (p.command.type === "markEaten") out.set(p.command.payload.planItemId, "eaten");
+    }
+    return out;
+  }, [m.supply.pendingCommands]);
+  const supplyNow = m.supply.now;
   const views: PlanItemView[] = React.useMemo(
-    () => m.items.map((i) => ({ id: i.id, item: i.data, title: planItemTitle(i.data, titleOf), cost: m.ready ? m.costs.get(i.id) : undefined })),
-    [m.items, titleOf, m.costs, m.ready],
+    () =>
+      m.items.map((i) => {
+        const status = optimistic.get(i.id) ?? i.data.status;
+        const v: PlanItemView = { id: i.id, item: i.data, title: planItemTitle(i.data, titleOf), cost: m.ready ? m.costs.get(i.id) : undefined, status };
+        if (status === "planned" && i.data.kind === "meal") {
+          // R6.7: the soonest-expiring lot this meal would use, when it expires within the period (or within days).
+          const needs = mealRequirements(i.data.recipes, i.data.servings, m.ctx);
+          const e = earliestExpiringUse(needs, (id) => m.lotsByIngredient.get(id), supplyNow);
+          if (e && (e.expiresMs <= (endMs ?? 0) || daysLeft(e.expiresMs, supplyNow, tz) <= USE_SOON_DAYS)) {
+            const name = m.ingredients.get(e.ingredientId)?.name ?? e.ingredientId.replace(/-/g, " ");
+            v.expiry = `${name} ${expiresPhrase(e.expiresMs, supplyNow, tz)}`;
+          }
+        }
+        if (i.data.kind === "leftover" && i.data.leftoverSupplyId) {
+          const lo = m.supply.items.get(i.data.leftoverSupplyId);
+          const exp = lo ? itemExpiry(lo.lots, supplyNow, tz) : null;
+          v.leftover = { useBy: exp?.expiresMs ? dateText(exp.expiresMs - 1, tz) : null, expired: exp?.flag === "expired" };
+        }
+        return v;
+      }),
+    [m.items, titleOf, m.costs, m.ready, optimistic, m.ctx, m.lotsByIngredient, m.ingredients, m.supply.items, supplyNow, endMs, tz],
+  );
+  const rows = React.useMemo(
+    () => stripModel(views.map((v) => ({ coverage: v.item.coverage, status: v.status })), cells.length, m.household?.plannedMealTypes ?? []),
+    [views, cells.length, m.household?.plannedMealTypes],
   );
   const listRows = React.useMemo(() => views.map((v) => planItemRow(v.id, v.item, (id) => byId.get(id), v.title)), [views, byId]);
   const factsOf = useHouseholdFacts(null);
@@ -81,7 +122,8 @@ function PlanPage() {
     [navigate],
   );
   const groceryCount = Object.keys(m.built.items).length + Object.values(m.draft.data?.items ?? {}).filter((it) => it.source !== "plan").length;
-  const planned = m.items.filter((i) => i.data.status === "planned").length;
+  const planned = views.filter((v) => v.status === "planned" && v.item.kind === "meal").length;
+  const expired = expiredEntries(m.supply.items.values(), supplyNow, (it) => unitFor(it, it.ingredientId ? m.ingredients.get(it.ingredientId) : undefined));
   const protein = proteinSummary(
     m.items.map((i) => i.data),
     (id) => m.recipes.get(id)?.proteinPerServingG ?? null,
@@ -107,6 +149,8 @@ function PlanPage() {
           <Button onClick={() => openCreateMeal()}>+ Create meal</Button>
         </div>
       </div>
+      <PendingReviews hid={m.hid} uid={s.user.uid} />
+      <ExpiredLotPrompts entries={expired} hid={m.hid} uid={s.user.uid} tz={tz} nowMs={supplyNow} />
       {ended && !online ? (
         <div role="status" className="rounded-ui border-2 border-dashed border-line bg-base p-3 text-sm font-bold">
           This period has ended. It will roll over when you're back online; uncooked meals carry into the next one.
@@ -152,7 +196,7 @@ function PlanPage() {
                   {g.items
                     .sort((a, b) => MEAL_TYPE_ORDER[a.item.mealType] - MEAL_TYPE_ORDER[b.item.mealType])
                     .map((v) => (
-                      <PlanItemCard key={v.id} v={v} recipes={m.recipes} hid={m.hid} onOpen={() => setOpenItem(v.id)} />
+                      <PlanItemCard key={v.id} v={v} recipes={m.recipes} hid={m.hid} uid={s.user.uid} onOpen={() => setOpenItem(v.id)} />
                     ))}
                 </section>
               ))
