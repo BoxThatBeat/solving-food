@@ -1,11 +1,159 @@
 rules_version = '2';
 
-// Placeholder until M0 task 2 lands the real rules (TECHNICAL_SPECS §10).
-// Deny everything so an accidental deploy exposes nothing.
+// Solving Food security rules, M0 subset (TECHNICAL_SPECS §10, Planning/M0 §2).
+// Collections: allowlist, users, directory, households (+ members). Everything else is denied until the milestone
+// that introduces it adds its rules.
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
+
+    // ---------- identity
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function me() {
+      return request.auth.uid;
+    }
+    // Firebase lower-cases emails already; lower() keeps the allowlist key canonical regardless.
+    function email() {
+      return request.auth.token.email.lower();
+    }
+    // Email-link sign-in always yields a verified address. Requiring it stops someone from using the
+    // Email/Password provider to register an allowlisted address they don't own.
+    function verified() {
+      return signedIn()
+        && request.auth.token.email is string
+        && request.auth.token.email_verified == true;
+    }
+    // R2.12 / NFR4: every grant to a signed-in user requires an allowlist entry for their address.
+    function allowed() {
+      return verified() && exists(/databases/$(database)/documents/allowlist/$(email()));
+    }
+    function isMember(hid) {
+      return allowed() && exists(/databases/$(database)/documents/households/$(hid)/members/$(me()));
+    }
+
+    // ---------- validation helpers
+
+    function str(v, min, max) {
+      return v is string && v.size() >= min && v.size() <= max;
+    }
+    function changed() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+    function validTheme(t) {
+      return t is map
+        && t.keys().hasOnly(['flavour', 'accent']) && t.keys().hasAll(['flavour', 'accent'])
+        && t.flavour in ['latte', 'frappe', 'macchiato', 'mocha']
+        && t.accent in ['green', 'teal', 'sapphire', 'blue', 'lavender', 'mauve', 'pink', 'flamingo',
+                        'maroon', 'red', 'peach', 'yellow'];
+    }
+    function validDisplayName(n) {
+      return str(n, 1, 40) && n.trim().size() > 0;
+    }
+    function validHousehold(d) {
+      return d.keys().hasOnly(['name', 'createdBy', 'periodDays', 'budgetCents', 'currency', 'timezone',
+                               'defaultServings', 'plannedMealTypes', 'pcxStoreId', 'currentPeriodId',
+                               'settings', 'createdAt'])
+        && d.keys().hasAll(['name', 'createdBy', 'periodDays', 'budgetCents', 'currency', 'timezone',
+                            'defaultServings', 'plannedMealTypes', 'pcxStoreId'])
+        && str(d.name, 1, 60) && d.name.trim().size() > 0
+        && d.periodDays is int && d.periodDays >= 1 && d.periodDays <= 28
+        && d.budgetCents is int && d.budgetCents >= 0
+        && d.currency == 'CAD'
+        && str(d.timezone, 1, 64)
+        && d.defaultServings is int && d.defaultServings >= 1 && d.defaultServings <= 20
+        && d.plannedMealTypes is list && d.plannedMealTypes.size() >= 1
+        && d.plannedMealTypes.hasOnly(['breakfast', 'lunch', 'dinner'])
+        && str(d.pcxStoreId, 1, 100)
+        && (!('settings' in d) || d.settings is map);
+    }
+
+    // ---------- allowlist/{emailLower}: sign-up allowlist (R2.12)
+
+    match /allowlist/{emailLower} {
+      // Only your own entry: the app checks it after sign-in. No listing.
+      allow get: if verified() && emailLower == email();
+      // Any allowlisted user can add an address (invite by email, R2.4).
+      allow create: if allowed()
+        && emailLower == emailLower.lower()
+        && request.resource.data.keys().hasOnly(['addedBy', 'addedAt', 'inviteHouseholdId'])
+        && request.resource.data.addedBy == me()
+        && request.resource.data.addedAt == request.time
+        && (!('inviteHouseholdId' in request.resource.data) || isMember(request.resource.data.inviteHouseholdId));
+    }
+
+    // ---------- users/{uid}: private to the user
+
+    match /users/{uid} {
+      allow read: if uid == me() && allowed();
+      // First run (with directory/{uid}, same batch). The counter starts at 0.
+      allow create: if uid == me() && allowed()
+        && request.resource.data.keys().hasOnly(['email', 'activeHouseholdId', 'householdsCreated', 'theme', 'createdAt'])
+        && request.resource.data.email == email()
+        && request.resource.data.activeHouseholdId == null
+        && request.resource.data.householdsCreated == 0
+        && validTheme(request.resource.data.theme)
+        && request.resource.data.createdAt == request.time;
+      // Theme and active household are free to change. householdsCreated only ever goes up by one, to at
+      // most 3, and only in the batch that creates a household (R2.3). Decrements are function-only (§10).
+      allow update: if uid == me() && allowed()
+        && changed().hasOnly(['activeHouseholdId', 'theme', 'householdsCreated'])
+        && validTheme(request.resource.data.theme)
+        && (request.resource.data.activeHouseholdId == null || str(request.resource.data.activeHouseholdId, 1, 200))
+        && (!('householdsCreated' in changed()) || (
+              request.resource.data.householdsCreated == resource.data.householdsCreated + 1
+              && request.resource.data.householdsCreated <= 3
+              && request.resource.data.activeHouseholdId is string
+              && !exists(/databases/$(database)/documents/households/$(request.resource.data.activeHouseholdId))
+              && existsAfter(/databases/$(database)/documents/households/$(request.resource.data.activeHouseholdId))));
+    }
+
+    // ---------- directory/{uid}: readable by every allowlisted user, for invites by name
+
+    match /directory/{uid} {
+      allow read: if allowed();
+      allow create, update: if uid == me() && allowed()
+        && request.resource.data.keys().hasOnly(['displayName', 'displayNameLower'])
+        && validDisplayName(request.resource.data.displayName)
+        && request.resource.data.displayNameLower == request.resource.data.displayName.lower();
+    }
+
+    // ---------- households/{hid}
+
+    match /households/{hid} {
+      allow read: if isMember(hid);
+      allow update: if isMember(hid)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && validHousehold(request.resource.data);
+      // One batch: this doc, the creator's members/{uid}, and users/{uid}.householdsCreated + 1 (≤ 3) (R2.3).
+      allow create: if allowed()
+        && request.resource.data.createdBy == me()
+        && validHousehold(request.resource.data)
+        && request.resource.data.createdAt == request.time
+        && getAfter(/databases/$(database)/documents/users/$(me())).data.householdsCreated
+             == get(/databases/$(database)/documents/users/$(me())).data.householdsCreated + 1
+        && getAfter(/databases/$(database)/documents/users/$(me())).data.householdsCreated <= 3
+        && existsAfter(/databases/$(database)/documents/households/$(hid)/members/$(me()));
+      // No client deletes: a household goes away when its last member leaves (function, M4).
+
+      match /members/{uid} {
+        allow read: if isMember(hid);
+        // Creator only, in the household's creation batch. Invites (M4) add the other two paths from §10.
+        allow create: if uid == me() && allowed()
+          && request.resource.data.keys().hasOnly(['uid', 'displayName', 'joinedAt'])
+          && request.resource.data.uid == me()
+          && validDisplayName(request.resource.data.displayName)
+          && request.resource.data.joinedAt == request.time
+          && !exists(/databases/$(database)/documents/households/$(hid))
+          && getAfter(/databases/$(database)/documents/households/$(hid)).data.createdBy == me();
+      }
+    }
+
+    // "My households": collection-group query on members where uid == me (§10). The rule reads the
+    // duplicated uid field, which is what the query filters on, so Firestore can prove the query safe.
+    match /{path=**}/members/{memberId} {
+      allow read: if allowed() && resource.data.uid == me();
     }
   }
 }

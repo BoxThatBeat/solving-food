@@ -111,7 +111,7 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Data | Firestore SDK with a shared `useLiveQuery` / `useLiveDoc` hook layer |
 | Forms / validation | react-hook-form + zod (schemas shared with functions) |
 | PWA | `vite-plugin-pwa` (Workbox) for the app shell; Firestore persistent cache for data |
-| Theme | `@catppuccin/palette` → CSS variables |
+| Theme | The design prototype's Catppuccin `FLAV` / `ACCENTS` tables (Latte default) → CSS variables → Tailwind theme |
 | Search | MiniSearch (client-side full-text) over the recipe index (§9) |
 | Backend | Cloud Functions for Firebase (2nd gen, Node 22), region `us-east1` |
 | Cooklang | A TypeScript Cooklang parser in `packages/core` (evaluate `@cooklang/cooklang-ts`; write a small one if it lags the spec). Used **only** for drop-folder imports and `.cook` export. |
@@ -586,6 +586,7 @@ The manual editor runs this check before saving. Drop imports are flagged `pendi
 ```
 function email()    { return lower(request.auth.token.email); }
 function allowed()  { return request.auth != null
+                        && request.auth.token.email_verified == true                 // see note below
                         && exists(/databases/$(db)/documents/allowlist/$(email())); }   // R2.12
 function isMember(hid) { return allowed()
                         && exists(/databases/$(db)/documents/households/$(hid)/members/$(request.auth.uid)); }
@@ -618,7 +619,7 @@ match /households/{hid} {
   match /{coll}/{id}         { allow read: if isMember(hid);
                                allow write: if isMember(hid) && !(coll in FUNCTION_ONLY); }
 }
-match /{path=**}/members/{uid} { allow read: if uid == me() && allowed(); }              // "my households" collection-group query
+match /{path=**}/members/{uid} { allow read: if allowed() && resource.data.uid == me(); } // "my households" query (filters on the uid field)
 match /{path=**}/invites/{key} { allow read: if allowed() && (key == me() || key == email()); }
 
 match /recipes/{id}      { allow get: if true;                // share links work without an account
@@ -637,6 +638,8 @@ match /users/{uid}       { allow read, write: if uid == me() && allowed();
 match /recipeIndex/{id}  { allow read: if allowed(); }       // write: functions only
 match /prices/{id}       { allow read: if allowed(); }       // write: functions only
 ```
+
+**Verified email (M0 decision):** `allowed()` also requires `email_verified`. The Email/Password provider must be enabled for email-link sign-in, which would otherwise let anyone register an allowlisted address they don't own with a password. Email-link sign-in always verifies the address, so real users are unaffected. The collection-group `members` rule checks the duplicated `uid` *field* rather than the document ID, because Firestore can only prove a query safe from the fields it filters on. A collection-group single-field index on `members.uid` is declared in `firestore.indexes.json`.
 
 Share links work for both recipes and meals: `allow get: if true` on both, and a meal page reads its recipes the same way. Public `get` on single documents can't be enumerated, so the exposure is limited to someone who already has a link.
 
@@ -749,7 +752,7 @@ Timers must keep running and **alert even when the phone is locked** or the app 
 
 ### Theming
 
-Catppuccin flavour colours become CSS variables (`--ctp-base`, `--ctp-text`, `--accent`) mapped onto shadcn tokens. The theme is stored on `users/{uid}.theme`, with a localStorage cache to avoid a flash on load. Brutalist styling: 2–3 px borders in `--ctp-text`, hard offset shadows (`4px 4px 0`), minimal radius, and a grotesk or monospace font (e.g. Space Grotesk / JetBrains Mono).
+Colours come from the design prototype's `FLAV` and `ACCENTS` tables (not `@catppuccin/palette`), as CSS variables named as in the prototype (`--base --mantle --pg --desk --ink --sub --acc --onc --line --s0 --scrim`, plus the look tokens `--bw --sh --r --tt --tilt`), mapped onto Tailwind colours (`bg-base`, `text-ink`, `border-line`) and the shadcn token names. Latte with the green accent is the default. The theme (`{ flavour, accent }`, accent by name) is stored on `users/{uid}.theme`, with a localStorage cache of the computed variables applied by an inline script before first paint. Brutalist styling uses the prototype's Classic look: 3 px borders in `--line`, hard 4 px offset shadows, 6 px radius, all expressed in rem so they scale with the fluid root size. Type: Archivo (500–900), Archivo Black for display, JetBrains Mono for numbers, self-hosted.
 
 ### Offline
 
