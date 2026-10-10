@@ -257,6 +257,25 @@ describe("cooking, review, leftovers, eaten", () => {
     expect((await command("markEaten", { planItemId: "p2" })).status).toBe("failed");
   });
 
+  it("a review queued offline with its finishCooking applies after it, whatever order they arrive in", async () => {
+    await db.doc(`households/${HID}/planItems/p3`).set({ periodId: "2026-10-05", kind: "meal", mealType: "dinner", servings: 4, recipes: [{ recipeId: "r-rice", servingsMultiplier: 1 }], coverage: { dinner: 1 }, status: "planned", addedBy: UID });
+    const before = (await supply("rice"))!.canonicalAmount as number;
+    const b = db.batch();
+    const at = FieldValue.serverTimestamp();
+    b.set(db.doc(`households/${HID}/commands/offline-review`), { type: "submitReview", payload: { cookEventId: "ev-off", ratings: [{ targetType: "recipe", targetId: "r-rice", score: 7 }], used: [{ ingredientId: "rice", canonicalAmount: 300 }], leftoverPortions: 0 }, uid: UID, createdAt: at, status: "pending" });
+    b.set(db.doc(`households/${HID}/commands/offline-finish`), { type: "finishCooking", payload: { cookEventId: "ev-off", planItemId: "p3", recipes: [{ recipeId: "r-rice", servingsMultiplier: 1 }], servings: 4 }, uid: UID, createdAt: at, status: "pending" });
+    await b.commit();
+    for (const id of ["offline-review", "offline-finish"]) {
+      const d = await poll(async () => {
+        const x = (await db.doc(`households/${HID}/commands/${id}`).get()).data();
+        return x && x.status !== "pending" ? x : null;
+      });
+      expect(d.status, id).toBe("applied");
+    }
+    expect((await supply("rice"))!.canonicalAmount).toBe(before - 300);
+    expect((await db.doc(`households/${HID}/cookEvents/ev-off`).get()).data()!.reviewStatus).toBe("done");
+  });
+
   it("importHousehold is a placeholder until M4", async () => {
     const r = await command("importHousehold", { path: "imports/x.zip" });
     expect(r.status).toBe("failed");

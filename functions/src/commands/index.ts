@@ -57,6 +57,9 @@ export async function applyCommand(hid: string, cmdId: string, nowMs = Date.now(
     return fail(zodMessage(e));
   }
 
+  // A review written offline can reach the server together with (or before) its finishCooking: apply that first.
+  if (cmd.type === "submitReview") await ensureCookEvent(hid, cmd.payload.cookEventId, nowMs);
+
   const household = await db.doc(`households/${hid}`).get();
   if (!household.exists) return fail("Household not found");
   const hd = household.data()!;
@@ -106,4 +109,14 @@ export async function applyCommand(hid: string, cmdId: string, nowMs = Date.now(
     console.error("command failed", { hid, cmdId, type: cmd.type, error: e });
     return fail("something went wrong on the server; try again");
   }
+}
+
+/** Makes sure the cook event a review refers to exists: applies its pending finishCooking, or waits briefly for it. */
+async function ensureCookEvent(hid: string, cookEventId: string, nowMs: number): Promise<void> {
+  const ref = db.doc(`households/${hid}/cookEvents/${cookEventId}`);
+  if ((await ref.get()).exists) return;
+  const finish = await db.collection(`households/${hid}/commands`).where("payload.cookEventId", "==", cookEventId).where("type", "==", "finishCooking").limit(1).get();
+  const f = finish.docs[0];
+  if (f && f.data().status === "pending") await applyCommand(hid, f.id, nowMs);
+  for (let i = 0; i < 20 && !(await ref.get()).exists; i++) await new Promise((r) => setTimeout(r, 500));
 }
