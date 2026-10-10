@@ -2,7 +2,7 @@
 
 > Everything here is **non-secret** (the Firebase web config is shipped to browsers by design).
 > Secrets (PC Express credentials) live only in Secret Manager; see "Secrets" below.
-> Last verified: 2026-10-10 (M2)
+> Last verified: 2026-10-10 (M3)
 
 ## Decision: one project, no dev
 
@@ -115,6 +115,30 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   ran the Firestore emulator out of Java heap once specs created a fresh recipe per test. The specs now reuse their
   recipes per worker; locally, run big project sets one at a time (CI shards already split them). Raising the heap with
   `JAVA_TOOL_OPTIONS` is not an option: the Storage rules runtime treats the JVM's "Picked up …" line as an error.
+
+## M3 operations (2026-10-10)
+
+- **New functions:** `commands` (Firestore `onDocumentCreated` on `households/{hid}/commands/{id}`, `retry: false`):
+  applies every supply change, cook event, review, and rating; `scheduleTimer` and `cancelTimer` (callables); `timers`
+  (`onTaskDispatched`). All in `us-east1`, `maxInstances: 2`, 256 MiB.
+- **Cloud Tasks queue `timers`** (us-east1) is created by the first deploy of the `timers` function (the Cloud Tasks API
+  was enabled in M0). Check it with `gcloud tasks queues describe timers --location us-east1`. Retries: 3 attempts,
+  10 s minimum backoff; at most 6 concurrent dispatches. The callables enqueue with
+  `getFunctions().taskQueue("locations/us-east1/functions/timers")`; the default compute service account needs
+  `roles/cloudtasks.enqueuer` and `roles/iam.serviceAccountUser` on itself for that, which the Firebase CLI grants
+  when it deploys a task-queue function. If a timer push ever fails with PERMISSION_DENIED in the logs, grant those
+  two roles to `28493041173-compute@developer.gserviceaccount.com`.
+- **Web push:** FCM with the VAPID key above. The private half lives in the Firebase console (Project settings → Cloud
+  Messaging → Web Push certificates); nothing to do unless it is rotated, in which case update `VAPID_KEY` in
+  `apps/web/src/pwa/push.ts` and this file. Devices register on their first timer (`users/{uid}/devices/{token}`).
+  iPhone: the app must be installed to the home screen (iOS 16.4+) for lock-screen timer alerts.
+- **Emulators:** Cloud Tasks and FCM are stubbed under the Functions emulator: scheduled timers appear in
+  `_stubTasks/{taskName}` (state `scheduled` or `deleted`), pushes in `_stubPushes`. Nothing is ever pushed locally.
+- **Demo supply:** `pnpm dev:seed -- --supply` adds fresh, use-soon, expired, frozen, multi-purchase lots, a leftover
+  batch, and an olive-oil cadence to the dev household (emulator only).
+- **Free-use list:** `data/free-use.json` (the seed's free-use ingredient IDs, used by the Recipes page's "can make") is
+  regenerated with `pnpm free-use:write` after changing the ingredient seed; a unit test fails while it is stale.
+- **Existing data:** nothing to migrate. Households start with empty supply (R8.2); the first command creates docs.
 
 ## CI/CD (GitHub Actions)
 

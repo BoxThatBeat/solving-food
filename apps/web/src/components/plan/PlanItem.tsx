@@ -104,13 +104,13 @@ export function PlanItemCard({ v, recipes, onOpen, hid, uid }: { v: PlanItemView
               Meal prep · +{it.coverage[t]} {t === "lunch" ? "lunches" : "breakfasts"}
             </Badge>
           ))}
-          {trashed ? <Badge className="bg-red text-onc uppercase">Recipe in Trash</Badge> : null}
+          {trashed ? <Badge className="bg-red-soft text-onc uppercase">Recipe in Trash</Badge> : null}
           {v.expiry && status === "planned" ? (
             <Badge className="bg-peach text-onc uppercase" data-testid="expiry-badge">
               {v.expiry}
             </Badge>
           ) : null}
-          {v.leftover?.expired && status === "planned" ? <Badge className="bg-red text-onc uppercase">Past its use-by</Badge> : v.leftover && status === "planned" ? <Badge className="bg-peach text-onc uppercase">Eat soon</Badge> : null}
+          {v.leftover?.expired && status === "planned" ? <Badge className="bg-red-soft text-onc uppercase">Past its use-by</Badge> : v.leftover && status === "planned" ? <Badge className="bg-peach text-onc uppercase">Eat soon</Badge> : null}
         </div>
       </div>
       {multi ? (

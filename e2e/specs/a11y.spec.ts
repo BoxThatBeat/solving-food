@@ -146,3 +146,59 @@ test("M2 pages and sheets: plan with a meal, Create meal, meals, grocery, househ
   await expect(page.getByRole("dialog", { name: "Add to plan" })).toBeVisible();
   await expectNoSeriousViolations(page, "Add to plan sheet");
 });
+
+test("M3 pages and sheets in Latte and Mocha: supply with every flag, add supply, item history, cooking phases, review, history, confirm groceries", async ({ page, household }) => {
+  test.slow();
+  const { seedPeriod, seedPlanItem } = await import("../pages/plan");
+  const { seedSupply, makeCookRecipe, seedOrderedList, groceryLine } = await import("../pages/supply");
+  const r = await makeCookRecipe("Accessible cook");
+  const pid = await seedPeriod(household.hid);
+  const itemId = await seedPlanItem(household.hid, pid, [r.id]);
+  await seedSupply(household.hid, "chicken-thigh", [{ amount: 300, expiresInDays: 1 }, { amount: 900, frozen: { frozenDaysAgo: 2, expiresInDays: 200 } }]);
+  await seedSupply(household.hid, "milk", [{ amount: 1000, expiresInDays: -1 }]);
+  await seedSupply(household.hid, "jasmine-rice", [{ amount: 5000, location: "pantry", expiresInDays: 300 }]);
+  await seedOrderedList(household.hid, pid, { "baby-spinach": groceryLine({ ingredientId: "baby-spinach", amount: 312, packAmount: 312, packLabel: "312 g", productName: "Baby spinach", storeId: "costco", estPriceCents: 499 }) });
+  for (const flavour of ["latte", "mocha"] as const) {
+    if (flavour === "mocha") {
+      await page.goto("/settings/theme");
+      await page.getByRole("button", { name: "Mocha" }).click();
+    }
+    await page.goto("/supply");
+    await expect(page.getByTestId("expired-prompts")).toBeVisible();
+    await page.getByTestId("supply-row").filter({ hasText: /Chicken thigh/i }).getByRole("button").first().click();
+    await expectNoSeriousViolations(page, `/supply with detail (${flavour})`);
+    await page.getByRole("button", { name: "+ Add" }).click();
+    await expect(page.getByRole("dialog", { name: "Add to supply" })).toBeVisible();
+    await expectNoSeriousViolations(page, `add supply (${flavour})`);
+    await page.goto("/supply/jasmine-rice");
+    await expect(page.getByTestId("ledger")).toBeVisible();
+    await expectNoSeriousViolations(page, `/supply/:id (${flavour})`);
+    await page.goto(`/recipes/${r.id}`);
+    await expect(page.getByTestId("supply-badge").first()).toBeVisible();
+    await expectNoSeriousViolations(page, `recipe with supply badges (${flavour})`);
+    await page.goto(`/plan/${itemId}/cook`);
+    await expect(page.getByRole("heading", { name: "Mise en place" })).toBeVisible();
+    await expectNoSeriousViolations(page, `mise en place (${flavour})`);
+    await page.getByRole("button", { name: "Start step mode →" }).click();
+    await expect(page.getByTestId("step-card")).toBeVisible();
+    await expectNoSeriousViolations(page, `step mode (${flavour})`);
+    await page.goto("/grocery");
+    await page.getByRole("button", { name: /Groceries arrived\? Confirm/ }).click();
+    await expect(page.getByRole("dialog", { name: "Confirm groceries" })).toBeVisible();
+    await expectNoSeriousViolations(page, `confirm groceries (${flavour})`);
+  }
+  // Review and history (Latte is the reference; Mocha shares the tokens checked above).
+  await page.goto(`/plan/${itemId}/cook`);
+  await page.getByRole("button", { name: "Done cooking", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Rate it" })).toBeVisible();
+  await expectNoSeriousViolations(page, "review: rate");
+  await page.getByRole("tab", { name: "2 · Used" }).click();
+  await expect(page.getByTestId("used-row").first()).toBeVisible();
+  await expectNoSeriousViolations(page, "review: used");
+  await page.getByRole("button", { name: "Review later" }).click();
+  await expect(page.getByTestId("pending-reviews")).toBeVisible();
+  await expectNoSeriousViolations(page, "/plan with pending review and cooked item");
+  await page.goto("/history");
+  await expect(page.getByTestId("history-row").first()).toBeVisible();
+  await expectNoSeriousViolations(page, "/history");
+});

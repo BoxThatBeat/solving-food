@@ -158,7 +158,9 @@ export function SupplyAdjust({ item, ingredient, unit, hid, uid }: { item: Suppl
   const current = recomputeAmount(item.lots);
   const measures: Measure[] = ingredient ? enterableMeasures(ingredient) : ["count"];
   const units = unit.portions ? ["count"] : measures.flatMap((m) => ENTRY_UNITS[m]);
-  const [u, setU] = React.useState(units[0] ?? "g");
+  // The ingredient may load after the first render: a unit it doesn't offer falls back to its first one.
+  const [uPick, setU] = React.useState<string | null>(null);
+  const u = uPick && units.includes(uPick) ? uPick : (units[0] ?? "g");
   const conv = ingredient ?? { allowedMeasures: ["count" as Measure], canonicalUnit: "count" as const };
   const shown = (canon: number) => {
     const v = fromCanonical(canon, u, conv);

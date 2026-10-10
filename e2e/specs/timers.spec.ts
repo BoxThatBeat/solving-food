@@ -4,6 +4,12 @@
 import { adminDb } from "../fixtures/admin";
 import { expect, test } from "../fixtures/test";
 import { makeCookRecipe } from "../pages/supply";
+import type { Page } from "@playwright/test";
+
+async function dismissInstall(page: Page) {
+  const sheet = page.getByRole("dialog", { name: "Install for timer alerts" });
+  if (await sheet.isVisible({ timeout: 1_500 }).catch(() => false)) await sheet.getByRole("button", { name: /Got it|Install/ }).click();
+}
 
 async function stubTasks(uid: string) {
   const snap = await adminDb.collection("_stubTasks").where("uid", "==", uid).get();
@@ -18,6 +24,7 @@ test("start a timer: it counts down on wall-clock time and schedules the locked-
   await expect(timer.getByRole("timer")).toHaveText("10:00");
   const t0 = Date.now();
   await timer.getByRole("button", { name: "Start timer" }).click();
+  await dismissInstall(page); // iPhone Safari asks to install first (covered in its own test below)
   await expect(timer).toHaveAttribute("data-state", "running");
   await expect(timer.getByRole("timer")).not.toHaveText("10:00", { timeout: 5_000 });
   await expect.poll(async () => (await stubTasks(household.uid)).filter((t) => t.state === "scheduled").length, { timeout: 15_000 }).toBe(1);
@@ -43,6 +50,7 @@ test("when a timer ends in the page, it rings and says so (R4.23)", { tag: ["@R4
   const timer = page.getByTestId("timer");
   await expect(timer.getByRole("timer")).toHaveText("0:03");
   await timer.getByRole("button", { name: "Start timer" }).click();
+  await dismissInstall(page);
   await expect(timer).toHaveAttribute("data-state", "done", { timeout: 10_000 });
   await expect(timer).toContainText("Time's up!");
   await expect(page.getByTestId("notifications")).toContainText(/time's up/i);

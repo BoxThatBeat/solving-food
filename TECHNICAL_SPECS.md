@@ -1,6 +1,6 @@
 # Solving Food — Technical Specification
 
-> Status: Draft v0.5 · Companion to `PRODUCT_REQUIREMENTS.md` (v0.5) · Last updated: 2026-10-10 (M2)
+> Status: Draft v0.6 · Companion to `PRODUCT_REQUIREMENTS.md` (v0.5) · Last updated: 2026-10-10 (M3)
 
 ---
 
@@ -199,6 +199,8 @@ users/{uid}/notifications/{id}                    // bottom-banner notifications
   kind: "info"|"success"|"error", message, link?, createdAt, dismissedAt?
 users/{uid}/devices/{fcmToken}                    // web-push targets for timers
   platform, createdAt, lastSeenAt
+users/{uid}/timers/{timerId}                      // function-written: the running timer's push (M3)
+  endsAt, label, title, link, taskId              // the task handler fires only for the current taskId
 ```
 
 Recipe ratings and stats are **not** stored on global documents, because households are invisible to each other.
@@ -245,13 +247,21 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
   cookEvents/{eventId}           planItemId?, recipeIds[], titles[], cookedBy, cookedAt,   // titles survive recipe deletion
                                  used: [{ ingredientId, canonicalAmount }], leftoverPortions,
                                  reviewStatus: "pending"|"done", ratedBy[]
-  ratings/{ratingId}             uid, cookEventId, targetType: "recipe"|"meal", targetId, score
+                                 // as built (M3): + title, periodId?, savedMealId?, mealType, servings, defaults[] (recipe
+                                 // amounts at the planned servings), deducted[] (what the ledger took), takes[] (per lot),
+                                 // leftoverSupplyId?, leftoverPlanItemIds[], reviewedBy?, note?. `used` = defaults until a
+                                 // review confirms amounts. ID chosen by the client (in the finishCooking payload)
+  ratings/{ratingId}             uid, cookEventId, targetType: "recipe"|"meal", targetId, score, createdAt
+                                 // ID <eventId>_<uid>_<type>_<targetId>: one per person and target; re-rating replaces
 
   groceryLists/{listId}          periodId, status: draft|ordered|received, createdAt, orderedAt?, orderedBy?, receivedAt?,
                                  items: { [itemId]: { ingredientId?, freeText?, amount, measure,   // amount: canonical bought
                                           need?, packAmount?, packLabel?,                        // shortfall, pack (canonical), "400 g"
                                           packs, productName, storeId, estPriceCents, priceSource?,
-                                          source: plan|manual|cadence, checked, checkedBy? } }
+                                          source: plan|manual|cadence, checked, checkedBy?,
+                                          receivedAmount?, receivedIngredientId? } }               // set on receiving (M3)
+                                 // received lists also have receivedBy and receivedCents (estimated cost of what arrived:
+                                 // the period's spend, R10.3); clients can't edit or delete a received list
                                  // the current draft is groceryLists/draft; Copy moves its items into a new list
                                  // with status ordered (Undo moves them back and deletes it)
                                  // status → ordered when the Copy button is used (R7.5); items on ordered lists count as "incoming" (§8)
@@ -260,13 +270,13 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
     ingredientId?, label, canonicalAmount, canonicalUnit,
     lots: [{ lotId, amount, location, acquiredAt, expiresFresh?, expiresFrozen?, frozenAt?,
              expiryExtendedTo? }],                                        // set by "Still good" (R8.15)
-    nextExpiry?
+    nextExpiry?, shortAt?, cookEventId?, leftoverMealType?, updatedAt     // shortAt: "check the amount" (§6)
   supply/{supplyId}/transactions/{txId}
     delta, kind: purchase|cook|correction|discard|freeze|thaw|leftover|eaten|extendExpiry,
-    lotId, ref?: { type, id }, uid, note?, createdAt
+    lotId, ref?: { type, id }, uid, note?, commandId, createdAt
 
-  commands/{cmdId}               type, payload, uid, createdAt, status: pending|applied|failed, error?
-  cadence/{ingredientId}         avgIntervalDays, lastPurchasedAt, snoozedUntil?
+  commands/{cmdId}               type, payload, uid, createdAt, status: pending|applied|failed, error?, result?, appliedAt?
+  cadence/{ingredientId}         avgIntervalDays (null until bought twice), lastPurchasedAt, purchaseCount, snoozedUntil?
 ```
 
 **Notes**
@@ -667,6 +677,10 @@ match /households/{hid} {
   // use isMemberAfter(hid) (existsAfter on the member doc) for writes, so the creation batch can write the first
   // period and the default stores. Clients create plan items as planned and can't change their status (M3's commands
   // do). Grocery lists are draft or ordered (with orderedAt and orderedBy); received is set by the command function.
+  // As built (M3): validCommand checks the envelope (type in the command list, payload a map whose keys are that type's,
+  // uid == me, status pending, createdAt == request.time, no other fields); commands are never updated or deleted by
+  // clients. supply/** (with transactions), stats, cookEvents, ratings, cadence: member read, no client writes. Received
+  // grocery lists can't be updated or deleted. users/{uid}/devices: the user's own; users/{uid}/timers: read only.
 }
 match /{path=**}/members/{uid} { allow read: if allowed() && resource.data.uid == me(); } // "my households" query (filters on the uid field)
 match /{path=**}/invites/{key} { allow read: if allowed() && (key == me() || key == email()); }
@@ -723,6 +737,7 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 /                → redirect: /plan if the current period has items, else /recipes
 /plan  /recipes  /recipes/new  /recipes/trash  /recipes/:id  /recipes/:id/edit  /recipes/:id/cook
 /meals  /meals/:id  /meals/:id/cook  /supply  /supply/:id  /grocery  /history       (/meals/:id renders signed out too)
+/plan/:itemId/cook  (cook a planned meal)   /review/:eventId  (the review flow for a cook event)       (M3)
 /settings/{household,members,brands,stores,tools,preferences,weights,theme,data}
 /drop            (upload .cook files, see import results)
 /not-invited     (signed in with an address that isn't on the allowlist)
@@ -737,7 +752,7 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 - **`<CollectionView>`**: shared search, filter, and sort for Recipes, Meals, Plan, and History, with a **Suggested** sort. Filter state lives in the URL.
 - **`<CreateMealSheet>`**: the Plan page's primary action (R5.7). Tabs *Recipes* (multi-select `<CollectionView>`, Suggested sort first, selected recipes pinned at the top with per-recipe multiplier) and *Saved meals*; then meal type, servings, optional name + "Save as meal" (R5.8); Add to plan.
 - **`<BudgetMeter>`**: sticky on the Plan page (a compact bar on phones, a card in the desktop's right column); turns red below zero; shows "n prices unknown".
-- **`<SupplyBadge>`**: the "have / need" chip next to recipe ingredients.
+- **`<SupplyBadge>`**: the "have / need" chip next to recipe ingredients. As built (M3): "have 250 g", "have 250 g ⚠" (not enough at the shown servings), "none", or "staple"; unexpired supply only. Recipe cards show CAN MAKE when projected supply covers every tracked ingredient and ALMOST at ≥ 85 % of the tracked grams ("Use what's left", R4.4, uses the same threshold).
 - **`<CoverageStrip>`**: the period coverage view (R6.2). One row per meal type, one cell per day, filled left to right from plan items' `coverage`. Cooked or eaten cells are solid, planned cells are outlined, and overflow shows as "+n". Cells aren't interactive.
 - **`<ExpiryBadge>`**: on planned meals (R6.7).
 - **`<ProteinSummary>`**: average protein per serving vs. goal for each meal type, on the Plan page.
@@ -745,7 +760,7 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 - **`<MealCookView>`**: the plan item's recipes with their durations; the user picks the order and checks recipes off. When all are checked, it opens the review. One-recipe meals skip the ordering step.
 - **`<StepMode>`**: full-screen, swipe between steps, inline amounts, Screen Wake Lock API, inline timers (§12 Cooking timers). Adapts to orientation and size (§12 Cooking layouts).
 - **`<MiseEnPlace>`**: the prep checklist shown before step mode.
-- **`<ReviewSheet>`**: per-user 1–10 rating for each recipe, and for the meal when it has a `savedMealId` (otherwise a "Save this meal?" prompt for multi-recipe meals, R5.8) → used amounts (pre-filled with what `finishCooking` already deducted) → leftovers ▲/▼. Submits a `submitReview` command whose corrections are the differences. It can be completed later from **Pending reviews** on the Plan page.
+- **`<ReviewSheet>`**: per-user 1–10 rating for each recipe, and for the meal when it has a `savedMealId` (otherwise a "Save this meal?" prompt for multi-recipe meals, R5.8) → used amounts (pre-filled with what `finishCooking` already deducted) → leftovers ▲/▼. Submits a `submitReview` command whose corrections are the differences. It can be completed later from **Pending reviews** on the Plan page. As built (M3): a full-screen phase at `/review/:eventId` (as the prototype's cook "review" phase) with three tabs; ratings default to none (a rating is only sent when picked); an optional note goes on the cook event and shows in History; once someone has confirmed the amounts, later visitors see only "Rate it".
 - **`<SupplyAdjust>`**: typed amount, ±5 / ±25 buttons, Apply.
 - **`<ExpiredLotPrompt>`**: shown on Supply and Plan for each expired lot, with **Still good** (`extendExpiry`) and **Threw it out** (`discard`) (R8.15).
 - **`<TrashList>`**: `/recipes/trash`, trashed recipes with days remaining and a Restore button (R4.26).
@@ -799,6 +814,20 @@ Timers must keep running and **alert even when the phone is locked** or the app 
 - **Permissions:** notification permission is requested the first time a timer is started. On iOS, web push only works for the app **installed to the home screen** (iOS 16.4+), so the first timer on iOS Safari prompts the user to install the app.
 - **Offline:** if the device is offline when a timer starts, the push can't be scheduled. The timer still runs in the page, and a banner warns that it won't alert while the phone is locked.
 
+As built (M3): `packages/core/timers.ts` holds the timer state (wall-clock end, pause keeps what's left); the page keeps
+its timers in sessionStorage per cook session. The alarm is synthesised with Web Audio (three square-wave beeps) plus
+`navigator.vibrate`, so there's no audio file to cache. `functions/src/timers.ts`: callables `scheduleTimer` and
+`cancelTimer` and the task function `timers` (`onTaskDispatched`; its deploy creates the Cloud Tasks queue `timers`
+in us-east1). Scheduling writes `users/{uid}/timers/{timerId}` with the task name `t-<uid>-<timerId>-<endsAt>`
+(names of deleted tasks can't be reused for a while, so a reschedule gets a new one) and deletes the previous task;
+the handler sends only if the record still holds its task name, then deletes the record. The push is a data-only FCM
+web push (`{ kind, title, body, link, timerId }`, Urgency high, TTL 10 min); `apps/web/public/push-sw.js`, imported by
+the Workbox worker, shows it with an "Open" action that focuses or opens the app at `<cook page>?recipe=<id>&step=<n>`.
+Dead tokens are pruned. Queue and push sit behind two small adapters; under the Functions emulator a stub queue
+records tasks in `_stubTasks/{taskName}` (`scheduled` → `deleted`) and a stub pusher records payloads in
+`_stubPushes` (never sent). Unit tests drive the handler directly with an in-memory queue. Device registration happens
+on the first timer (permission, then `getToken` with the VAPID key on the app's service worker).
+
 ### Theming
 
 Colours come from the design prototype's `FLAV` and `ACCENTS` tables (not `@catppuccin/palette`), as CSS variables named as in the prototype (`--base --mantle --pg --desk --ink --sub --acc --onc --line --s0 --scrim`, plus the look tokens `--bw --sh --r --tt --tilt`), mapped onto Tailwind colours (`bg-base`, `text-ink`, `border-line`) and the shadcn token names. Latte with the green accent is the default. The theme (`{ flavour, accent }`, accent by name) is stored on `users/{uid}.theme`, with a localStorage cache of the computed variables applied by an inline script before first paint. Brutalist styling uses the prototype's Classic look: 3 px borders in `--line`, hard 4 px offset shadows, 6 px radius, all expressed in rem so they scale with the fluid root size. Type: Archivo (500–900), Archivo Black for display, JetBrains Mono for numbers, self-hosted.
@@ -806,6 +835,16 @@ Colours come from the design prototype's `FLAV` and `ACCENTS` tables (not `@catp
 ### Offline
 
 Firestore `persistentLocalCache` (multi-tab) caches data and queues writes. Together with the command pattern, this means finishing a meal, adjusting supply, or ticking groceries works with no signal. Workbox caches the app shell and images for planned recipes.
+
+As built (M3): recipe photos are cached by Workbox (`CacheFirst`, Storage `recipes/` paths) as they're shown, and the
+Plan page warms the cache with its planned recipes' photos. Pending commands are projected onto supply
+(`packages/core/projection.ts`: addSupply, receiveGroceries, correctSupply, discard, extendExpiry, freeze, thaw) and
+onto plan item status (finishCooking → cooked, markEaten → eaten); the review opens from a pending finishCooking with
+the recipe defaults computed on the client. A review that reaches the server before its finishCooking makes the
+function apply that one first. The cook view preloads the review route's code so Done cooking works offline even
+before the service worker has installed. The Recipes page marks "can make" from a bundled list of the seed's
+free-use ingredients (`data/free-use.json`, `pnpm free-use:write`, checked by a unit test) instead of reading every
+ingredient; recipe pages read the ingredient docs themselves.
 
 ---
 

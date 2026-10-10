@@ -38,7 +38,7 @@ export function MiseEnPlace({ recipe, lookup, factor, missingTools, onStart }: {
         <span className="text-[0.9375rem] font-bold">{recipe.title}</span>
       </div>
       {recipe.tools.length ? (
-        <div className={cn("rounded-ui border-2 border-dashed border-line px-3 py-2 font-mono text-[0.6875rem] font-bold uppercase", missingTools.length && "border-solid bg-red text-onc")}>
+        <div className={cn("rounded-ui border-2 border-dashed border-line px-3 py-2 font-mono text-[0.6875rem] font-bold uppercase", missingTools.length && "border-solid bg-red-soft text-onc")}>
           Get out · {recipe.tools.join(" · ")}
           {missingTools.length ? ` · not in your kitchen: ${missingTools.join(", ")}` : ""}
         </div>
@@ -312,7 +312,7 @@ export function TimerBox({ timers, recipeId, step, seconds }: { timers: Timers; 
   const left = t ? remainingMs(t, timers.now) : seconds * 1000;
   const state = t?.state ?? "idle";
   return (
-    <div className={cn("flex flex-col gap-2 rounded-ui border-bw p-3", state === "done" ? "bg-red text-onc" : state === "running" ? "bg-yellow text-onc" : "bg-base")} data-testid="timer" data-state={state}>
+    <div className={cn("flex flex-col gap-2 rounded-ui border-bw p-3", state === "done" ? "bg-red-soft text-onc" : state === "running" ? "bg-yellow text-onc" : "bg-base")} data-testid="timer" data-state={state}>
       <div className="flex items-center justify-between gap-3">
         <span className="text-[0.875rem] font-extrabold">{state === "idle" ? `Start ${formatDuration(seconds * 1000)} timer` : state === "done" ? "Time's up!" : state === "paused" ? "Paused" : "Running"}</span>
         <span className="font-mono text-[clamp(2rem,4vw,3.5rem)] leading-none font-extrabold tabular-nums" role="timer" aria-label={`${formatClock(left)} left`}>
@@ -358,7 +358,7 @@ function OtherTimers({ timers, except }: { timers: Timers; except: string }) {
   return (
     <ul className="m-0 flex list-none flex-col gap-1.5 p-0" aria-label="Other timers">
       {list.map((t) => (
-        <li key={t.id} className={cn("flex items-center justify-between gap-2 rounded-ui border-2 border-line px-2.5 py-1.5", t.state === "done" ? "bg-red text-onc" : "bg-base")}>
+        <li key={t.id} className={cn("flex items-center justify-between gap-2 rounded-ui border-2 border-line px-2.5 py-1.5", t.state === "done" ? "bg-red-soft text-onc" : "bg-base")}>
           <span className="text-[0.8125rem] font-bold">{t.label}</span>
           <span className="font-mono text-[1.125rem] font-extrabold tabular-nums">{t.state === "done" ? "DONE" : formatClock(remainingMs(t, timers.now))}</span>
           {t.state === "done" ? (

@@ -13,7 +13,7 @@ export function ExpiredLotPrompts({ entries, hid, uid, tz, nowMs }: { entries: E
   if (!entries.length) return null;
   return (
     <section aria-label="Expired in supply" className="flex flex-col overflow-hidden rounded-ui border-bw bg-base shadow-hard" data-testid="expired-prompts">
-      <div className="border-b-2 border-line bg-red px-3 py-1.5 font-mono text-[0.625rem] font-bold tracking-[0.0625rem] text-onc uppercase">
+      <div className="border-b-2 border-line bg-red-soft px-3 py-1.5 font-mono text-[0.625rem] font-bold tracking-[0.0625rem] text-onc uppercase">
         Expired · not counted until you say
       </div>
       {entries.map((e, i) => (

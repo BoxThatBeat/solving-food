@@ -17,7 +17,7 @@ export function SupplyBadge({ need, have, ingredient, name }: { need: number; ha
     const amt = ingredient?.canonicalUnit === "count" ? formatQuantity(Math.max(0, have)) : formatGrams(have);
     const enough = have > 0 && have + 1e-6 >= need;
     text = have > 0 ? `have ${amt}${enough || need <= 0 ? "" : " ⚠"}` : "none";
-    cls = enough || (need <= 0 && have > 0) ? "bg-acc text-onc" : have > 0 ? "bg-peach text-onc" : "bg-red text-onc";
+    cls = enough || (need <= 0 && have > 0) ? "bg-acc text-onc" : have > 0 ? "bg-peach text-onc" : "bg-red-soft text-onc";
     label = have > 0 ? `${name}: ${amt} in supply${enough ? "" : need > 0 ? ", not enough" : ""}` : `${name}: none in supply`;
   }
   return (

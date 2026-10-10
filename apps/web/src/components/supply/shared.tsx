@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/chip";
 import { cn } from "@/lib/utils";
 
 const FLAG_CLASS: Record<ExpiryFlag, string> = {
-  expired: "bg-red text-onc",
+  expired: "bg-red-soft text-onc",
   soon: "bg-peach text-onc",
   fresh: "bg-s0 text-ink",
   none: "bg-s0 text-ink",
