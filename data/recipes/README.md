@@ -34,3 +34,14 @@ Original units are kept (cups, tbsp, oz, lb); the app converts. Unicode fraction
 words stay outside the ingredient token (`@garlic{2%cloves}, minced`). Comments use `-- `.
 
 Filenames are kebab-case of the title.
+
+## Known quirks in this set (useful as test cases, documented so nobody "fixes" the data by accident)
+
+- **caesar-salad.cook** is a one-line stub in the vault ("Costco Chicken Nuggets"); it has one ingredient and one invented step.
+- **greek-salad.cook** and **taco-seasoning.cook** had no instructions in the vault; short steps were written for them. Taco seasoning's servings (4) is inferred.
+- **greek-turkey-meatballs-with-tzatziki.cook** refers to `tzatziki-sauce.cook` in a comment rather than embedding it; the meal feature (PRD §5) is the intended way to combine them.
+- Several notes list **salt and pepper on one line**; they are two tokens (`@salt{}`, `@black pepper{}`), so token counts exceed line counts by one.
+- Ingredients listed twice in a note (batter + streusel, two water additions) appear as **two tokens with the same name**; a parser must sum them.
+- Marinating time isn't counted in the vault's Duration for the Greek and lemon-oregano chicken, so `prep_time + cook_time` understates real time there. Tandoori counts its 2-hour marinade as prep.
+- Two image paths contain **spaces** (`Pasted image ….png/.jpg`). The importer must handle that.
+- `check-cooklang.mjs` validates the conventions above; `node data/recipes/check-cooklang.mjs` must pass before any file here is changed.
