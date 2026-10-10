@@ -44,6 +44,19 @@ near line 815 switches them).
 - Data and state in the prototype are mock. Never copy its data model; the Firestore model in the spec is the
   truth. Treat the prototype's "Sam" user, sample recipes, and prices as placeholders.
 
+## Visual verification (do this, don't guess)
+
+Claude can drive a headless browser here. Two project skills cover it:
+
+- **`playwright-cli`**: `scripts/pw open|goto|click|snapshot|screenshot|resize|close …` runs Microsoft's
+  Playwright CLI on the nixpkgs Chromium from the dev shell. Read the resulting PNG with the Read tool.
+- **`design-compare`**: the procedure for screenshotting a page of the running app and the same page of the
+  prototype (served by `node scripts/design-serve.mjs --daemon` at `http://127.0.0.1:8787/`, with
+  `/v/<device>/<flavour>/<look>.html` variants) at the same viewport, reading both, and fixing differences.
+
+Every UI task ends with a design-compare pass on phone and desktop before its checkbox is ticked. `file:`
+URLs are blocked in the CLI; serve things over HTTP. Screenshots never go into the repo.
+
 ## Git
 
 - **Commit automatically** after each coherent unit of work, without asking. Small, descriptive commits.
