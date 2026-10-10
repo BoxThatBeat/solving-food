@@ -1,0 +1,10 @@
+rules_version = '2';
+
+// Placeholder until M1 adds recipe images, the drop folder, and imports (TECHNICAL_SPECS §10).
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

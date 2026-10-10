@@ -60,7 +60,7 @@ redirect), NFR1, NFR2, NFR4 (allowlist + household isolation rules), NFR6 (shell
 
 ### 2. Firebase project wiring
 
-- [ ] `.firebaserc` → `solvingfood`. `firebase.json`: hosting (`apps/web/dist`, SPA rewrite, cache headers for
+- [x] `.firebaserc` → `solvingfood`. `firebase.json`: hosting (`apps/web/dist`, SPA rewrite, cache headers for
       hashed assets), functions (`functions`, codebase `default`), firestore rules + indexes, storage rules,
       emulators (auth 9099, firestore 8080, storage 9199, functions 5001, hosting 5000, ui 4000, pubsub 8085,
       eventarc 9299, tasks 9499).
