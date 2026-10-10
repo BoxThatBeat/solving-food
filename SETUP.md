@@ -2,7 +2,7 @@
 
 > Everything here is **non-secret** (the Firebase web config is shipped to browsers by design).
 > Secrets (PC Express credentials) live only in Secret Manager; see "Secrets" below.
-> Last verified: 2026-10-09 (M0)
+> Last verified: 2026-10-10 (M1)
 
 ## Decision: one project, no dev
 
@@ -48,6 +48,7 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
 | Custom domain | none; the app lives at `https://solvingfood.web.app` |
 | GitHub repo | https://github.com/BoxThatBeat/solving-food (**public**; Actions minutes are unlimited, so CI runs the Playwright suite too) |
 | First household name | **Silbrass Pvt** |
+| Owner's Firebase uid | `HBebN9sYntQG1Kbdx5Ggw611xyy1` (from `users/*` where `email == buitenwerfa@gmail.com`; used for the drop folder path) |
 | PC Express account email | `buitenwerfa@gmail.com` (password only in Secret Manager, never here) |
 
 ## Cloud setup done in M0 (2026-10-09)
@@ -69,6 +70,34 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   `28493041173-compute@developer.gserviceaccount.com` (the 2nd gen functions runtime identity).
 - **Deployed**: Hosting (`apps/web/dist`), Firestore rules + indexes, Storage rules (deny all), and the `healthcheck`
   function at https://us-east1-solvingfood.cloudfunctions.net/healthcheck.
+
+## M1 operations (2026-10-10)
+
+- **Deployed:** Hosting, Firestore rules and indexes, Storage rules, and the functions `dropFolder` (Storage
+  `object.finalized`, 512 MiB, 120 s, `sharp`), `recipeIndex`, `recipeCleanup`, `ingredientRecipes` (Firestore
+  triggers), `maintenance` (Cloud Scheduler, Mondays 04:00 America/Toronto; the one scheduler job of the three free
+  ones), and `healthcheck`. All in `us-east1`, `maxInstances: 2`.
+- **First event-trigger deploy:** the Firebase CLI enabled Pub/Sub and Storage APIs and generated the Pub/Sub and
+  Eventarc service identities. The first `firebase deploy` then failed for the four event-triggered functions
+  ("Permission denied while using the Eventarc Service Agent"; for `dropFolder`, `storage.buckets.get` on the
+  bucket) because the agents' roles hadn't propagated; `firebase deploy --only functions` a few minutes later
+  succeeded. No IAM was granted by hand. If the GitHub deploy service account ever fails to create Eventarc
+  triggers, grant it `roles/eventarc.admin` (not needed so far: the M0 deploy roles covered it from the CLI).
+- **Ingredient seed:** `pnpm ingredients:upload` (owner's gcloud login, Firestore REST; no ADC on this machine) wrote
+  the 475 ingredients; re-running reports "475 unchanged". Ingredients edited in the app (they carry `updatedBy`) are
+  never overwritten without `--force`.
+- **Household recipes:** `pnpm drop:recipes -- --email buitenwerfa@gmail.com` looked up the owner's uid and copied
+  each photo and `.cook` from `data/recipes/` to `gs://solvingfood.firebasestorage.app/recipe-drop/<uid>/` with
+  `gcloud storage cp`, two recipes at a time, waiting for each import (and re-sending any the trigger misses).
+  Result: 28 active recipes created by the owner, 19 with photos (the other 9 have none in the vault), 28 success
+  notifications for the owner (they show on first open: three at a time, then "+25 more · Dismiss all").
+- **Drop folder from a terminal (the Claude skill's path):**
+  `gcloud storage cp photo.jpg recipe.cook gs://solvingfood.firebasestorage.app/recipe-drop/HBebN9sYntQG1Kbdx5Ggw611xyy1/`
+  (photo first; the Drop page shows the same command with the signed-in user's uid). The skill lives in
+  `.claude/skills/cooklang-recipe/`; regenerate its lists with `pnpm gen:skill` after changing the taxonomy or the
+  ingredient seed.
+- **Local demo data:** `pnpm dev`, then `pnpm dev:seed` (emulator only) creates `dev@example.com` with "Silbrass Pvt",
+  uploads the ingredients, and drops the 28 recipes (~40 s).
 
 ## CI/CD (GitHub Actions)
 
