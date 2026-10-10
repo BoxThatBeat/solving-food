@@ -9,7 +9,7 @@ import { Stepper } from "@/components/ui/stepper";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { IngredientPicker } from "@/components/recipes/IngredientPicker";
 import { useNotify } from "@/components/notifications-context";
-import { useAllIngredients, type IngredientEntry } from "@/data/ingredients";
+import { useAllIngredients, useIngredientsById, type IngredientEntry } from "@/data/ingredients";
 import { sendCommand } from "@/data/supply";
 import { cn } from "@/lib/utils";
 
@@ -52,8 +52,14 @@ export function ReceiveSheet({
   );
 }
 
-function ReceiveBody({ listId, items, stores, ingredients, hid, uid, close }: { listId: string; items: Record<string, GroceryItem>; stores: readonly StoreEntry[]; ingredients: Map<string, IngredientEntry>; hid: string; uid: string; close: () => void }) {
+function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, close }: { listId: string; items: Record<string, GroceryItem>; stores: readonly StoreEntry[]; ingredients: Map<string, IngredientEntry>; hid: string; uid: string; close: () => void }) {
   const notify = useNotify();
+  // The list's own ingredients (freezable? default location?), whatever the page happened to load.
+  const ids = Object.values(items).flatMap((it) => (it.ingredientId ? [it.ingredientId] : []));
+  const own = useIngredientsById(ids);
+  const ingredients = own.size >= new Set(ids).size ? own : given;
+  // Stores too: the freeze prompt depends on the store being a bulk one.
+  const ready = ids.every((id) => ingredients.has(id)) && stores.length > 0;
   const [lines, setLines] = React.useState<Line[]>(() =>
     Object.entries(items)
       .sort(([, a], [, b]) => a.storeId.localeCompare(b.storeId) || a.productName.localeCompare(b.productName))
@@ -153,7 +159,7 @@ function ReceiveBody({ listId, items, stores, ingredients, hid, uid, close }: { 
       title="Confirm groceries"
       description="Fix anything that changed; change nothing and it all arrived"
       footer={
-        <Button size="lg" className="w-full" onClick={confirm} disabled={!lines.length}>
+        <Button size="lg" className="w-full" onClick={confirm} disabled={!lines.length || !ready}>
           {changed ? "Confirm with changes" : "Everything arrived · add to supply"}
         </Button>
       }

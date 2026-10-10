@@ -107,3 +107,23 @@ test("tools: says when the household has none configured, and flags missing tool
   await adminDb.doc(`households/${household.hid}`).update({ "settings.tools": ["oven", "air fryer"] });
   await expect(detail(page).getByText("Your kitchen has everything this needs.")).toBeVisible();
 });
+
+test("beside every ingredient: how much is in supply, staple for free-use, expired lots not counted (R4.9)", { tag: ["@R4.9", "@R8.15"] }, async ({ page, household }) => {
+  const { makePlanRecipe } = await import("../pages/plan");
+  const { seedSupply } = await import("../pages/supply");
+  const r = await makePlanRecipe("Badge check"); // 600 g chicken thigh, 140 g spinach, olive oil
+  await seedSupply(household.hid, "chicken-thigh", [{ amount: 250, expiresInDays: 2 }]);
+  await seedSupply(household.hid, "baby-spinach", [{ amount: 300, expiresInDays: -1 }]);
+  await page.goto(`/recipes/${r.id}`);
+  const d = detail(page);
+  const badges = d.getByTestId("supply-badge");
+  await expect(badges).toHaveCount(3);
+  await expect(d.getByLabel("chicken thigh: 250 g in supply, not enough", { exact: false })).toHaveText("have 250 g ⚠");
+  await expect(d.getByLabel(/baby spinach: none in supply/i)).toHaveText("none");
+  await expect(d.getByLabel(/olive oil: staple/i)).toHaveText("staple");
+  // Scaling down to 2 servings: 300 g needed, 250 g still short; to 1 serving, enough.
+  await d.getByRole("button", { name: "Fewer servings" }).click();
+  await d.getByRole("button", { name: "Fewer servings" }).click();
+  await d.getByRole("button", { name: "Fewer servings" }).click();
+  await expect(d.getByLabel(/chicken thigh: 250 g in supply$/i)).toHaveText("have 250 g");
+});

@@ -86,9 +86,10 @@ test.describe("filters and sorts", () => {
     await expect(r.card("Oat Flour Banana Muffins")).toBeVisible();
     expect(await r.titles()).not.toContain("Tzatziki Sauce");
 
-    // Supply- and price-based options are visible but not usable yet (M3, M2).
+    // Supply filters are live since M3 (supply-based browsing below); "Uses expiring" waits for M5.
     sheet = await r.openFilters();
-    await expect(sheet.getByRole("button", { name: "Can make" })).toBeDisabled();
+    await expect(sheet.getByRole("button", { name: /^Can make/ })).toBeEnabled();
+    await expect(sheet.getByRole("button", { name: "Uses expiring" })).toBeDisabled();
     // Cost per serving is live since M2 (estimates); grocery and plan specs cover prices.
     await expect(sheet.getByRole("button", { name: /^≤ \$4/ })).toBeEnabled();
   });
@@ -217,5 +218,36 @@ test.describe("favourites and cards", () => {
     await r2.searchFor(title);
     await expect(r2.card(title)).toBeVisible();
     await ctx.close();
+  });
+});
+
+test.describe("supply-based browsing (M3)", () => {
+  test("recipes the supply left after the plan covers are marked; Can make and Use what's left filter them (R4.3, R4.4, R4.2)", { tag: ["@R4.3", "@R4.4", "@R4.2"] }, async ({ page, household }) => {
+    const { makePlanRecipe, seedPeriod, seedPlanItem } = await import("../pages/plan");
+    const { seedSupply } = await import("../pages/supply");
+    const tag = Math.random().toString(36).slice(2, 7);
+    const full = await makePlanRecipe(`Pantry rice ${tag}`, { lines: "Boil @jasmine rice{400%g} with @salt{1%tsp}." });
+    const most = await makePlanRecipe(`Pantry lentils ${tag}`, { lines: "Simmer @dried red lentil{900%g} with @onion{100%g}." });
+    const none = await makePlanRecipe(`Pantry salmon ${tag}`, { lines: "Roast @salmon fillet{600%g}." });
+    // 1 kg rice, but a planned rice dinner takes 400 g: 600 g left still covers it. 900 g lentils, no onion: ~90 %.
+    await seedSupply(household.hid, "jasmine-rice", [{ amount: 1000, location: "pantry", expiresInDays: 300 }]);
+    await seedSupply(household.hid, "dried-red-lentil", [{ amount: 900, location: "pantry", expiresInDays: 300 }]);
+    const pid = await seedPeriod(household.hid);
+    await seedPlanItem(household.hid, pid, [full.id]);
+    const r = new RecipesPage(page);
+    await r.goto(`?q=${encodeURIComponent(`Pantry ${tag}`)}`);
+    await expect(r.card(full.title).getByTestId("can-make")).toBeVisible();
+    await expect(r.card(most.title)).toContainText("ALMOST");
+    await expect(r.card(none.title).getByTestId("can-make")).toHaveCount(0);
+    await r.goto(`?q=${encodeURIComponent(`Pantry ${tag}`)}&supply=can`);
+    await expect(page.getByTestId("recipe-card")).toHaveCount(1);
+    await expect(r.card(full.title)).toBeVisible();
+    await r.goto(`?q=${encodeURIComponent(`Pantry ${tag}`)}&supply=useup`);
+    await expect(page.getByTestId("recipe-card")).toHaveCount(2);
+    await expect(r.card(none.title)).toHaveCount(0);
+    // An expired lot doesn't count (R8.15).
+    await seedSupply(household.hid, "jasmine-rice", [{ amount: 1000, location: "pantry", expiresInDays: -1 }]);
+    await r.goto(`?q=${encodeURIComponent(`Pantry ${tag}`)}&supply=can`);
+    await expect(page.getByTestId("recipe-card")).toHaveCount(0);
   });
 });

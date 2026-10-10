@@ -4,7 +4,7 @@
 // sends `finishCooking`, which deducts the recipe defaults right away, and opens the review. One-recipe meals skip the
 // ordering step. The screen stays awake while cooking (Screen Wake Lock).
 import * as React from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
 import { formatDuration, missingTools, scaleFactor, type MealType, type RecipeRef } from "@solving-food/core";
 import { Button } from "@/components/ui/button";
@@ -75,6 +75,11 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
   const [installAsk, setInstallAsk] = React.useState(false);
   const [finished, setFinished] = React.useState(false);
   const awake = useWakeLock(true);
+  // Load the review screen's code now, so Done cooking works with no signal even before the service worker has it.
+  const router = useRouter();
+  React.useEffect(() => {
+    void router.preloadRoute({ to: "/review/$eventId", params: { eventId: "preload" } }).catch(() => undefined);
+  }, [router]);
 
   React.useEffect(() => {
     try {

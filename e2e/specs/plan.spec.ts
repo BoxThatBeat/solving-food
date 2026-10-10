@@ -239,3 +239,30 @@ test.describe("landing page (R12)", () => {
 });
 
 void cook;
+
+test.describe("M3 on the Plan page", () => {
+  test("a planned meal shows an expiry badge for the soonest-expiring ingredient it uses (R6.7)", { tag: ["@R6.7"] }, async ({ page, household }) => {
+    const { seedSupply } = await import("../pages/supply");
+    const r = await makePlanRecipe("Expiring chicken");
+    const pid = await seedPeriod(household.hid);
+    await seedPlanItem(household.hid, pid, [r.id]);
+    await seedSupply(household.hid, "chicken-thigh", [{ amount: 1000, expiresInDays: 30 }]);
+    await seedSupply(household.hid, "baby-spinach", [{ amount: 200, expiresInDays: 2.5 }]);
+    const plan = new PlanPage(page);
+    await plan.goto();
+    await expect(plan.item(r.title).getByTestId("expiry-badge")).toHaveText(/baby spinach expires (in 2 days|tomorrow)/i);
+  });
+
+  test("expired lots prompt on the Plan page too; Still good makes them count again (R8.15)", { tag: ["@R8.15"] }, async ({ page, household }) => {
+    const { seedSupply } = await import("../pages/supply");
+    await seedPeriod(household.hid);
+    await seedSupply(household.hid, "milk", [{ amount: 1000, expiresInDays: -1 }], { label: "milk" });
+    const plan = new PlanPage(page);
+    await plan.goto();
+    const prompts = page.getByTestId("expired-prompts");
+    await expect(prompts).toContainText("Milk");
+    await prompts.getByRole("button", { name: "Pick a date for Milk" }).click();
+    await prompts.getByRole("button", { name: "Save" }).click();
+    await expect(prompts).toHaveCount(0);
+  });
+});

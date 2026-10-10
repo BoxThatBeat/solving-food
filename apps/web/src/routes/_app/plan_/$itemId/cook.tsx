@@ -32,6 +32,8 @@ function CookPlanItem() {
       </PageBody>
     );
   const it = item.data;
+  // The title names the meal in history: wait for the recipes rather than call it "Recipe".
+  if (it.recipes.some((r) => !recipes.has(r.recipeId)) && !it.name) return null;
   const title = planItemTitle(it, (id) => recipes.get(id)?.title);
   return (
     <CookSession

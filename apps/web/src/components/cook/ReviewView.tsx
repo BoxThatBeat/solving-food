@@ -87,8 +87,7 @@ export function ReviewView({ hid, uid, eventId, tz }: { hid: string; uid: string
         <p className="p-6 text-sm font-bold">{event.data === null && !finishCmd ? "This cooked meal isn't here any more." : "Loading…"}</p>
       </Shell>
     );
-  // Remounts when the cook event reaches the server, so the form starts from what was actually deducted.
-  return <ReviewFlow key={`${eventId}-${source.pending}`} hid={hid} uid={uid} eventId={eventId} source={source} recipeTitles={(id) => recipes.get(id)?.title ?? "Recipe"} tz={tz} members={members} onDone={() => void navigate({ to: "/plan" })} notify={notify} />;
+  return <ReviewFlow key={eventId} hid={hid} uid={uid} eventId={eventId} source={source} recipeTitles={(id) => recipes.get(id)?.title ?? "Recipe"} tz={tz} members={members} onDone={() => void navigate({ to: "/plan" })} notify={notify} />;
 }
 
 function Shell({ title, kicker = "Review", onClose, children }: { title: string; kicker?: string; onClose: () => void; children?: React.ReactNode }) {
@@ -137,10 +136,17 @@ function ReviewFlow({
   const mine = React.useMemo(() => new Map((ratingsQ.docs ?? []).filter((r) => r.data.cookEventId === eventId && r.data.uid === uid).map((r) => [`${r.data.targetType}:${r.data.targetId}`, r.data.score])), [ratingsQ.docs, eventId, uid]);
   const others = (ratingsQ.docs ?? []).filter((r) => r.data.cookEventId === eventId && r.data.uid !== uid);
   const [scores, setScores] = React.useState<Map<string, number>>(new Map());
-  const [savedMealId, setSavedMealId] = React.useState(source.savedMealId);
+  const [savedMealPick, setSavedMealId] = React.useState<string | undefined>(undefined);
+  const savedMealId = savedMealPick ?? source.savedMealId;
   const [mealName, setMealName] = React.useState(() => defaultMealName(source.recipeIds.map(recipeTitles)));
-  const [used, setUsed] = React.useState(() => source.used.filter((u) => u.canonicalAmount > 0).map((u) => ({ ...u })));
-  const [leftovers, setLeftovers] = React.useState(source.leftoverPortions);
+  const [usedEdit, setUsedEdit] = React.useState<Array<{ ingredientId: string; canonicalAmount: number }> | null>(null);
+  const [leftoversEdit, setLeftoversEdit] = React.useState<number | null>(null);
+  // Until the person changes them, the amounts and leftovers follow the source: the pending estimate, then the cook
+  // event once it reaches the server (what was actually deducted).
+  const used = usedEdit ?? source.used.filter((u) => u.canonicalAmount > 0);
+  const leftovers = leftoversEdit ?? source.leftoverPortions;
+  const setUsed = (f: (l: Array<{ ingredientId: string; canonicalAmount: number }>) => Array<{ ingredientId: string; canonicalAmount: number }>) => setUsedEdit(f(used.map((u) => ({ ...u }))));
+  const setLeftovers = (f: (n: number) => number) => setLeftoversEdit(f(leftovers));
   const [note, setNote] = React.useState("");
   const supply = useSupply(hid, tz);
   const usedIngredients = useIngredientsById([...used.map((u) => u.ingredientId), ...[...supply.items.values()].flatMap((i) => (i.ingredientId ? [i.ingredientId] : []))]);
