@@ -13,7 +13,7 @@
 #   scripts/pw close
 set -euo pipefail
 
-PW_CLI_VERSION="0.1.19"   # Playwright 1.63.x; keep in step with pkgs.playwright-driver in flake.nix (nix eval shows 1.63.0)
+PW_CLI_VERSION="0.1.19"   # same as the root package.json devDependency; Playwright 1.63.x; keep in step with pkgs.playwright-driver in flake.nix (nix eval shows 1.63.0)
 
 if [[ -z "${PLAYWRIGHT_BROWSERS_PATH:-}" ]]; then
   echo "scripts/pw: PLAYWRIGHT_BROWSERS_PATH is not set. Run inside the dev shell (direnv or nix develop)." >&2
@@ -48,4 +48,9 @@ for a in "$@"; do
 done
 
 cd "$root"
+# Prefer the pinned root devDependency (`pnpm install`), so nothing depends on the npx cache; fall back to npx.
+local_cli="$root/node_modules/.bin/playwright-cli"
+if [[ -x "$local_cli" ]]; then
+  exec "$local_cli" "${args[@]}"
+fi
 exec npx -y "@playwright/cli@$PW_CLI_VERSION" "${args[@]}"

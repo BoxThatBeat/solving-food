@@ -20,10 +20,16 @@
     "emulators": "pnpm --filter @solving-food/functions build && firebase emulators:start --only auth,firestore,storage,functions",
     "seed:allowlist": "tsx scripts/seed-allowlist.ts",
     "seed:allowlist:emulator": "tsx scripts/seed-allowlist.ts --emulator",
-    "deploy": "pnpm build && firebase deploy --only hosting,functions,firestore,storage"
+    "deploy": "pnpm build && firebase deploy --only hosting,functions,firestore,storage",
+    "pw": "bash scripts/pw",
+    "gen:skill": "tsx scripts/gen-skill.ts",
+    "ingredients:validate": "tsx data/scripts/validate.ts",
+    "ingredients:upload": "tsx data/scripts/upload.ts",
+    "ingredients:upload:emulator": "tsx data/scripts/upload.ts --emulator"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/cli": "0.1.19",
     "@types/node": "^24.0.0",
     "eslint": "^10.12.0",
     "eslint-plugin-react-hooks": "^7.1.1",
