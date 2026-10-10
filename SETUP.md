@@ -43,7 +43,7 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
 
 | Item | Value |
 |---|---|
-| FCM web push VAPID public key | _pending_ |
+| FCM web push VAPID public key | `BDJ6cML5GULVZZ0X3Zd2B2m02s_aGTbRRkbKPrV38lLZr6YE9SrkbwL4_aOGAQp72B5eDVeoQ-iui05v0vn1Rgk` (public; the private half stays in the Firebase console) |
 | Project owner sign-in email (first allowlist entry, `OWNER_UID` source) | `buitenwerfa@gmail.com` |
 | Custom domain | none; the app lives at `https://solvingfood.web.app` |
 | GitHub repo | https://github.com/BoxThatBeat/solving-food (**public**; Actions minutes are unlimited, so CI runs the Playwright suite too) |
@@ -88,7 +88,8 @@ free) for Firestore and Storage.
 
 - **$1/month budget alert**: not verifiable from the CLI (Budget API disabled on the billing project). Confirm in
   Google Cloud console → Billing → Budgets & alerts.
-- **VAPID key**: Firebase console → Project settings → Cloud Messaging → Web Push certificates → Generate key pair,
-  then fill in the table above.
+- ~~VAPID key~~ recorded above, 2026-10-09.
+- **GitHub deploy**: `firebase init hosting:github` was run 2026-10-09. Repo secret `FIREBASE_SERVICE_ACCOUNT_SOLVINGFOOD`
+  exists; the two generated workflows in `.github/workflows/` are to be merged into the M0 CI design.
 - ~~gcloud login~~ done 2026-10-09: `gcloud auth list` shows `buitenwerfa@gmail.com` active, project `solvingfood`.
   (Interactive logins must run in a normal terminal, not through the Claude session, which has no stdin.)
