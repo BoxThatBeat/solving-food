@@ -28,6 +28,17 @@ near line 815 switches them).
 - **Tokens** (CSS variables in the file): `--base`, `--mantle`, `--pg`, `--desk`, `--ink`, `--sub`, `--acc`,
   `--onc` (text on accent), `--line`, `--bw` (border width), `--r` (radius), `--sh` (hard shadow), `--tt`.
   Reproduce these as the app's theme variables so the Catppuccin flavour and accent map one-to-one.
+- **Colour source of truth is the prototype's `FLAV` table** in the script block (search `const FLAV=`), not
+  `@catppuccin/palette` guesses. **Catppuccin Latte is the default flavour and the reference** for every
+  design decision and screenshot baseline. Its values: ink `#4c4f69`, sub `#6c6f85`, base `#eff1f5`,
+  mantle `#e6e9ef`, pg `#dce0e8`, s0 `#ccd0da`, onc `#4c4f69`, desk `#bcc0cc`, scrim `rgba(76,79,105,.55)`.
+  Accents come from the prototype's `ACCENTS` list (green `#a6da95` is the default). The other three flavours
+  stay selectable per PRD R11.9 using the same table; build Latte first and verify it pixel-close before
+  touching the others.
+- **Styling is Tailwind CSS (v4) + shadcn/ui.** Theme tokens are exposed as CSS variables and mapped into
+  Tailwind's theme so utilities like `bg-base text-ink border-line` exist. No other CSS framework, no
+  CSS-in-JS. Hand-written CSS only for things Tailwind can't express (fluid root font size, step-mode
+  typography, print).
 - The prototype also has a **"look"** switch (Quiet / Classic / Loud) that scales border weight, shadow, and
   radius. Ship **Classic**; keep the token structure so the others could be added later.
 - Data and state in the prototype are mock. Never copy its data model; the Firestore model in the spec is the
