@@ -527,7 +527,8 @@ export function RecipeEditor({
         </Field>
       </Card>
 
-      <div className="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-10 flex gap-2.5 border-t-bw bg-pg py-3 md:bottom-0">
+      {/* The pg-coloured shadow fills down to the phone tab bar (z-20 covers the overshoot), whatever its exact height. */}
+      <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-10 flex gap-2.5 border-t-bw bg-pg py-3 shadow-[0_1.5rem_0_var(--pg)] md:bottom-0 md:shadow-none">
         <Button type="button" variant="secondary" onClick={() => (id ? navigate({ to: "/recipes/$id", params: { id } }) : navigate({ to: "/recipes" }))}>
           Cancel
         </Button>
