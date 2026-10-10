@@ -1,12 +1,12 @@
 # Solving Food — Technical Specification
 
-> Status: Draft v0.4 · Companion to `PRODUCT_REQUIREMENTS.md` (v0.3) · Last updated: 2026-10-09
+> Status: Draft v0.5 · Companion to `PRODUCT_REQUIREMENTS.md` (v0.5) · Last updated: 2026-10-09
 
 ---
 
 ## 1. Architecture Overview
 
-Everything runs on Firebase. The React PWA reads and writes Firestore directly and gets live updates between household members for free. **Cloud Functions do only what the client can't do safely or at all:** apply supply changes consistently, process the recipe drop folder, maintain the search index, clean up deleted recipes, talk to PC Express (prices, product and store search), deliver timer push notifications, and import household data.
+Everything runs on Firebase. The React PWA reads and writes Firestore directly and gets live updates between household members for free. **Cloud Functions do only what the client can't do safely or at all:** apply supply changes consistently, process the recipe drop folder, maintain the search index, purge trashed recipes and clean up after them, delete a household when its last member leaves, talk to PC Express (prices, product and store search), deliver timer push notifications, and import household data.
 
 There are **no LLM calls inside the app**. Recipe import (from a URL or a photo) happens outside it: an external LLM following the Claude skill writes a Cooklang file and puts it in the drop folder.
 
@@ -30,8 +30,8 @@ flowchart TB
         subgraph functions["Cloud Functions (TypeScript, 2nd gen)"]
             fnCmd["onCreate commands<br/>→ supply, cook events, stats, imports"]
             fnDrop["onFinalize recipe-drop<br/>→ parse Cooklang → recipe → delete file"]
-            fnIndex["onWrite recipes<br/>→ search index · delete cleanup"]
-            fnPrice["scheduled weekly<br/>→ refresh PC Express prices"]
+            fnIndex["onWrite recipes · onDelete members<br/>→ search index · purge cleanup · empty-household cleanup"]
+            fnPrice["scheduled weekly maintenance<br/>→ refresh PC Express prices · purge 30-day trash"]
             fnPcx["callable<br/>→ PC Express product / store search"]
             fnTimer["callable + task handler<br/>→ schedule / send timer push"]
         end
@@ -75,7 +75,7 @@ NFR2 asks for the free tier unless something paid is unavoidable. **Two required
 - **Cloud Storage**, for recipe images and the drop folder. Since late 2024, new Storage buckets require the Blaze plan.
 - **Cloud Functions**, for processing the drop folder and keeping the supply ledger consistent.
 
-So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays at $0**. Blaze keeps the same no-cost quotas as Spark. There's no automatic billing kill switch, only alerting. Safeguards:
+So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays at $0**. Blaze keeps the same no-cost quotas as Spark. There's no automatic billing kill switch, only alerting. (Google documents a Pub/Sub-triggered function that detaches billing at a threshold; it was considered and **rejected** because it would take the app down. Alerts only.) Safeguards:
 
 - A **budget alert at $1/month**.
 - All resources in **`us-east1`**. Cloud Storage's always-free tier only applies in `us-central1`, `us-east1`, and `us-west1`, and keeping Firestore and Functions in the same region avoids cross-region charges.
@@ -93,7 +93,7 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Storage | 5 GB-month (US regions) | ~1 GB of images for 2,000 recipes | 5× |
 | Storage egress | 100 GB / month (N. America) | < 5 GB (images cached by the service worker) | 20× |
 | Hosting transfer | 360 MB / day | < 50 MB / day | 7× |
-| Cloud Scheduler | 3 jobs / account | 1 (price refresh) | — |
+| Cloud Scheduler | 3 jobs / **billing account** | 1 per project (weekly maintenance: price refresh + trash purge), so dev + prod = 2 | 1 spare |
 | Cloud Tasks | 1M operations / month | < 2,000 (cooking timers) | 500× |
 | Cloud Messaging (web push) | free | < 2,000 pushes / month | — |
 | Secret Manager | 6 active secret versions, 10,000 accesses / month | 2 secrets (PC Express credentials), ~500 accesses | 20× |
@@ -138,8 +138,13 @@ Household data is nested under `households/{hid}`, so a single membership check 
 
 ```
 users/{uid}                                       // private to the user
-  email, householdIds[], activeHouseholdId, householdsCreated,   // ≤ 3
+  email, activeHouseholdId, householdsCreated,    // ≤ 3; decremented by the function that deletes an emptied household
   theme: { flavour, accent }
+  // No list of household IDs here: membership is read with a collection-group query on members (§10),
+  // so a member removed by someone else never sees a stale list.
+
+allowlist/{emailLower}                            // sign-up allowlist (R2.12); readable by its own address, writable by any signed-in user
+  addedBy, addedAt, inviteHouseholdId?            // optional: household invite created alongside (R2.4)
 
 directory/{uid}                                   // readable by every signed-in user, for invites
   displayName, displayNameLower
@@ -150,6 +155,8 @@ ingredients/{ingredientId}
   canonicalUnit: "g"|"count",
   densityGPerMl?, unitWeightG?, proteinPer100g?,
   shelfLifeDays: { pantry?, cupboard?, fridge?, freezer? },   // all null → never expires
+  defaultPackAmount?, defaultPackMeasure?,        // pack rounding when there's no brand mapping (§8)
+  defaultCadenceDays?,                            // staples cadence before the household has bought it twice (§8)
   freezable, isStaple, freeUse, needsReview      // freeUse → tracked by staples cadence only (§5)
 
 recipes/{recipeId}                                // source of truth (structured)
@@ -161,7 +168,9 @@ recipes/{recipeId}                                // source of truth (structured
   defaultLeftoverPortions, leftoverMealType?,          // e.g. 4 portions → lunch
   proteinPerServingG?,                                 // derived on save (§5)
   sourceUrl?, sourceUrlCanonical?, fingerprint, ingredientIds[],
-  imagePaths[], status: "active"|"pendingDuplicateReview", possibleDuplicateOf?,
+  imagePaths[], indexChunk,                            // which recipeIndex chunk holds its summary (§9)
+  status: "active"|"pendingDuplicateReview"|"trashed", possibleDuplicateOf?,
+  trashedAt?, trashedBy?,                              // Trash (§4.4); purged 30 days after trashedAt
   createdBy, updatedBy, version, createdAt, updatedAt
 recipes/{recipeId}/versions/{version}             // full snapshot + editedBy, editedAt
 
@@ -185,12 +194,16 @@ Recipe ratings and stats are **not** stored on global documents, because househo
 
 ```
 households/{hid}                 name, createdBy, periodDays, budgetCents, currency,
+                                 timezone,                                 // IANA, default America/Toronto (R11.11)
+                                 defaultServings,                          // plan items are scaled to this (R11.12)
+                                 plannedMealTypes: ("breakfast"|"lunch"|"dinner")[],   // default all three (R11.13)
                                  pcxStoreId,                               // PC Express store for prices; default Loblaws Greenbank Road
                                  currentPeriodId, settings: { scoreWeights{}, tools[],
                                  preferences: { likes[], dislikes[], diets[] },
                                  proteinGoals: { breakfast?, lunch?, dinner?, snack? } }   // g per serving; absent = off
-  members/{uid}                  displayName, joinedAt                     // no roles
-  invites/{inviteeUid}           inviteeUid, householdName, invitedBy, createdAt
+  members/{uid}                  uid, displayName, joinedAt                // no roles; uid duplicated for the collection-group query
+  invites/{inviteeKey}           inviteeUid? | inviteeEmailLower?, householdName, invitedBy, createdAt
+                                 // key = uid for directory invites, or the lower-cased email for email invites (R2.4)
 
   stores/{storeId}               name, kind: "pcExpress"|"inStore", bulk: bool   // Costco: inStore, bulk
   sourcingRules/{id}             match: { category? | ingredientId? }, storeId
@@ -211,26 +224,29 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
                                  reviewStatus: "pending"|"done", ratedBy[]
   ratings/{ratingId}             uid, cookEventId, targetType: "recipe"|"meal", targetId, score
 
-  groceryLists/{listId}          periodId, status: draft|ordered|received, createdAt,
+  groceryLists/{listId}          periodId, status: draft|ordered|received, createdAt, orderedAt?, receivedAt?,
                                  items: { [itemId]: { ingredientId?, freeText?, amount, measure,
                                           packs, productName, storeId, estPriceCents,
                                           source: plan|manual|cadence, checked, checkedBy? } }
+                                 // status → ordered when the Copy button is used (R7.5); items on ordered lists count as "incoming" (§8)
 
   supply/{supplyId}              // ingredientId, or "leftover_{eventId}"
     ingredientId?, label, canonicalAmount, canonicalUnit,
-    lots: [{ lotId, amount, location, acquiredAt, expiresFresh?, expiresFrozen?, frozenAt? }],
+    lots: [{ lotId, amount, location, acquiredAt, expiresFresh?, expiresFrozen?, frozenAt?,
+             expiryExtendedTo? }],                                        // set by "Still good" (R8.15)
     nextExpiry?
   supply/{supplyId}/transactions/{txId}
-    delta, kind: purchase|cook|correction|discard|freeze|thaw|leftover|eaten,
+    delta, kind: purchase|cook|correction|discard|freeze|thaw|leftover|eaten|extendExpiry,
     lotId, ref?: { type, id }, uid, note?, createdAt
 
   commands/{cmdId}               type, payload, uid, createdAt, status: pending|applied|failed, error?
   cadence/{ingredientId}         avgIntervalDays, lastPurchasedAt, snoozedUntil?
-  duplicateReviews/{recipeId}    // drop imports awaiting a keep-which decision
 ```
 
 **Notes**
 
+- **Function-only collections.** Clients can read but never write `supply/**`, `stats`, `cookEvents`, `ratings`, and `cadence`. They change only through commands (§6), so a cook event can't exist without its supply deductions and a rating can't be forged for another user. Everything else under the household is read/write for members.
+- **Drop imports awaiting a duplicate decision** are simply recipes with `status: pendingDuplicateReview`; the Recipes page lists them with a query on that field. There is no per-household review collection, because recipes are global.
 - **Grocery items are a map keyed by item ID**, not an array, so two people ticking items at the same time update different fields instead of overwriting each other (§11).
 - **Lots live inside the supply document**, so one transaction updates the amount and the lots together. An ingredient rarely has more than a handful of active lots.
 - **Discards** are ordinary `discard` transactions. Waste is tracked internally and no UI exposes it (R8.9).
@@ -242,14 +258,24 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
 - **Cuisine:** american, british, canadian, caribbean, chinese, french, greek, indian, italian, japanese, korean, mediterranean, mexican, middle-eastern, nordic, spanish, thai, vietnamese, other.
 - **Main protein:** beef, pork, chicken, turkey, lamb, fish, seafood, eggs, tofu, legumes, dairy, none.
 
-### 4.4 Deleting a recipe
+### 4.4 Deleting a recipe (Trash)
 
-Any user can delete a global recipe. A **confirmation dialog** warns: *"This deletes the recipe for everyone, in every household."* An `onDocumentDeleted(recipes/*)` function then cleans up:
+Any user can delete a global recipe, but deletion is **soft** (R4.26). A **confirmation dialog** warns: *"This removes the recipe for everyone, in every household. It stays in Trash for 30 days."* The client then sets `status: "trashed"`, `trashedAt`, `trashedBy` as a normal versioned save. Rules forbid clients from deleting recipe documents outright.
 
-- Deletes `versions/*` and the recipe's images in Storage, and removes it from `recipeIndex`.
+**While trashed:**
+
+- The index function drops it from `recipeIndex`, so it disappears from search, lists, and suggestions.
+- The client refuses to add a trashed recipe to a plan or meal. Existing plan items and meals that reference it still render (they read the document directly) with a *recipe in Trash* badge, and can still be cooked.
+- `/recipes/trash` lists trashed recipes with a **Restore** button. Restoring sets `status: "active"` as a new version, and the index function puts it back.
+
+**Purge:** the weekly maintenance function (§8, §13) finds recipes with `trashedAt` older than 30 days and deletes each document. An `onDocumentDeleted(recipes/*)` function then cleans up:
+
+- Deletes `versions/*` and the recipe's images in Storage.
 - Removes it from every meal that includes it. A meal left with no recipes is deleted.
 - In every household: deletes `planned` plan items for it, plus its favourites, notes, and stats.
 - Keeps `cookEvents`, ratings, and history entries, which show the stored title marked *(deleted)*.
+
+The same cleanup runs for the only other hard delete: a new drop import discarded with **Keep existing** during duplicate review (§9), which was never visible to anyone.
 
 ---
 
@@ -300,19 +326,22 @@ Firestore writes queue up offline, but callable functions don't. So every action
 |---|---|
 | `addSupply` | Manual add (R8.2): `purchase` (+) lot with estimated expiry |
 | `receiveGroceries` | `purchase` (+) per confirmed item → new lots; optional `freeze` split (R7.9); grocery list → received; update cadence |
-| `finishCooking` | `cook` (−) per used ingredient (FEFO, skipping free-use ingredients); `leftover` (+) lot; leftover plan items (§7); plan item → cooked; cook event (`reviewStatus: pending` if not rated) |
-| `submitReview` | Per-user ratings for the meal and/or its recipes; updates `stats/*`; marks the review done once the cook confirms |
+| `finishCooking` | Issued by **Done cooking**, before any review (R9.3). `cook` (−) per recipe ingredient at the planned servings (FEFO, skipping free-use ingredients); `leftover` (+) lot of `defaultLeftoverPortions`; leftover plan items (§7); plan item → cooked; cook event with `reviewStatus: pending` |
+| `submitReview` | Per-user rating for the meal and/or its recipes; updates `stats/*`. When the reviewer also confirms **used amounts and leftovers**, the function writes `correction` (±) transactions for the difference between the recipe defaults already deducted and the confirmed amounts, adjusts the leftover lot and its plan items to the confirmed count, and marks the review `done`. Later ratings from other members only add ratings |
 | `correctSupply` | `correction` (± delta to reach the stated amount). Recorded as-is: the app doesn't ask why or try to infer unplanned consumption |
-| `discard` | `discard` (−) on a lot |
+| `discard` | `discard` (−) on a lot. Also what **Threw it out** sends for an expired lot (R8.15) |
+| `extendExpiry` | **Still good** on an expired lot (R8.15): 0-delta transaction that sets `expiryExtendedTo` (default +3 days, or a chosen date) so the lot counts again |
 | `freeze` / `thaw` | 0-delta transaction; moves the lot and switches its active expiry |
 | `markEaten` | `eaten` (−) on a leftover portion or snack; leftover plan item → eaten |
 | `importHousehold` | Replaces the household's data from an uploaded export file (§13) |
 
 ### Rules
 
-- **FEFO:** consumption takes from the lot that expires first, so per-lot expiry (R8.5) stays accurate without the user choosing a lot.
-- **Expiry:** `expiresFresh = acquiredAt + shelfLifeDays[location]`. Freezing sets `expiresFrozen = frozenAt + shelfLifeDays.freezer`. Both values are kept. Ingredients with no shelf life never expire.
-- **Projected supply** (the bracketed number in R8.4) = `canonicalAmount − Σ requirements of planned, uncooked items in the current period`. It's computed on the client from live data.
+- **FEFO:** consumption takes from the lot that expires first, so per-lot expiry (R8.5) stays accurate without the user choosing a lot. Expired lots are skipped unless nothing else is left.
+- **Expiry:** `expiresFresh = acquiredAt + shelfLifeDays[location]`. Freezing sets `expiresFrozen = frozenAt + shelfLifeDays.freezer`. Both values are kept. The active expiry is `expiryExtendedTo` if set, else frozen or fresh depending on `frozenAt`. Ingredients with no shelf life never expire. Dates are compared in the household's `timezone`.
+- **Leftover lots** use fixed shelf lives from `packages/core` config: 4 days in the fridge, 90 days frozen (R6.10).
+- **Expired lots** (R8.15) are excluded from every client-side calculation: available supply, projected supply, "can make", ingredient badges, the grocery builder, and `supplyUtilisation` / `missingIngredients` in scoring. They stay in the document until the user answers the **Still good / Threw it out** prompt (`<ExpiredLotPrompt>`, §12). Nothing discards them automatically.
+- **Projected supply** (the bracketed number in R8.4) = `Σ unexpired lots − Σ requirements of planned, uncooked items in the current period`. It's computed on the client from live data.
 - **Transaction history** uses a paginated query (`orderBy(createdAt desc).limit(25)` + `startAfter`) with infinite scroll (R8.7).
 - **Negative supply:** allowed in the ledger, shown as 0, and prompts the user to check the amount.
 - **Double-finish guard:** `finishCooking` is a no-op if the plan item is already `cooked`, e.g. when two members finish the same meal.
@@ -323,11 +352,13 @@ Firestore writes queue up offline, but callable functions don't. So every action
 
 ### Periods & rollover
 
-`households/{hid}.currentPeriodId` points to the active period. When any member opens the app after `period.end`, the client runs a **Firestore transaction**. It creates the next period (length `periodDays`, with a budget snapshot), copies uncooked `planned` items into it with `carriedFromId`, and advances `currentPeriodId`. The transaction makes this idempotent, so two members opening the app at once can't create two periods. No scheduler is needed.
+`households/{hid}.currentPeriodId` points to the active period. When any member opens the app after `period.end` (midnight in the household's `timezone`), the client runs a **Firestore transaction**. It creates the next period (length `periodDays`, with a budget snapshot), copies uncooked `planned` items into it with `carriedFromId`, and advances `currentPeriodId`. The transaction makes this idempotent, so two members opening the app at once can't create two periods. No scheduler is needed. Transactions need a connection, so a device that is offline keeps showing the ended period with a "period ended, will roll over when online" note, and all its other actions still work.
+
+**Servings:** a recipe added to the plan gets `servings = household.defaultServings` (R11.12); a meal's recipes are scaled by their `servingsMultiplier` on top of that. The user can change the number on the plan item.
 
 ### Coverage & leftovers
 
-Each plan item has a `coverage` map: how many slots of each meal type it fills. This drives the period coverage strip (R6.2) without assigning anything to a day.
+Each plan item has a `coverage` map: how many slots of each meal type it fills. This drives the period coverage strip (R6.2) without assigning anything to a day. The strip shows one row per entry in `household.plannedMealTypes` (R11.13); a plan item for a meal type that's turned off still exists and still counts in the list, it just has no row.
 
 - An ordinary dinner covers `{ dinner: 1 }`.
 - A **meal-prep recipe** with `defaultLeftoverPortions: 4, leftoverMealType: "lunch"` covers `{ dinner: 1, lunch: 4 }` as soon as it's planned, so the strip shows the lunches as planned straight away.
@@ -336,7 +367,9 @@ Each plan item has a `coverage` map: how many slots of each meal type it fills. 
 
 ### Budget
 
-`spent = Σ marginal cost of planned items`, where marginal cost prices only the **shortfall packs** the grocery builder would buy (§8). Ingredients already in supply cost nothing. Manual and staple items are excluded (R6.4). The meter shows `budget − spent` and turns red below zero. Adding meals is never blocked.
+`spent = Σ marginal cost of planned items`, where marginal cost prices only the **shortfall packs** the grocery builder would buy (§8). Ingredients already in supply, or **incoming** on an ordered-but-not-received list, cost nothing. Manual and staple items are excluded (R6.4). The meter shows `budget − spent` and turns red below zero. Adding meals is never blocked.
+
+By design the meter is a *"what will the next order cost"* gauge (R6.3): after a grocery list is confirmed as received, the planned meals are covered and `spent` drops back toward zero. Pack rounding makes the cost order-dependent (the first recipe that needs flour pays for the whole bag), which is accepted. Actual spend for a period is `Σ estPriceCents` of the period's received lists and is shown on History (R10.3).
 
 ### Suggestion score
 
@@ -389,15 +422,19 @@ The Plan page shows, for each meal type, the average `proteinPerServingG` of the
 
 ```
 needs     = Σ requirements of planned, uncooked items (scaled by servings), excluding free-use ingredients
-shortfall = max(0, needs − (current supply − other planned use))
-packs     = ceil(shortfall / brandMapping.packAmount)
+incoming  = Σ amounts on this household's grocery lists with status "ordered" (copied, not yet received)
+shortfall = max(0, needs − unexpired supply − incoming)
+packSize  = brandMapping.packAmount ?? ingredient.defaultPackAmount ?? shortfall   // no rounding if unknown
+packs     = ceil(shortfall / packSize)
 + manual items + accepted "are you out of X?" prompts
-→ group by store: ingredient rule → category rule → brandMapping.storeId → default store
+→ store: brandMapping.storeId → ingredient sourcing rule → category sourcing rule → household default store
 ```
 
-Regenerating keeps manual items and checked-off state. The list is a Firestore document, so every member sees ticks live, which matters at Costco.
+Regenerating keeps manual items and checked-off state. The list is a Firestore document, so every member sees ticks live, which matters at Costco. Expired lots don't count as supply (R8.15), so the builder buys replacements for them.
 
-**Copy button:** copies only the `pcExpress` store items:
+Store resolution starts with the brand mapping because a mapping pinned to a specific PC Express product must never be sent to Costco by a broader category rule.
+
+**Copy button:** copies only the `pcExpress` store items and sets the list's `status` to `ordered` (R7.5), with an **Undo** in the confirmation toast that sets it back to `draft`:
 
 ```
 Please add these to my PC Express cart:
@@ -409,7 +446,7 @@ Substitutions: closest equivalent size; skip if unavailable.
 
 **Confirming a purchase** (R7.8): the confirmation screen lists the items as bought. Edits are optional. When a confirmed item comes from a `bulk` store and its ingredient is `freezable`, the screen asks how much to freeze (R7.9). Everything is submitted as one `receiveGroceries` command.
 
-**Staples cadence:** the `receiveGroceries` handler updates `cadence/{ingredientId}.avgIntervalDays` (an exponential moving average of the gaps between purchases). The client raises an "Are you out of X?" prompt when `daysSinceLastPurchase ≥ 0.85 × avgIntervalDays`. *Yes* adds the item to the draft list; *Not yet* snoozes it.
+**Staples cadence:** the `receiveGroceries` handler updates `cadence/{ingredientId}.avgIntervalDays` (an exponential moving average of the gaps between purchases). Until an item has been bought twice there's no gap to average, so the client uses `ingredient.defaultCadenceDays` from the seed data (e.g. milk 7, eggs 14, olive oil 60). The client raises an "Are you out of X?" prompt when `daysSinceLastPurchase ≥ 0.85 × interval`. *Yes* adds the item to the draft list; *Not yet* snoozes it.
 
 ### Prices
 
@@ -423,9 +460,9 @@ PC Express has **no official public API**. Third-party scrapers exist, but they'
 
 **Price refresh & resolution:**
 
-1. A **weekly scheduled function** (the one Cloud Scheduler job) collects every distinct `(pcxStoreId, productCode)` pair across households and refreshes `prices/{pcxStoreId}_{productCode}`.
+1. A **weekly scheduled maintenance function** (the project's one Cloud Scheduler job, shared with the trash purge in §4.4) collects every distinct `(pcxStoreId, productCode)` pair across households and refreshes `prices/{pcxStoreId}_{productCode}`.
 2. Prices are resolved in this order: **live price** for the household's store (fetched ≤ 14 days ago) → **`data/price-estimates.json`** (per-ingredient $/kg or $/unit) → unknown. Unknown prices count as $0, and the item is marked "price unknown" on the meter.
-3. If a fetch or sign-in fails, the function logs it, leaves old prices in place, and posts an error notification to the owner. The app falls back to estimates automatically as prices age.
+3. If a fetch or sign-in fails, the function logs it, leaves old prices in place, and posts an error notification to the **project owner**, whose uid is set in the function's config (`OWNER_UID` parameter). The app falls back to estimates automatically as prices age.
 
 ---
 
@@ -441,7 +478,7 @@ Every save writes the recipe and a `versions/{n}` snapshot in **one batch**. Rul
 
 ### Search
 
-Firestore has no full-text search. An `onDocumentWritten(recipes/*)` function maintains `recipeIndex/{chunk}` documents, each holding ≤ ~500 compact summaries: `{id, title, tags, cuisine, mainProtein, proteinPerServingG, ingredientIds, totalMin, thumb}`. The client loads a few chunk documents (cached offline), builds a **MiniSearch** index, and applies every filter in memory: supply, tools, favourites, cooked before, and cost. Meals use the same approach with a smaller index.
+Firestore has no full-text search. An `onDocumentWritten(recipes/*)` function maintains `recipeIndex/{chunk}` documents, each holding ≤ ~500 compact summaries: `{id, title, tags, cuisine, mainProtein, proteinPerServingG, ingredientIds, totalMin, thumb}`. A recipe is assigned a chunk on creation (`indexChunk`, the lowest chunk with room) and stays there. Recipes with `status: trashed` or `pendingDuplicateReview` are left out of the index. The client loads a few chunk documents (cached offline), builds a **MiniSearch** index (ingredient names resolved from the `ingredients` collection, household notes merged in), and applies every filter in memory: supply, tools, favourites, cooked before, and cost. Meals use the same approach with a smaller index.
 
 ### Drop folder
 
@@ -464,6 +501,7 @@ flowchart TD
     err --> del
 ```
 
+- **Trigger scope:** 2nd-gen Storage triggers fire for **every** object in the bucket, including image uploads and import files. The function returns immediately unless the path starts with `recipe-drop/`. These no-op invocations are counted in the §2 estimate.
 - **Getting files in:**
   1. An in-app **"Drop recipes"** area (drag and drop or file picker, several files at once) uploads to `recipe-drop/{uid}/`. This works for anyone signed in.
   2. The project owner can run `gcloud storage cp *.cook gs://<bucket>/recipe-drop/<uid>/` from a terminal, which lets Claude Code drop files directly.
@@ -512,9 +550,9 @@ A recipe is flagged as a possible duplicate if any of these hold:
 
 **Resolution** (R4.20):
 
-- **Keep existing:** delete the new recipe.
-- **Keep new:** copy the new content **onto the existing recipe's ID** as a new version, then delete the new document. History, favourites, and plans in every household keep working.
-- **Keep both:** clear the flag.
+- **Keep existing:** delete the new recipe (a hard delete, allowed by rules only while `status == pendingDuplicateReview`).
+- **Keep new:** copy the new content **onto the existing recipe's ID** as a new version, then delete the new document the same way. History, favourites, and plans in every household keep working.
+- **Keep both:** set the new recipe to `active`.
 
 The manual editor runs this check before saving. Drop imports are flagged `pendingDuplicateReview` and listed on the Recipes page.
 
@@ -526,52 +564,81 @@ The manual editor runs this check before saving. Drop imports are flagged `pendi
 
 - Firebase Auth **email link** (passwordless). Firebase sends the email for free.
 - **iOS PWA caveat:** a link tapped in Mail opens Safari, not the installed PWA, which has separate storage. The free fix: the sign-in screen also has a **"Paste sign-in link"** field. `signInWithEmailLink(auth, email, pastedLink)` accepts a pasted link, so no extra function or email service is needed.
-- **Open sign-up:** anyone with the app's URL can create an account. This is needed because invites work by finding people in the user directory, so they must sign up first.
-- On first sign-in, the user sets a display name, which creates `directory/{uid}`.
+- **Allowlisted sign-up (R2.12):** Firebase Auth itself can't restrict who completes an email link without the paid Identity Platform blocking functions, so the gate is in **Firestore rules** instead. Every rule that grants a signed-in user anything requires `allowed()`: an `allowlist/{email}` document exists for `request.auth.token.email` (lower-cased). Someone not on the list can complete the Firebase sign-in, but the app can't create their `users/{uid}` or `directory/{uid}` documents and can't read anything, so it shows *"This address hasn't been invited"* and signs them out. An orphaned Auth account with no data is harmless; the owner can prune them in the console.
+- Any signed-in user can add an address to the allowlist (that's how invites by email work, R2.4). Rules let a user read only their own allowlist entry.
+- On first sign-in, the user sets a display name, which creates `users/{uid}` and `directory/{uid}`.
 
-### Households & invites (no functions needed)
+### Households & invites (one function)
 
-- **Create:** a batch writes `households/{hid}`, `members/{uid}`, and increments `users/{uid}.householdsCreated`. Rules use `getAfter()` to require that the counter goes up by exactly 1 and stays ≤ 3 (R2.3).
-- **Invite:** a member searches `directory` by name (with 10 users, the client just loads it all) and writes `households/{hid}/invites/{inviteeUid}`.
-- **See invites:** a collection-group query on `invites` where `inviteeUid == me`.
-- **Accept:** the invitee creates their own `members/{uid}` document in a batch that deletes the invite. Rules allow this only when the invite exists.
-- **Remove or leave:** any member can delete any `members/*` document (no roles, R2.5).
+- **Create:** a batch writes `households/{hid}`, `members/{uid}`, and increments `users/{uid}.householdsCreated`. Rules use `getAfter()` to require that the counter goes up by exactly 1 and stays ≤ 3 (R2.3), and allow the creator's own `members/{uid}` document when `households/{hid}.createdBy == uid` in the same batch.
+- **Which households am I in:** a **collection-group query** on `members` where `uid == me`. There is no list on the user document, so a member removed by someone else drops out of the list immediately (§11).
+- **Invite by name:** a member searches `directory` by name (with 10 users, the client just loads it all) and writes `households/{hid}/invites/{inviteeUid}`.
+- **Invite by email:** a member writes `allowlist/{emailLower}` (if missing) and `households/{hid}/invites/{emailLower}` with `inviteeEmailLower` in one batch.
+- **See invites:** two collection-group queries on `invites`: `inviteeUid == me` and `inviteeEmailLower == my email`.
+- **Accept:** the invitee creates their own `members/{uid}` document in a batch that deletes the invite. Rules allow this only when an invite keyed by their uid **or** their email exists.
+- **Remove or leave:** any member can delete any `members/*` document (no roles, R2.5). Before a user deletes their **own** document, the client checks whether they're the last member and shows the warning from R2.13.
+- **Empty household cleanup:** an `onDocumentDeleted(households/*/members/*)` function checks whether any members remain. If none do, it deletes the household document and all of its subcollections (`recursiveDelete`) and decrements `users/{createdBy}.householdsCreated`. It's the only household-level function besides commands, and it's idempotent, so two simultaneous leaves are safe.
 
 ### Security rules (sketch)
 
 ```
-function signedIn() { return request.auth != null; }
-function isMember(hid) { return exists(/databases/$(db)/documents/households/$(hid)/members/$(request.auth.uid)); }
+function email()    { return lower(request.auth.token.email); }
+function allowed()  { return request.auth != null
+                        && exists(/databases/$(db)/documents/allowlist/$(email())); }   // R2.12
+function isMember(hid) { return allowed()
+                        && exists(/databases/$(db)/documents/households/$(hid)/members/$(request.auth.uid)); }
+function me()       { return request.auth.uid; }
+
+// Function-only household collections: readable by members, never written by clients.
+FUNCTION_ONLY = ['supply', 'stats', 'cookEvents', 'ratings', 'cadence']
+
+match /allowlist/{emailLower} { allow get: if request.auth != null && emailLower == email();
+                                allow create: if allowed(); }                          // invite by email
 
 match /households/{hid} {
   allow read, update: if isMember(hid);
-  match /supply/{doc=**}     { allow read: if isMember(hid); allow write: if false; }   // functions only
-  match /stats/{id}          { allow read: if isMember(hid); allow write: if false; }
-  match /commands/{id}       { allow read: if isMember(hid);
-                               allow create: if isMember(hid) && validCommand(request.resource.data); }
-  match /members/{uid}       { allow read, delete: if isMember(hid);
-                               allow create: if uid == request.auth.uid
-                                 && exists(/databases/$(db)/documents/households/$(hid)/invites/$(uid)); }
-  match /invites/{uid}       { allow read: if isMember(hid) || uid == request.auth.uid;
+  allow create: if allowed() && request.resource.data.createdBy == me()
+                && householdsCreatedBumpedByOne() && getAfter(/users/$(me())).data.householdsCreated <= 3;   // R2.3
+
+  match /members/{uid}       { allow read: if isMember(hid);
+                               allow delete: if isMember(hid);                           // remove or leave (R2.5, R2.13)
+                               allow create: if uid == me() && request.resource.data.uid == me() && (
+                                    getAfter(/households/$(hid)).data.createdBy == me()   // creator, same batch
+                                 || exists(/households/$(hid)/invites/$(uid))             // invite by name
+                                 || exists(/households/$(hid)/invites/$(email()))); }      // invite by email
+  match /invites/{key}       { allow read: if isMember(hid) || key == me() || key == email();
                                allow create: if isMember(hid);
-                               allow delete: if isMember(hid) || uid == request.auth.uid; }
-  match /{coll}/{id}         { allow read, write: if isMember(hid) && coll in WRITABLE; }
+                               allow delete: if isMember(hid) || key == me() || key == email(); }
+  match /commands/{id}       { allow read: if isMember(hid);
+                               allow create: if isMember(hid) && request.resource.data.uid == me()
+                                                && validCommand(request.resource.data); }
+  match /supply/{doc=**}     { allow read: if isMember(hid); }                           // write: functions only
+  match /{coll}/{id}         { allow read: if isMember(hid);
+                               allow write: if isMember(hid) && !(coll in FUNCTION_ONLY); }
 }
+match /{path=**}/members/{uid} { allow read: if uid == me() && allowed(); }              // "my households" collection-group query
+match /{path=**}/invites/{key} { allow read: if allowed() && (key == me() || key == email()); }
+
 match /recipes/{id}      { allow get: if true;                // share links work without an account
-                           allow list, create: if signedIn();
-                           allow update: if signedIn() && validVersionBump(); }
-match /meals/{id}        { allow get: if true; allow list, create, update: if signedIn(); }
-match /directory/{uid}   { allow read: if signedIn(); allow write: if uid == request.auth.uid; }
-match /users/{uid}       { allow read, write: if uid == request.auth.uid;
-                           match /notifications/{id} { allow read, update, delete: if uid == request.auth.uid; }   // functions create
-                           match /devices/{token}    { allow read, write: if uid == request.auth.uid; } }
-match /recipeIndex/{id}  { allow read: if signedIn(); allow write: if false; }
-match /prices/{id}       { allow read: if signedIn(); allow write: if false; }
+                           allow list, create: if allowed();
+                           allow update: if allowed() && validVersionBump();           // includes trashing & restoring
+                           allow delete: if allowed() && resource.data.status == 'pendingDuplicateReview';   // dedupe only; purge is a function
+                           match /versions/{v} { allow read: if allowed();
+                                                 allow create: if allowed() && v == getAfter(/recipes/$(id)).data.version; } }
+match /meals/{id}        { allow get: if true; allow list, create, update, delete: if allowed(); }
+match /ingredients/{id}  { allow get: if true;                // share-link recipe pages resolve ingredient names
+                           allow list, create, update: if allowed(); }
+match /directory/{uid}   { allow read: if allowed(); allow write: if uid == me() && allowed(); }
+match /users/{uid}       { allow read, write: if uid == me() && allowed();
+                           match /notifications/{id} { allow read, update, delete: if uid == me(); }   // functions create
+                           match /devices/{token}    { allow read, write: if uid == me(); } }
+match /recipeIndex/{id}  { allow read: if allowed(); }       // write: functions only
+match /prices/{id}       { allow read: if allowed(); }       // write: functions only
 ```
 
-Share links work for both recipes and meals: `allow get: if true` on both, and a meal page reads its recipes the same way.
+Share links work for both recipes and meals: `allow get: if true` on both, and a meal page reads its recipes the same way. Public `get` on single documents can't be enumerated, so the exposure is limited to someone who already has a link.
 
-Storage rules: `recipe-drop/{uid}/**` can only be written by that user, with a size limit of 1 MB and `.cook` files only. Image uploads are capped at 2 MB. `imports/{hid}/**` can be written by household members, JSON only, ≤ 20 MB.
+Storage rules: `recipe-drop/{uid}/**` can only be written by that user, with a size limit of 1 MB and `.cook` files only. Image uploads under `recipes/{recipeId}/**` are capped at 2 MB per file and allowed for allowlisted users; **reads of recipe images are public**, so share-link pages render them. `imports/{hid}/**` can be written by household members, JSON or zip only, ≤ 20 MB, and read by nobody but functions.
 
 ---
 
@@ -586,7 +653,9 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 | Supply consistency | Only functions write supply, one transaction per command |
 | Duplicate actions | Commands are idempotent per target (e.g. finishing an already-cooked plan item does nothing) |
 | Editors | The recipe editor and the review sheet work on a copy taken when they open. If the version changes underneath, the user sees "edited elsewhere — reload or overwrite?" |
-| Period rollover | Done in a transaction, so concurrent openings are safe (§7) |
+| Offline recipe edits | A recipe save queued offline is rejected by the version-bump rule on reconnect if someone else saved first, and the SDK drops it silently. So the editor **requires a connection to save**: offline, it keeps the draft in IndexedDB and shows "will save when online", then re-checks the version before writing. Household data (commands, plan, grocery ticks) has no such rule and syncs normally |
+| Membership | "My households" is a live collection-group query on `members`, so being removed takes effect on the next snapshot and the app switches to another household or the "no household" screen |
+| Period rollover | Done in a transaction, so concurrent openings are safe (§7). Not possible offline; the client waits for a connection |
 | Recalculation | Updates are debounced ~300 ms before suggestions or projected supply recompute in the worker |
 | Pending writes | `hasPendingWrites` drives a small "syncing" indicator, which is useful for offline commands |
 
@@ -598,11 +667,14 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 
 ```
 /                → redirect: /plan if the current period has items, else /recipes
-/plan  /recipes  /recipes/new  /recipes/:id  /recipes/:id/edit  /recipes/:id/cook
+/plan  /recipes  /recipes/new  /recipes/trash  /recipes/:id  /recipes/:id/edit  /recipes/:id/cook
 /meals  /meals/:id  /meals/:id/cook  /supply  /supply/:id  /grocery  /history
 /settings/{household,members,brands,stores,tools,preferences,weights,theme,data}
 /drop            (upload .cook files, see import results)
+/not-invited     (signed in with an address that isn't on the allowlist)
 ```
+
+`/settings/household` holds period length, budget, timezone, default servings, and planned meal types. `/settings/members` holds the member list, invite by name or email (which writes the allowlist), remove, and leave.
 
 `/recipes/:id` and `/meals/:id` also render for signed-out visitors (share links). These pages show only the global recipe content, without supply badges, notes, or stats.
 
@@ -618,8 +690,11 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 - **`<MealCookView>`**: the meal's recipes with their durations; the user picks the order and checks recipes off. When all are checked, it opens the review.
 - **`<StepMode>`**: full-screen, swipe between steps, inline amounts, Screen Wake Lock API, inline timers (§12 Cooking timers). Adapts to orientation and size (§12 Cooking layouts).
 - **`<MiseEnPlace>`**: the prep checklist shown before step mode.
-- **`<ReviewSheet>`**: per-user 1–10 rating for the meal and recipes → used amounts → leftovers ▲/▼. It can be completed later from **Pending reviews** on the Plan page.
+- **`<ReviewSheet>`**: per-user 1–10 rating for the meal and recipes → used amounts (pre-filled with what `finishCooking` already deducted) → leftovers ▲/▼. Submits a `submitReview` command whose corrections are the differences. It can be completed later from **Pending reviews** on the Plan page.
 - **`<SupplyAdjust>`**: typed amount, ±5 / ±25 buttons, Apply.
+- **`<ExpiredLotPrompt>`**: shown on Supply and Plan for each expired lot, with **Still good** (`extendExpiry`) and **Threw it out** (`discard`) (R8.15).
+- **`<TrashList>`**: `/recipes/trash`, trashed recipes with days remaining and a Restore button (R4.26).
+- **`<LeaveHouseholdDialog>`**: the leave confirmation, with the extra "this deletes the household and all its data" warning when the user is the last member (R2.13).
 - **`<LedgerList>`**: paginated transaction history.
 - **`<IngredientPicker>`**: typeahead with allowed-measurement selector.
 - **`<NotificationBanners>`**: the app-wide notification system. Banners stack at the bottom of every page, above the bottom tab bar on phones. Fed by a live listener on `users/{uid}/notifications` (undismissed) plus local, client-only messages. Success and info banners auto-dismiss after ~6 s; errors stay until dismissed. Each can link to the related page.
@@ -682,8 +757,8 @@ Firestore `persistentLocalCache` (multi-tab) caches data and queues writes. Toge
 ## 13. Deployment & Operations
 
 - **Environments:** `solving-food-dev` and `solving-food-prod` Firebase projects (both Blaze with budget alerts, both expected to cost $0). Local development runs entirely on the **Emulator Suite**.
-- **CI/CD:** GitHub Actions runs lint, unit, rules, and functions tests plus the Playwright PR suite (§14.1) on every PR. Merging to `main` deploys to prod. PRs get Hosting preview channels.
-- **Monitoring:** Cloud Functions logs and error reporting, the $1 budget alert, and an alert if the weekly price refresh fails twice in a row.
+- **CI/CD:** GitHub Actions runs lint, type-check, unit, property, rules, and functions (emulator) tests, plus the requirement-tag coverage check, on every PR. **The Playwright suite does not run in CI** (§14.1): it runs on the developer's machine before merging, to stay inside GitHub's free Actions minutes. Merging to `main` deploys to prod. PRs get Hosting preview channels.
+- **Monitoring:** Cloud Functions logs and error reporting, the $1 budget alert, and an alert if the weekly maintenance job fails twice in a row.
 - **Secrets:** PC Express credentials are set with `firebase functions:secrets:set` in each project. The dev project and the emulators use the PC Express stub (§14.1), not real credentials.
 
 ### Household data download & import
@@ -704,13 +779,15 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 
 - **Unit (Vitest, `packages/core`):** unit conversion and metric + imperial formatting, Cooklang → recipe and recipe → Cooklang round-trip, FEFO ledger math, free-use exclusion, scoring, optimiser (threshold, diversity, exhaustion), coverage counting, grocery rounding, budget math, period rollover, export schema.
 - **Property tests (fast-check):** Σ transactions == `canonicalAmount`; FEFO never takes a lot below zero; export → import round-trip keeps the recipe the same.
-- **Security rules:** household isolation; the 3-household limit; invite/accept flow; clients can't write supply, stats, the index, or prices; version bump enforced.
-- **Functions (emulator):** every command handler including `importHousehold`, the drop-folder pipeline (good file, bad file, duplicate, image download and resize), index maintenance, recipe-delete cleanup across households, PC Express module against the stub, timer scheduling and cancellation.
+- **Security rules:** allowlist gate (a non-allowlisted signed-in user can read and create nothing); household isolation; the 3-household limit; creator's member doc in the creation batch; invite/accept by uid and by email; collection-group reads of `members` and `invites` limited to one's own; clients can't write the function-only collections (supply, stats, cookEvents, ratings, cadence), the index, or prices; version bump enforced; recipe hard-delete allowed only for `pendingDuplicateReview`.
+- **Functions (emulator):** every command handler including `submitReview` corrections, `extendExpiry`, and `importHousehold`; the drop-folder pipeline (good file, bad file, duplicate, image download and resize, non-drop path ignored); index maintenance including trashed recipes leaving and re-entering; weekly maintenance (price refresh against the stub, 30-day trash purge); recipe-purge cleanup across households; empty-household cleanup and counter decrement; timer scheduling and cancellation.
 - **E2E (Playwright):** a full suite covering every user-facing requirement in the PRD (§14.1).
 
 ### 14.1 End-to-End Suite (Playwright)
 
-**Coverage rule:** every user-facing PRD requirement (R2.x–R12.x, NFR5, NFR6) has at least one Playwright test. Each test is tagged with the requirement IDs it covers (e.g. `test('budget goes negative and turns red', { tag: ['@R6.5'] }, …)`), and a CI script fails the build if a user-facing requirement has no tagged test.
+**Coverage rule:** every user-facing PRD requirement (R2.x–R12.x, NFR5, NFR6) has at least one Playwright test. Each test is tagged with the requirement IDs it covers (e.g. `test('budget goes negative and turns red', { tag: ['@R6.5'] }, …)`), and a script (`pnpm e2e:coverage`, run locally and in CI since it only reads the spec files) fails if a user-facing requirement has no tagged test.
+
+**Where it runs:** the suite runs **locally** (`pnpm e2e`), not in GitHub Actions. A full run of this matrix against the emulators on every PR would exhaust the 2,000 free Actions minutes of a private repo within a few PRs, and NFR2's spirit applies to CI as much as to Firebase. A PR is merged only after the author has run the relevant specs locally and pasted the Playwright summary into the PR description. The full matrix is run locally before each prod deploy.
 
 #### Environment
 
@@ -721,6 +798,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 - **Function results:** tests wait for the UI to show the result of a command or drop import (`expect.poll` / auto-retrying assertions), never fixed sleeps.
 - **PC Express** is never called. The PC Express module is pointed at a local stub server returning canned sign-in, search, store, and price responses, including failure cases.
 - **Cloud Tasks and push:** the timer functions use a stub queue in tests. Specs check that tasks are scheduled and cancelled, and trigger the handler directly to check the notification payload.
+- **WebKit limits:** Playwright's WebKit build on Linux has no Push API, Notification API, or Screen Wake Lock. Specs that assert on those run on the Chromium projects only; on `phone-ios` and `tablet` they assert the UI around them (the install prompt, the offline banner, the timer countdown).
 
 #### Projects (Playwright `projects` matrix)
 
@@ -737,30 +815,30 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 
 | Spec | Covers |
 |---|---|
-| `auth.spec.ts` | Open sign-up; email-link sign-in; "paste sign-in link" fallback; display-name setup and directory entry; sign-out (R2.1, R2.12) |
-| `households.spec.ts` | Create household; 3-household limit; search directory and invite; accept/decline; switch active household; remove member; leave (R2.2–R2.5, R11.8) |
+| `auth.spec.ts` | Allowlisted email signs in; non-allowlisted email reaches "not invited" and nothing is created; "paste sign-in link" fallback; display-name setup and directory entry; sign-out (R2.1, R2.12) |
+| `households.spec.ts` | Create household with timezone, default servings, and meal types; 3-household limit; invite by name and by email (allowlist + invite); accept/decline; switch active household; remove member; leave; last member sees the deletion warning and the household is gone afterwards (R2.2–R2.5, R2.13, R11.8) |
 | `isolation.spec.ts` | User in household A can't see B's supply, plan, history, or ratings, through the UI or direct Firestore reads from the page (R2.8, NFR4) |
 | `recipes-browse.spec.ts` | Full-text search; every filter and sort, including Suggested; "can make" marking; "Use what's left"; stats on cards; favourites (R4.1–R4.7) |
 | `recipe-detail.spec.ts` | Supply badges next to ingredients; servings scaling; missing-tool warning; protein per serving (R4.8–R4.9, R4.13–R4.14, R6.15) |
 | `cooking.spec.ts` | Mise en place; step mode navigation (swipe, tap, keys); inline amounts; portrait/landscape and tablet layouts; wake lock requested (R4.10–R4.12, R4.24) |
 | `timers.spec.ts` | Start, pause, cancel, and adjust timers; foreground alarm; push scheduled and cancelled (task stub); install prompt on iOS; offline warning banner (R4.23) |
-| `recipe-edit.spec.ts` | Manual create and edit with fixed cuisine/protein lists; version history and restore; concurrent-edit warning; delete with all-users warning and cleanup of plans, meals, and favourites (R4.15, R4.19, R4.25–R4.26) |
+| `recipe-edit.spec.ts` | Manual create and edit with fixed cuisine/protein lists; version history and restore; concurrent-edit warning; offline draft saved when online; delete with all-users warning moves to Trash and hides from search and plans; restore from Trash; purge after 30 days (clock) cleans up plans, meals, and favourites (R4.15, R4.19, R4.25–R4.26) |
 | `drop-folder.spec.ts` | Upload `.cook` files → recipes appear with downloaded images; invalid file shows an error banner on whatever page is open; file deleted after processing; duplicate goes to the review list; keep existing / keep new / keep both (R4.16–R4.17, R4.20) |
 | `notifications.spec.ts` | Banners appear at the bottom of any page, stack, auto-dismiss (success) or persist (error), link to their target, and stay dismissed across devices (R12.1) |
 | `sharing.spec.ts` | Copy link; signed-out visitor sees the recipe/meal page without household data; `.cook` export downloads and re-imports (R4.21–R4.22) |
 | `meals.spec.ts` | Create, edit, favourite, share meals; choose recipe order with durations shown; meal and recipe ratings (R5.1–R5.6) |
-| `plan.spec.ts` | Add/remove items; meal types; coverage strip fills left to right, shows n/N and overflow, cells not clickable; budget meter goes down, goes negative and turns red, never blocks; expiry badges; protein summary; landing page redirect (R6.1–R6.7, R6.17) |
+| `plan.spec.ts` | Add/remove items scaled to default servings; meal types; coverage strip shows only planned meal types, fills left to right, shows n/N and overflow, cells not clickable; budget meter goes down, ignores incoming and in-supply ingredients, goes back up after receiving, goes negative and turns red, never blocks; expiry badges; protein summary; landing page redirect (R6.1–R6.7, R6.17, R11.12–R11.13) |
 | `rollover.spec.ts` | Uncooked items carry over at period end; two members opening at once creates one period (R6.6) |
 | `leftovers.spec.ts` | Meal-prep batch fills lunch cells when planned; confirmed ▲/▼ count replaces the estimate; leftover supply item with expiry; leftover plan items roll over; mark eaten (R6.8–R6.10, R9.5) |
 | `suggestions.spec.ts` | Ranking reflects expiry, supply, ratings, variety, and protein goal; weight sliders and presets change the order; expiry alerts (R6.11–R6.14, R6.16) |
 | `optimiser.spec.ts` | "n dinners under $x" respects the budget; Next gives a different good set; Back restores the previous one; "No more good combinations" when exhausted; Accept adds all; protein-goal toggle (R6.18–R6.20) |
 | `prices.spec.ts` | Store picker (defaults to Loblaws Greenbank Road); in-app product search links a brand mapping; live price used when fresh; falls back to estimates when stale or failed; "price unknown" marker (R6.21–R6.22, R7.10) |
-| `grocery.spec.ts` | List built from plan − supply with pack rounding; free-use ingredients excluded (R8.14); brand names applied; grouped by store; copy button copies only the PC Express section; manual additions; cadence prompts (R7.1–R7.7) |
+| `grocery.spec.ts` | List built from plan − supply − incoming with pack rounding (mapping, default pack, or raw); expired lots treated as missing; free-use ingredients excluded (R8.14); brand names applied; grouped by store with mapping winning over category rule; copy button copies only the PC Express section and marks the list ordered (with undo); regenerating doesn't re-add ordered items; manual additions; cadence prompts including the seeded default interval (R7.1–R7.7) |
 | `receive.spec.ts` | Confirm unchanged = everything bought; edit quantities and substitutions; freeze prompt for bulk freezable items; supply updated (R7.8–R7.9) |
-| `supply.spec.ts` | Starts empty; add via ingredient picker in each allowed measurement; current (projected) display in metric + imperial (R8.13); Staples group for free-use items (R8.14); per-lot expiry flags; freeze/thaw; ±5/±25 + Apply corrections; discard; filters; transaction history with infinite scroll (R8.1–R8.12) |
-| `review.spec.ts` | Review opens when all recipes are checked off and on early "Done cooking"; per-user ratings; adjust used ingredients; pending reviews completed later by another member (R9.1–R9.4) |
+| `supply.spec.ts` | Starts empty; add via ingredient picker in each allowed measurement; current (projected) display in metric + imperial (R8.13); Staples group for free-use items (R8.14); per-lot expiry flags; expired lot excluded from amounts and "can make" until Still good / Threw it out (R8.15); freeze/thaw; ±5/±25 + Apply corrections; discard; filters; transaction history with infinite scroll (R8.1–R8.12) |
+| `review.spec.ts` | Done cooking deducts recipe defaults and adds estimated leftovers immediately; review opens when all recipes are checked off and on early "Done cooking"; per-user ratings; adjusting used ingredients posts corrections for the difference; pending reviews completed later by another member (R9.1–R9.4) |
 | `history.spec.ts` | Cooked list, filters, stats (R10.1–R10.3) |
-| `settings.spec.ts` | Tools, preferences, weights, protein goals, plan period, budget, brand mappings, stores and sourcing rules; theme flavour and accent persist per user only (R11.1–R11.9) |
+| `settings.spec.ts` | Tools, preferences, weights, protein goals, plan period, budget, timezone, default servings, planned meal types, brand mappings, stores and sourcing rules; theme flavour and accent persist per user only (R11.1–R11.9, R11.11–R11.13) |
 | `data-transfer.spec.ts` | Download produces a valid zip; import into another household after the replace warning reproduces supply, plan, history, and favourites; members unchanged; invalid file rejected with an error banner (R11.10) |
 | `live-sync.spec.ts` | Two browser contexts as two members: plan, supply, and grocery ticks appear on the other device without reload; simultaneous grocery ticks both survive (NFR5) |
 | `offline.spec.ts` | `context.setOffline(true)`: finish a meal, adjust supply, tick groceries; go back online and the changes apply and sync (§12 Offline) |
@@ -778,11 +856,12 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 - **Artifacts:** trace, video, and screenshots are kept on first retry. The HTML report is uploaded from CI.
 - **Flake policy:** CI allows 1 retry, and any test that passes only on retry is reported. A test that is flaky twice in a week is fixed or quarantined (`test.fixme`) with an issue.
 
-#### CI
+#### Running the suite
 
-- **Every PR:** `@smoke` on all projects, plus the full suite on `phone-ios` and `desktop-1080p`, sharded across 4 runners.
-- **Merge to `main`:** the full matrix, including 4K and visual baselines, must pass before deploying.
-- Visual baseline updates (`--update-snapshots`) happen only in a dedicated PR, so changes are reviewed as images.
+- **Before opening a PR:** `pnpm e2e --project=phone-ios --project=desktop-1080p` plus any specs the change touches. The Playwright summary goes in the PR description.
+- **Before a prod deploy:** `pnpm e2e` (the full matrix, including 4K and visual baselines) locally. The deploy is blocked by a checklist item, not by CI.
+- **In CI (GitHub Actions):** only the cheap layers run: lint, type-check, unit and property tests, rules tests, functions tests on the emulator, and `pnpm e2e:coverage`. Together these take a few minutes and fit comfortably in the free tier.
+- Visual baseline updates (`--update-snapshots`) happen only in a dedicated PR, so changes are reviewed as images. Baselines are generated on Linux (the same OS as the emulator image) so they're stable across developer machines.
 
 ---
 
@@ -790,12 +869,12 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 
 | # | Milestone | Scope |
 |---|---|---|
-| M0 | Skeleton | Monorepo, Firebase projects (Blaze + alerts, `us-east1`), emulators, PWA shell, theme, email-link auth, CI deploy, Playwright harness (fixtures, seed data, project matrix, requirement-tag check) |
-| M1 | Recipes | Ingredient seed data (incl. free-use flags), taxonomies, structured editor, versioning, delete + cleanup, search index, notification banners, drop folder + Claude skill, dedupe, share links |
-| M2 | Plan + Grocery | Periods & rollover, meals, Plan page with coverage strip, budget meter (estimates), brand mappings, stores, grocery builder, copy button |
-| M3 | Supply & Cooking | Commands, ledger, manual add, confirmation with freeze prompt, cooking views and layouts, timers with push, review flow, leftovers, projected supply, expiry |
-| M4 | Households | Directory, invites, multiple households (≤ 3), member management, data download & import |
-| M5 | Smarts | Suggestions & weights, expiry badges and alerts, optimiser, staples cadence, PC Express module (auth, store and product search, price refresh) |
+| M0 | Skeleton | Monorepo, Firebase projects (Blaze + alerts, `us-east1`), emulators, PWA shell, theme, email-link auth with allowlist, a single household created automatically for the first user (all data is nested under a household from day one), CI (lint, unit, rules, functions), Playwright harness (fixtures, seed data, project matrix, requirement-tag check) |
+| M1 | Recipes | Ingredient seed data (incl. free-use flags, default packs, default cadence), taxonomies, structured editor, versioning, Trash + purge + cleanup, search index, notification banners, drop folder + Claude skill, dedupe, share links |
+| M2 | Plan + Grocery | Periods & rollover, household settings (timezone, servings, meal types), meals, Plan page with coverage strip, budget meter (estimates), brand mappings, stores, grocery builder with incoming, copy button marks ordered |
+| M3 | Supply & Cooking | Commands, ledger, manual add, confirmation with freeze prompt, cooking views and layouts, timers with push, Done cooking → review corrections, leftovers, projected supply, expiry and the expired-lot prompt |
+| M4 | Households | Directory, invites by name and email, multiple households (≤ 3), member management, last-member deletion, data download & import |
+| M5 | Smarts | Suggestions & weights, expiry badges and alerts, optimiser, staples cadence, PC Express module (auth, store and product search, weekly maintenance job) |
 
-Each milestone is done only when the Playwright specs for its requirements (§14.1) pass across the project matrix.
+Each milestone is done only when the Playwright specs for its requirements (§14.1) pass locally across the project matrix.
 

@@ -1,6 +1,6 @@
 # Solving Food — Product Requirements
 
-> Status: Draft v0.4 · Source: `THOUGHTS.md` + answered open questions · Last updated: 2026-10-09
+> Status: Draft v0.5 · Source: `THOUGHTS.md` + answered open questions · Last updated: 2026-10-09
 
 ---
 
@@ -26,6 +26,7 @@ The name **Solving Food** is final.
 - Non-food household items (cleaning supplies, toilet paper) on the grocery list.
 - Weighing ingredients with scales or sensors. Supply is inferred, not measured.
 - Importing recipes from URLs or photos inside the app. An external LLM does this and drops the result into the app (§4.3).
+- Deleting a user account from inside the app. Users can leave households (R2.13). Removing an account is done by the project owner in the Firebase console.
 
 ### Success metrics
 
@@ -42,7 +43,7 @@ The name **Solving Food** is final.
 - **R2.1** Users sign in with **passwordless email** (magic link or one-time code).
 - **R2.2** A **household** has one or more users. A user can belong to more than one household (e.g. a cottage, or a parent's home) and can switch the active household.
 - **R2.3** Each user can **create up to 3 households**.
-- **R2.4** Members invite others by **searching a directory of all users by name** and sending an invite. The invitee accepts it to join.
+- **R2.4** Members invite others in one of two ways. **By email:** the member types an email address. That address is added to the app's **sign-up allowlist** (R2.12) and a household invite is created for it, so a newcomer sees the invite as soon as they first sign in. **By name:** for people who already have an account, the member **searches the directory of users by name** and sends an invite. In both cases the invitee accepts the invite to join.
 - **R2.5** There are **no roles**. Every member of a household can do everything in it, including deleting things and inviting or removing members.
 - **R2.6** These belong to a **household** and are shared by all its members: supply, plans, grocery lists, cook history, favourites, brand mappings, stores, kitchen tools, preferences, suggestion weights, and settings.
 - **R2.7** **Ratings are per user.** The household sees the average of its members' ratings.
@@ -50,7 +51,8 @@ The name **Solving Food** is final.
 - **R2.9** The **recipe and meal library is global**. Every user can search, add, and edit it (§4).
 - **R2.10** The only **per-user setting** is the theme (§11). Everything else is configured per household.
 - **R2.11** Every household member gets the same experience on their own device. For example, a spouse can check the plan or cook from a recipe on their phone.
-- **R2.12** **Open sign-up.** Anyone with the app's URL can create an account. Once signed up, they appear in the user directory so others can invite them to a household.
+- **R2.12** **Sign-up by invitation only.** An email address must be on the **allowlist** before it can sign in. Any member of any household can add an address (R2.4). Someone whose address isn't allowlisted is told so after they follow the sign-in link, and nothing is created for them. Once signed up, a user appears in the user directory so others can invite them to further households. This keeps the shared recipe library (R2.9, R4.19, R4.26) in the hands of people someone in the circle has vouched for.
+- **R2.13** **Leaving a household.** Any member can leave. If they are the **last member**, the app warns that leaving **deletes the household and all of its data** (supply, plans, history, ratings, settings) and asks them to confirm. The household is then deleted, and it no longer counts toward its creator's 3-household limit (R2.3). Recipes and meals in the global library are not affected.
 
 ---
 
@@ -68,11 +70,11 @@ flowchart LR
 ```
 
 1. **Suggest.** The app ranks recipes so the ones that use up supply close to expiry come first, while staying varied and within budget. A **Suggested** sort option is always available, and it also ranks the results of any filter.
-2. **Plan.** The user adds recipes or saved meals to the plan. The budget meter goes down as they add.
-3. **Grocery list.** The app works out *needed − projected supply*, applies preferred brands, and groups items by store.
-4. **Order.** The user copies the list into ChatGPT, which orders it through the PC Express plugin. When the groceries arrive, the user confirms them and corrects any quantities that changed. The app adds them to supply.
-5. **Cook.** The user opens a planned meal and cooks from the step view.
-6. **Review.** The user rates the meal from 1 to 10, adjusts the ingredients they actually used, and confirms leftovers. Supply is updated.
+2. **Plan.** The user adds recipes or saved meals to the plan, scaled to the household's default servings (R11.12). The budget meter goes down as they add.
+3. **Grocery list.** The app works out *needed − projected supply − items already ordered*, applies preferred brands, and groups items by store.
+4. **Order.** The user copies the list into ChatGPT, which orders it through the PC Express plugin. Copying marks the list as **ordered**. When the groceries arrive, the user confirms them and corrects any quantities that changed. The app adds them to supply.
+5. **Cook.** The user opens a planned meal and cooks from the step view. Pressing **Done cooking** immediately deducts the recipe's ingredients from supply and records the estimated leftovers, so supply is right even if nobody reviews the meal.
+6. **Review.** Straight away or later, the user rates the meal from 1 to 10, adjusts the ingredients they actually used, and confirms leftovers. Supply is corrected by the difference.
 7. **Carry over.** Meals not cooked by the end of the period carry over to the next one.
 
 ### The plan period
@@ -98,7 +100,7 @@ flowchart LR
 ### 4.2 Recipe Detail & Cooking View
 
 - **R4.8** The detail view shows the image, servings, times, ingredients, steps, tools, source link, and the household's notes.
-- **R4.9** **Next to every ingredient**, the view shows how much of it is in supply (e.g. `Salmon 400 g · have 250 g ⚠`).
+- **R4.9** **Next to every ingredient**, the view shows how much of it is in supply (e.g. `Salmon 400 g · have 250 g ⚠`). Free-use ingredients (R8.14) show *staple* instead of an amount. Expired lots don't count (R8.15).
 - **R4.10** **Step mode** shows one step at a time in large text, full screen, with that step's ingredients and any timers. The screen stays awake while it's open.
 - **R4.11** Step instructions always show ingredient **amounts inline** where each ingredient is mentioned (e.g. "Add the butter (30 g)").
 - **R4.12** A **mise en place** screen lists all prep tasks up front (chop, measure, preheat) before step mode starts.
@@ -127,7 +129,7 @@ flowchart LR
 ### 4.6 Managing the Library
 
 - **R4.25** **Cuisine** and **main protein** are chosen from **fixed lists**, the same in the recipe form and the Claude skill, so recipes are classified consistently.
-- **R4.26** **Any user can delete a recipe.** A confirmation dialog warns that it will be deleted **for all users in every household**. Deleting removes it from searches, meals, plans, and favourites everywhere. Past cook history keeps the recipe's name, marked as deleted.
+- **R4.26** **Any user can delete a recipe, and deletion goes through a Trash.** A confirmation dialog warns that it will be removed **for all users in every household**. A deleted recipe moves to **Trash** for **30 days**. While in Trash it's hidden from the Recipes list, search, and suggestions, and it can't be added to plans or meals. Meals and planned items that already reference it keep working and show a *recipe in Trash* badge. Any user can open the Trash and **restore** a recipe, which undoes all of this. After 30 days the recipe is deleted permanently: it's removed from meals, plans, and favourites everywhere, and past cook history keeps the recipe's name, marked as deleted.
 
 ---
 
@@ -147,13 +149,13 @@ flowchart LR
 ### 6.1 Plan Page
 
 - **R6.1** The Plan page shows the **meals selected for the current period** as a list that can be sorted and filtered.
-- **R6.2** **Period coverage view.** Above the list, the Plan page shows the plan period as a **calendar-like strip**: one cell per day, labelled with its weekday and date for orientation, and one row per meal type the household plans (breakfast, lunch, dinner).
+- **R6.2** **Period coverage view.** Above the list, the Plan page shows the plan period as a **calendar-like strip**: one cell per day, labelled with its weekday and date for orientation, and one row per meal type the household plans (R11.13; breakfast, lunch, and dinner by default).
   - Cells **fill from left to right** as meals are added. Five dinners planned in a 7-day period fill the first five dinner cells, and the row reads **5/7**. It's a visual version of "5 of 7 dinners planned", **not a schedule**. Meals are never assigned to specific days, and the cells can't be tapped to pick a day.
   - A meal-prep recipe or leftover portions fill one cell per portion they cover (e.g. 4 lunches from one batch fill 4 lunch cells).
   - Cooked meals show as solid cells and planned-but-not-cooked meals as outlined cells, so the strip also shows progress through the period.
   - If more meals are planned than there are days, the row shows the overflow (e.g. **8/7, +1**).
   - Snacks aren't shown in the strip.
-- **R6.3** A **budget meter** is always visible. It starts at the household's budget for the period and goes down as meals are added. The cost of a meal counts only ingredients that have to be bought; ingredients already in supply cost nothing extra.
+- **R6.3** A **budget meter** is always visible. It starts at the household's budget for the period and goes down as meals are added. The cost of a meal counts only ingredients that **still have to be bought**; ingredients already in supply, or already on a grocery list that has been ordered but not yet delivered, cost nothing extra. The meter therefore answers *"what will the next grocery order cost?"* Once an order is confirmed as received, the planned meals are covered and the meter goes back up. **This is intended.** What the household actually spent in a period is shown on the History page (R10.3).
 - **R6.4** The budget covers **all food for planned meals** in the period. Food bought outside of recipes (manual list additions, staples) doesn't count against it.
 - **R6.5** Going over budget is allowed. The meter goes negative and turns red, but the app **never stops** the user from adding meals.
 - **R6.6** Meals not cooked by the end of the period **roll over** into the next period's plan automatically.
@@ -163,7 +165,7 @@ flowchart LR
 
 - **R6.8** One recipe can produce **several portions** that cover future lunches or breakfasts, and these can last into the next period.
 - **R6.9** After a meal is cooked, the app asks: *"Estimated leftovers: 3 lunches — correct?"* The user adjusts the number with ▲/▼ buttons.
-- **R6.10** Leftover portions are tracked as their own supply items, with an expiry date. They fill lunch/breakfast slots in the plan.
+- **R6.10** Leftover portions are tracked as their own supply items, with an expiry date (4 days in the fridge or 90 days frozen by default). They fill lunch/breakfast slots in the plan.
 
 ### 6.3 Suggestions
 
@@ -204,13 +206,13 @@ flowchart LR
 
 ## 7. Grocery List & Ordering
 
-- **R7.1** The **grocery list** is generated automatically as *ingredients needed by the plan − projected supply*, rounded up to purchasable pack sizes.
+- **R7.1** The **grocery list** is generated automatically as *ingredients needed by the plan − projected supply − items on lists already ordered but not yet received*, rounded up to purchasable pack sizes. The pack size comes from the ingredient's brand mapping (R7.3), or from a typical pack size in the ingredient data when there's no mapping, or the raw amount is listed when neither is known.
 - **R7.2** The list is **food only**.
 - **R7.3** **Brand mapping.** A dedicated page maps a generic ingredient to a preferred product, e.g. `canned tomatoes → Mutti Polpa 400 g`. The grocery list uses the mapped product name, so the LLM orders the right thing.
 - **R7.4** **Stores.** Each ingredient (or category) has a preferred store, e.g. *meat → Costco*. The list is grouped by store. Only the PC Express section is meant to be copied into ChatGPT. Other stores (e.g. Costco) become in-store checklists.
-- **R7.5** **Copy button.** One button copies the PC Express section in a clean, LLM-friendly format with quantities and brands.
+- **R7.5** **Copy button.** One button copies the PC Express section in a clean, LLM-friendly format with quantities and brands. Copying marks the list as **ordered**, so its items aren't added to the list again until the order is confirmed (R7.8). The user can undo this if the order wasn't placed.
 - **R7.6** **Manual additions.** Users can add any food item to the list at any time.
-- **R7.7** **Staples cadence.** The app learns how fast the household uses staple foods (milk, eggs, coffee, and the free-use ingredients in R8.14). When an item is probably running low, it asks *"Are you out of milk?"* and offers to add it to the list.
+- **R7.7** **Staples cadence.** The app learns how fast the household uses staple foods (milk, eggs, coffee, and the free-use ingredients in R8.14). When an item is probably running low, it asks *"Are you out of milk?"* and offers to add it to the list. Until the household has bought an item at least twice, the app uses a typical interval from the ingredient data.
 - **R7.8** **Purchase confirmation.** After an order is delivered or a store trip is done, the user is shown the list of items to confirm. They can adjust for substitutions and out-of-stock items. If they change nothing, the app assumes everything was bought and arrived. The result is added to supply.
 - **R7.9** **Freeze prompt for bulk buys.** Confirming a bulk purchase of a freezable item (e.g. 3 kg of chicken from Costco) asks *"Freeze some of this?"* and lets the user choose how much to freeze.
 - **R7.10** **Product search for brand mapping.** The brand mapping page has an in-app **PC Express product search** showing name, pack size, image, and current price at the household's store. Picking a result links the ingredient to that exact product.
@@ -235,6 +237,7 @@ flowchart LR
 - **R8.12** Filters: by location (pantry, cupboards, fridge, freezer), category, expiring soon, low stock.
 - **R8.13** **Metric and imperial together.** Every amount in the app (recipes, supply, grocery list) is shown in both systems, e.g. `1 cup flour (125 g · 4.4 oz)`. There's no setting to switch; both are always visible.
 - **R8.14** **Free-use ingredients.** Ingredients used freely and often outside recipes, such as cooking oils, salt, pepper, and butter, aren't tracked by amount. Cooking doesn't subtract them and planned meals don't add them to the grocery list. The staples cadence (R7.7) handles them instead. They appear in a **Staples** group on the Supply page with when each was last bought. **Spices are not free-use** and are tracked like other ingredients. Which ingredients are free-use can be changed per ingredient.
+- **R8.15** **Expired lots.** When a lot passes its expiry date, it stops counting toward supply: it's excluded from the amounts shown in brackets, from "can make with current supply", from recipe ingredient badges, and from the grocery list calculation, so the app assumes it will have to be replaced. It is **never discarded automatically**. The Supply page and the Plan page show a prompt for each expired lot with two actions: **Still good** (extends the expiry by a few days, or lets the user pick a date) and **Threw it out** (records a discard). Until one is chosen, the lot shows as expired.
 
 ---
 
@@ -245,7 +248,7 @@ flowchart LR
   1. **Rate it 1–10.** Each user rates for themselves, and the meal and its recipes can each be rated (R5.3).
   2. **Adjust ingredients used.** The recipe quantities are pre-filled. The user can change any amount, remove an ingredient, or add one.
   3. **Confirm leftovers** with ▲/▼ (R6.9).
-- **R9.3** Supply is reduced by the confirmed amounts, and leftover portions are added.
+- **R9.3** Supply is updated in two steps so that it's never left stale. **Done cooking** immediately subtracts the recipe's ingredients (at the planned servings) and adds the recipe's estimated leftover portions. The review then **corrects** supply by the difference between those defaults and what the user confirms. If the review is never completed, the defaults stand.
 - **R9.4** A review doesn't have to be done straight away. Cooked meals without a review appear in a **"pending reviews"** prompt so any household member can finish it later (e.g. that evening). Each other member is prompted to add their own rating.
 - **R9.5** The user can mark which planned items were **eaten**. This covers leftovers and snacks as well as cooked meals.
 
@@ -255,7 +258,7 @@ flowchart LR
 
 - **R10.1** The History page lists everything cooked: date, meal, ratings, who cooked it, notes, and deviations from the recipe.
 - **R10.2** It uses the same filter and sort component as the other lists.
-- **R10.3** It shows stats: most-cooked recipes, average rating by cuisine, and spend per period.
+- **R10.3** It shows stats: most-cooked recipes, average rating by cuisine, and spend per period. Spend is the estimated cost of every grocery list confirmed as received in the period, using the prices known at the time.
 
 ---
 
@@ -270,9 +273,12 @@ Everything here belongs to the household except the theme, which is per user.
 - **R11.5** **Plan period** length in days.
 - **R11.6** **Budget** for planned meals per period.
 - **R11.7** **Brand mappings** and **stores** (dedicated page, §7).
-- **R11.8** **Household members**: invite by name, remove members, leave the household.
+- **R11.8** **Household members**: invite by email or by name (R2.4), remove members, leave the household (with the last-member warning, R2.13).
 - **R11.9** **Theme (per user).** Catppuccin flavour (Latte/Frappé/Macchiato/Mocha) and accent colour.
 - **R11.10** **Download & import household data.** A **Download household data** button saves a file with all of the household's data (supply and its history, plans, grocery lists, cook history, ratings, favourites, notes, and settings) plus the recipes and meals it uses. An **Import household data** button loads such a file into the current household, after a warning that it **replaces** the household's existing data. Members aren't changed by an import.
+- **R11.11** **Timezone.** Set when the household is created (default *America/Toronto*). Period boundaries and expiry days are worked out in it.
+- **R11.12** **Default servings.** The number of servings a recipe is planned for unless the user changes it (asked when the household is created, e.g. 4). Recipes added to the plan are scaled to it.
+- **R11.13** **Planned meal types.** Which of breakfast, lunch, and dinner the household plans. All three are on by default. Each one that's on gets a row in the period coverage strip (R6.2), a protein goal (R6.14), and a line in the protein summary (R6.17). Snacks are always available and never shown in the strip.
 
 ---
 
@@ -283,12 +289,12 @@ Everything here belongs to the household except the theme, which is per user.
 | Page | Purpose |
 |---|---|
 | **Plan** | Current period's meals, budget meter, suggestions, optimiser, expiry alerts, pending reviews |
-| **Recipes** | Global library: search, filter, add, review possible duplicates |
+| **Recipes** | Global library: search, filter, add, review possible duplicates, Trash |
 | **Meals** | Saved recipe collections |
 | **Supply** | Current and projected amounts, expiry dates, transactions |
 | **Grocery** | Generated list grouped by store, copy button, purchase confirmation |
 | **History** | Cooked meals, ratings, stats |
-| **Settings** | Household, members, brands, stores, tools, preferences, weights, theme |
+| **Settings** | Household (period, budget, timezone, servings, meal types), members and allowlist, brands, stores, tools, preferences, weights, theme, data |
 
 - **Landing page:** **Plan** if the current period has a plan, otherwise **Recipes**.
 
@@ -317,6 +323,6 @@ Everything here belongs to the household except the theme, which is per user.
 - **NFR1 Cloud-hosted on Firebase.** Hosting, user accounts, and the database all run on Firebase. Every household member can reach the app from anywhere, with nothing to run at home.
 - **NFR2 Free tier.** The app stays within Firebase's free usage. Paid features are used only where they're unavoidable, and even then usage must stay inside the no-cost quotas.
 - **NFR3 Scale.** Designed for about **3 households and 10 users** in the first year.
-- **NFR4 Privacy.** Household data (supply, plans, history, ratings) is visible only to members of that household, enforced by database security rules.
+- **NFR4 Privacy.** Household data (supply, plans, history, ratings) is visible only to members of that household, enforced by database security rules. Only allowlisted email addresses can sign in (R2.12), also enforced by security rules.
 - **NFR5 Live sync.** Changes made by one household member (plan, supply, grocery list) appear on other members' devices without a refresh.
 - **NFR6 Responsive.** Every page works and looks intentional from a 360 px-wide phone up to a 3840×2160 (4K) display, with no horizontal scrolling and no pixelated images.
