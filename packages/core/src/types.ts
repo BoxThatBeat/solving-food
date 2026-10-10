@@ -183,10 +183,16 @@ export const recipeVersionSchema = recipeSchema.extend({
 });
 export type RecipeVersionDoc = z.infer<typeof recipeVersionSchema>;
 
+export const MEAL_NAME_MAX = 80;
+export const MEAL_RECIPES_MAX = 12;
+export const mealRecipeSchema = z.object({ recipeId: id, servingsMultiplier: z.number().positive().max(10) });
+/** A saved meal (R5.2): global like recipes, born from Create meal (R5.8). */
 export const mealSchema = z.object({
-  name: z.string().min(1),
-  recipes: z.array(z.object({ recipeId: id, servingsMultiplier: z.number().positive() })).min(1),
+  name: z.string().trim().min(1, "Name the meal").max(MEAL_NAME_MAX),
+  recipes: z.array(mealRecipeSchema).min(1).max(MEAL_RECIPES_MAX),
   createdBy: z.string(),
+  updatedBy: z.string().optional(),
+  createdAt: timestamp.optional(),
   updatedAt: timestamp,
 });
 export type MealDoc = z.infer<typeof mealSchema>;
@@ -256,6 +262,8 @@ export const householdSchema = z.object({
   plannedMealTypes: z.array(z.enum(PLANNABLE_MEAL_TYPES)).min(1),
   pcxStoreId: z.string().min(1),
   currentPeriodId: id.nullable(),
+  /** Store items go to when no mapping or sourcing rule picks one (§8). Set when the default stores are seeded. */
+  defaultStoreId: id.optional(),
   settings: householdSettingsSchema,
   createdAt: timestamp.optional(),
 });
@@ -320,6 +328,7 @@ export const statsSchema = z.object({
 });
 export type StatsDoc = z.infer<typeof statsSchema>;
 
+/** Document ID = the local start date ("2026-10-05"), so concurrent rollovers write the same document (§7). */
 export const periodSchema = z.object({
   start: timestamp,
   end: timestamp,
@@ -333,18 +342,23 @@ export const coverageSchema = z.object({
   dinner: nonNegInt.optional(),
 });
 
+export const PLAN_ITEM_STATUSES = ["planned", "cooked", "skipped", "eaten"] as const;
+/** A plan item (§4.2, R5.1): `kind: "meal"` is 1..n recipes eaten together; `leftover` portions come from M3. */
 export const planItemSchema = z.object({
   periodId: id,
-  mealId: id.optional(),
-  recipeId: id.optional(),
-  leftoverSupplyId: id.optional(),
+  kind: z.enum(["meal", "leftover"]),
   mealType: z.enum(MEAL_TYPES),
   servings: z.number().positive(),
-  coverage: coverageSchema,
-  status: z.enum(["planned", "cooked", "skipped", "eaten"]),
-  carriedFromId: id.optional(),
+  recipes: z.array(mealRecipeSchema).max(MEAL_RECIPES_MAX),
+  savedMealId: id.optional(),
+  name: z.string().max(MEAL_NAME_MAX).optional(),
+  leftoverSupplyId: id.optional(),
   sourcePlanItemId: id.optional(),
+  coverage: coverageSchema,
+  status: z.enum(PLAN_ITEM_STATUSES),
+  carriedFromId: id.optional(),
   addedBy: z.string(),
+  addedAt: timestamp.optional(),
 });
 export type PlanItemDoc = z.infer<typeof planItemSchema>;
 
@@ -370,25 +384,40 @@ export const ratingSchema = z.object({
 });
 export type RatingDoc = z.infer<typeof ratingSchema>;
 
+/**
+ * One grocery line (§4.2, §8). Plan lines are keyed by ingredient ID, manual ones `manual_<uuid>`. `amount` is what is
+ * bought in canonical units (`measure` = the ingredient's canonical unit): packs × pack size, or the raw shortfall when
+ * no pack size is known. It is what counts as "incoming" once the list is ordered. Free-text lines have no amount.
+ */
 export const groceryItemSchema = z.object({
   ingredientId: id.optional(),
-  freeText: z.string().optional(),
+  freeText: z.string().max(120).optional(),
   amount: z.number().min(0),
   measure: z.string(),
+  /** Canonical shortfall the line covers (plan lines). */
+  need: z.number().min(0).optional(),
+  /** Canonical amount per pack, or null when the raw amount is listed. */
+  packAmount: z.number().positive().nullable().optional(),
+  /** "400 g", "4 L", "12 ct": the pack as a shopper reads it. */
+  packLabel: z.string().optional(),
   packs: z.number().min(0),
   productName: z.string(),
   storeId: id,
   estPriceCents: cents.min(0).nullable(),
+  priceSource: z.enum(["live", "estimate", "unknown"]).optional(),
   source: z.enum(["plan", "manual", "cadence"]),
   checked: z.boolean(),
   checkedBy: z.string().optional(),
 });
+export type GroceryItem = z.infer<typeof groceryItemSchema>;
 
+export const GROCERY_STATUSES = ["draft", "ordered", "received"] as const;
 export const groceryListSchema = z.object({
   periodId: id,
-  status: z.enum(["draft", "ordered", "received"]),
+  status: z.enum(GROCERY_STATUSES),
   createdAt: timestamp,
   orderedAt: timestamp.optional(),
+  orderedBy: z.string().optional(),
   receivedAt: timestamp.optional(),
   items: z.record(z.string(), groceryItemSchema),
 });

@@ -37,5 +37,12 @@ Sources: USDA FoodData Central (portion weights, protein) and USDA FoodKeeper (s
 
 ## `price-estimates.json`
 
-Fallback prices when PC Express has no fresh price (TECHNICAL_SPECS §8): `estimates` maps an ingredient ID to
-`{ "priceCents": number, "packAmount": number, "packMeasure": "weight" | "volume" | "count" }` in CAD.
+Fallback prices when PC Express has no fresh price (TECHNICAL_SPECS §8): `estimates` maps every seeded ingredient ID to
+`{ "priceCents", "packAmount", "packMeasure": "weight" | "volume" | "count", "centsPerUnit" }` in CAD (rough Ottawa
+supermarket prices, 2026). `packAmount` is grams, millilitres, or pieces; the price is what that pack costs (the
+ingredient's default pack where it has one). `centsPerUnit` is derived: cents per canonical unit (gram or piece) from the
+seed's conversions, used by the recipe cost-per-serving filter.
+
+The file is bundled into the web app (no upload, no reads). `pnpm prices:check` flags missing estimates, unknown IDs,
+packs that can't be converted, and a stale `centsPerUnit`; `pnpm prices:check -- --write` refills `centsPerUnit`.
+Run both after adding ingredients. M5 adds live PC Express prices in front of these.

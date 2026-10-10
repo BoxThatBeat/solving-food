@@ -14,6 +14,7 @@ import {
   SERVINGS_MAX,
 } from "./config";
 import { PLANNABLE_MEAL_TYPES } from "./taxonomy";
+import { DEFAULT_STORE_ID } from "./grocery";
 import { householdNameSchema, type HouseholdDoc, type MemberDoc } from "./types";
 
 export const newHouseholdInputSchema = z.object({
@@ -75,6 +76,7 @@ export function buildNewHousehold(
       plannedMealTypes,
       pcxStoreId: DEFAULT_PCX_STORE_ID,
       currentPeriodId: null,
+      defaultStoreId: DEFAULT_STORE_ID,
       settings: {
         scoreWeights: {},
         tools: [],

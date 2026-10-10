@@ -7,6 +7,8 @@ export interface Banner {
   kind: NotificationKind;
   message: string;
   link?: { to: string; label: string };
+  /** An in-banner action, e.g. Undo. Running it dismisses the banner. */
+  action?: { label: string; run: () => void };
   /** Called when the banner is dismissed (by the user or the auto-dismiss timer), e.g. to write `dismissedAt`. */
   onDismiss?: () => void;
 }

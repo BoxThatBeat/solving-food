@@ -6,14 +6,11 @@ import { z } from "zod";
 import { CUISINES, MAIN_PROTEINS, MEAL_TYPES } from "./taxonomy";
 import type { RecipeSummary } from "./recipe";
 
-export const SORTS = ["suggested", "newest", "name", "quickest", "protein", "rating", "made", "recent"] as const;
+export const SORTS = ["suggested", "newest", "name", "quickest", "protein", "cheapest", "rating", "made", "recent"] as const;
 export type CollectionSort = (typeof SORTS)[number];
 
 /** Sorts that need data from later milestones; shown greyed with the reason. */
-export const UNAVAILABLE_SORTS = [
-  { key: "expiry", label: "Expiring first", reason: "Needs Supply (M3)" },
-  { key: "cheapest", label: "Cheapest", reason: "Needs prices (M2)" },
-] as const;
+export const UNAVAILABLE_SORTS = [{ key: "expiry", label: "Expiring first", reason: "Needs Supply (M3)" }] as const;
 
 export const SORT_LABELS: Record<CollectionSort, string> = {
   suggested: "Suggested",
@@ -21,6 +18,7 @@ export const SORT_LABELS: Record<CollectionSort, string> = {
   name: "Name",
   quickest: "Quickest",
   protein: "Most protein",
+  cheapest: "Cheapest",
   rating: "Top rated",
   made: "Most made",
   recent: "Recently cooked",
@@ -30,6 +28,8 @@ export const TOTAL_TIME_STEPS = [20, 30, 45, 60] as const;
 export const ACTIVE_TIME_STEPS = [10, 15, 20, 30] as const;
 export const PROTEIN_STEPS = [15, 25, 35] as const;
 export const RATING_STEPS = [8, 9] as const;
+/** Cost per serving steps, in cents ("≤ $2", "≤ $4", "≤ $6"). */
+export const COST_STEPS = [200, 400, 600] as const;
 
 const csv = <T extends string>(values?: readonly T[]) =>
   z
@@ -57,6 +57,10 @@ export const collectionSearchSchema = z.object({
   minRating: num,
   cooked: z.enum(["before", "never"]).catch(undefined as never).optional(),
   fav: z.coerce.boolean().catch(false).optional(),
+  /** Only recipes whose tools the household owns (R11.1). */
+  tools: z.coerce.boolean().catch(false).optional(),
+  /** Max estimated cost per serving, cents (R4.2). */
+  maxCost: num,
 });
 export type CollectionSearch = z.infer<typeof collectionSearchSchema>;
 
@@ -77,13 +81,23 @@ export interface HouseholdFacts {
   lastCookedAtMs: number | null;
   /** Household average rating (1–10), null when unrated. */
   rating: number | null;
+  /** Does the household own every tool the recipe needs? True when no tools are configured (nothing to flag). */
+  hasAllTools?: boolean;
+  /** Estimated cost per serving in cents, null when a price is unknown. */
+  costPerServingCents?: number | null;
 }
 
 export const NO_FACTS: HouseholdFacts = { favourite: false, timesCooked: 0, lastCookedAtMs: null, rating: null };
 
+/** Tools a recipe needs that the household doesn't list (case-insensitive). */
+export function missingTools(recipeTools: readonly string[], householdTools: readonly string[]): string[] {
+  const have = new Set(householdTools.map((t) => t.trim().toLowerCase()));
+  return recipeTools.filter((t) => !have.has(t.trim().toLowerCase()));
+}
+
 export type FactsOf = (id: string) => HouseholdFacts;
 
-export type FilterKey = "cuisine" | "protein" | "meal" | "tags" | "minProtein" | "maxTotal" | "maxActive" | "minRating" | "cooked" | "fav";
+export type FilterKey = "cuisine" | "protein" | "meal" | "tags" | "minProtein" | "maxTotal" | "maxActive" | "minRating" | "cooked" | "fav" | "tools" | "maxCost";
 
 const MEAL_SET = new Set<string>(MEAL_TYPES);
 
@@ -108,6 +122,8 @@ export function passes(r: RecipeSummary, s: CollectionSearch, facts: HouseholdFa
   if (skip !== "cooked" && s.cooked === "before" && facts.timesCooked === 0) return false;
   if (skip !== "cooked" && s.cooked === "never" && facts.timesCooked > 0) return false;
   if (skip !== "fav" && s.fav && !facts.favourite) return false;
+  if (skip !== "tools" && s.tools && facts.hasAllTools === false) return false;
+  if (skip !== "maxCost" && s.maxCost && (facts.costPerServingCents === null || facts.costPerServingCents === undefined || facts.costPerServingCents > s.maxCost)) return false;
   return true;
 }
 
@@ -119,6 +135,8 @@ function compare(sort: CollectionSort, a: RecipeSummary, b: RecipeSummary, fa: H
       return a.totalMin - b.totalMin;
     case "protein":
       return (b.proteinPerServingG ?? -1) - (a.proteinPerServingG ?? -1);
+    case "cheapest":
+      return (fa.costPerServingCents ?? Number.MAX_SAFE_INTEGER) - (fb.costPerServingCents ?? Number.MAX_SAFE_INTEGER);
     case "rating":
       return (fb.rating ?? -1) - (fa.rating ?? -1);
     case "made":
@@ -177,7 +195,7 @@ export function optionCount(
 export function activeFilterCount(s: CollectionSearch): number {
   let n = 0;
   for (const k of ["cuisine", "protein", "meal", "tags"] as const) n += s[k]?.length ?? 0;
-  for (const k of ["minProtein", "maxTotal", "maxActive", "minRating", "cooked", "fav"] as const) if (s[k]) n++;
+  for (const k of ["minProtein", "maxTotal", "maxActive", "minRating", "cooked", "fav", "tools", "maxCost"] as const) if (s[k]) n++;
   return n;
 }
 

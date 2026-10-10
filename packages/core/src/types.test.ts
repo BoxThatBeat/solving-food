@@ -174,7 +174,9 @@ describe("document schemas accept the spec examples", () => {
     expect(
       planItemSchema.parse({
         periodId: "p1",
-        recipeId: "r1",
+        kind: "meal",
+        recipes: [{ recipeId: "r1", servingsMultiplier: 1 }],
+        savedMealId: "m1",
         mealType: "dinner",
         servings: 4,
         coverage: { dinner: 1, lunch: 2 },

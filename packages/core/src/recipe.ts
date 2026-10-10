@@ -336,6 +336,17 @@ export interface RecipeSummary {
   fingerprint: string;
   /** Milliseconds since epoch, for the Newest sort. */
   createdAtMs: number;
+  /** Tools the recipe needs ("has all tools" filter, R11.1). Absent on summaries written before M2. */
+  tools?: string[];
+  /** `[ingredientId, canonical amount per serving]` for non-optional lines (cost per serving, R4.2). Absent before M2. */
+  lines?: Array<[string, number]>;
+}
+
+/** Canonical amount per serving of each non-optional, non-vague line, summed per ingredient, rounded to 0.1. */
+export function summaryLines(r: Pick<RecipeDoc, "ingredients" | "servings">): Array<[string, number]> {
+  const m = new Map<string, number>();
+  for (const l of r.ingredients) if (!l.optional && l.canonicalAmount > 0) m.set(l.ingredientId, (m.get(l.ingredientId) ?? 0) + l.canonicalAmount / Math.max(1, r.servings));
+  return [...m.entries()].map(([id, a]) => [id, Math.round(a * 10) / 10] as [string, number]);
 }
 
 /** Recipes that appear in the index (§9): trashed and pending-duplicate recipes are left out. */
@@ -362,6 +373,8 @@ export function recipeSummary(id: string, r: RecipeDoc): RecipeSummary {
     sourceUrlCanonical: r.sourceUrlCanonical ?? null,
     fingerprint: r.fingerprint,
     createdAtMs: created instanceof Date ? created.getTime() : (created?.toMillis?.() ?? 0),
+    tools: r.tools,
+    lines: summaryLines(r),
   };
 }
 

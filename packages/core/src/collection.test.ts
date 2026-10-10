@@ -87,3 +87,25 @@ describe("<CollectionView> filters and sorts (R4.2, R4.7)", () => {
     expect(taxonomyLabel("middle-eastern")).toBe("Middle Eastern");
   });
 });
+
+describe("M2 filters: has all tools, cost per serving, Cheapest", () => {
+  const f: Record<string, HouseholdFacts> = {
+    Alpha: { ...NO_FACTS, hasAllTools: false, costPerServingCents: 150 },
+    Bravo: { ...NO_FACTS, hasAllTools: true, costPerServingCents: 450 },
+    Charlie: { ...NO_FACTS, hasAllTools: true, costPerServingCents: null },
+  };
+  const run = (s: object) => applyCollection(all, collectionSearchSchema.parse(s), (id) => f[id] ?? NO_FACTS).items.map((x) => x.id);
+  it("filters", () => {
+    expect(run({ tools: "true" })).toEqual(["Charlie", "Bravo"]);
+    expect(run({ maxCost: "200" })).toEqual(["Alpha"]);
+    expect(run({ maxCost: "600" })).toEqual(["Alpha", "Bravo"]); // unknown cost never passes a cost filter
+    expect(activeFilterCount(collectionSearchSchema.parse({ tools: "1", maxCost: "400" }))).toBe(2);
+  });
+  it("sorts cheapest first, unknown last", () => {
+    expect(run({ sort: "cheapest" })).toEqual(["Alpha", "Bravo", "Charlie"]);
+  });
+  it("missingTools is case-insensitive", async () => {
+    const { missingTools } = await import("./collection");
+    expect(missingTools(["Instant Pot", "Wok"], ["instant pot "])).toEqual(["Wok"]);
+  });
+});

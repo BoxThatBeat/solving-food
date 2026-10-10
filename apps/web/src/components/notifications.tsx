@@ -161,6 +161,18 @@ export function NotificationBanners({ className }: { className?: string }) {
               {b.link.label}
             </Link>
           ) : null}
+          {b.action ? (
+            <button
+              type="button"
+              onClick={() => {
+                b.action!.run();
+                ctx.dismiss(b.id);
+              }}
+              className="flex-none cursor-pointer rounded-ui border-2 border-current bg-transparent px-2 py-1 text-inherit"
+            >
+              {b.action.label}
+            </button>
+          ) : null}
           <button
             type="button"
             aria-label="Dismiss"
