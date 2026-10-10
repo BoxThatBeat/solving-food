@@ -4,14 +4,16 @@
 //   pnpm drop:recipes -- --emulator --uid <uid>          # Storage emulator (Admin SDK)
 //   pnpm drop:recipes -- --email buitenwerfa@gmail.com   # live bucket via `gcloud storage cp`, as that user
 //   … [--only baked-feta-pasta,greek-salad]              # a subset
+//   … [--concurrency 2]                                  # recipes in flight at once
 //
-// Photos go first (the import matches relative `image:` paths by file name in the same folder), then the .cook files.
-// Then it waits until every .cook has been processed (the function deletes it) and prints what's left.
+// Each recipe's photo goes up right before its .cook (the import matches relative `image:` paths by file name in the
+// same folder). It waits until every .cook has been processed (the function deletes it), re-uploading any that a busy
+// trigger never picked up (scripts/lib/drop.ts).
 import { execFileSync } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
-import { join, resolve, basename } from "node:path";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { splitFrontMatter } from "../packages/core/src/cooklang/parse";
+import { dropAndWait, dropItems, type DropTransport } from "./lib/drop";
 import { openStore } from "./lib/admin-store";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -40,22 +42,12 @@ const files = readdirSync(recipesDir)
   .filter((f) => f.endsWith(".cook"))
   .filter((f) => !only || only.includes(f.replace(/\.cook$/, "")))
   .sort();
-const photos = new Map<string, string>(); // basename → absolute path
-for (const f of files) {
-  const { frontMatter } = splitFrontMatter(readFileSync(join(recipesDir, f), "utf8"));
-  const img = typeof frontMatter.image === "string" ? frontMatter.image : "";
-  if (img && !/^https?:/i.test(img)) photos.set(basename(img), resolve(recipesDir, img));
-}
+const items = dropItems(recipesDir, files);
 const prefix = `recipe-drop/${uid}/`;
-console.log(`${files.length} recipes, ${photos.size} photos → gs://${BUCKET}/${prefix} (${emulator ? "emulator" : "live"})`);
+const concurrency = Number(arg("--concurrency") ?? (emulator ? 3 : 2));
+console.log(`${files.length} recipes, ${items.filter((i) => i.photo).length} photos → gs://${BUCKET}/${prefix} (${emulator ? "emulator" : "live"}, ${concurrency} at a time)`);
 
-function contentType(name: string): string {
-  if (/\.cook$/i.test(name)) return "text/plain";
-  if (/\.png$/i.test(name)) return "image/png";
-  if (/\.webp$/i.test(name)) return "image/webp";
-  return "image/jpeg";
-}
-
+let transport: DropTransport;
 if (emulator) {
   process.env.FIREBASE_STORAGE_EMULATOR_HOST ??= "127.0.0.1:9199";
   process.env.GCLOUD_PROJECT ??= "solvingfood";
@@ -63,34 +55,27 @@ if (emulator) {
   const { getStorage } = await import("firebase-admin/storage");
   const app = getApps()[0] ?? initializeApp({ projectId: "solvingfood", storageBucket: BUCKET });
   const bucket = getStorage(app).bucket(BUCKET);
-  await Promise.all([...photos].map(([name, path]) => bucket.file(prefix + name).save(readFileSync(path), { contentType: contentType(name), resumable: false })));
-  for (const f of files) await bucket.file(prefix + f).save(readFileSync(join(recipesDir, f)), { contentType: "text/plain", resumable: false });
-  const deadline = Date.now() + 5 * 60_000;
-  for (;;) {
-    const [left] = await bucket.getFiles({ prefix });
-    const cooks = left.filter((x) => x.name.endsWith(".cook"));
-    if (!cooks.length) break;
-    if (Date.now() > deadline) throw new Error(`Still waiting for ${cooks.length} imports`);
-    process.stdout.write(`\r${files.length - cooks.length}/${files.length} imported…`);
-    await new Promise((r) => setTimeout(r, 1000));
-  }
+  transport = {
+    put: async (path, name, contentType) => void (await bucket.file(prefix + name).save(readFileSync(path), { contentType, resumable: false })),
+    list: async () => (await bucket.getFiles({ prefix }))[0].map((f) => f.name.slice(prefix.length)),
+  };
 } else {
   const dest = `gs://${BUCKET}/${prefix}`;
-  if (photos.size) execFileSync("gcloud", ["storage", "cp", ...photos.values(), dest], { stdio: "inherit" });
-  execFileSync("gcloud", ["storage", "cp", ...files.map((f) => join(recipesDir, f)), dest], { stdio: "inherit" });
-  const deadline = Date.now() + 10 * 60_000;
-  for (;;) {
-    let out: string;
-    try {
-      out = execFileSync("gcloud", ["storage", "ls", dest], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
-    } catch {
-      out = ""; // nothing left: ls exits non-zero on an empty prefix
-    }
-    const cooks = out.split("\n").filter((l) => l.endsWith(".cook"));
-    if (!cooks.length) break;
-    if (Date.now() > deadline) throw new Error(`Still waiting for ${cooks.length} imports`);
-    process.stdout.write(`\r${files.length - cooks.length}/${files.length} imported…`);
-    await new Promise((r) => setTimeout(r, 3000));
-  }
+  transport = {
+    put: async (path, name, contentType) =>
+      void execFileSync("gcloud", ["storage", "cp", `--content-type=${contentType}`, path, dest + name], { stdio: ["ignore", "ignore", "inherit"] }),
+    list: async () => {
+      let out: string;
+      try {
+        out = execFileSync("gcloud", ["storage", "ls", dest], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+      } catch {
+        out = ""; // ls exits non-zero on an empty prefix
+      }
+      return out.split("\n").filter((l) => l.startsWith(dest)).map((l) => l.slice(dest.length));
+    },
+  };
 }
-console.log(`\nAll ${files.length} .cook files processed. Results are in the uploader's notifications (and dropImports/*).`);
+
+const { attempts } = await dropAndWait(items, transport, { concurrency, staleMs: emulator ? 60_000 : 120_000, pollMs: emulator ? 1000 : 4000, log: (m) => console.log(m) });
+const retried = Object.entries(attempts).filter(([, n]) => n > 1);
+console.log(`All ${files.length} .cook files processed${retried.length ? ` (${retried.length} needed a re-upload)` : ""}. Results are in the uploader's notifications (and dropImports/*).`);
