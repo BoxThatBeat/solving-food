@@ -16,6 +16,7 @@ import {
   type CookTimer,
   type IngredientLookup,
   type RecipeIngredient,
+  toolLabel,
 } from "@solving-food/core";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -39,8 +40,13 @@ export function MiseEnPlace({ recipe, lookup, factor, missingTools, onStart }: {
       </div>
       {recipe.tools.length ? (
         <div className={cn("rounded-ui border-2 border-dashed border-line px-3 py-2 font-mono text-[0.6875rem] font-bold uppercase", missingTools.length && "border-solid bg-red-soft text-onc")}>
-          Get out · {recipe.tools.join(" · ")}
-          {missingTools.length ? ` · not in your kitchen: ${missingTools.join(", ")}` : ""}
+          Get out · <span className="normal-case">{recipe.tools.map(toolLabel).join(" · ")}</span>
+          {missingTools.length ? (
+            <>
+              {" "}
+              · not in your kitchen: <span className="normal-case">{missingTools.map(toolLabel).join(", ")}</span>
+            </>
+          ) : null}
         </div>
       ) : null}
       {items.length ? (

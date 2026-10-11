@@ -16,6 +16,8 @@ import {
   type HouseholdDoc,
   type RecipeVersionDoc,
   fahrenheitOnly,
+  missingTools,
+  toolLabel,
 } from "@solving-food/core";
 import { db } from "@/firebase/app";
 import { useLiveDoc } from "@/data/live";
@@ -136,7 +138,8 @@ export function RecipeDetail({
 
   const tools = ctx?.household?.settings?.tools ?? [];
   const toolsConfigured = tools.length > 0;
-  const missingTools = toolsConfigured ? recipe.tools.filter((t) => !tools.map((x) => x.toLowerCase()).includes(t.toLowerCase())) : [];
+  // Compared by toolKey (M7): owning "skillet" covers "frying pan". Names show lower-case.
+  const missing = toolsConfigured ? missingTools(recipe.tools, tools) : [];
   const meals = recipe.tags.filter((t) => ["breakfast", "lunch", "dinner", "snack"].includes(t));
   const otherTags = recipe.tags.filter((t) => !meals.includes(t));
   const trashedAt = millis(recipe.trashedAt);
@@ -315,18 +318,18 @@ export function RecipeDetail({
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">TOOLS</span>
               {recipe.tools.map((t) => {
-                const missing = missingTools.includes(t);
+                const lacks = missing.includes(t);
                 return (
-                  <span key={t} className={cn("rounded-ui border-2 border-line px-2 py-1 text-xs font-extrabold", missing ? "bg-red text-onc" : "bg-base text-ink")}>
-                    {toolsConfigured ? (missing ? "✕ " : "✓ ") : ""}
-                    {t}
+                  <span key={t} className={cn("rounded-ui border-2 border-line px-2 py-1 text-xs font-extrabold", lacks ? "bg-red text-onc" : "bg-base text-ink")}>
+                    {toolsConfigured ? (lacks ? "✕ " : "✓ ") : ""}
+                    {toolLabel(t)}
                   </span>
                 );
               })}
             </div>
-            {missingTools.length ? (
+            {missing.length ? (
               <div role="alert" className="rounded-ui border-bw bg-red px-3.5 py-3 text-sm leading-snug font-extrabold text-onc">
-                Needs {missingTools.join(" and ")}. {missingTools.length === 1 ? "It's" : "They're"} not in your kitchen tools.
+                Needs {missing.map(toolLabel).join(" and ")}. {missing.length === 1 ? "It's" : "They're"} not in your kitchen tools.
               </div>
             ) : ctx ? (
               <p className="m-0 font-mono text-[0.625rem] font-semibold text-sub">

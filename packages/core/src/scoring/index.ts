@@ -8,6 +8,7 @@
 
 import { formatCents } from "../pricing";
 import { taxonomyLabel } from "../collection";
+import { toolLabel } from "../tools";
 import { activeExpiry, isExpired, type LedgerLot } from "../ledger";
 import { daysLeft as daysLeftOf } from "../expiry";
 import { matchingPrefs, preferenceBlock, prefLabel } from "../preferences";
@@ -101,7 +102,7 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
   }
 
   const tools = missingToolsOf(r, ctx);
-  const blocked = tools.length ? `Needs ${tools.join(", ")}` : preferenceBlock(r, ctx.preferences, ctx.ingredient, (id) => ctx.ingredient(id)?.name);
+  const blocked = tools.length ? `Needs ${tools.map(toolLabel).join(", ")}` : preferenceBlock(r, ctx.preferences, ctx.ingredient, (id) => ctx.ingredient(id)?.name);
   const uses = expiringUses(needs, ctx);
   const exp = uses[0] ?? null;
 

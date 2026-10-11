@@ -29,7 +29,10 @@ every file imports the same way.
   step where it belongs, so **every listed ingredient appears at least once**.
 - Steps without instructions in the source (a bare ingredient list): write short, plain steps that only combine
   what's listed. Don't invent techniques or ingredients.
-- Use `#cookware{}` for the pan, oven, appliance the step needs, and `~{n%minutes}` for each timed wait.
+- Use `#cookware{}` for the pan, oven, appliance the step needs, and `~{n%minutes}` for each timed wait. Name the
+  cookware with its canonical name from [taxonomy.md](taxonomy.md) "Cookware names", lower-case and without a size:
+  `#skillet{}` (not `#large frying pan{}`), `#baking dish{}` (not `#9x13-inch pan{}`), `#sheet pan{}` (not
+  `#rimmed baking sheet{}`). A size that matters goes in the step text.
 
 ## Ingredient names
 

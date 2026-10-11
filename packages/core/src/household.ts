@@ -97,26 +97,29 @@ export function pickActiveHousehold(
   return membershipHouseholdIds[0] ?? null;
 }
 
-/** Kitchen tools offered as suggestions in Settings → Kitchen tools (R11.1), plus whatever the library's recipes use. */
+/**
+ * Kitchen tools offered as suggestions in Settings → Kitchen tools (R11.1), plus whatever the library's recipes use.
+ * Canonical names (`TOOL_SYNONYMS` in tools.ts), one per `toolKey`.
+ */
 export const TOOL_SUGGESTIONS = [
-  "Instant Pot",
-  "Rice cooker",
-  "Food processor",
-  "Dutch oven",
-  "Sheet pans",
-  "Blender",
-  "Immersion blender",
-  "Wok",
-  "Cast iron pan",
-  "Sous vide",
-  "Stand mixer",
-  "Hand mixer",
-  "Air fryer",
-  "Slow cooker",
-  "Grill",
-  "Muffin tin",
-  "Baking dish",
-  "Stock pot",
+  "instant pot",
+  "rice cooker",
+  "food processor",
+  "dutch oven",
+  "sheet pan",
+  "blender",
+  "immersion blender",
+  "wok",
+  "skillet",
+  "sous vide",
+  "stand mixer",
+  "hand mixer",
+  "air fryer",
+  "slow cooker",
+  "grill",
+  "muffin tin",
+  "baking dish",
+  "pot",
 ] as const;
 
 /** Household settings form (R11.5, R11.6, R11.11–R11.13): validated before the household document is updated. */

@@ -287,7 +287,7 @@ describe("hard filters and ranking", () => {
     const ranked = rank([wok, olives, meat, ok].map((r) => (r.id === "ok" ? { ...r, mainProtein: "legumes" } : r)), c, DEFAULT_WEIGHTS);
     expect(ranked[0]!.id).toBe("ok");
     expect(ranked.slice(1).every((x) => x.blocked)).toBe(true);
-    expect(ranked.find((x) => x.id === "wok")!.blocked).toBe("Needs Wok");
+    expect(ranked.find((x) => x.id === "wok")!.blocked).toBe("Needs wok");
     expect(ranked.find((x) => x.id === "olives")!.blocked).toMatch(/Not vegetarian|Disliked/);
     expect(suggest([wok, olives, meat], c, DEFAULT_WEIGHTS)).toEqual([]);
   });

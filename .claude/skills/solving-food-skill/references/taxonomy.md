@@ -55,3 +55,45 @@ sweets and plain sides are `none`.
 - Vague (no amount tracked): `pinch`, `dash`, `to taste`, `splash`, `handful`
 - Anything else is a count noun: `@egg{2}`, `@garlic{3%cloves}`, `@lemon{1}`. Common spellings work too
   (`Tbsp`, `teaspoons`, `lbs`, `T` = tablespoon).
+
+## Cookware names
+
+Write `#cookware{}` with the plain canonical name, lower-case, no size: `#skillet{}`, not `#large frying pan{}` or
+`#10-inch skillet{}`; `#baking dish{}`, not `#9x13-inch pan{}`. Put a size that matters in the step text ("a
+9x13-inch #baking dish{}"). The app matches kitchen tools by these names; the other spellings on each line still match,
+but the canonical one keeps the library tidy.
+
+- `instant pot` (not "pressure cooker", "multicooker", "multi cooker", "electric pressure cooker")
+- `slow cooker` (not "crockpot", "crock pot")
+- `sheet pan` (not "baking sheet", "half sheet pan", "baking tray", "cookie sheet", "tray", "rimmed baking sheet", "sheet tray")
+- `skillet` (not "frying pan", "fry pan", "pan", "saute pan", "high sided pan", "cast iron skillet", "cast iron pan", "nonstick pan", "nonstick skillet")
+- `pot` (not "saucepan", "sauce pan", "soup pot", "stock pot", "stockpot")
+- `bowl` (not "mixing bowl", "serving bowl", "microwave safe bowl")
+- `baking dish` (not "casserole dish", "baking pan", "square pan", "aluminum pan", "square baking dish")
+- `muffin tin` (not "muffin pan", "muffin tray", "cupcake pan", "cupcake tin")
+- `loaf pan` (not "loaf tin")
+- `cake pan` (not "round cake pan")
+- `pie dish` (not "pie plate", "pie pan")
+- `wire rack` (not "cooling rack", "wire cooling rack", "baking rack")
+- `food processor`
+- `stand mixer` (not "mixer", "electric mixer")
+- `hand mixer`
+- `blender` (not "high speed blender")
+- `immersion blender` (not "hand blender", "stick blender")
+- `air fryer`
+- `dutch oven`
+- `cutting board` (not "chopping board")
+- `whisk`
+- `grater` (not "box grater", "cheese grater")
+- `spatula` (not "rubber spatula")
+- `strainer` (not "colander", "sieve", "fine mesh strainer")
+- `scoop` (not "ice cream scoop", "cookie scoop")
+- `thermometer` (not "meat thermometer", "instant read thermometer")
+- `knife` (not "chef knife", "chefs knife")
+- `jar` (not "mason jar")
+- `fridge` (not "refrigerator")
+- `foil` (not "aluminum foil", "tin foil")
+- `freezer bag` (not "zip top bag", "ziploc bag")
+- `skewer` (not "wooden skewer")
+
+Tools not listed here: the plain singular name (`#wok{}`, `#rolling pin{}`, `#oven{}`).

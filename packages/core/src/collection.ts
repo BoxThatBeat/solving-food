@@ -99,11 +99,7 @@ export interface HouseholdFacts {
 
 export const NO_FACTS: HouseholdFacts = { favourite: false, timesCooked: 0, lastCookedAtMs: null, rating: null };
 
-/** Tools a recipe needs that the household doesn't list (case-insensitive). */
-export function missingTools(recipeTools: readonly string[], householdTools: readonly string[]): string[] {
-  const have = new Set(householdTools.map((t) => t.trim().toLowerCase()));
-  return recipeTools.filter((t) => !have.has(t.trim().toLowerCase()));
-}
+export { missingTools } from "./tools";
 
 export type FactsOf = (id: string) => HouseholdFacts;
 

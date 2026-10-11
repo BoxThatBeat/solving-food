@@ -29,6 +29,7 @@ import {
   UNITS_BY_MEASURE,
   type DuplicateMatch,
   type RecipeContent,
+  toolLabel,
 } from "@solving-food/core";
 import { useNotify } from "@/components/notifications-context";
 import { Button } from "@/components/ui/button";
@@ -105,7 +106,7 @@ function toForm(c: RecipeContent | null): FormInput {
     cuisine: c.cuisine,
     mainProtein: c.mainProtein,
     tags: c.tags,
-    tools: c.tools,
+    tools: c.tools.map(toolLabel),
     ingredients: c.ingredients.map((l) => ({ id: l.id, ingredientId: l.ingredientId, displayText: l.displayText, amount: l.amount ? String(l.amount) : "", measure: l.measure, optional: l.optional })),
     steps: c.steps.map((s) => ({ text: s.text, timerMinutes: s.timerSeconds ? String(Math.round((s.timerSeconds / 60) * 100) / 100) : "", section: s.section ?? "" })),
     prepTasks: c.prepTasks.map((p) => ({ text: p.text })),
@@ -392,7 +393,7 @@ export function RecipeEditor({
         <ChipChoice label="Cuisine" control={control} name="cuisine" options={CUISINES} />
         <ChipChoice label="Main protein" control={control} name="mainProtein" options={MAIN_PROTEINS} />
         <ChipList label="Tags" hint="Meal type and anything you'll filter by" values={values.tags} onChange={(t) => setValue("tags", t, { shouldDirty: true })} suggestions={[...MEAL_TYPES, "side", "dessert", "family recipe"]} />
-        <ChipList label="Tools" hint="Free text for now; kitchen tools settings arrive in M2" values={values.tools} onChange={(t) => setValue("tools", t, { shouldDirty: true })} />
+        <ChipList label="Tools" hint="Plain names, lower-case: skillet, pot, sheet pan, baking dish" values={values.tools} onChange={(t) => setValue("tools", t, { shouldDirty: true })} />
         <Field label="Source URL" error={formState.errors.sourceUrl?.message}>
           {(fid) => <Input id={fid} type="url" inputMode="url" placeholder="https://…" {...register("sourceUrl")} />}
         </Field>

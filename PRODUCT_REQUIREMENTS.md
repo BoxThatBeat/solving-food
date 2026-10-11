@@ -272,7 +272,7 @@ flowchart LR
 
 Everything here belongs to the household except the theme, which is per user.
 
-- **R11.1** **Kitchen tools.** The household lists the equipment it owns (Instant Pot, food processor, sous vide…). Recipes that need missing tools are flagged or filtered out.
+- **R11.1** **Kitchen tools.** The household lists the equipment it owns (instant pot, food processor, sous vide…). Recipes that need missing tools are flagged or filtered out. Tool names are shown lower-case everywhere, and tools are matched by meaning rather than spelling: owning a skillet covers a recipe's "frying pan" or "large skillet", and the suggestions offer one chip per tool with its other spellings as a hint.
 - **R11.2** **Food preferences.** Favourite foods and cuisines, dislikes, and dietary restrictions, set once for the whole household and used in scoring.
 - **R11.3** **Suggestion weights** (R6.12).
 - **R11.4** **Protein goals** per meal type (R6.14).

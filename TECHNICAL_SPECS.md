@@ -677,6 +677,43 @@ Toss @baby potatoes{600%g} with @olive oil{2%tbsp} and @salt{} on a #sheet pan{}
 Add @salmon fillet{600%g} and @lemon{1}, sliced. Roast ~{12%minutes} more.
 ```
 
+### Kitchen tools: names and matching (M7, R11.1, R4.14)
+
+Recipes name cookware freely and households list what they own, so the same tool turns up under many names (the live
+library had 120 spellings for about 50 tools). Tool names are **shown lower-case everywhere** (`toolLabel()`: Settings →
+Kitchen tools, the recipe page's tool chips and missing-tool alert, mise en place, the editor's chips, the "Needs …"
+suggestion reason) and **compared by `toolKey()`** (`packages/core/src/tools.ts`): lower-case, accents and punctuation
+dropped, sizes removed (`9x13-inch`, `12-cup`, `3.5-quart`, `10-oz`), size and material qualifiers removed (`large`,
+`small`, `mini`, `rimmed`, `round`, `oven-safe`, `nonstick`, `metal`, `glass`, `disposable`, `digital`, `sharp`…), the last
+word made singular (`tongs` and `scissors` stay), then the synonym table (`TOOL_SYNONYMS`). A bare "pan" that had a size
+is a baking dish; without one it is a skillet. `toolKey` is idempotent and case-insensitive (unit-tested with properties).
+Stored names are never rewritten.
+
+| Canonical | Also matches |
+|---|---|
+| instant pot | pressure cooker, multicooker |
+| slow cooker | crockpot |
+| sheet pan | baking sheet, half sheet pan, baking tray, cookie sheet, tray |
+| skillet | frying pan, fry pan, pan, sauté pan, high sided pan, cast iron skillet / pan |
+| pot | saucepan, soup pot, stock pot |
+| bowl | mixing bowl, serving bowl, microwave safe bowl |
+| baking dish | casserole dish, baking pan, square pan, aluminum pan, any sized "pan" (9x13 pan) |
+| muffin tin | muffin pan, muffin tray, cupcake pan |
+| loaf pan, cake pan, pie dish | loaf tin; round cake pan; pie plate, pie pan |
+| wire rack | cooling rack |
+| stand mixer | mixer, electric mixer (hand mixer stays separate) |
+| blender / immersion blender | high speed blender / hand blender, stick blender |
+| grater, strainer, spatula, scoop | box grater; colander, sieve; rubber spatula; ice cream scoop, cookie scoop |
+| thermometer, knife, jar, fridge, foil, skewer | meat thermometer; chef knife; mason jar; refrigerator; aluminum foil; wooden skewer |
+| food processor, air fryer, dutch oven, hand mixer, whisk, cutting board | (mini food processor via "mini"); chopping board |
+
+Uses: `missingTools()` (the recipe page flag, mise en place, the "Have the tools" filter via `hasAllTools`, and the
+suggestion score's hard filter) compares keys, so owning "Skillet" satisfies "frying pan". Settings → Kitchen tools shows
+one suggestion chip per key (`groupTools()`: label = the key, "also: frying pan, pan, large skillet +n" underneath, most
+common spellings first), hides every spelling of a tool the household owns, and adding another spelling of an owned tool
+says it's already covered instead of storing a duplicate. `TOOL_SUGGESTIONS` lists canonical names. The Claude skill
+writes canonical names (`references/taxonomy.md` "Cookware names" is generated from `TOOL_SYNONYMS` by `pnpm gen:skill`).
+
 ### Deduplication
 
 A recipe is flagged as a possible duplicate if any of these hold:

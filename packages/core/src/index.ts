@@ -12,6 +12,7 @@ export * from "./recipe";
 export * from "./dedupe";
 export * from "./cooklang";
 export * from "./collection";
+export { TOOL_SYNONYMS, toolKey, toolLabel, groupTools, type ToolGroup } from "./tools";
 export * from "./period";
 export * from "./plan";
 export * from "./pricing";

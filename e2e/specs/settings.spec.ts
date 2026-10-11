@@ -54,12 +54,12 @@ test("kitchen tools: add and remove; recipes needing a missing tool are flagged 
   await waitForIndexed(id);
   await page.goto("/settings/tools");
   await page.getByRole("button", { name: "Add Instant Pot" }).click();
-  await expect(page.getByRole("list", { name: "Tools you own" })).toContainText("Instant Pot");
+  await expect(page.getByRole("list", { name: "Tools you own" })).toContainText("instant pot");
   await page.getByLabel("Add a tool").fill("Pasta machine");
   await page.getByRole("button", { name: "Add", exact: true }).click();
-  await expect(page.getByRole("list", { name: "Tools you own" })).toContainText("Pasta machine");
-  await page.getByRole("button", { name: "Remove Pasta machine" }).click();
-  await expect(page.getByRole("list", { name: "Tools you own" })).not.toContainText("Pasta machine");
+  await expect(page.getByRole("list", { name: "Tools you own" })).toContainText("pasta machine"); // shown lower-case
+  await page.getByRole("button", { name: "Remove pasta machine" }).click();
+  await expect(page.getByRole("list", { name: "Tools you own" })).not.toContainText("pasta machine");
 
   await page.goto(`/recipes/${id}`);
   await expect(page.getByText("Needs wok.")).toBeVisible();
@@ -76,9 +76,37 @@ test("kitchen tools: add and remove; recipes needing a missing tool are flagged 
   await page.goto("/settings/tools");
   await page.getByLabel("Add a tool").fill("Wok");
   await page.getByRole("button", { name: "Add", exact: true }).click();
-  await expect(page.getByRole("list", { name: "Tools you own" })).toContainText("Wok");
+  await expect(page.getByRole("list", { name: "Tools you own" })).toContainText("wok");
   await page.goto(`/recipes?q=${encodeURIComponent(title)}&tools=true`);
   await expect(page.getByTestId("recipe-card").filter({ hasText: title })).toBeVisible();
+});
+
+test("kitchen tools match by meaning: owning a Skillet covers a recipe's frying pan; one suggestion per tool (R11.1, M7)", { tag: ["@R11.1", "@R4.14"] }, async ({ page, household }) => {
+  const title = uniqueTitle("Frying pan supper");
+  const id = await makeRecipe(title, { cook: cook({ lines: "Fry @chicken thigh{300%g} in a #Frying Pan{}, then toss in a #large wok{}." }) });
+  await waitForIndexed(id);
+  await page.goto("/settings/tools");
+  const suggested = page.getByRole("list", { name: "Suggested tools" });
+  // "frying pan" from the recipe joins the skillet chip instead of getting its own.
+  const skillet = suggested.getByRole("button", { name: "Add skillet", exact: true });
+  await expect(skillet).toBeVisible();
+  await expect(suggested.getByRole("button", { name: "Add frying pan" })).toHaveCount(0);
+  await expect(skillet).toContainText("also:");
+  await expect(skillet).toContainText("frying pan");
+  await page.getByLabel("Add a tool").fill("Skillet");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(page.getByRole("list", { name: "Tools you own" })).toContainText("skillet");
+  await expect(skillet).toHaveCount(0);
+  await expect.poll(async () => (await adminDb.doc(`households/${household.hid}`).get()).data()!.settings.tools).toEqual(["Skillet"]); // stored as typed
+  // Adding another spelling of a tool you own says so instead of adding a duplicate.
+  await page.getByLabel("Add a tool").fill("Frying pan");
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(page.getByTestId("notifications")).toContainText("You already have skillet, which covers frying pan.");
+
+  await page.goto(`/recipes/${id}`);
+  await expect(page.getByRole("alert").filter({ hasText: "Needs" })).toHaveText(/^Needs large wok\. It's not in your kitchen tools\.$/);
+  await expect(page.getByText("✓ frying pan")).toBeVisible();
+  await expect(page.getByText("✕ large wok")).toBeVisible();
 });
 
 test("stores: default stores exist, add one, make it the default, and route a category to it (R11.7, R7.4)", { tag: ["@R11.7", "@R7.4"] }, async ({ page, household }) => {

@@ -6,7 +6,7 @@
 import type { MealType } from "../taxonomy";
 import { MEAL_TYPES } from "../taxonomy";
 import { DAY_MS } from "../expiry";
-import { missingTools } from "../collection";
+import { missingTools } from "../tools";
 import { matchingPrefs, type IngredientMetaOf, type PrefRecipe, type Preferences } from "../preferences";
 
 

@@ -1,5 +1,6 @@
 // Generated sections of the Claude skill (.claude/skills/solving-food-skill/references/), rendered from the same lists
 // the importer validates against. Used by `pnpm gen:skill` and checked by skill.test.ts.
+import { TOOL_SYNONYMS } from "./tools";
 import { CUISINES, MAIN_PROTEINS } from "./taxonomy";
 import { UNITS } from "./units";
 import { INGREDIENT_CATEGORIES } from "./ingredient";
@@ -38,6 +39,19 @@ sweets and plain sides are \`none\`.
 - Vague (no amount tracked): ${units("vague")}
 - Anything else is a count noun: \`@egg{2}\`, \`@garlic{3%cloves}\`, \`@lemon{1}\`. Common spellings work too
   (\`Tbsp\`, \`teaspoons\`, \`lbs\`, \`T\` = tablespoon).
+
+## Cookware names
+
+Write \`#cookware{}\` with the plain canonical name, lower-case, no size: \`#skillet{}\`, not \`#large frying pan{}\` or
+\`#10-inch skillet{}\`; \`#baking dish{}\`, not \`#9x13-inch pan{}\`. Put a size that matters in the step text ("a
+9x13-inch #baking dish{}"). The app matches kitchen tools by these names; the other spellings on each line still match,
+but the canonical one keeps the library tidy.
+
+${Object.entries(TOOL_SYNONYMS)
+  .map(([canon, alts]) => `- \`${canon}\`${alts.length ? ` (not ${alts.map((a) => `"${a}"`).join(", ")})` : ""}`)
+  .join("\n")}
+
+Tools not listed here: the plain singular name (\`#wok{}\`, \`#rolling pin{}\`, \`#oven{}\`).
 `;
 }
 

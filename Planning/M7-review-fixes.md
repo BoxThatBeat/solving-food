@@ -79,6 +79,27 @@ R8.13, R4.19, R4.21, R4.2 (agent 1); R3.1, R11.1, R4.14, R6.1, R6.2, R6.11, R6.1
       show the new dates, old period kept (ends at the new start) with its cooked meal; Tomorrow again is a no-op;
       Today then moves the not-yet-started period without carrying again.
 
+### 6. Kitchen tools lower-case, one tool per meaning (R11.1, R4.14)
+- [x] Live library read (read-only): 125 recipes, 120 distinct tool spellings for ~50 tools ("large bowl", "bowl",
+      "large mixing bowl", "medium bowl"…; 21 spellings of a 9x13 / 8x8 baking dish; 16 of a skillet).
+- [x] Core `tools.ts`: `toolKey()` (lower-case, accents/punctuation dropped, sizes and qualifiers removed, last word
+      singular, synonym table `TOOL_SYNONYMS`; a sized bare "pan" is a baking dish, an unsized one a skillet; iterates
+      to a fixed point so it is idempotent), `toolLabel()` (lower-case display), `missingTools()` by key (moved from
+      collection.ts; the recipe flag, mise en place, the "Have the tools" filter and the score's hard filter all use
+      it), `groupTools()` for the Settings suggestions. `TOOL_SUGGESTIONS` are canonical lower-case names. 62 unit
+      tests incl. 56 live spellings and properties (idempotent, case-insensitive).
+- [x] Display lower-case: Settings → Kitchen tools (owned chips and suggestions), recipe page tool chips and alert,
+      mise en place, the editor's tool chips (editor already saved lower-case), "Needs wok" in suggestions.
+- [x] Settings → Kitchen tools: one chip per key, label = the key, "also: frying pan, pan, large skillet +13" under
+      it (`aria-describedby`); owning any spelling hides the chip; adding another spelling of an owned tool says
+      "You already have skillet, which covers frying pan." instead of storing a duplicate. Recipe documents untouched.
+- [x] Spec §9 "Kitchen tools: names and matching" (synonym table), PRD R11.1, the skill: `taxonomy.md` gets a generated
+      "Cookware names" list (`pnpm gen:skill` from `TOOL_SYNONYMS`), `conventions.md` says to write canonical names.
+- [x] E2E `settings.spec.ts` (@R11.1 @R4.14): a recipe with `#Frying Pan{}` and `#large wok{}`; the suggestions show
+      one "skillet" chip with "also: … frying pan"; owning "Skillet" (stored as typed) hides it, "Frying pan" is refused
+      as covered; the recipe page shows "✓ frying pan", "✕ large wok" and "Needs large wok." The older tools test now
+      asserts lower-case names.
+
 ## Verification (items 1–4)
 
 - Lint, typecheck: clean. Core unit 341/341, web unit 7/7, functions (emulator) 9 files / 54 tests.
