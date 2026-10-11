@@ -212,6 +212,14 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
     gcloud projects add-iam-policy-binding solvingfood --member=$SA --role=$r --condition=None
   done
   ```
+  With only those, the Storage step reports "Firebase Storage has not been set up" (the third CI failure): the
+  default-bucket lookup returns 404 to a caller without `storage.buckets.get` on the bucket. Grant plain bucket read
+  on the bucket itself:
+  ```
+  gcloud storage buckets add-iam-policy-binding gs://solvingfood.firebasestorage.app \
+    --member=serviceAccount:github-action-1409507284@solvingfood.iam.gserviceaccount.com \
+    --role=roles/storage.legacyBucketReader
+  ```
   Then re-run Deploy (`gh workflow run deploy.yml --ref master`).
 - **Branch protection (owner, in GitHub):** Settings → Branches → Add branch ruleset (or classic rule) for `master`:
   require a pull request, require status checks to pass: `Lint, types, unit, coverage`,
