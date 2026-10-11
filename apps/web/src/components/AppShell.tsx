@@ -23,6 +23,7 @@ import { HouseholdSheet } from "./HouseholdSheet";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "./ui/sheet";
 import { Wordmark } from "./Wordmark";
 import { PlanSheetProvider } from "./plan/PlanSheetProvider";
+import { SuggestionsProvider } from "./SuggestionsProvider";
 import { useMeals, usePlanItems } from "@/data/plan";
 import { usePendingReviews } from "./cook/helpers";
 import { useSupply } from "@/data/supply";
@@ -363,6 +364,7 @@ function ReadyShell({ children, uid }: { children: React.ReactNode; uid: string 
   const s = useReadySession();
   const pathname = usePathname();
   return (
+    <SuggestionsProvider>
     <PlanSheetProvider>
     <div className="flex min-h-dvh bg-pg text-ink">
       <SideRail />
@@ -382,6 +384,7 @@ function ReadyShell({ children, uid }: { children: React.ReactNode; uid: string 
       <NotificationBanners className="bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-7" />
     </div>
     </PlanSheetProvider>
+    </SuggestionsProvider>
   );
 }
 

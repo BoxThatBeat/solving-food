@@ -13,6 +13,7 @@ import { useActiveHousehold } from "@/data/households";
 import { useMealFacts } from "@/data/meals";
 import { setMealFavourite, useMeals, usePlanItems } from "@/data/plan";
 import { useRecipeIndex } from "@/search/useRecipeSearch";
+import { useSuggestions } from "@/data/suggestions";
 
 export const Route = createFileRoute("/_app/meals/")({
   validateSearch: (s) => collectionSearchSchema.parse(s),
@@ -29,7 +30,8 @@ function MealsPage() {
   const summaries = useRecipeIndex();
   const byId = React.useMemo(() => new Map((summaries ?? []).map((r) => [r.id, r])), [summaries]);
   const rows = React.useMemo(() => (meals.docs ?? []).map((m) => mealRow(m.id, m.data, (id) => byId.get(id))), [meals.docs, byId]);
-  const factsOf = useMealFacts(hh.id, rows);
+  const suggestions = useSuggestions();
+  const factsOf = useMealFacts(hh.id, rows, suggestions.byId);
   const planItems = usePlanItems(hh.id, hh.data?.currentPeriodId);
   const inPlan = new Set((planItems.docs ?? []).filter((p) => p.data.status === "planned" && p.data.savedMealId).map((p) => p.data.savedMealId!));
 

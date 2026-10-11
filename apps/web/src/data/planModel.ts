@@ -5,12 +5,16 @@
 
 import { useMemo } from "react";
 import {
+  addLocalDays,
   budgetState,
   buildList,
+  expiringSpare,
   incomingFrom,
   itemCosts,
+  needsFor,
   projectedSupply,
   unexpiredByIngredient,
+  USE_SOON_DAYS,
   type LedgerLot,
   type BuildContext,
   type GroceryIngredient,
@@ -21,6 +25,7 @@ import {
   type StoreEntry,
 } from "@solving-food/core";
 import { PRICE_ESTIMATES } from "./prices";
+import { liveLookup, useLivePrices } from "./livePrices";
 import { useActiveHousehold } from "./households";
 import { useIngredientsById } from "./ingredients";
 import { useSupply } from "./supply";
@@ -39,6 +44,7 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[] } = {}) 
   const ordered = useOrderedLists(hid);
   const draft = useDraftList(hid);
   const supply = useSupply(hid, household?.timezone ?? "America/Toronto");
+  const livePrices = useLivePrices(household?.pcxStoreId);
   // Unexpired supply per ingredient (expired lots don't count, R8.15); leftover batches aren't ingredients.
   const unexpired = useMemo(() => unexpiredByIngredient(supply.items.values(), supply.now), [supply.items, supply.now]);
   const lotsByIngredient = useMemo(() => {
@@ -81,9 +87,9 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[] } = {}) 
       rules: ruleList,
       stores: storeList,
       defaultStoreId: household?.defaultStoreId,
-      prices: { estimates: PRICE_ESTIMATES },
+      prices: { estimates: PRICE_ESTIMATES, live: liveLookup(livePrices) },
     };
-  }, [stores.docs, mappings.docs, rules.docs, ingredients, recipes, ordered.docs, household?.defaultStoreId, unexpired]);
+  }, [stores.docs, mappings.docs, rules.docs, ingredients, recipes, ordered.docs, household?.defaultStoreId, unexpired, livePrices]);
 
   const inputs: PlanItemInput[] = useMemo(() => items.map((i) => ({ id: i.id, status: i.data.status, servings: i.data.servings, recipes: i.data.recipes })), [items]);
   const built = useMemo(() => buildList(inputs, ctx), [inputs, ctx]);
@@ -91,6 +97,14 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[] } = {}) 
   // Projected supply (R8.4): unexpired − what the period's uncooked items will use.
   const projected = useMemo(() => projectedSupply(unexpired, inputs, ctx), [unexpired, inputs, ctx]);
   const budget = useMemo(() => budgetState(period.data?.budgetCents ?? household?.budgetCents ?? 0, built), [period.data?.budgetCents, household?.budgetCents, built]);
+  // Spare supply expiring within the period (or the next few days): what no planned meal will use (R6.13, M5).
+  const tz = household?.timezone ?? "America/Toronto";
+  const periodEndMs = millis(period.data?.end);
+  const expiring = useMemo(() => {
+    const plannedNeeds = needsFor(inputs, ctx);
+    const until = Math.max(periodEndMs ?? 0, addLocalDays(supply.now, USE_SOON_DAYS + 1, tz));
+    return expiringSpare(lotsByIngredient, plannedNeeds, until, supply.now, tz);
+  }, [inputs, ctx, periodEndMs, supply.now, tz, lotsByIngredient]);
 
   // Ready to price: every recipe loaded and every ingredient they use.
   const recipesReady = recipeIds.every((id) => recipes.has(id));
@@ -119,6 +133,8 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[] } = {}) 
     unexpired,
     projected,
     lotsByIngredient,
+    expiring,
+    livePrices,
   };
 }
 

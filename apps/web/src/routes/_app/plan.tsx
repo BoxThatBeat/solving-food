@@ -7,6 +7,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   applyCollection,
   collectionSearchSchema,
+  combinedSuggestion,
+  NO_FACTS,
   dayOfPeriod,
   imageVariant,
   daysLeft,
@@ -15,7 +17,6 @@ import {
   mealRequirements,
   USE_SOON_DAYS,
   formatPeriodRange,
-  formatProtein,
   MEAL_TYPE_ORDER,
   MEAL_TYPES,
   periodCells,
@@ -24,9 +25,9 @@ import {
   proteinSummary,
   SORT_LABELS,
   stripModel,
-  taxonomyLabel,
   toSearchParams,
   type CollectionSearch,
+  type HouseholdFacts,
   type MealType,
 } from "@solving-food/core";
 import { EmptyState, PageBody } from "@/components/AppShell";
@@ -36,12 +37,17 @@ import { BudgetMeterCard, BudgetMeterCompact } from "@/components/plan/BudgetMet
 import { CoverageStrip } from "@/components/plan/CoverageStrip";
 import { PlanItemCard, PlanItemSheet, type PlanItemView } from "@/components/plan/PlanItem";
 import { MEAL_LABEL, useCreateMeal } from "@/components/plan/plan-sheet-context";
-import { RecipeImage } from "@/components/recipes/RecipeImage";
+import { SuggestedSection } from "@/components/plan/Suggested";
+import { ExpiryAlerts } from "@/components/plan/ExpiryAlerts";
+import { OptimiserCard } from "@/components/plan/Optimiser";
+import { CadencePrompt } from "@/components/grocery/CadencePrompt";
 import { usePlanModel } from "@/data/planModel";
-import { useHouseholdFacts } from "@/data/householdRecipes";
-import { millis } from "@/data/plan";
+import { dismissExpiryAlert, millis } from "@/data/plan";
+import { useScoringSnapshot, useSuggestions } from "@/data/suggestions";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useRecipeIndex } from "@/search/useRecipeSearch";
 import { publicUrl } from "@/firebase/app";
+import { useNotify } from "@/components/notifications-context";
 import { ExpiredLotPrompts } from "@/components/supply/ExpiredLotPrompt";
 import { dateText, expiredEntries, itemExpiry, unitFor } from "@/components/supply/format";
 import { PendingReviews } from "@/components/cook/PendingReviews";
@@ -110,7 +116,16 @@ function PlanPage() {
     [views, cells.length, m.household?.plannedMealTypes],
   );
   const listRows = React.useMemo(() => views.map((v) => planItemRow(v.id, v.item, (id) => byId.get(id), v.title)), [views, byId]);
-  const factsOf = useHouseholdFacts(null);
+  const suggestions = useSuggestions();
+  // The list's Suggested and Expiring first sorts: each item's recipes' scores, combined (M5).
+  const factsOf = React.useCallback(
+    (id: string): HouseholdFacts => {
+      const v = views.find((x) => x.id === id);
+      const c = v ? combinedSuggestion(v.item.recipes.map((r) => r.recipeId), suggestions.byId) : null;
+      return c ? { ...NO_FACTS, suggestion: { raw: c.raw, blocked: c.blocked }, expiryDays: c.expiryDays } : NO_FACTS;
+    },
+    [views, suggestions.byId],
+  );
   const result = React.useMemo(() => {
     const q = (search.q ?? "").trim().toLowerCase();
     const matches = q ? new Map(listRows.filter((r) => [r.title, ...r.ingredientNames, ...r.tags].some((t) => t.toLowerCase().includes(q))).map((r) => [r.id, 1])) : null;
@@ -131,6 +146,12 @@ function PlanPage() {
     (id) => m.recipes.get(id)?.proteinPerServingG ?? null,
   );
   const open = openItem ? (views.find((v) => v.id === openItem) ?? null) : null;
+  const notify = useNotify();
+  const wide = useMediaQuery("(min-width: 80rem)");
+  const snapshot = useScoringSnapshot(m);
+  const plannedIds = React.useMemo(() => new Set(m.items.filter((i) => i.data.status === "planned" || i.data.status === "cooked").flatMap((i) => i.data.recipes.map((r) => r.recipeId))), [m.items]);
+  const goals = (m.household?.settings?.proteinGoals ?? {}) as Partial<Record<MealType, number>>;
+  const dismissed = React.useMemo(() => new Set(m.period?.dismissedLots ?? []), [m.period?.dismissedLots]);
 
   // Offline (§12): warm the service worker's image cache with the planned recipes' photos.
   const imageKey = [...m.recipes.values()].map((r) => r.imagePaths[0] ?? "").filter(Boolean).sort().join("|");
@@ -162,6 +183,7 @@ function PlanPage() {
         </div>
       </div>
       <PendingReviews hid={m.hid} uid={s.user.uid} />
+      <CadencePrompt m={m} uid={s.user.uid} />
       <ExpiredLotPrompts entries={expired} hid={m.hid} uid={s.user.uid} tz={tz} nowMs={supplyNow} />
       {ended && !online ? (
         <div role="status" className="rounded-ui border-2 border-dashed border-line bg-base p-3 text-sm font-bold">
@@ -217,12 +239,31 @@ function PlanPage() {
         </div>
 
         <div className="flex min-w-0 flex-col gap-3.5 [grid-area:b]">
-          <Suggested onAdd={(id) => openCreateMeal({ recipeIds: [id] })} plannedIds={new Set(m.items.flatMap((i) => i.data.recipes.map((r) => r.recipeId)))} />
+          <SuggestedSection ranked={suggestions.ranked} summaries={byId} plannedIds={plannedIds} weights={m.household?.settings?.scoreWeights} wide={wide} onAdd={(id) => openCreateMeal({ recipeIds: [id] })} />
+          <OptimiserCard snapshot={snapshot} summaries={byId} hid={m.hid} periodId={m.periodId} uid={s.user.uid} servings={m.household?.defaultServings ?? 4} remainingCents={m.budget.remainingCents} goals={goals} />
         </div>
 
         <div className="flex min-w-0 flex-col gap-3.5 [grid-area:c] lg:sticky lg:top-4">
           <BudgetMeterCard b={m.budget} className="hidden lg:flex" />
-          <ProteinCard protein={protein} plannedTypes={m.household?.plannedMealTypes ?? []} />
+          <ExpiryAlerts
+            spare={m.expiring}
+            dismissed={dismissed}
+            ingredient={(id) => {
+              const i = m.ingredients.get(id);
+              return i ? { name: i.name, canonicalUnit: i.canonicalUnit, unitWeightG: i.unitWeightG } : undefined;
+            }}
+            summaries={summaries ?? []}
+            scores={suggestions.byId}
+            plannedIds={plannedIds}
+            servings={m.household?.defaultServings ?? 4}
+            nowMs={supplyNow}
+            tz={tz}
+            onAdd={(id) => openCreateMeal({ recipeIds: [id] })}
+            onDismiss={(lots) => {
+              if (m.periodId) void dismissExpiryAlert(m.hid, m.periodId, lots).catch((e) => notify({ kind: "error", message: `Couldn't dismiss it: ${(e as Error).message}` }));
+            }}
+          />
+          <ProteinCard protein={protein} plannedTypes={m.household?.plannedMealTypes ?? []} goals={goals} />
         </div>
       </div>
 
@@ -231,57 +272,42 @@ function PlanPage() {
   );
 }
 
-/** Suggestions arrive in M5 (scoring); until then the newest recipes not yet planned, each one tap from Create meal. */
-function Suggested({ onAdd, plannedIds }: { onAdd: (id: string) => void; plannedIds: Set<string> }) {
-  const summaries = useRecipeIndex();
-  const list = (summaries ?? []).filter((r) => !plannedIds.has(r.id)).sort((a, b) => b.createdAtMs - a.createdAtMs).slice(0, 5);
-  return (
-    <section aria-labelledby="suggested-h" className="flex flex-col gap-2.5">
-      <div className="flex items-baseline justify-between gap-2">
-        <h2 id="suggested-h" className="m-0 font-display text-[1.375rem] font-normal">
-          Suggested
-        </h2>
-        <span className="font-mono text-[0.625rem] font-bold text-sub uppercase">Newest first · scoring arrives in M5</span>
-      </div>
-      {list.map((r) => (
-        <div key={r.id} className="flex items-stretch gap-3 rounded-ui border-bw bg-base p-2.5 shadow-hard">
-          <Link to="/recipes/$id" params={{ id: r.id }} className="flex min-w-0 flex-1 items-center gap-3 text-ink no-underline">
-            <span className="relative block size-16 flex-none overflow-hidden rounded-[calc(var(--r)*0.67)] border-2 border-line">
-              <RecipeImage base={r.thumb} cuisine={r.cuisine} alt="" sizes="4rem" className="absolute inset-0" />
-            </span>
-            <span className="flex min-w-0 flex-col gap-1">
-              <span className="text-[0.9375rem] leading-tight font-extrabold">{r.title}</span>
-              <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
-                {r.totalMin} min · {taxonomyLabel(r.cuisine)} · {formatProtein(r.proteinPerServingG, r.proteinApproximate)}
-              </span>
-            </span>
-          </Link>
-          <button type="button" onClick={() => onAdd(r.id)} aria-label={`Add ${r.title} to plan`} className="press grid w-11 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-acc text-xl font-extrabold text-onc shadow-hard-sm">
-            +
-          </button>
-        </div>
-      ))}
-      {summaries && !list.length ? <EmptyState>Every recipe is already planned.</EmptyState> : null}
-    </section>
-  );
-}
-
-/** R6.17's shape: average protein per serving per planned meal type. Goals (R6.14) arrive in M5. */
-function ProteinCard({ protein, plannedTypes }: { protein: Partial<Record<MealType, { avg: number; items: number }>>; plannedTypes: readonly string[] }) {
+/**
+ * <ProteinSummary> (R6.17, R6.14): average protein per serving of the planned meals per meal type, next to the goal,
+ * with a bar (green at or above the goal, peach below). Goals are set in Settings → Preferences.
+ */
+function ProteinCard({ protein, plannedTypes, goals }: { protein: Partial<Record<MealType, { avg: number; items: number }>>; plannedTypes: readonly string[]; goals: Partial<Record<MealType, number>> }) {
   const types = MEAL_TYPES.filter((t) => plannedTypes.includes(t) || protein[t]);
   return (
-    <section aria-label="Protein per serving" className="flex flex-col gap-2.5 rounded-ui border-bw bg-base p-3.5 shadow-hard">
-      <div className="flex justify-between font-mono text-[0.6875rem] font-bold tracking-[0.09rem] uppercase">
+    <section aria-label="Protein per serving" data-testid="protein-summary" className="flex flex-col gap-2.5 rounded-ui border-bw bg-base px-3.5 py-3 shadow-hard">
+      <div className="flex justify-between font-mono text-[0.65625rem] font-bold tracking-[0.09rem] uppercase">
         <span>Protein / serving</span>
         <span className="text-sub">Plan avg</span>
       </div>
-      {types.map((t) => (
-        <div key={t} className="flex items-center justify-between font-mono text-[0.6875rem] font-bold uppercase">
-          <span>{MEAL_LABEL[t]}</span>
-          <span>{protein[t] ? `${Math.round(protein[t]!.avg)} g` : "—"}</span>
-        </div>
-      ))}
-      <span className="text-[0.75rem] font-semibold text-sub">Protein goals per meal type arrive with Preferences (M5).</span>
+      {types.map((t) => {
+        const p = protein[t];
+        const goal = goals[t];
+        const avg = p ? Math.round(p.avg) : null;
+        const met = goal !== undefined && avg !== null && avg >= goal;
+        const pct = goal !== undefined ? (avg !== null ? Math.min(100, (avg / goal) * 100) : 0) : avg !== null ? 100 : 0;
+        return (
+          <div key={t} className="flex flex-col gap-1" data-testid={`protein-${t}`}>
+            <div className="flex justify-between gap-2 font-mono text-[0.6875rem] font-bold uppercase">
+              <span>{MEAL_LABEL[t]}</span>
+              <span>
+                {avg !== null ? `${avg} g` : "—"} · {goal !== undefined ? `goal ${goal} g` : "no goal"}
+                {goal !== undefined && avg !== null ? (met ? " ✓" : " ↓") : ""}
+              </span>
+            </div>
+            <div className="h-2.5 overflow-hidden rounded-[0.1875rem] border-2 border-line bg-pg" aria-hidden>
+              <div className={goal === undefined ? "h-full bg-s0" : met ? "h-full bg-acc" : "h-full bg-peach"} style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        );
+      })}
+      <Link to="/settings/preferences" className="text-[0.75rem] font-bold text-ink underline">
+        Protein goals
+      </Link>
     </section>
   );
 }

@@ -1,6 +1,6 @@
 // <CollectionView> (TECHNICAL_SPECS §12, PRD R4.2, R4.7): the shared search box, filter-and-sort sheet, and applied-
-// filter chips for every list of recipes or meals (Recipes and Meals now; Plan and History later). Filter state lives
-// in the URL. The page computes the results (core `applyCollection`) and renders them as children.
+// filter chips for every list of recipes or meals (Recipes, Meals, Plan, History, and the Create meal sheet). Filter state
+// lives in the URL. Suggested and Expiring first use the suggestion scores (M5). The page computes the results (core `applyCollection`) and renders them as children.
 import * as React from "react";
 import {
   ACTIVE_TIME_STEPS,
@@ -15,7 +15,6 @@ import {
   SORTS,
   taxonomyLabel,
   TOTAL_TIME_STEPS,
-  UNAVAILABLE_SORTS,
   type CollectionSearch,
   type CollectionSort,
   type FilterKey,
@@ -66,6 +65,7 @@ function appliedChips(s: CollectionSearch): Array<{ key: string; label: string; 
   if (s.maxActive) out.push({ key: "maxActive", label: `≤ ${s.maxActive} min active`, remove: (x) => ({ ...x, maxActive: undefined }) });
   if (s.minRating) out.push({ key: "minRating", label: `★ ${s.minRating}+`, remove: (x) => ({ ...x, minRating: undefined }) });
   if (s.tools) out.push({ key: "tools", label: "Have the tools", remove: (x) => ({ ...x, tools: undefined }) });
+  if (s.exp) out.push({ key: "exp", label: "Uses expiring", remove: (x) => ({ ...x, exp: undefined }) });
   if (s.supply) out.push({ key: "supply", label: s.supply === "can" ? "Can make" : "Use what's left", remove: (x) => ({ ...x, supply: undefined }) });
   if (s.maxCost) out.push({ key: "maxCost", label: `≤ $${s.maxCost / 100}/serving`, remove: (x) => ({ ...x, maxCost: undefined }) });
   return out;
@@ -208,18 +208,6 @@ export function CollectionView(p: CollectionViewProps) {
                   <span aria-hidden>{sort === s ? "●" : ""}</span>
                 </button>
               ))}
-              {UNAVAILABLE_SORTS.map((s) => (
-                <button
-                  key={s.key}
-                  type="button"
-                  disabled
-                  title={s.reason}
-                  className="flex cursor-not-allowed flex-col rounded-ui border-2 border-dashed border-line bg-base px-2 py-1.5 text-left text-[0.8125rem] font-extrabold text-ink opacity-60"
-                >
-                  <span>{s.label}</span>
-                  <span className="font-mono text-[0.5625rem] font-bold uppercase">{s.reason}</span>
-                </button>
-              ))}
             </div>
           </fieldset>
 
@@ -246,7 +234,7 @@ export function CollectionView(p: CollectionViewProps) {
                 <ToggleChip pressed={draft.supply === "useup"} onClick={() => setDraft((d) => ({ ...d, supply: d.supply === "useup" ? undefined : "useup" }))} count={count("supply", "useup")}>
                   Use what&apos;s left
                 </ToggleChip>
-                <ToggleChip pressed={false} disabled title="Arrives with suggestions (M5)" className="border-dashed shadow-none">
+                <ToggleChip pressed={!!draft.exp} onClick={() => setDraft((d) => ({ ...d, exp: d.exp ? undefined : true }))} count={count("exp", true)}>
                   Uses expiring
                 </ToggleChip>
               </>

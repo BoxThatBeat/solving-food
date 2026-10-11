@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import {
+  arrayUnion,
   collection,
   deleteDoc,
   deleteField,
@@ -42,6 +43,7 @@ import {
   type GroceryListDoc,
   type HouseholdDoc,
   type MealDoc,
+  type MealType,
   type PeriodDoc,
   type PlanItemDoc,
   type RecipeRef,
@@ -297,6 +299,53 @@ export async function saveHouseholdSettings(
 
 export function saveTools(hid: string, tools: string[]) {
   return updateDoc(doc(db, "households", hid), { "settings.tools": tools });
+}
+
+// ---------- M5: preferences, weights, protein goals, PC Express store, alert dismissals, optimiser sets
+
+/** Food preferences (R11.2): likes, dislikes, diets, written whole (the lists are small). */
+export function savePreferences(hid: string, prefs: { likes: string[]; dislikes: string[]; diets: string[] }) {
+  return updateDoc(doc(db, "households", hid), { "settings.preferences": prefs });
+}
+
+/** Suggestion weights (R6.12, R11.3): { factor: 0..5 }. */
+export function saveWeights(hid: string, weights: Record<string, number>) {
+  return updateDoc(doc(db, "households", hid), { "settings.scoreWeights": weights });
+}
+
+/** Protein goals per meal type (R6.14, R11.4): grams per serving; a missing type is "off". */
+export function saveProteinGoals(hid: string, goals: Partial<Record<string, number>>) {
+  const clean = Object.fromEntries(Object.entries(goals).filter(([, v]) => typeof v === "number" && v > 0));
+  return updateDoc(doc(db, "households", hid), { "settings.proteinGoals": clean });
+}
+
+/** The household's PC Express store (R6.22). */
+export function savePcxStore(hid: string, pcxStoreId: string, pcxStoreName: string) {
+  return updateDoc(doc(db, "households", hid), { pcxStoreId, pcxStoreName: pcxStoreName.slice(0, 120) });
+}
+
+/** Dismisses expiry alerts for the rest of the period (R6.13): their lot IDs go on the period document. */
+export function dismissExpiryAlert(hid: string, periodId: string, lotIds: readonly string[]) {
+  return updateDoc(doc(db, "households", hid, "periods", periodId), { dismissedLots: arrayUnion(...lotIds) });
+}
+
+/**
+ * Accepts an optimiser set (R6.20): every recipe becomes its own planned meal, in one batch. Coverage needs each
+ * recipe's leftover estimate, so the recipe documents are read first (public gets, cached).
+ */
+export async function addOptimiserSet(hid: string, periodId: string, uid: string, recipeIds: readonly string[], mealType: MealType, servings: number): Promise<string[]> {
+  const docs = await Promise.all(recipeIds.map((id) => getDoc(doc(db, "recipes", id))));
+  const info = new Map(docs.filter((d) => d.exists()).map((d) => [d.id, d.data() as CoverageRecipe]));
+  const b = writeBatch(db);
+  const ids: string[] = [];
+  for (const recipeId of recipeIds) {
+    const item = buildPlanItem({ recipes: [{ recipeId, servingsMultiplier: 1 }], mealType, servings, saveAsMeal: false }, { periodId, uid, recipes: (id) => info.get(id) });
+    const ref = doc(collection(db, "households", hid, "planItems"));
+    ids.push(ref.id);
+    b.set(ref, { ...item, addedAt: serverTimestamp() });
+  }
+  await b.commit();
+  return ids;
 }
 
 // ---------- stores, rules, mappings (R7.3, R7.4, R11.7)

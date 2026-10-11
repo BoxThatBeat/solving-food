@@ -263,6 +263,37 @@ export function addedCost(items: readonly PlanItemInput[], candidate: PlanItemIn
   return { cents: after.cents - before.cents, unknown: Math.max(0, after.unknown - before.unknown) };
 }
 
+/**
+ * A fast marginal-cost function over a fixed plan (suggestions and the optimiser price hundreds of candidates): the
+ * plan's needs are summed once, and a candidate's cost is Σ over its own ingredients of (line cost with it − line cost
+ * without it). Lines are independent per ingredient, so this equals `addedCost` exactly, shared packs included.
+ */
+export function marginalCostFn(planned: readonly PlanItemInput[], ctx: BuildContext): (extra: ReadonlyMap<string, number>) => { cents: number; unknown: number } {
+  const base = needsFor(planned, ctx);
+  const baseLine = new Map<string, number | null>();
+  const lineCents = (id: string, need: number): number | null => {
+    const l = lineFor(id, need, ctx);
+    return l ? l.estPriceCents : 0;
+  };
+  return (extra) => {
+    let cents = 0;
+    let unknown = 0;
+    for (const [id, add] of extra) {
+      if (!(add > 0)) continue;
+      const b = base.get(id) ?? 0;
+      if (!baseLine.has(id)) baseLine.set(id, b > 0 ? lineCents(id, b) : 0);
+      const before = baseLine.get(id)!;
+      const after = lineCents(id, b + add);
+      if (after === null || before === null) {
+        if (after === null && before !== null) unknown++;
+        continue;
+      }
+      cents += after - before;
+    }
+    return { cents, unknown };
+  };
+}
+
 /** Incoming = canonical amounts on ordered (not yet received) lists, per ingredient (§8). */
 export function incomingFrom(lists: ReadonlyArray<{ status: string; items: Record<string, Pick<GroceryItem, "ingredientId" | "amount">> }>): Map<string, number> {
   const m = new Map<string, number>();

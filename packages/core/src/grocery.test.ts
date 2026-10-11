@@ -229,3 +229,20 @@ describe("prices", () => {
     expect(costPerServing({ a: 100, c: 1 }, (id) => (id === "a" ? 1 : null))).toBeNull();
   });
 });
+
+describe("marginalCostFn", () => {
+  it("matches addedCost for single recipes and for sets sharing a pack", async () => {
+    const { marginalCostFn, addedCost, needsFor, costOfNeeds } = await import("./grocery");
+    const c = ctx({ supply: new Map([["tomato", 300]]) });
+    for (const planned of [[], [plan("p1", "pasta")], [plan("p1", "curry", 6)]]) {
+      const fn = marginalCostFn(planned, c);
+      for (const rid of Object.keys(RECIPES)) {
+        const cand = plan("c", rid, 3);
+        expect(fn(needsFor([cand], c)).cents).toBe(addedCost(planned, cand, c).cents);
+      }
+      const both = [plan("a", "pasta"), plan("b", "curry")];
+      const added = costOfNeeds(needsFor([...planned, ...both], c), c).cents - costOfNeeds(needsFor(planned, c), c).cents;
+      expect(fn(needsFor(both, c)).cents).toBe(added);
+    }
+  });
+});

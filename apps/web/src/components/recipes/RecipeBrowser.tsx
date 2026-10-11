@@ -23,6 +23,7 @@ import { RecipeCard } from "./RecipeCard";
 import { usePlanModel } from "@/data/planModel";
 import { DuplicateReviewSheet } from "./DuplicateReview";
 import { useCreateMeal } from "@/components/plan/plan-sheet-context";
+import { useSuggestions } from "@/data/suggestions";
 
 export function RecipeBrowser({
   search,
@@ -42,7 +43,8 @@ export function RecipeBrowser({
   const summaries = useRecipeIndex();
   const notes = useNotes(hh.id);
   const plan = usePlanModel();
-  const factsOf = useHouseholdFacts(hh.id, summaries, plan.supply.loading ? undefined : plan.projected);
+  const suggestions = useSuggestions();
+  const factsOf = useHouseholdFacts(hh.id, summaries, plan.supply.loading ? undefined : plan.projected, suggestions.byId);
   const pending = useRecipesWithStatus("pendingDuplicateReview");
   const openCreateMeal = useCreateMeal();
   const all = React.useMemo(() => summaries ?? [], [summaries]);

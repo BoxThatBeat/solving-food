@@ -3,6 +3,7 @@
 // Copy hands the PC Express section to ChatGPT and marks the list ordered, with Undo (R7.5). Prototype "Grocery",
 // phase "order". An ordered list is confirmed on arrival (phase "receipt", R7.8) with the freeze prompt for bulk buys
 // (R7.9): <ReceiveSheet> sends one receiveGroceries command.
+import { CadencePrompt } from "@/components/grocery/CadencePrompt";
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
@@ -129,6 +130,7 @@ function GroceryPage() {
         <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">Grocery</h1>
         <span className="font-mono text-[0.65625rem] font-bold uppercase">Plan needs − supply − ordered · rounded to packs · brand-mapped · food only</span>
       </div>
+      <CadencePrompt m={m} uid={s.user.uid} />
 
       {!m.ready ? (
         <p className="m-0 text-sm font-bold">Building the list…</p>

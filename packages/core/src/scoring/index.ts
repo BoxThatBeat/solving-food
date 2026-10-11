@@ -257,3 +257,16 @@ export function emptyScoreContext(overrides: Partial<ScoreContext> = {}): ScoreC
     ...overrides,
   };
 }
+
+/** The suggestion of a saved meal or plan item: the mean of its recipes' scores; blocked if any recipe is (M5). */
+export function combinedSuggestion(recipeIds: readonly string[], byId: ReadonlyMap<string, ScoreResult>): { raw: number; score: number; blocked: boolean; expiryDays: number | null } | null {
+  const rs = recipeIds.map((id) => byId.get(id)).filter((x): x is ScoreResult => !!x);
+  if (!rs.length) return null;
+  const days = rs.map((r) => (r.expiring ? r.expiring.daysLeft : null)).filter((d): d is number => d !== null);
+  return {
+    raw: rs.reduce((t, r) => t + r.raw, 0) / rs.length,
+    score: Math.round(rs.reduce((t, r) => t + r.score, 0) / rs.length),
+    blocked: rs.some((r) => !!r.blocked),
+    expiryDays: days.length ? Math.min(...days) : null,
+  };
+}

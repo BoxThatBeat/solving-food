@@ -1,5 +1,6 @@
-// <BudgetMeter> (PRD R6.3–R6.5; TECHNICAL_SPECS §7 "Budget", §12): budget − what the next order will cost. Red and
-// negative when over; never blocks adding. "n prices unknown" when an ingredient has no price (counted as $0).
+// <BudgetMeter> (PRD R6.3–R6.5, R6.21; TECHNICAL_SPECS §7 "Budget", §8 "Prices", §12): budget − what the next order
+// will cost. Red and negative when over; never blocks adding. "n prices unknown" when an ingredient has no price
+// (counted as $0). The source mix says how many lines use live PC Express prices and how many the estimates (M5).
 import { formatCents, type BudgetState } from "@solving-food/core";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +32,7 @@ export function BudgetMeterCompact({ b, className }: { b: BudgetState; className
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <Bar b={b} />
-        {b.unknownPrices ? <span className="font-mono text-[0.59375rem] font-bold uppercase">{b.unknownPrices} price{b.unknownPrices === 1 ? "" : "s"} unknown</span> : null}
+        <SourceMix b={b} />
       </div>
     </section>
   );
@@ -51,8 +52,26 @@ export function BudgetMeterCard({ b, className }: { b: BudgetState; className?: 
       <Bar b={b} />
       <span className="font-mono text-[0.625rem] leading-relaxed font-bold uppercase">
         Next order {formatCents(b.spentCents)} · only what supply and ordered lists don't cover counts
-        {b.unknownPrices ? ` · ${b.unknownPrices} price${b.unknownPrices === 1 ? "" : "s"} unknown` : ""}
       </span>
+      <SourceMix b={b} />
     </section>
   );
+}
+
+/** "3 live · 9 estimated · 1 unknown": where the meter's prices come from (R6.21). Nothing when nothing is priced. */
+function sourceMixText(b: Pick<BudgetState, "livePrices" | "estimatedPrices" | "unknownPrices">): string {
+  const parts: string[] = [];
+  if (b.livePrices) parts.push(`${b.livePrices} live`);
+  if (b.estimatedPrices) parts.push(`${b.estimatedPrices} estimated`);
+  if (b.unknownPrices) parts.push(`${b.unknownPrices} price${b.unknownPrices === 1 ? "" : "s"} unknown`);
+  return parts.join(" · ");
+}
+
+function SourceMix({ b }: { b: BudgetState }) {
+  const t = sourceMixText(b);
+  return t ? (
+    <span className="font-mono text-[0.59375rem] font-bold uppercase" data-testid="price-sources">
+      Prices: {t}
+    </span>
+  ) : null;
 }

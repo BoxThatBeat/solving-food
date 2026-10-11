@@ -6,14 +6,12 @@ import { z } from "zod";
 import { CUISINES, MAIN_PROTEINS, MEAL_TYPES } from "./taxonomy";
 import type { RecipeSummary } from "./recipe";
 
-export const SORTS = ["suggested", "newest", "name", "quickest", "protein", "cheapest", "rating", "made", "recent"] as const;
+export const SORTS = ["suggested", "expiry", "newest", "name", "quickest", "protein", "cheapest", "rating", "made", "recent"] as const;
 export type CollectionSort = (typeof SORTS)[number];
-
-/** Sorts that need data from later milestones; shown greyed with the reason. */
-export const UNAVAILABLE_SORTS = [{ key: "expiry", label: "Expiring first", reason: "Arrives with suggestions (M5)" }] as const;
 
 export const SORT_LABELS: Record<CollectionSort, string> = {
   suggested: "Suggested",
+  expiry: "Expiring first",
   newest: "Newest",
   name: "Name",
   quickest: "Quickest",
@@ -63,6 +61,8 @@ export const collectionSearchSchema = z.object({
   maxCost: num,
   /** Supply filters (R4.2, R4.3, R4.4): "can" = can make with projected supply; "useup" = Use what's left. */
   supply: z.enum(["can", "useup"]).catch(undefined as never).optional(),
+  /** Uses supply that expires soon and isn't planned for (R6.13, M5). */
+  exp: z.coerce.boolean().catch(false).optional(),
 });
 export type CollectionSearch = z.infer<typeof collectionSearchSchema>;
 
@@ -91,6 +91,10 @@ export interface HouseholdFacts {
   canMake?: boolean;
   /** Share of the recipe's tracked amounts projected supply covers, 0..1 (R4.4). */
   supplyFraction?: number;
+  /** The suggestion score (M5): `raw` ranks; blocked (missing tool, dislike, diet) sorts last. Absent until scored. */
+  suggestion?: { raw: number; blocked: boolean } | null;
+  /** Days left on the soonest spare expiring ingredient it uses, or null (M5: "Expiring first", "Uses expiring"). */
+  expiryDays?: number | null;
 }
 
 export const NO_FACTS: HouseholdFacts = { favourite: false, timesCooked: 0, lastCookedAtMs: null, rating: null };
@@ -103,7 +107,7 @@ export function missingTools(recipeTools: readonly string[], householdTools: rea
 
 export type FactsOf = (id: string) => HouseholdFacts;
 
-export type FilterKey = "cuisine" | "protein" | "meal" | "tags" | "minProtein" | "maxTotal" | "maxActive" | "minRating" | "cooked" | "fav" | "tools" | "maxCost" | "supply";
+export type FilterKey = "cuisine" | "protein" | "meal" | "tags" | "minProtein" | "maxTotal" | "maxActive" | "minRating" | "cooked" | "fav" | "tools" | "maxCost" | "supply" | "exp";
 
 /** "Use what's left" (R4.4): covered fully or nearly fully by what's left after the plan. */
 export const USE_WHATS_LEFT = 0.85;
@@ -111,7 +115,7 @@ export const USE_WHATS_LEFT = 0.85;
 const MEAL_SET = new Set<string>(MEAL_TYPES);
 
 /** Meal types a recipe is tagged with (tags carry the course: breakfast, lunch, dinner, snack). */
-export function mealTypesOf(r: Pick<RecipeSummary, "tags">): string[] {
+export function mealTypesOf(r: { tags: readonly string[] }): string[] {
   return r.tags.map((t) => t.toLowerCase()).filter((t) => MEAL_SET.has(t));
 }
 
@@ -134,8 +138,15 @@ export function passes(r: RecipeSummary, s: CollectionSearch, facts: HouseholdFa
   if (skip !== "tools" && s.tools && facts.hasAllTools === false) return false;
   if (skip !== "supply" && s.supply === "can" && !facts.canMake) return false;
   if (skip !== "supply" && s.supply === "useup" && !(facts.canMake || (facts.supplyFraction ?? 0) >= USE_WHATS_LEFT)) return false;
+  if (skip !== "exp" && s.exp && (facts.expiryDays === null || facts.expiryDays === undefined)) return false;
   if (skip !== "maxCost" && s.maxCost && (facts.costPerServingCents === null || facts.costPerServingCents === undefined || facts.costPerServingCents > s.maxCost)) return false;
   return true;
+}
+
+function bySuggestion(fa: HouseholdFacts, fb: HouseholdFacts): number {
+  const ka = fa.suggestion ? (fa.suggestion.blocked ? -1e9 : fa.suggestion.raw) : -2e9;
+  const kb = fb.suggestion ? (fb.suggestion.blocked ? -1e9 : fb.suggestion.raw) : -2e9;
+  return kb - ka;
 }
 
 function compare(sort: CollectionSort, a: RecipeSummary, b: RecipeSummary, fa: HouseholdFacts, fb: HouseholdFacts): number {
@@ -154,7 +165,11 @@ function compare(sort: CollectionSort, a: RecipeSummary, b: RecipeSummary, fa: H
       return fb.timesCooked - fa.timesCooked;
     case "recent":
       return (fb.lastCookedAtMs ?? -1) - (fa.lastCookedAtMs ?? -1);
-    case "suggested": // M5 adds the suggestion score; until then Suggested is Newest (Planning/M1).
+    case "expiry":
+      return (fa.expiryDays ?? Number.MAX_SAFE_INTEGER) - (fb.expiryDays ?? Number.MAX_SAFE_INTEGER) || bySuggestion(fa, fb);
+    case "suggested":
+      // Blocked last, then the score; unscored (still computing) falls back to Newest.
+      return bySuggestion(fa, fb) || b.createdAtMs - a.createdAtMs;
     case "newest":
       return b.createdAtMs - a.createdAtMs;
   }
@@ -206,7 +221,7 @@ export function optionCount(
 export function activeFilterCount(s: CollectionSearch): number {
   let n = 0;
   for (const k of ["cuisine", "protein", "meal", "tags"] as const) n += s[k]?.length ?? 0;
-  for (const k of ["minProtein", "maxTotal", "maxActive", "minRating", "cooked", "fav", "tools", "maxCost", "supply"] as const) if (s[k]) n++;
+  for (const k of ["minProtein", "maxTotal", "maxActive", "minRating", "cooked", "fav", "tools", "maxCost", "supply", "exp"] as const) if (s[k]) n++;
   return n;
 }
 

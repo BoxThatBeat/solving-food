@@ -3,7 +3,7 @@
 
 import { useMemo } from "react";
 import { collection, deleteDoc, doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { costPerServing, missingTools, NO_FACTS, supplyCoverage, type FavouriteDoc, type HouseholdFacts, type NoteDoc, type RecipeSummary, type StatsDoc } from "@solving-food/core";
+import { costPerServing, missingTools, NO_FACTS, supplyCoverage, type FavouriteDoc, type HouseholdFacts, type NoteDoc, type RecipeSummary, type ScoreResult, type StatsDoc } from "@solving-food/core";
 import { db } from "@/firebase/app";
 import { useLiveDoc, useLiveQuery } from "./live";
 import { useHousehold } from "./households";
@@ -53,7 +53,7 @@ function millis(v: unknown): number | null {
  * household owns its tools (R11.1), and its estimated cost per serving (R4.2). `summaries` supplies tools and cost
  * lines; without it those two filters pass everything.
  */
-export function useHouseholdFacts(hid: string | null, summaries?: readonly RecipeSummary[], projected?: ReadonlyMap<string, number>): (id: string) => HouseholdFacts {
+export function useHouseholdFacts(hid: string | null, summaries?: readonly RecipeSummary[], projected?: ReadonlyMap<string, number>, scores?: ReadonlyMap<string, ScoreResult>): (id: string) => HouseholdFacts {
   const favs = useFavourites(hid);
   const stats = useStats(hid);
   const household = useHousehold(hid);
@@ -82,14 +82,16 @@ export function useHouseholdFacts(hid: string | null, summaries?: readonly Recip
       const s = stats.get(id);
       const favourite = favs.has(id);
       const x = extra.get(id);
-      if (!s && !favourite && !x) return NO_FACTS;
+      const sc = scores?.get(id);
+      if (!s && !favourite && !x && !sc) return NO_FACTS;
       return {
         favourite,
         timesCooked: s?.timesCooked ?? 0,
         lastCookedAtMs: millis(s?.lastCookedAt),
         rating: s && s.ratingCount > 0 ? s.ratingSum / s.ratingCount : null,
         ...(x ?? {}),
+        ...(sc ? { suggestion: { raw: sc.raw, blocked: !!sc.blocked }, expiryDays: sc.expiring ? sc.expiring.daysLeft : null } : {}),
       };
     };
-  }, [favs, stats, extra]);
+  }, [favs, stats, extra, scores]);
 }

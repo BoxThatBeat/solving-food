@@ -33,6 +33,7 @@ import { useNotify } from "@/components/notifications-context";
 import { useHouseholdFacts, useNotes } from "@/data/householdRecipes";
 import { createMeal, useMeals } from "@/data/plan";
 import { usePlanModel } from "@/data/planModel";
+import { useSuggestions } from "@/data/suggestions";
 import { useRecipeIndex, useRecipeSearch } from "@/search/useRecipeSearch";
 import { useReadySession } from "@/session/useSession";
 import { cn } from "@/lib/utils";
@@ -101,7 +102,8 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
 
   // Recipes tab: shared filters and text search over the index.
   const notes = useNotes(model.hid);
-  const factsOf = useHouseholdFacts(model.hid, all, model.supply.loading ? undefined : model.projected);
+  const suggestions = useSuggestions();
+  const factsOf = useHouseholdFacts(model.hid, all, model.supply.loading ? undefined : model.projected, suggestions.byId);
   const matches = useRecipeSearch(all, notes, search.q ?? "");
   const result = React.useMemo(() => applyCollection(all, search, factsOf, matches), [all, search, factsOf, matches]);
   const tags = React.useMemo(() => tagCounts(all), [all]);
