@@ -197,6 +197,20 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   for PRs from this repo. Every step runs in the Nix dev shell, so CI has the same toolchain and browsers as local.
 - `.github/workflows/deploy.yml`: after Checks succeed on a push to `master` (or by manual dispatch), builds and runs
   `firebase deploy --only hosting,functions,firestore,storage`, then smoke-checks the site and `healthcheck`.
+- **Deploy service account roles (owner, once):** `firebase init hosting:github` created
+  `github-action-1409507284@solvingfood.iam.gserviceaccount.com` with Hosting rights only; M0 added Cloud Functions
+  Admin, Cloud Run Admin, Firebase Rules Admin and Datastore Index Admin. The first CI deploy (2026-10-11) still
+  failed with "Missing permissions required for functions deploy … iam.serviceAccounts.ActAs". The account also needs
+  `roles/iam.serviceAccountUser` (run functions as the App Engine / compute accounts), `roles/eventarc.admin` (Storage
+  and Firestore triggers), `roles/cloudscheduler.admin` (weekly maintenance), `roles/cloudtasks.queueAdmin` (the
+  `timers` queue) and, once PC Express is enabled, `roles/secretmanager.admin` (binding `PCX_EMAIL` / `PCX_PASSWORD`):
+  ```
+  SA=serviceAccount:github-action-1409507284@solvingfood.iam.gserviceaccount.com
+  for r in roles/iam.serviceAccountUser roles/eventarc.admin roles/cloudscheduler.admin roles/cloudtasks.queueAdmin roles/secretmanager.admin; do
+    gcloud projects add-iam-policy-binding solvingfood --member=$SA --role=$r --condition=None
+  done
+  ```
+  Then re-run Deploy (`gh workflow run deploy.yml --ref master`).
 - **Branch protection (owner, in GitHub):** Settings → Branches → Add branch ruleset (or classic rule) for `master`:
   require a pull request, require status checks to pass: `Lint, types, unit, coverage`,
   `Rules and functions (emulator)`, `Playwright (phone-ios)`, `Playwright (phone-android)`, `Playwright (desktop-1080p)`,
