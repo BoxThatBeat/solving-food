@@ -215,7 +215,7 @@ test("an invite can be declined, or cancelled by the household", { tag: ["@R2.4"
   await pending.getByRole("button", { name: "Cancel the invite for someone.new@example.com" }).click();
   await expect(pending.getByRole("listitem")).toHaveCount(0);
   await expect(page.getByText("Nobody is waiting to join.")).toBeVisible();
-  expect((await adminDb.collection(`households/${household.hid}/invites`).get()).size).toBe(0);
+  await expect.poll(async () => (await adminDb.collection(`households/${household.hid}/invites`).get()).size).toBe(0);
   await dee.context.close();
 });
 

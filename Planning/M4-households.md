@@ -30,44 +30,46 @@ M3 done (so an export has real data to round-trip). M0 already created `users`, 
 
 ### 1. Members and invites
 
-- [ ] `/settings/members`: member list with display names and joined dates; Remove (any member, R2.5);
+- [x] `/settings/members`: member list with display names and joined dates; Remove (any member, R2.5);
       Leave (self) with `<LeaveHouseholdDialog>`; last-member variant with the R2.13 warning. Prototype
-      sheet "house".
-- [ ] Invite by email: email field → batch `allowlist/{emailLower}` (if missing) + `invites/{emailLower}`.
+      Settings "Household" card (the "house" sheet is the switcher).
+- [x] Invite by email: email field → batch `allowlist/{emailLower}` (if missing) + `invites/{emailLower}`.
       Shows "invited, waiting for sign-up" state.
-- [ ] Invite by name: directory search (load all; filter client-side) → `invites/{uid}`.
-- [ ] Invites inbox (banner on any page + list in Settings): two collection-group queries (by uid, by email);
+- [x] Invite by name: directory search (load all; filter client-side) → `invites/{uid}`.
+- [x] Invites inbox (banner on any page + list in Settings): two collection-group queries (by uid, by email);
       Accept = batch create `members/{uid}` (with `uid`, `displayName`) + delete invite; Decline = delete.
-- [ ] Household switcher in the shell (header on phone, side nav on desktop): memberships from the
+- [x] Household switcher in the shell (header on phone, side nav on desktop): memberships from the
       collection-group query; sets `activeHouseholdId`. "Create household" entry with the 3-limit message
       from rules errors.
-- [ ] Removal takes effect live: `useMyHouseholds()` drops the household; if it was active, switch or show
+- [x] Removal takes effect live: `useMyHouseholds()` drops the household; if it was active, switch or show
       the "no household" screen.
 
 ### 2. Empty-household cleanup
 
-- [ ] `functions/src/households.ts`: `onDocumentDeleted(households/{hid}/members/{uid})` → if no members
+- [x] `functions/src/households.ts`: `onDocumentDeleted(households/{hid}/members/{uid})` → if no members
       remain, `recursiveDelete(households/{hid})` and decrement `users/{createdBy}.householdsCreated`
       (floor 0). Idempotent; guards against the household already being gone.
-- [ ] Storage: delete `imports/{hid}/**` in the same cleanup.
+- [x] Storage: delete `imports/{hid}/**` in the same cleanup.
 
 ### 3. Data download
 
-- [ ] `packages/core/export.ts`: `household.json` schema (versioned, zod), `.cook` per recipe,
-      `meals.json`. `buildExport()` from in-memory documents.
-- [ ] `<DataTransfer>` Download: reads every household collection (paginated), recipes and meals referenced
+- [x] `packages/core/export.ts`: `household.json` schema (versioned, zod), `.cook` per recipe,
+      `meals.json`. `buildExport()` from in-memory documents; `gatherExport()` does the reads behind a reader the
+      web app (Firestore SDK) and the functions tests (Admin SDK) both implement.
+- [x] `<DataTransfer>` Download: reads every household collection (paginated), recipes and meals referenced
       by plans, favourites, notes, history and stats; zips in the browser (`fflate`); file name
       `solving-food-<household>-<date>.zip`. Progress indicator; Firestore read estimate shown ("~1,200 reads").
 
 ### 4. Data import
 
-- [ ] Import: file picker → unzip → zod validate → summary (counts, export date, schema version) → confirm
+- [x] Import: file picker → unzip → zod validate → summary (counts, export date, schema version) → confirm
       dialog "replaces this household's data" → upload to `imports/{hid}/{uuid}.zip` → `importHousehold`
-      command with the path.
-- [ ] `functions/src/commands/importHousehold.ts`: download, validate, delete household data except
+      command with the path. (Import reads the zip in the browser for the summary; the function validates again.)
+- [x] `functions/src/commands/importHousehold.ts`: download, validate, delete household data except
       `members` and `invites`, write documents in batches (supply + transactions written by the function so
       ledger rules hold), match recipes by ID then fingerprint, create missing recipes from `.cook` via the
-      M1 pipeline (no dedupe prompt; mark `needsReview` if fingerprint-matched), delete the upload, notify.
+      M1 pipeline (no dedupe prompt), delete the upload, notify. (`functions/src/importHousehold.ts`, dispatched
+      outside the command transaction; `needsReview` for fingerprint matches dropped, see Deviations.)
       Writes per import logged; stay under the 20K/day quota for realistic sizes (note in spec §2 if not).
 
 ## Data & rules introduced
