@@ -165,7 +165,7 @@ test("invite by email: the newcomer signs up on their phone, sees the invite, jo
   await sam.context.close();
 });
 
-test("invite by name: someone with an account gets a banner on any page, joins, and switches between households", { tag: ["@R2.4", "@R2.2", "@R11.8"] }, async ({ page, household, browser, uniqueEmail }) => {
+test("invite by name: someone with an account gets a banner on any page, joins, and switches between households", { tag: ["@R2.4", "@R2.2", "@R11.8"] }, async ({ page, household: _owner, browser, uniqueEmail }) => {
   const email = uniqueEmail("kim");
   await allowlist(email);
   const kim = await newDevice(browser, email, "Kimberly Quinn");
