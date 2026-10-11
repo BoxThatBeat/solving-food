@@ -184,3 +184,22 @@ describe("expiry alerts", () => {
     ]);
   });
 });
+
+describe("PC Express shapes", async () => {
+  const { parsePackageSize, priceDocId } = await import("./pcx");
+  it("reads pack sizes", () => {
+    expect(parsePackageSize("400 g")).toEqual({ packAmount: 400, packMeasure: "weight" });
+    expect(parsePackageSize("1.5 kg")).toEqual({ packAmount: 1500, packMeasure: "weight" });
+    expect(parsePackageSize("946 mL")).toEqual({ packAmount: 946, packMeasure: "volume" });
+    expect(parsePackageSize("4 L")).toEqual({ packAmount: 4000, packMeasure: "volume" });
+    expect(parsePackageSize("6x355 mL")).toEqual({ packAmount: 2130, packMeasure: "volume" });
+    expect(parsePackageSize("2 x 170 g")).toEqual({ packAmount: 340, packMeasure: "weight" });
+    expect(parsePackageSize("12 ea")).toEqual({ packAmount: 12, packMeasure: "count" });
+    expect(parsePackageSize("about a bunch")).toBeNull();
+    expect(parsePackageSize(undefined)).toBeNull();
+  });
+  it("price doc IDs", () => {
+    expect(priceDocId("1032", "20123_EA")).toBe("1032_20123_EA");
+    expect(priceDocId("a/b", "c")).toBe("a-b_c");
+  });
+});

@@ -15,6 +15,8 @@ import { runMaintenance } from "./maintenance";
 import { applyCommand } from "./commands";
 import { cleanupIfEmpty } from "./households";
 import { cancelTimer as cancelTimerLogic, fireTimer, scheduleTimer as scheduleTimerLogic, type TimerTask } from "./timers";
+import { defineSecret, defineString } from "firebase-functions/params";
+import { CallError, pcxStatus as pcxStatusLogic, searchProducts, searchStores } from "./pcx";
 
 // Keep every function small and cheap: free tier is a hard requirement (PRD NFR2).
 setGlobalOptions({ region: REGION, maxInstances: 2, memory: "256MiB" });
@@ -54,11 +56,40 @@ export const dropFolder = onObjectFinalized({ bucket: STORAGE_BUCKET, memory: "5
   logger.info("drop", { name, ...outcome });
 });
 
-/** Weekly maintenance (§13): Monday 04:00 Toronto time. M5 adds the price refresh here. */
-export const maintenance = onSchedule({ schedule: "every monday 04:00", timeZone: "America/Toronto", timeoutSeconds: 540 }, async () => {
-  const report = await runMaintenance();
+// PC Express (§8): the credentials are Secret Manager secrets, bound only once the owner has set them and switched the
+// module on with PCX_ENABLED=true in functions/.env (a deploy that names a missing secret fails). Until then every
+// PC Express function answers "not connected" and the app prices from the bundled estimates.
+const PCX_ON = process.env.PCX_ENABLED === "true";
+const PCX_SECRETS = PCX_ON ? [defineSecret("PCX_EMAIL"), defineSecret("PCX_PASSWORD")] : [];
+/** Who hears about failed price refreshes (SETUP.md: the owner's uid). */
+const OWNER_UID = defineString("OWNER_UID", { default: "HBebN9sYntQG1Kbdx5Ggw611xyy1" });
+
+/** Weekly maintenance (§13): Monday 04:00 Toronto time; trash purge, index refresh, and the PC Express price refresh. */
+export const maintenance = onSchedule({ schedule: "every monday 04:00", timeZone: "America/Toronto", timeoutSeconds: 540, secrets: PCX_SECRETS }, async () => {
+  const report = await runMaintenance(Date.now(), { ownerUid: OWNER_UID.value() || null });
   logger.info("maintenance", report);
 });
+
+function memberUid(auth: { uid: string; token: { email_verified?: boolean } } | undefined): string {
+  if (!auth || auth.token.email_verified !== true) throw new HttpsError("unauthenticated", "Sign in first");
+  return auth.uid;
+}
+
+async function pcxCall<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    if (e instanceof CallError) throw new HttpsError(e.code, e.message);
+    throw e;
+  }
+}
+
+/** PC Express store search for the store picker (R6.22). */
+export const pcxSearchStores = onCall({ cors: true, secrets: PCX_SECRETS }, (req) => pcxCall(() => searchStores(memberUid(req.auth), req.data)));
+/** PC Express product search for brand mappings (R7.10); writes the results' prices. */
+export const pcxSearchProducts = onCall({ cors: true, secrets: PCX_SECRETS }, (req) => pcxCall(() => searchProducts(memberUid(req.auth), req.data)));
+/** Whether PC Express is connected (Settings). */
+export const pcxStatus = onCall({ cors: true, secrets: PCX_SECRETS }, (req) => pcxCall(() => pcxStatusLogic(memberUid(req.auth), req.data)));
 
 /**
  * Supply commands (§6): every supply change, cook event, rating, and stat goes through here. 512 MiB and 5 minutes
