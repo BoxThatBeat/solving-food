@@ -148,34 +148,6 @@ export function earliestExpiringUse(needs: ReadonlyMap<string, number>, lotsOf: 
   return best;
 }
 
-// ---------- staples cadence (R7.7, §8)
-
-export const CADENCE_ALPHA = 0.5;
-/** Repeat purchases closer together than this are the same shop (a second delivery the same day). */
-export const CADENCE_MIN_GAP_DAYS = 1;
-
-export interface CadenceState {
-  avgIntervalDays: number | null;
-  lastPurchasedAtMs: number | null;
-  purchaseCount: number;
-}
-
-/** Updates the exponential moving average of purchase gaps with a purchase at `nowMs`. */
-export function updateCadence(prev: CadenceState | null, nowMs: number): CadenceState {
-  if (!prev || prev.lastPurchasedAtMs === null) return { avgIntervalDays: prev?.avgIntervalDays ?? null, lastPurchasedAtMs: nowMs, purchaseCount: (prev?.purchaseCount ?? 0) + 1 };
-  const gap = (nowMs - prev.lastPurchasedAtMs) / 86_400_000;
-  if (gap < CADENCE_MIN_GAP_DAYS) return { ...prev, lastPurchasedAtMs: Math.max(prev.lastPurchasedAtMs, nowMs) };
-  const avg = prev.avgIntervalDays && prev.purchaseCount >= 2 ? CADENCE_ALPHA * gap + (1 - CADENCE_ALPHA) * prev.avgIntervalDays : gap;
-  return { avgIntervalDays: Math.round(avg * 100) / 100, lastPurchasedAtMs: nowMs, purchaseCount: prev.purchaseCount + 1 };
-}
-
-/** When the cadence expects a staple to run out (last purchase + interval; the seed default until bought twice). */
-export function expectedRunOut(state: Pick<CadenceState, "avgIntervalDays" | "lastPurchasedAtMs" | "purchaseCount"> | null, defaultCadenceDays: number | undefined): number | null {
-  if (!state?.lastPurchasedAtMs) return null;
-  const days = state.purchaseCount >= 2 && state.avgIntervalDays ? state.avgIntervalDays : defaultCadenceDays;
-  return days ? state.lastPurchasedAtMs + days * 86_400_000 : null;
-}
-
 // ---------- pending reviews (R9.4)
 
 /** How long another member keeps being asked to add their rating. */

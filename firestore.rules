@@ -11,6 +11,8 @@ rules_version = '2';
 //     denied until the milestone that introduces it adds its rules.
 // M4: households/*/invites (+ collection-group read of your own), member docs by accepting an invite, member deletes
 //     (remove and leave). The household itself is deleted by the cleanup function when its last member leaves.
+// M5: prices (read; written by functions), the snoozeCadence command, periods' dismissed expiry alerts
+//     (`dismissedLots`), and the household's PC Express store name (`pcxStoreName`).
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -73,7 +75,7 @@ service cloud.firestore {
     }
     function validHousehold(d) {
       return d.keys().hasOnly(['name', 'createdBy', 'periodDays', 'budgetCents', 'currency', 'timezone',
-                               'defaultServings', 'plannedMealTypes', 'pcxStoreId', 'currentPeriodId',
+                               'defaultServings', 'plannedMealTypes', 'pcxStoreId', 'pcxStoreName', 'currentPeriodId',
                                'defaultStoreId', 'settings', 'createdAt'])
         && d.keys().hasAll(['name', 'createdBy', 'periodDays', 'budgetCents', 'currency', 'timezone',
                             'defaultServings', 'plannedMealTypes', 'pcxStoreId'])
@@ -86,6 +88,7 @@ service cloud.firestore {
         && d.plannedMealTypes is list && d.plannedMealTypes.size() >= 1
         && d.plannedMealTypes.hasOnly(['breakfast', 'lunch', 'dinner'])
         && str(d.pcxStoreId, 1, 100)
+        && optStr(d, 'pcxStoreName', 120)
         && (!('settings' in d) || d.settings is map)
         && (!('currentPeriodId' in d) || d.currentPeriodId == null || str(d.currentPeriodId, 1, 200))
         && (!('defaultStoreId' in d) || str(d.defaultStoreId, 1, 200));
@@ -284,6 +287,12 @@ service cloud.firestore {
       allow read: if allowed();
     }
 
+    // ---------- prices/{pcxStoreId}_{productCode} (§8, R6.21): PC Express prices, written by functions only
+
+    match /prices/{id} {
+      allow read: if allowed();
+    }
+
     // ---------- users/{uid}/notifications (§12, R12.1): created by functions; the owner reads and dismisses
 
     match /users/{uid}/notifications/{id} {
@@ -319,13 +328,14 @@ service cloud.firestore {
         : t == 'extendExpiry' ? ['supplyId', 'lotId', 'until']
         : t == 'markEaten' ? ['planItemId']
         : t == 'importHousehold' ? ['path']
+        : t == 'snoozeCadence' ? ['ingredientId', 'until']
         : [];
     }
     function validCommand(d) {
       return d.keys().hasOnly(['type', 'payload', 'uid', 'createdAt', 'status'])
         && d.keys().hasAll(['type', 'payload', 'uid', 'createdAt', 'status'])
         && d.type in ['addSupply', 'receiveGroceries', 'finishCooking', 'submitReview', 'correctSupply', 'discard',
-                      'extendExpiry', 'freeze', 'thaw', 'markEaten', 'importHousehold']
+                      'extendExpiry', 'freeze', 'thaw', 'markEaten', 'importHousehold', 'snoozeCadence']
         && d.payload is map && d.payload.keys().hasOnly(payloadKeys(d.type))
         && d.status == 'pending'
         && d.createdAt == request.time;
@@ -456,12 +466,15 @@ service cloud.firestore {
       // transaction. The budget snapshot follows a budget change in Settings.
       match /periods/{pid} {
         allow read: if isMember(hid);
+        // `dismissedLots` (M5): supply lot IDs whose expiry alert a member dismissed for this period (R6.13).
         allow create, update: if isMemberAfter(hid)
-          && request.resource.data.keys().hasOnly(['start', 'end', 'budgetCents'])
+          && request.resource.data.keys().hasOnly(['start', 'end', 'budgetCents', 'dismissedLots'])
           && request.resource.data.keys().hasAll(['start', 'end', 'budgetCents'])
           && request.resource.data.start is timestamp && request.resource.data.end is timestamp
           && request.resource.data.end > request.resource.data.start
-          && request.resource.data.budgetCents is int && request.resource.data.budgetCents >= 0;
+          && request.resource.data.budgetCents is int && request.resource.data.budgetCents >= 0
+          && (!('dismissedLots' in request.resource.data)
+              || (request.resource.data.dismissedLots is list && request.resource.data.dismissedLots.size() <= 500));
       }
 
       // Plan items (§4.2, R5.1): meals of 1..n recipes; members add, edit, and remove them.

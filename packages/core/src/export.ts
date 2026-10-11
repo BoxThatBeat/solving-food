@@ -51,6 +51,7 @@ export const EXPORT_HOUSEHOLD_FIELDS = [
   "defaultServings",
   "plannedMealTypes",
   "pcxStoreId",
+  "pcxStoreName",
   "defaultStoreId",
   "currentPeriodId",
   "settings",

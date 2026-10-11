@@ -204,6 +204,8 @@ export interface BuiltList {
   totalCents: number;
   /** Plan lines without a price (count as $0, flagged on the meter). */
   unknownPrices: number;
+  /** How many plan lines are priced from each source (the meter's source mix, M5). */
+  sources: Record<PriceSource, number>;
 }
 
 /** `buildList(...)`: the generated (plan) part of the list. Manual items are merged separately (`mergeDraft`). */
@@ -212,14 +214,16 @@ export function buildList(items: readonly PlanItemInput[], ctx: BuildContext): B
   const out: Record<string, GroceryItem> = {};
   let totalCents = 0;
   let unknownPrices = 0;
+  const sources: Record<PriceSource, number> = { live: 0, estimate: 0, unknown: 0 };
   for (const [id, need] of [...needs.entries()].sort(([a], [b]) => a.localeCompare(b))) {
     const line = lineFor(id, need, ctx);
     if (!line) continue;
     out[id] = line;
     if (line.estPriceCents === null) unknownPrices++;
     else totalCents += line.estPriceCents;
+    sources[line.estPriceCents === null ? "unknown" : (line.priceSource ?? "estimate")]++;
   }
-  return { items: out, totalCents, unknownPrices };
+  return { items: out, totalCents, unknownPrices, sources };
 }
 
 /** Cost of buying the shortfall of a set of needs. */

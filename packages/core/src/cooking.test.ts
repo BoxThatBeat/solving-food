@@ -3,7 +3,6 @@ import fc from "fast-check";
 import {
   cookedCoverage,
   earliestExpiringUse,
-  expectedRunOut,
   leftoverMealTypeOf,
   leftoverPortionsByType,
   mealRequirements,
@@ -14,8 +13,8 @@ import {
   toMap,
   totalPortions,
   unexpiredByIngredient,
-  updateCadence,
 } from "./cooking";
+import { expectedRunOut, updateCadence } from "./cadence";
 import { consumeFEFO, refund, recomputeAmount, type LedgerLot } from "./ledger";
 import { addLocalDays, daysLeft, estimateExpiry, expiresPhrase, expiryFlag, leftoverExpiry, shortDuration } from "./expiry";
 import { localDate } from "./period";

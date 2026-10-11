@@ -135,6 +135,7 @@ export function projectPending(supply: ReadonlyMap<string, ProjectedDoc>, pendin
       case "finishCooking":
       case "submitReview":
       case "importHousehold":
+      case "snoozeCadence":
         break;
     }
   }

@@ -261,6 +261,8 @@ export const householdSchema = z.object({
   defaultServings: z.number().int().min(1).max(SERVINGS_MAX),
   plannedMealTypes: z.array(z.enum(PLANNABLE_MEAL_TYPES)).min(1),
   pcxStoreId: z.string().min(1),
+  /** The PC Express store's name as the store search showed it (M5); absent for the default store. */
+  pcxStoreName: z.string().max(120).optional(),
   currentPeriodId: id.nullable(),
   /** Store items go to when no mapping or sourcing rule picks one (§8). Set when the default stores are seeded. */
   defaultStoreId: id.optional(),
@@ -335,6 +337,8 @@ export const periodSchema = z.object({
   start: timestamp,
   end: timestamp,
   budgetCents: cents.min(0),
+  /** Supply lot IDs whose expiry alert was dismissed for this period (R6.13, M5). */
+  dismissedLots: z.array(z.string()).optional(),
 });
 export type PeriodDoc = z.infer<typeof periodSchema>;
 

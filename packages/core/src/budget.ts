@@ -14,9 +14,12 @@ export interface BudgetState {
   fractionLeft: number;
   /** Plan lines whose price is unknown (counted as $0). */
   unknownPrices: number;
+  /** Plan lines priced live from PC Express / from the bundled estimates (R6.21, M5). */
+  livePrices: number;
+  estimatedPrices: number;
 }
 
-export function budgetState(budgetCents: number, built: Pick<BuiltList, "totalCents" | "unknownPrices">): BudgetState {
+export function budgetState(budgetCents: number, built: Pick<BuiltList, "totalCents" | "unknownPrices"> & Partial<Pick<BuiltList, "sources">>): BudgetState {
   const remaining = budgetCents - built.totalCents;
   return {
     budgetCents,
@@ -25,5 +28,7 @@ export function budgetState(budgetCents: number, built: Pick<BuiltList, "totalCe
     over: remaining < 0,
     fractionLeft: budgetCents > 0 ? Math.max(0, Math.min(1, remaining / budgetCents)) : 0,
     unknownPrices: built.unknownPrices,
+    livePrices: built.sources?.live ?? 0,
+    estimatedPrices: built.sources?.estimate ?? 0,
   };
 }

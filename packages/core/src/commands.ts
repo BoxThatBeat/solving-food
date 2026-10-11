@@ -82,6 +82,8 @@ export const thawPayload = z.object({ supplyId: id, lotId: id, amount: amount.op
 export const markEatenPayload = z.object({ planItemId: id });
 /** Placeholder until M4 (household data import, §13). */
 export const importHouseholdPayload = z.object({ path: z.string().min(1).max(500) });
+/** "Not yet" on a staples prompt (R7.7): cadence is function-only, so the snooze is a command (M5). */
+export const snoozeCadencePayload = z.object({ ingredientId: id, until: ms });
 
 export const COMMAND_PAYLOADS = {
   addSupply: addSupplyPayload,
@@ -95,6 +97,7 @@ export const COMMAND_PAYLOADS = {
   thaw: thawPayload,
   markEaten: markEatenPayload,
   importHousehold: importHouseholdPayload,
+  snoozeCadence: snoozeCadencePayload,
 } as const;
 
 export type CommandType = keyof typeof COMMAND_PAYLOADS;

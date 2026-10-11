@@ -105,7 +105,8 @@ function writeCadence(ctx: Ctx, ref: DocumentReference, prev: Record<string, unk
     prev ? { avgIntervalDays: (prev.avgIntervalDays as number | null) ?? null, lastPurchasedAtMs: toMs(prev.lastPurchasedAt), purchaseCount: (prev.purchaseCount as number | undefined) ?? 1 } : null,
     ctx.nowMs,
   );
-  ctx.tx.set(ref, { avgIntervalDays: next.avgIntervalDays, lastPurchasedAt: ts(next.lastPurchasedAtMs!), purchaseCount: next.purchaseCount }, { merge: true });
+  // A purchase ends any "Not yet" snooze (R7.7).
+  ctx.tx.set(ref, { avgIntervalDays: next.avgIntervalDays, lastPurchasedAt: ts(next.lastPurchasedAtMs!), purchaseCount: next.purchaseCount, snoozedUntil: FieldValue.delete() }, { merge: true });
 }
 
 // ---------- receiveGroceries (R7.8, R7.9, §8 cadence)
@@ -521,6 +522,18 @@ export async function markEaten(ctx: Ctx, p: CommandPayload<"markEaten">): Promi
   return undefined;
 }
 
+// ---------- snoozeCadence (R7.7, M5): "Not yet" on an "Are you out of …?" prompt
+
+export async function snoozeCadence(ctx: Ctx, p: CommandPayload<"snoozeCadence">): Promise<Outcome> {
+  const ref = hh(ctx, `cadence/${p.ingredientId}`);
+  const snap = await ctx.tx.get(ref);
+  if (!snap.exists) return "nothing to snooze";
+  // At most a year out: a client clock can't silence a staple forever.
+  const until = Math.min(p.until, ctx.nowMs + 365 * 86_400_000);
+  ctx.tx.update(ref, { snoozedUntil: ts(Math.max(until, ctx.nowMs)) });
+  return undefined;
+}
+
 // ---------- importHousehold (§13) runs outside the transaction: see ../importHousehold.ts
 
 export async function runHandler(ctx: Ctx, c: AnyCommand): Promise<Outcome> {
@@ -545,6 +558,8 @@ export async function runHandler(ctx: Ctx, c: AnyCommand): Promise<Outcome> {
       return thaw(ctx, c.payload);
     case "markEaten":
       return markEaten(ctx, c.payload);
+    case "snoozeCadence":
+      return snoozeCadence(ctx, c.payload);
     case "importHousehold":
       throw new CommandError("importHousehold isn't applied in a transaction");
   }

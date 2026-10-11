@@ -29,6 +29,7 @@ const LABELS: Record<string, string> = {
   thaw: "thaw it",
   markEaten: "mark it eaten",
   importHousehold: "import household data",
+  snoozeCadence: "snooze the reminder",
 };
 
 function zodMessage(e: unknown): string {
