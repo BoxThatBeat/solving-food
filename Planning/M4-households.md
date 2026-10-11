@@ -15,7 +15,7 @@ Status: in progress
 | Playwright phone-ios (full, 2 workers) | 118 passed, 6 skipped, 16 failed (none in an M4 spec: plan, recipe-edit, review, settings, supply, sharing, theme, timers; mostly 45 s timeouts late in a 24-minute run on this 7 GB machine). Re-run of the 16 with one worker: **16 passed** (`--last-failed --workers=1`, 3.1 min: plan 3, recipe-edit 2, review 1, settings 1, sharing 1, supply 4, theme 1, timers 3). No real failures |
 | Playwright phone-android, tablet, desktop-firefox, 4K | not run for M4 on this machine (memory); CI runs the matrix after the push |
 | `pnpm e2e:coverage` | M4 11/11 requirement IDs tagged |
-| Live | __LIVE__ |
+| Live | `pnpm run deploy` (hosting, functions incl. new `householdCleanup` and `commands` at 512 MiB / 300 s, confirmed with `gcloud functions describe`; Firestore rules + the two `invites` collection-group index overrides; Storage rules with `imports/`): site 200, `/settings/members` 200, healthcheck `{"ok":true}`. The rules compiler's one warning (`validTrashState(…, null)`, line 233) dates from M1 and is harmless. `householdCleanup` and `importHousehold` were not exercised live |
 
 ## What's left for the owner
 
