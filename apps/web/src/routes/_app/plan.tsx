@@ -191,7 +191,7 @@ function PlanPage() {
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 items-start gap-[1.125rem] [grid-template-areas:'a'_'c'_'b'] lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:[grid-template-areas:'a_c'_'a_b'] xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,0.85fr)] xl:[grid-template-areas:'a_b_c']">
+      <div className="grid grid-cols-1 items-start gap-[1.125rem] [grid-template-areas:'c'_'a'_'b'] lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:[grid-template-areas:'a_c'_'a_b'] xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,0.85fr)] xl:[grid-template-areas:'a_b_c']">
         <div className="flex min-w-0 flex-col gap-3.5 [grid-area:a]">
           {cells.length ? <CoverageStrip rows={rows} cells={cells} todayIndex={dayOfPeriod(now, startMs!, endMs!, tz) - 1} /> : null}
           <CollectionView

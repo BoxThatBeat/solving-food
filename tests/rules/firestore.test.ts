@@ -337,7 +337,8 @@ describe("everything not yet introduced is denied", () => {
     });
     const db = dbAs(ALICE);
     await assertFails(setDoc(doc(db, "recipes", "r1"), { title: "x" })); // invalid recipe, no version snapshot
-    await assertFails(getDoc(doc(db, "prices", "p1")));
+    // prices became readable in M5 (smarts.test.ts); clients still never write them.
+    await assertFails(setDoc(doc(db, "prices", "p1"), { priceCents: 1 }));
     await assertFails(setDoc(doc(db, "meals", "m1"), { name: "x" }));
     await assertFails(setDoc(doc(db, "households", "hA", "supply", "s1"), { canonicalAmount: 1 }));
     await assertFails(setDoc(doc(db, "households", "hA", "planItems", "p1"), { status: "planned" }));

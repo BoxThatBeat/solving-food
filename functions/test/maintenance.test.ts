@@ -72,6 +72,8 @@ describe("maintenance: 30-day trash purge and cleanup", () => {
 
     // The onDocumentDeleted cleanup (running in the emulator).
     await poll(async () => !(await db.doc("meals/m1").get()).exists, 30_000, "meal cleanup");
+    // Meals are rewritten one by one: wait for m2 too (the full suite runs slower than this file alone).
+    await poll(async () => (await db.doc("meals/m2").get()).data()?.recipes?.length === 1, 30_000, "mixed meal cleanup");
     expect((await db.doc("meals/m2").get()).data()!.recipes).toEqual([{ recipeId: "keep", servingsMultiplier: 1 }]);
     await poll(async () => !(await db.doc("households/h2/favourites/recipe_old").get()).exists, 30_000, "household cleanup");
     for (const hid of ["h1", "h2"]) {
