@@ -108,7 +108,8 @@ function SidesPage() {
             ))}
           </ul>
         </Card>
-        <Card className="gap-3">
+        {/* Phone: the short flag form first, above the long list; desktop: the list left, the form right. */}
+        <Card className="order-first gap-3 lg:order-none">
           <CardTitle>Flag an ingredient</CardTitle>
           <p className="m-0 text-[0.8125rem] font-semibold">Any ingredient can be a side. Type to find it, or create a new one.</p>
           <IngredientPicker ingredients={ing.list ?? []} value={picked ?? undefined} onPick={(i) => setPicked(i)} uid={s.user.uid} label="Ingredient to use as a side" />

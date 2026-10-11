@@ -96,7 +96,6 @@ export function SidePicker({
         </label>
         <Input
           id={`${listId}-input`}
-          type="search"
           role="combobox"
           aria-expanded={open && options.length > 0}
           aria-controls={listId}
