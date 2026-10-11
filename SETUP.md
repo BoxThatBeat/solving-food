@@ -203,10 +203,12 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   failed with "Missing permissions required for functions deploy … iam.serviceAccounts.ActAs". The account also needs
   `roles/iam.serviceAccountUser` (run functions as the App Engine / compute accounts), `roles/eventarc.admin` (Storage
   and Firestore triggers), `roles/cloudscheduler.admin` (weekly maintenance), `roles/cloudtasks.queueAdmin` (the
-  `timers` queue) and, once PC Express is enabled, `roles/secretmanager.admin` (binding `PCX_EMAIL` / `PCX_PASSWORD`):
+  `timers` queue), `roles/firebasestorage.admin` (the Storage rules deploy first reads the default bucket:
+  `firebasestorage.defaultBucket.get`, the second CI failure) and, once PC Express is enabled,
+  `roles/secretmanager.admin` (binding `PCX_EMAIL` / `PCX_PASSWORD`):
   ```
   SA=serviceAccount:github-action-1409507284@solvingfood.iam.gserviceaccount.com
-  for r in roles/iam.serviceAccountUser roles/eventarc.admin roles/cloudscheduler.admin roles/cloudtasks.queueAdmin roles/secretmanager.admin; do
+  for r in roles/iam.serviceAccountUser roles/eventarc.admin roles/cloudscheduler.admin roles/cloudtasks.queueAdmin roles/firebasestorage.admin roles/secretmanager.admin; do
     gcloud projects add-iam-policy-binding solvingfood --member=$SA --role=$r --condition=None
   done
   ```
