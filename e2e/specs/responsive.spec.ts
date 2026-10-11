@@ -62,18 +62,25 @@ test("sign-in fits a 360 px phone without horizontal scroll", { tag: ["@NFR6"] }
   await ctx.close();
 });
 
-test("the Plan page: one column on phones, two at lg, three at xl (plan · suggestions · budget)", { tag: ["@NFR6"] }, async ({ page, household }) => {
+test("the Plan page: one column on phones, two at lg, three at xl (plan · suggestions/protein/optimiser · budget); protein sits right above the optimiser (M7)", { tag: ["@NFR6", "@R6.17"] }, async ({ page, household }) => {
   void household;
   const width = page.viewportSize()!.width;
   await page.goto("/plan");
   await expect(page.getByTestId("coverage-strip")).toBeVisible({ timeout: 20_000 });
-  const x = async (name: string) => (await page.getByRole(name === "Suggested" ? "heading" : "region", { name }).first().boundingBox())!;
-  const strip = (await page.getByTestId("coverage-strip").boundingBox())!;
-  const suggested = await x("Suggested");
-  const protein = await x("Protein per serving");
+  const box = async (l: import("@playwright/test").Locator) => (await l.first().boundingBox())!;
+  const strip = await box(page.getByTestId("coverage-strip"));
+  const suggested = await box(page.getByRole("heading", { name: "Suggested" }));
+  const protein = await box(page.getByRole("region", { name: "Protein per serving" }));
+  const optimiser = await box(page.getByTestId("optimiser"));
+  // Every width: protein is in the optimiser's column, directly above it, and below Suggested.
+  expect(Math.abs(protein.x - optimiser.x)).toBeLessThan(2);
+  expect(protein.y).toBeGreaterThan(suggested.y);
+  expect(optimiser.y).toBeGreaterThan(protein.y + protein.height - 1);
+  expect(optimiser.y - (protein.y + protein.height)).toBeLessThan(40);
   if (width >= 1440) {
+    const budget = await box(page.locator('[data-testid="budget-meter"]:visible'));
     expect(suggested.x).toBeGreaterThan(strip.x + strip.width - 1);
-    expect(protein.x).toBeGreaterThan(suggested.x + suggested.width - 1);
+    expect(budget.x).toBeGreaterThan(protein.x + protein.width - 1);
   } else if (width >= 1024) {
     expect(suggested.x).toBeGreaterThan(strip.x + strip.width - 1);
     expect(Math.abs(protein.x - suggested.x)).toBeLessThan(2);

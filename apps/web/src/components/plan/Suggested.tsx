@@ -1,7 +1,7 @@
 // The Plan page's Suggested section (PRD R6.11, R6.12, R6.16; TECHNICAL_SPECS §7): the best-scoring recipes not yet
 // planned, each with its score, time · protein · what it adds to the order, and "why" chips (the top two raising
 // factors and the strongest lowering one), one tap from Create meal. The header links to the weights (prototype:
-// "WEIGHTS: BALANCED").
+// "WEIGHTS: BALANCED"); "See more" (M7) opens Recipes sorted by Suggested.
 import { Link } from "@tanstack/react-router";
 import { formatCents, formatProtein, presetOf, resolveWeights, type Reason, type RecipeSummary, type ScoreResult } from "@solving-food/core";
 import { EmptyState } from "@/components/AppShell";
@@ -83,6 +83,9 @@ export function SuggestedSection({
         );
       })}
       {ranked && !list.length ? <EmptyState>No suggestions: every recipe is planned or filtered out by your preferences and tools.</EmptyState> : null}
+      <Link to="/recipes" search={{ sort: "suggested" }} aria-label="See more suggested recipes" className="self-end py-1 text-[0.8125rem] font-bold text-ink underline underline-offset-2">
+        See more →
+      </Link>
     </section>
   );
 }

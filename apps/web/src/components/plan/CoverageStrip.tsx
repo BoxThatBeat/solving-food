@@ -1,6 +1,7 @@
 // <CoverageStrip> (PRD R6.2; TECHNICAL_SPECS §12): one row per planned meal type, one cell per day labelled with its
 // weekday and date. Cells fill left to right from the plan items' coverage: solid = cooked or eaten, outlined =
-// planned, overflow as "+n". Not a schedule: the cells aren't interactive. Not in the prototype; built in its language.
+// planned, overflow as "+n". Not a schedule: the cells aren't interactive (M7: the "not a schedule · cook in any order" hint
+// was removed at the owner's request). Not in the prototype; built in its language.
 import { stripCount, type DayCell, type StripRow } from "@solving-food/core";
 import { cn } from "@/lib/utils";
 import { MEAL_LABEL } from "./plan-sheet-context";
@@ -10,10 +11,7 @@ const STATE_TEXT = { cooked: "cooked", planned: "planned", open: "open" } as con
 export function CoverageStrip({ rows, cells, todayIndex }: { rows: StripRow[]; cells: DayCell[]; todayIndex: number }) {
   return (
     <section aria-label="Period coverage" className="flex flex-col gap-2.5 rounded-ui border-bw bg-base p-3.5 shadow-hard" data-testid="coverage-strip">
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="font-mono text-[0.6875rem] font-bold tracking-[0.09rem] uppercase">Coverage</span>
-        <span className="font-mono text-[0.625rem] font-bold text-sub uppercase">Not a schedule · cook in any order</span>
-      </div>
+      <span className="font-mono text-[0.6875rem] font-bold tracking-[0.09rem] uppercase">Coverage</span>
       <table className="w-full table-fixed border-separate border-spacing-[0.1875rem]">
         <caption className="sr-only">Meals planned this period by meal type. Solid cells are cooked, outlined cells are planned.</caption>
         <thead>

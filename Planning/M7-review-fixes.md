@@ -100,6 +100,23 @@ R8.13, R4.19, R4.21, R4.2 (agent 1); R3.1, R11.1, R4.14, R6.1, R6.2, R6.11, R6.1
       as covered; the recipe page shows "✓ frying pan", "✕ large wok" and "Needs large wok." The older tools test now
       asserts lower-case names.
 
+### 7. Plan page layout (R6.1, R6.2, R6.11, R6.17)
+- [x] No Grocery list button in the Plan header (the Grocery tab stays); the header is the kicker, title and + Create meal.
+- [x] Protein per serving moves to the bottom, directly above the optimiser, in the optimiser's column at every width
+      (phone: Suggested → protein → optimiser; lg: right column; xl: middle column; budget + expiry alerts keep the
+      right column at xl). Its landmark (`region "Protein per serving"`) is unchanged.
+- [x] "See more →" under the Suggested rows (accessible name "See more suggested recipes") opens `/recipes?sort=suggested`.
+- [x] The coverage strip's "Not a schedule · cook in any order" hint is gone (no equivalent text elsewhere on the page).
+- [x] PRD R6.1, R6.2, R6.11, R6.17 wording; spec §7 protein summary, §12 components and the xl layout row.
+- [x] E2E: `plan.spec.ts` "page layout after the owner's review" (@R6.1 @R6.2 @R6.11: no grocery button/link in main, no
+      hint text, Grocery tab present, See more → /recipes?sort=suggested); `responsive.spec.ts` Plan layout test now
+      asserts protein directly above the optimiser in its column at every width (@NFR6 @R6.17) and the xl budget column.
+- [x] Design-compare (Latte, phone 430×932 and desktop 1920×1080, dev emulator data): layout, tokens and card shapes
+      match the prototype. Intentional differences, all owner-requested: the prototype's green "Grocery list · 8 →"
+      header button is gone (+ Create meal takes its place, same style); the prototype puts protein in the right column
+      under the expiry card (xl) and near the top (phone), the app puts it above the optimiser; "See more →" is new;
+      the "not a schedule" hint was ours, not the prototype's.
+
 ## Verification (items 1–4)
 
 - Lint, typecheck: clean. Core unit 341/341, web unit 7/7, functions (emulator) 9 files / 54 tests.

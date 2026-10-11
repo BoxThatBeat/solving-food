@@ -153,9 +153,9 @@ flowchart LR
 
 ### 6.1 Plan Page
 
-- **R6.1** The Plan page shows the **meals selected for the current period** as a list that can be sorted and filtered; each row shows the meal's name or recipes and its sides (R5.9). Its primary action is **Create meal** (R5.7).
+- **R6.1** The Plan page shows the **meals selected for the current period** as a list that can be sorted and filtered; each row shows the meal's name or recipes and its sides (R5.9). Its primary action is **Create meal** (R5.7). The page has no button to the grocery list; the Grocery tab in the navigation is the way there.
 - **R6.2** **Period coverage view.** Above the list, the Plan page shows the plan period as a **calendar-like strip**: one cell per day, labelled with its weekday and date for orientation, and one row per meal type the household plans (R11.13; breakfast, lunch, and dinner by default).
-  - Cells **fill from left to right** as meals are added. Five dinners planned in a 7-day period fill the first five dinner cells, and the row reads **5/7**. It's a visual version of "5 of 7 dinners planned", **not a schedule**. Meals are never assigned to specific days, and the cells can't be tapped to pick a day.
+  - Cells **fill from left to right** as meals are added. Five dinners planned in a 7-day period fill the first five dinner cells, and the row reads **5/7**. It's a visual version of "5 of 7 dinners planned", **not a schedule**. Meals are never assigned to specific days, and the cells can't be tapped to pick a day. (The strip doesn't spell this out in a hint.)
   - A meal-prep recipe or leftover portions fill one cell per portion they cover (e.g. 4 lunches from one batch fill 4 lunch cells).
   - Cooked meals show as solid cells and planned-but-not-cooked meals as outlined cells, so the strip also shows progress through the period.
   - If more meals are planned than there are days, the row shows the overflow (e.g. **8/7, +1**).
@@ -174,7 +174,7 @@ flowchart LR
 
 ### 6.3 Suggestions
 
-- **R6.11** The Plan page has a **Suggested** section ranked by a configurable score:
+- **R6.11** The Plan page has a **Suggested** section ranked by a configurable score, with a **See more** link under it that opens the Recipes page sorted by Suggested:
 
   | Positive factors | Negative factors |
   |---|---|
@@ -194,7 +194,7 @@ flowchart LR
 - **R6.14** The household sets a **protein goal per serving** for each meal type (e.g. dinner ≥ 35 g). Each goal can be turned off.
 - **R6.15** Recipe cards and the recipe page show **protein per serving**.
 - **R6.16** Suggestions favour recipes that meet the goal (weighted like the other factors), and the optimiser can be told to only propose recipes that meet it.
-- **R6.17** The Plan page shows the **average protein per serving** for each meal type in the current plan, next to the goal.
+- **R6.17** The Plan page shows the **average protein per serving** for each meal type in the current plan, next to the goal, at the bottom of the page directly above the budget optimiser.
 
 ### 6.5 Budget Optimiser
 

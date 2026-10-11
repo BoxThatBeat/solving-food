@@ -1,7 +1,8 @@
 // The Plan page (PRD R6.1–R6.10, R5.1–R5.7, R9.4, R8.15; TECHNICAL_SPECS §7, §12). M3 adds pending reviews, expired-lot
 // prompts, Cook / eaten actions, expiry badges, and leftover items. Phone: sticky budget meter, header with Create
-// meal, coverage strip, the period's meals by meal type. lg: two columns; xl: plan · suggestions · budget/protein,
-// as the prototype's desktop mode.
+// meal, coverage strip, the period's meals by meal type, then Suggested (+ See more), protein, optimiser. lg: two
+// columns; xl: plan · suggestions/protein/optimiser · budget/expiry, as the prototype's desktop mode. M7 (owner review):
+// no Grocery list button (the tab stays), no "not a schedule" hint, protein directly above the optimiser.
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -140,7 +141,6 @@ function PlanPage() {
     (next: CollectionSearch, opts?: { replace?: boolean }) => void navigate({ to: "/plan", search: toSearchParams(next) as never, replace: opts?.replace ?? false }),
     [navigate],
   );
-  const groceryCount = Object.keys(m.built.items).length + Object.values(m.draft.data?.items ?? {}).filter((it) => it.source !== "plan").length;
   const planned = views.filter((v) => v.status === "planned" && v.item.kind === "meal").length;
   const expired = expiredEntries(m.supply.items.values(), supplyNow, (it) => unitFor(it, it.ingredientId ? m.ingredients.get(it.ingredientId) : undefined));
   const protein = proteinSummary(
@@ -175,14 +175,7 @@ function PlanPage() {
           </span>
           <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">Plan</h1>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" asChild>
-            <Link to="/grocery" className="no-underline">
-              Grocery list{groceryCount ? ` · ${groceryCount}` : ""} →
-            </Link>
-          </Button>
-          <Button onClick={() => openCreateMeal()}>+ Create meal</Button>
-        </div>
+        <Button onClick={() => openCreateMeal()}>+ Create meal</Button>
       </div>
       <PendingReviews hid={m.hid} uid={s.user.uid} />
       <CadencePrompt m={m} uid={s.user.uid} />
@@ -242,6 +235,8 @@ function PlanPage() {
 
         <div className="flex min-w-0 flex-col gap-3.5 [grid-area:b]">
           <SuggestedSection ranked={suggestions.ranked} summaries={byId} plannedIds={plannedIds} weights={m.household?.settings?.scoreWeights} wide={wide} onAdd={(id) => openCreateMeal({ recipeIds: [id] })} />
+          {/* M7: the protein summary sits at the bottom, directly above the optimiser, at every width. */}
+          <ProteinCard protein={protein} plannedTypes={m.household?.plannedMealTypes ?? []} goals={goals} />
           <OptimiserCard snapshot={snapshot} summaries={byId} hid={m.hid} periodId={m.periodId} uid={s.user.uid} servings={m.household?.defaultServings ?? 4} remainingCents={m.budget.remainingCents} goals={goals} />
         </div>
 
@@ -265,7 +260,6 @@ function PlanPage() {
               if (m.periodId) void dismissExpiryAlert(m.hid, m.periodId, lots).catch((e) => notify({ kind: "error", message: `Couldn't dismiss it: ${(e as Error).message}` }));
             }}
           />
-          <ProteinCard protein={protein} plannedTypes={m.household?.plannedMealTypes ?? []} goals={goals} />
         </div>
       </div>
 

@@ -124,6 +124,26 @@ test.describe("the plan list", () => {
   });
 });
 
+test.describe("page layout after the owner's review (M7)", () => {
+  test("no Grocery list button or 'not a schedule' hint; See more opens Recipes sorted by Suggested", { tag: ["@R6.1", "@R6.2", "@R6.11"] }, async ({ page, household }) => {
+    const r = await makePlanRecipe("Layout check");
+    const pid = await seedPeriod(household.hid);
+    await seedPlanItem(household.hid, pid, [r.id]);
+    const plan = new PlanPage(page);
+    await plan.goto();
+    await expect(plan.item(r.title)).toBeVisible();
+    const main = page.getByRole("main");
+    await expect(main.getByRole("link", { name: /Grocery list/ })).toHaveCount(0);
+    await expect(main.getByRole("button", { name: /Grocery list/ })).toHaveCount(0);
+    await expect(page.getByText(/not a schedule|cook in any order/i)).toHaveCount(0);
+    // The Grocery tab in the navigation stays.
+    await expect(page.getByRole("navigation").getByRole("link", { name: /^Grocery/ }).first()).toBeAttached();
+    await page.getByTestId("suggested").getByRole("link", { name: "See more suggested recipes" }).click();
+    await expect(page).toHaveURL(/\/recipes\?sort=suggested/);
+    await expect(page.getByRole("heading", { level: 1, name: "Recipes" })).toBeVisible();
+  });
+});
+
 test.describe("coverage strip (R6.2)", () => {
   test("one row per planned meal type, cells fill left to right, n/N, overflow, not clickable; meals aren't tied to days (R5.4)", { tag: ["@R6.2", "@R5.4", "@R11.13"] }, async ({ page, household }) => {
     await adminDb.doc(`households/${household.hid}`).update({ plannedMealTypes: ["lunch", "dinner"] });

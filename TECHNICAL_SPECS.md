@@ -519,7 +519,7 @@ Accept writes one plan item per recipe in a batch.
 
 ### Protein summary
 
-The Plan page shows, for each meal type, the average `proteinPerServingG` of the planned items next to the household goal (R6.17). This is computed on the client. As built (M5): a bar per meal type (accent at or above the goal, peach below); goals are set in Settings → Preferences with an on/off switch each (a missing key is "off").
+The Plan page shows, for each meal type, the average `proteinPerServingG` of the planned items next to the household goal (R6.17). This is computed on the client. As built (M5): a bar per meal type (accent at or above the goal, peach below); goals are set in Settings → Preferences with an on/off switch each (a missing key is "off"). M7: the card sits at the bottom of the page, directly above the optimiser.
 
 ---
 
@@ -886,7 +886,8 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 - **`<SupplyBadge>`**: the "have / need" chip next to recipe ingredients. As built (M3): "have 250 g", "have 250 g ⚠" (not enough at the shown servings), "none", or "staple"; unexpired supply only. Recipe cards show CAN MAKE when projected supply covers every tracked ingredient and ALMOST at ≥ 85 % of the tracked grams ("Use what's left", R4.4, uses the same threshold).
 - **`<CoverageStrip>`**: the period coverage view (R6.2). One row per meal type, one cell per day, filled left to right from plan items' `coverage`. Cooked or eaten cells are solid, planned cells are outlined, and overflow shows as "+n". Cells aren't interactive.
 - **`<ExpiryBadge>`**: on planned meals (R6.7).
-- **`<ProteinSummary>`**: average protein per serving vs. goal for each meal type, on the Plan page.
+- **`<ProteinSummary>`**: average protein per serving vs. goal for each meal type, on the Plan page. M7: at the bottom, directly above the optimiser card, in the optimiser's column at every width (phone: after Suggested; lg: right column under Suggested; xl: middle column).
+- **Plan page header and Suggested** (M7, owner review): the header holds the period kicker, the title and **+ Create meal** only (no Grocery list button; the Grocery tab remains). `<CoverageStrip>` has no "not a schedule · cook in any order" hint. Under the Suggested rows a small **See more →** link (accessible name "See more suggested recipes") opens `/recipes?sort=suggested`.
 - **`<OptimiserSheet>`**: n / $x inputs, Next / Back / Accept.
 - **`<MealCookView>`**: the plan item's recipes with their durations; the user picks the order and checks recipes off. When all are checked, it opens the review. One-recipe meals skip the ordering step.
 - **`<StepMode>`**: full-screen, swipe between steps, inline amounts, Screen Wake Lock API, inline timers (§12 Cooking timers). Adapts to orientation and size (§12 Cooking layouts).
@@ -911,7 +912,7 @@ Mobile-first CSS (Tailwind) with min-width breakpoints. Layouts add panes and co
 | base | < 640 px | One column, bottom tab bar, sheets for detail views |
 | `md` | ≥ 768 px | Two panes on list pages (list + detail); tab bar becomes a collapsible side rail |
 | `lg` | ≥ 1024 px | Persistent side navigation; Plan page in 2 columns |
-| `xl` | ≥ 1440 px | 1080p desktops: Plan page in 3 columns (plan · suggestions · budget/protein/expiry); recipe detail shows ingredients and steps side by side |
+| `xl` | ≥ 1440 px | 1080p desktops: Plan page in 3 columns (plan · suggestions/protein/optimiser · budget/expiry); recipe detail shows ingredients and steps side by side |
 | `3xl` (custom) | ≥ 2200 px CSS width | 4K at low OS scaling: root font size steps up, grids gain columns, max content width keeps line lengths readable |
 
 Techniques:
