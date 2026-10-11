@@ -1,4 +1,4 @@
-// Generated sections of the Claude skill (.claude/skills/cooklang-recipe/references/), rendered from the same lists
+// Generated sections of the Claude skill (.claude/skills/solving-food-skill/references/), rendered from the same lists
 // the importer validates against. Used by `pnpm gen:skill` and checked by skill.test.ts.
 import { CUISINES, MAIN_PROTEINS } from "./taxonomy";
 import { UNITS } from "./units";

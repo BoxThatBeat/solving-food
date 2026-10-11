@@ -4,7 +4,8 @@
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ref, uploadBytes } from "firebase/storage";
-import { ArrowLeft, Upload } from "lucide-react";
+import { ArrowLeft, Download, Upload } from "lucide-react";
+import { strToU8, zipSync } from "fflate";
 import { splitFrontMatter } from "@solving-food/core";
 import { PageBody, PageHeader } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
@@ -32,6 +33,33 @@ interface Row {
 }
 
 const BUCKET = "solvingfood.firebasestorage.app";
+
+// The Claude skill ships inside the app: every Markdown file of .claude/skills/solving-food-skill/ is bundled at build
+// time, and "Download skill" zips them in the browser, so the download always matches the deployed importer.
+const SKILL_NAME = "solving-food-skill";
+const SKILL_FILES = import.meta.glob("../../../../../.claude/skills/solving-food-skill/**/*.md", { query: "?raw", import: "default", eager: true }) as Record<
+  string,
+  string
+>;
+
+function skillZip(): Uint8Array {
+  const entries: Record<string, Uint8Array> = {};
+  for (const [path, text] of Object.entries(SKILL_FILES)) {
+    const rel = path.slice(path.indexOf(`/${SKILL_NAME}/`) + 1); // solving-food-skill/SKILL.md, solving-food-skill/references/…
+    entries[rel] = strToU8(text);
+  }
+  return zipSync(entries, { level: 6 });
+}
+
+function downloadSkill() {
+  const blob = new Blob([skillZip() as BlobPart], { type: "application/zip" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${SKILL_NAME}.zip`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 function isCook(f: File) {
   return /\.cook$/i.test(f.name);
@@ -105,7 +133,7 @@ function DropPage() {
         <ArrowLeft aria-hidden className="size-4" strokeWidth={3} />
         Recipes
       </Link>
-      <PageHeader title="Drop recipes" kicker="Drop folder · Cooklang" />
+      <PageHeader title="Let AI add for me" kicker="Drop folder · Cooklang" />
 
       <div
         onDragOver={(e) => {
@@ -172,12 +200,36 @@ function DropPage() {
       ) : null}
 
       <Card>
-        <SectionLabel>How recipes get here</SectionLabel>
+        <SectionLabel hint={`${Object.keys(SKILL_FILES).length} files`}>Let AI add for me</SectionLabel>
+        <p className="m-0 text-sm leading-normal font-semibold">
+          The <strong>Solving Food skill</strong> teaches Claude (or any AI that reads skills) to turn a recipe link, pasted text, or photo into the
+          exact <code className="font-mono text-xs">.cook</code> file this app imports: cuisine, main protein, tags, and the ingredient names it knows.
+        </p>
+        <button
+          type="button"
+          onClick={downloadSkill}
+          className="press inline-flex cursor-pointer items-center gap-2 self-start rounded-ui border-bw bg-acc px-4 py-3 text-[0.9375rem] font-extrabold text-onc shadow-hard"
+        >
+          <Download aria-hidden className="size-4" strokeWidth={3} />
+          Download skill (.zip)
+        </button>
         <ol className="m-0 flex flex-col gap-2 pl-5 text-sm leading-normal font-semibold">
           <li>
-            Give Claude a recipe link or a photo and ask it to use the <strong>cooklang-recipe</strong> skill (in this repo at{" "}
-            <code className="font-mono text-xs">.claude/skills/cooklang-recipe</code>). It writes a <code className="font-mono text-xs">.cook</code> file with the
-            cuisine, main protein, and tags the app expects.
+            Unzip it. You get a folder named <code className="font-mono text-xs">{SKILL_NAME}</code> with <code className="font-mono text-xs">SKILL.md</code>{" "}
+            inside. Put that folder where your AI looks for skills:
+            <ul className="mt-1.5 mb-0 flex list-disc flex-col gap-1 pl-5">
+              <li>
+                <strong>Claude Code:</strong> <code className="font-mono text-xs">~/.claude/skills/{SKILL_NAME}/</code> for every project, or a project&apos;s{" "}
+                <code className="font-mono text-xs">.claude/skills/{SKILL_NAME}/</code>.
+              </li>
+              <li>
+                <strong>Claude.ai and the Claude desktop app:</strong> Settings → Capabilities → Skills → upload the zip as a custom skill.
+              </li>
+            </ul>
+          </li>
+          <li>
+            Then just paste a recipe&apos;s web link (or attach a photo of the recipe) and say <em>&ldquo;Add this recipe to Solving Food&rdquo;</em>. The AI
+            writes the <code className="font-mono text-xs">.cook</code> file and tells you where it saved it.
           </li>
           <li>Drop the file here (with its photo, if the photo is a file rather than a link). The file is deleted once it&apos;s imported.</li>
           <li>

@@ -1,4 +1,4 @@
-// The Claude skill (.claude/skills/cooklang-recipe/) must agree with the importer: the generated references are up to
+// The Claude skill (.claude/skills/solving-food-skill/) must agree with the importer: the generated references are up to
 // date, and every Cooklang example in it imports cleanly with the app's own parser and validator (PRD R4.17, R4.25).
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -9,7 +9,7 @@ import { renderIngredients, renderTaxonomy } from "./skillDocs";
 import { buildIngredientIndex, resolveIngredientName, type IngredientDoc } from "./ingredient";
 
 const root = fileURLToPath(new URL("../../../", import.meta.url));
-const skill = join(root, ".claude/skills/cooklang-recipe");
+const skill = join(root, ".claude/skills/solving-food-skill");
 const seed = readdirSync(join(root, "data/ingredients"))
   .filter((f) => f.endsWith(".json"))
   .flatMap(
@@ -25,7 +25,7 @@ function walk(dir: string): string[] {
   );
 }
 
-describe("cooklang-recipe skill", () => {
+describe("solving-food-skill skill", () => {
   it("generated references match packages/core and the seed (run pnpm gen:skill)", () => {
     expect(readFileSync(join(skill, "references/taxonomy.md"), "utf8")).toBe(renderTaxonomy());
     expect(readFileSync(join(skill, "references/ingredients.md"), "utf8")).toBe(renderIngredients(seed));

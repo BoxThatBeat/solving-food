@@ -232,6 +232,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
       firebase:
         specifier: ^13.0.0
         version: 13.0.0
@@ -305,6 +308,9 @@ importers:
       '@playwright/test':
         specifier: 1.63.0
         version: 1.63.0
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
       firebase-admin:
         specifier: ^14.5.0
         version: 14.5.0(@firebase/app-compat@0.5.19)(@firebase/app@0.16.3)

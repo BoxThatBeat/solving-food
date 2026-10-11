@@ -1,5 +1,5 @@
 ---
-name: cooklang-recipe
+name: solving-food-skill
 description: Turn a recipe (a web page URL, pasted text, or a photo of a cookbook page or recipe card) into a Cooklang `.cook` file in the exact format the Solving Food app imports, then deliver it to the app's drop folder. Use whenever someone wants a recipe added to Solving Food, asks for a .cook file, or shares a recipe link or photo "for the app".
 ---
 

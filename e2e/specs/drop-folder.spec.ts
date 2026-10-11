@@ -2,7 +2,8 @@
 // dropFolder function (photos saved into the app), errors are reported on whatever page is open, processed files are
 // deleted, and look-alike imports wait in the review list for keep existing / keep new / keep both. Also checks that
 // the Claude skill's fixed lists and examples are what the app accepts (R4.17).
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
+import { strFromU8, unzipSync } from "fflate";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Page } from "@playwright/test";
@@ -12,7 +13,7 @@ import { ATTACHMENTS_DIR, bucket, makeRecipe, uniqueCook, uniqueTitle, waitForIn
 import { expect, test } from "../fixtures/test";
 import { detail, RecipesPage } from "../pages/recipes";
 
-const SKILL_DIR = fileURLToPath(new URL("../../.claude/skills/cooklang-recipe/", import.meta.url));
+const SKILL_DIR = fileURLToPath(new URL("../../.claude/skills/solving-food-skill/", import.meta.url));
 
 async function dropFiles(page: Page, files: Array<{ name: string; body: string | Buffer; mimeType: string }>) {
   await page.goto("/drop");
@@ -143,4 +144,19 @@ test("the Claude skill embeds the same fixed lists as the app, and its examples 
   await ok.getByRole("link", { name: "Open recipe" }).click();
   await expect(detail(page).getByText("AMERICAN").first()).toBeVisible();
   await expect(detail(page).locator("section[aria-labelledby=ing-h]")).toContainText(/walnuts/i);
+});
+
+test("Download skill hands out the repo's skill folder, byte for byte, so any AI can be taught the format", { tag: ["@R4.17"] }, async ({ page, household: _ }) => {
+  await page.goto("/drop");
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Download skill (.zip)" }).click()]);
+  expect(download.suggestedFilename()).toBe("solving-food-skill.zip");
+  const zip = unzipSync(new Uint8Array(readFileSync((await download.path())!)));
+
+  const expected: Record<string, string> = {};
+  for (const rel of readdirSync(SKILL_DIR, { recursive: true }) as string[]) {
+    if (rel.endsWith(".md")) expected[`solving-food-skill/${rel.replaceAll("\\", "/")}`] = readFileSync(join(SKILL_DIR, rel), "utf8");
+  }
+  expect(Object.keys(expected).length).toBeGreaterThanOrEqual(8); // SKILL.md, references, examples
+  expect(Object.keys(zip).sort()).toEqual(Object.keys(expected).sort());
+  for (const [name, body] of Object.entries(expected)) expect(strFromU8(zip[name]!), name).toBe(body);
 });

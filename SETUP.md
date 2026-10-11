@@ -94,7 +94,7 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
 - **Drop folder from a terminal (the Claude skill's path):**
   `gcloud storage cp photo.jpg recipe.cook gs://solvingfood.firebasestorage.app/recipe-drop/HBebN9sYntQG1Kbdx5Ggw611xyy1/`
   (photo first; the Drop page shows the same command with the signed-in user's uid). The skill lives in
-  `.claude/skills/cooklang-recipe/`; regenerate its lists with `pnpm gen:skill` after changing the taxonomy or the
+  `.claude/skills/solving-food-skill/`; regenerate its lists with `pnpm gen:skill` after changing the taxonomy or the
   ingredient seed.
 - **Local demo data:** `pnpm dev`, then `pnpm dev:seed` (emulator only) creates `dev@example.com` with "Silbrass Pvt",
   uploads the ingredients, and drops the 28 recipes (~40 s).

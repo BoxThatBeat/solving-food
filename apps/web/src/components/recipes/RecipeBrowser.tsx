@@ -191,9 +191,10 @@ function AddRecipeSheet() {
         <SheetClose asChild>
           <Link to="/drop" className="flex items-center justify-between rounded-ui border-bw bg-base p-3.5 text-ink no-underline shadow-hard">
             <span className="flex flex-col gap-1">
-              <span className="text-lg font-extrabold">Drop folder</span>
+              <span className="text-lg font-extrabold">Let AI add for me</span>
               <span className="text-xs font-semibold text-sub">
-                Give your LLM a link or photo with the Solving Food skill. It writes a Cooklang file; drop it here and we import it.
+                Download the Solving Food skill once, then paste a recipe link to your AI and say &ldquo;add this recipe&rdquo;. It writes the file; drop it
+                here and we import it.
               </span>
             </span>
             <span aria-hidden className="text-lg font-extrabold">

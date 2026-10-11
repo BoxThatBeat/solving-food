@@ -1,4 +1,4 @@
-// `pnpm gen:skill`: regenerates the parts of the Claude skill (.claude/skills/cooklang-recipe/) that come from code, so
+// `pnpm gen:skill`: regenerates the parts of the Claude skill (.claude/skills/solving-food-skill/) that come from code, so
 // the skill and the importer can't drift (TECHNICAL_SPECS §4.3, §9 "Claude skill"):
 //   references/taxonomy.md     cuisine and main_protein lists from packages/core/src/taxonomy.ts, plus units
 //   references/ingredients.md  the seed ingredient names and aliases (data/ingredients/), grouped by category
@@ -10,7 +10,7 @@ import { join } from "node:path";
 import { renderIngredients, renderTaxonomy } from "../packages/core/src/skillDocs";
 import { loadIngredients } from "../data/scripts/ingredients";
 
-const dir = fileURLToPath(new URL("../.claude/skills/cooklang-recipe/references/", import.meta.url));
+const dir = fileURLToPath(new URL("../.claude/skills/solving-food-skill/references/", import.meta.url));
 const files: Record<string, string> = {
   "taxonomy.md": renderTaxonomy(),
   "ingredients.md": renderIngredients(loadIngredients().items),

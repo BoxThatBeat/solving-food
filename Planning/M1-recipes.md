@@ -8,7 +8,7 @@ seed are live, the app is deployed, and every M1 requirement ID has a passing, t
 **Remaining** (needs the owner, so the milestone isn't marked done yet):
 
 1. Exit criterion 1: import real recipes **via the Claude skill** end to end (give Claude a recipe link or photo with
-   the `cooklang-recipe` skill, deliver with `gcloud storage cp` or the Drop page). The 28 vault recipes were loaded
+   the `solving-food-skill` skill, deliver with `gcloud storage cp` or the Drop page). The 28 vault recipes were loaded
    through the real drop folder, but from the hand-converted `.cook` files, not by the skill.
 2. Owner sign-off on feel on a real phone (search, filters, favourites, edit, version restore, Trash), as for M0.
 3. First GitHub Actions run of the full matrix after the owner pushes (every project passed locally; see Verification).
@@ -63,7 +63,7 @@ conventions must match that README.
 3. Recipe CRUD with versioning, Trash and restore, purge + cleanup function, search index function,
    MiniSearch client search, `<CollectionView>` filters and sorts.
 4. Recipe detail (ingredients with inline amounts in steps, scaling, tools flag, protein), images in three sizes.
-5. Drop folder: Storage trigger → Cooklang parser → recipe; `.claude/skills/cooklang-recipe/SKILL.md`; in-app
+5. Drop folder: Storage trigger → Cooklang parser → recipe; `.claude/skills/solving-food-skill/SKILL.md`; in-app
    drop area and `gcloud storage cp` path; `.cook` export.
 6. Deduplication on manual save and on import, with the review list.
 7. Share links readable without an account.
@@ -145,7 +145,7 @@ conventions must match that README.
       (`active` or `pendingDuplicateReview`) → delete file → notification. Error path → notification + delete.
 - [x] `/drop` page: drag-and-drop + file picker, multi-file, uploads to `recipe-drop/{uid}/`, shows results via
       notifications. Storage rules: own folder only, `.cook`, ≤ 1 MB.
-- [x] `.claude/skills/cooklang-recipe/SKILL.md` + `reference.md` (syntax), `taxonomy.md` generated from
+- [x] `.claude/skills/solving-food-skill/SKILL.md` + `reference.md` (syntax), `taxonomy.md` generated from
       `packages/core/taxonomy.ts` by a script (`pnpm gen:skill`), worked examples (web page, photo), delivery
       via `gcloud storage cp` to `gs://solvingfood.firebasestorage.app/recipe-drop/<uid>/` or local save.
 - [x] Export: Download `.cook` from the detail page (client-side).
