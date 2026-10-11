@@ -41,7 +41,7 @@ function BrandsPage() {
   const priceLine = (m: BrandMappingDoc) => {
     const p = m.productCode ? live.get(m.productCode) : undefined;
     if (!p) return null;
-    const days = Math.floor((now - p.fetchedAtMs) / 86_400_000);
+    const days = Math.max(0, Math.floor((now - p.fetchedAtMs) / 86_400_000));
     return `${formatCents(p.priceCents)} · ${days > LIVE_PRICE_MAX_AGE_DAYS ? "stale" : "live"} ${days === 0 ? "today" : `${days}d ago`}`;
   };
 

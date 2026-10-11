@@ -44,7 +44,10 @@ self.onmessage = (e: MessageEvent<OptimiserRequest>) => {
       if (types.length ? !types.includes(m.mealType) : m.mealType !== "dinner") return false;
       return !m.proteinOnly || meetsProteinGoal(r, ctx);
     });
-    const ranked = rank(pool, ctx, c.weights, { dropBlocked: true }).slice(0, 80);
+    // Recipes that alone cost more than the whole budget can't be in any set: leave them out before taking the best 80.
+    const ranked = rank(pool, ctx, c.weights, { dropBlocked: true })
+      .filter((x) => (x.costCents ?? 0) <= m.maxCents)
+      .slice(0, 80);
     candidateCount = ranked.length;
     costOf = (id) => ranked.find((x) => x.id === id)?.costCents ?? null;
     opt = new Optimiser(

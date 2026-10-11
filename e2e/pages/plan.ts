@@ -8,12 +8,12 @@ import { makeRecipe, uniqueTitle, waitForIndexed } from "../fixtures/recipes";
 export const TZ = "America/Toronto";
 
 /** A small recipe of the spec's own with known ingredients (all priced in data/price-estimates.json). */
-export function cook(opts: { servings?: number; lines: string; tags?: string[]; leftovers?: number; tools?: string } = { lines: "" }): string {
+export function cook(opts: { servings?: number; lines: string; tags?: string[]; leftovers?: number; tools?: string; cuisine?: string; protein?: string } = { lines: "" }): string {
   return `---
 title: x
 servings: ${opts.servings ?? 4}
-cuisine: other
-main_protein: chicken
+cuisine: ${opts.cuisine ?? "other"}
+main_protein: ${opts.protein ?? "chicken"}
 prep_time: 10
 cook_time: 20
 tags: [${(opts.tags ?? ["dinner"]).join(", ")}]
@@ -42,7 +42,7 @@ export function makePlanRecipe(base: string, opts: Parameters<typeof cook>[0] = 
   if (!p) {
     p = (async () => {
       const title = uniqueTitle(base);
-      const id = await makeRecipe(title, { cook: cook(opts) });
+      const id = await makeRecipe(title, { cook: cook(opts), ...(opts.cuisine ? { content: { cuisine: opts.cuisine as never } } : {}) });
       await waitForIndexed(id);
       return { id, title };
     })();

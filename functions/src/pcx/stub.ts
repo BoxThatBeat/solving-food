@@ -1,7 +1,7 @@
 // The PC Express stub (TECHNICAL_SPECS §14 "weekly maintenance (price refresh against the stub)"): a fetch with canned
 // responses in the shapes endpoints.ts parses, used under the Functions emulator (e2e) and by the functions tests.
 // The real API is never called from tests. Failure modes come from `_stubPcx/config` { mode } in the emulator, so a
-// test can switch them: "ok" (default), "notConfigured", "signInFails", "down" (every request 503), "priceFails"
+// test can switch them (per household with `_stubPcx/{hid}`): "ok" (default), "notConfigured", "signInFails", "down" (every request 503), "priceFails"
 // (product lookups 500, search works).
 import { db } from "../admin";
 import type { PcxConfig } from "./endpoints";
@@ -34,9 +34,11 @@ export function setStubMode(m: StubMode | null) {
   modeOverride = m;
 }
 
-export async function stubMode(): Promise<StubMode> {
+/** The mode: a test's override, else `_stubPcx/{hid}` for that household (e2e runs in parallel), else `_stubPcx/config`. */
+export async function stubMode(hid?: string): Promise<StubMode> {
   if (modeOverride) return modeOverride;
-  const s = await db.doc("_stubPcx/config").get().catch(() => null);
+  const own = hid ? await db.doc(`_stubPcx/${hid}`).get().catch(() => null) : null;
+  const s = own?.exists ? own : await db.doc("_stubPcx/config").get().catch(() => null);
   const m = s?.data()?.mode;
   if (s?.exists && typeof s.data()?.prices === "object") for (const [k, v] of Object.entries(s.data()!.prices as Record<string, number>)) stubPriceOverride.set(k, v);
   return m === "notConfigured" || m === "signInFails" || m === "down" || m === "priceFails" ? m : "ok";
@@ -47,9 +49,13 @@ export const stubCalls: string[] = [];
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
 /** A fetch that answers like PC Express would, from the fixtures. */
-export async function stubFetch(input: string | URL | Request, init?: RequestInit): Promise<Response> {
+export function stubFetchFor(hid?: string) {
+  return (input: string | URL | Request, init?: RequestInit) => stubFetch(input, init, hid);
+}
+
+export async function stubFetch(input: string | URL | Request, init?: RequestInit, hid?: string): Promise<Response> {
   const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
-  const mode = await stubMode();
+  const mode = await stubMode(hid);
   stubCalls.push(`${init?.method ?? "GET"} ${url.pathname}`);
   if (mode === "down") return json(503, { error: "unavailable" });
   if (url.pathname === "/signin") return mode === "signInFails" ? json(401, { error: "invalid credentials" }) : json(200, { access_token: "stub-token", expires_in: 1800 });

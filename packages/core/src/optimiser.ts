@@ -19,10 +19,10 @@ export const GOOD_RATIO = 0.8;
 export const JACCARD_MAX = 0.5;
 export const FRUITLESS_LIMIT = 200;
 export const OPTIMISER_TIME_BUDGET_MS = 2500;
-const OVERLAP_BONUS = 0.15;
+const OVERLAP_BONUS = 0.08;
 const OVERLAP_MAX = 4;
-const REPEAT_PENALTY = 0.3;
-const COST_WEIGHT = 0.5;
+const REPEAT_PENALTY = 0.12;
+const COST_WEIGHT = 0.25;
 /** Attempts the first `next()` makes before showing anything, so the first set is a strong one. */
 const WARMUP = 40;
 
@@ -189,7 +189,15 @@ export class Optimiser {
   private attempt(): OptimiserSet | null {
     this.attempts++;
     const chosen: string[] = [];
-    const used = new Set<string>();
+    // Diversify away from what's been shown: leave out half of each shown set (at random) for this attempt, so a new
+    // set can't share more than half of any of them (Jaccard < 0.5) unless the pool forces it.
+    const banned = new Set<string>();
+    for (const shown of this.shown) {
+      const ids = shown.ids.slice();
+      for (let i = 0; i < Math.ceil(ids.length / 2) && ids.length; i++) banned.add(ids.splice(Math.floor(this.rand() * ids.length), 1)[0]!);
+    }
+    if (this.cands.length - banned.size < this.n) banned.clear();
+    const used = new Set<string>(banned);
     // Random start, then greedy with noise among the top few by marginal base score.
     while (chosen.length < this.n) {
       const options: Array<{ id: string; v: number }> = [];

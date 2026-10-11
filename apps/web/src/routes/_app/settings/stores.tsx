@@ -44,6 +44,7 @@ function StoresPage() {
   return (
     <SettingsPage title="Stores" wide>
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-4">
         {hh.data ? <PcxStorePicker hid={hh.id} storeId={hh.data.pcxStoreId} storeName={hh.data.pcxStoreName} /> : null}
         <Card className="gap-3">
           <CardTitle>Stores</CardTitle>
@@ -96,6 +97,7 @@ function StoresPage() {
             </div>
           </form>
         </Card>
+        </div>
 
         <Card className="gap-3 p-0 pb-3.5">
           <div className="px-3.5 pt-3.5">

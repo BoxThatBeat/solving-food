@@ -59,7 +59,7 @@ function parse<T>(schema: { safeParse(v: unknown): { success: true; data: T } | 
 export async function pcxStatus(uid: string, data: unknown): Promise<PcxStatus> {
   const hid = String((data as { hid?: unknown })?.hid ?? "");
   await requireMember(uid, hid);
-  const deps = await pcxDeps();
+  const deps = await pcxDeps(hid);
   if (!deps) return { connected: false, message: NOT_CONNECTED };
   const s = (await db.doc(SESSION_DOC).get()).data();
   const err = typeof s?.lastError === "string" ? s.lastError : null;
@@ -69,7 +69,7 @@ export async function pcxStatus(uid: string, data: unknown): Promise<PcxStatus> 
 export async function searchStores(uid: string, data: unknown): Promise<PcxStoreSearchResult> {
   const input = parse(pcxStoreSearchInput, data);
   await requireMember(uid, input.hid);
-  const deps = await pcxDeps();
+  const deps = await pcxDeps(input.hid);
   if (!deps) return { connected: false, message: NOT_CONNECTED, stores: [] };
   await rateLimit(uid);
   const client = new PcxClient(deps);
@@ -92,7 +92,7 @@ export function priceDoc(pcxStoreId: string, p: PcxProduct, at: Timestamp | Fiel
 export async function searchProducts(uid: string, data: unknown): Promise<PcxProductSearchResult> {
   const input = parse(pcxProductSearchInput, data);
   await requireMember(uid, input.hid);
-  const deps = await pcxDeps();
+  const deps = await pcxDeps(input.hid);
   if (!deps) return { connected: false, message: NOT_CONNECTED, products: [] };
   await rateLimit(uid);
   const client = new PcxClient(deps);

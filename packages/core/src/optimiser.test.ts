@@ -40,7 +40,7 @@ describe("set score", () => {
     expect(baseSetScore([a, b])).toBeGreaterThan(baseSetScore([a, c]));
     const repeat = { ...c, cuisine: a.cuisine };
     expect(baseSetScore([a, repeat])).toBeLessThan(baseSetScore([a, c]));
-    expect(setScore([a, b], 1000, 2000)).toBeCloseTo(baseSetScore([a, b]) - 0.25);
+    expect(setScore([a, b], 1000, 2000)).toBeCloseTo(baseSetScore([a, b]) - 0.125);
   });
 
   it("caps per cuisine and protein; 'other' and 'none' are never capped", () => {

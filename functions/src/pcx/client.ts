@@ -6,7 +6,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { DEFAULT_PCX_STORE_ID, isDefaultPcxStore, parsePackageSize, PCX_DEFAULT_STORE_MATCH, type PcxProduct, type PcxStore } from "@solving-food/core";
 import { db } from "../admin";
 import { headers, parseProduct, parseSearch, parseSignIn, parseStores, pcxConfig, searchBody, urls, type PcxConfig, type RawProduct } from "./endpoints";
-import { STUB_CONFIG, stubFetch, stubMode } from "./stub";
+import { STUB_CONFIG, stubFetchFor, stubMode } from "./stub";
 
 export type Fetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 
@@ -32,10 +32,10 @@ export function pcxEnabled(env: Record<string, string | undefined> = process.env
 }
 
 /** The live dependencies, the stub's under the emulator, or null when PC Express isn't connected (estimates only). */
-export async function pcxDeps(): Promise<PcxDeps | null> {
+export async function pcxDeps(hid?: string): Promise<PcxDeps | null> {
   if (isEmulator()) {
-    if ((await stubMode()) === "notConfigured") return null;
-    return { fetch: stubFetch, config: STUB_CONFIG, credentials: { email: "stub@example.com", password: "stub" }, now: Date.now };
+    if ((await stubMode(hid)) === "notConfigured") return null;
+    return { fetch: stubFetchFor(hid), config: STUB_CONFIG, credentials: { email: "stub@example.com", password: "stub" }, now: Date.now };
   }
   if (!pcxEnabled()) return null;
   return { fetch: globalThis.fetch.bind(globalThis), config: pcxConfig(), credentials: { email: process.env.PCX_EMAIL!, password: process.env.PCX_PASSWORD! }, now: Date.now };
