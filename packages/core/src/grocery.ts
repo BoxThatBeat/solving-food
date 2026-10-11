@@ -12,7 +12,7 @@
 
 import type { Measure } from "./taxonomy";
 import type { ConvertibleIngredient } from "./units";
-import { formatGrams, formatOunces, formatQuantity } from "./units";
+import { formatGrams, formatQuantity } from "./units";
 import type { GroceryItem } from "./types";
 import { packToCanonical, resolvePrice, type LivePrice, type PriceEstimate, type PriceSource } from "./pricing";
 import type { RecipeRef } from "./plan";
@@ -399,10 +399,10 @@ function sortLines(lines: Array<[string, GroceryItem]>): Array<[string, GroceryI
   return lines.sort(([, a], [, b]) => (a.source === b.source ? (a.source === "plan" ? a.productName.localeCompare(b.productName) : 0) : a.source === "plan" ? -1 : 1));
 }
 
-/** "140 g · 4.9 oz" or "3" for a canonical amount. */
+/** A canonical amount in metric (R8.13): "140 g", "3 (640 g)", or "3" for a count with no unit weight. */
 export function formatCanonical(amount: number, unit: string, unitWeightG?: number): string {
-  if (unit === "count") return unitWeightG ? `${formatQuantity(amount)} (${formatGrams(amount * unitWeightG)} · ${formatOunces(amount * unitWeightG)})` : formatQuantity(amount);
-  return `${formatGrams(amount)} · ${formatOunces(amount)}`;
+  if (unit === "count") return unitWeightG ? `${formatQuantity(amount)} (${formatGrams(amount * unitWeightG)})` : formatQuantity(amount);
+  return formatGrams(amount);
 }
 
 /** One clipboard line: "- Mutti Polpa, 400 g × 2", "- Baby spinach, 140 g", "- Bananas × 1". */

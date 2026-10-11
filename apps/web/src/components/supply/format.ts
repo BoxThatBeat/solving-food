@@ -23,7 +23,7 @@ export interface AmountUnit {
   portions?: boolean;
 }
 
-/** Metric and imperial together (R8.13): "640 g · 1.4 lb", "3 (640 g · 1.4 lb)", "2 portions". */
+/** Metric only (R8.13): "640 g", "3 (640 g)", "2 portions". */
 export function amountText(amount: number, u: AmountUnit): string {
   const a = Math.max(0, amount);
   if (u.portions) return `${formatQuantity(a)} portion${Math.abs(a - 1) < 1e-6 ? "" : "s"}`;

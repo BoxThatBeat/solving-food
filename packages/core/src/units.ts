@@ -2,8 +2,10 @@
 //
 // Every amount is stored canonically: grams for anything with a weight or a conversion to one, a plain count only
 // when an ingredient has no unit weight. Recipes keep their original wording (amount + unit) for display; the
-// canonical value is derived from the ingredient's density or unit weight. Display always shows metric and imperial
-// together via `formatAmount()`.
+// canonical value is derived from the ingredient's density or unit weight. Display never shows imperial (R8.13):
+// recipe pages show the recipe's own wording followed by the metric conversion only (`formatRecipeAmount()`), and
+// everything else (Supply, grocery, History, notifications) is metric only (`formatGrams()`, `formatAmount()`).
+// Imperial units stay accepted as input (recipes, packaging, the supply pickers).
 
 import type { Measure } from "./taxonomy";
 import { singularize } from "./names";
@@ -262,16 +264,16 @@ export function formatGrams(g: number): string {
   return `${Math.round(v / 1000)} kg`;
 }
 
-/** Imperial weight: 0.4 oz · 4.4 oz · 15 oz · 2.6 lb · 12 lb. */
-export function formatOunces(g: number): string {
-  const oz = Math.max(0, g) / G_PER_OZ;
-  if (oz === 0) return "0 oz";
-  if (oz < 0.05) return "<0.1 oz"; // a pinch of a spice: never "0 oz" for something that's there
-  if (oz < 10) return `${clean(oz, 1)} oz`;
-  if (oz < 15.95) return `${Math.round(oz)} oz`;
-  const lb = oz / 16;
-  if (lb < 9.95) return `${lb.toFixed(1)} lb`;
-  return `${Math.round(lb)} lb`;
+/** Metric volume with the same rounding as grams: 2.5 ml · 15 ml · 235 ml · 750 ml · 1.2 L · 12 L. */
+export function formatMl(ml: number): string {
+  const v = Math.max(0, ml);
+  if (v === 0) return "0 ml";
+  if (v < 10) return `${clean(v, 1)} ml`;
+  if (v < 100) return `${Math.round(v)} ml`;
+  if (v < 250) return `${Math.round(v / 5) * 5} ml`;
+  if (v < 995) return `${Math.round(v / 10) * 10} ml`;
+  if (v < 9950) return `${(v / 1000).toFixed(1)} L`;
+  return `${Math.round(v / 1000)} L`;
 }
 
 const FRACTIONS: Array<[number, string]> = [
@@ -308,36 +310,64 @@ export function formatQuantity(amount: number, measure = "count"): string {
   return clean(a, 2);
 }
 
-/** "125 g · 4.4 oz" for a canonical gram amount. */
-export function formatMetricImperial(grams: number): string {
-  return `${formatGrams(grams)} · ${formatOunces(grams)}`;
-}
-
 export interface FormatOptions {
-  /** The recipe's original wording, e.g. "1 cup flour". Shown first, with the conversions in brackets. */
+  /** The recipe's original wording of a count, e.g. "2 potatoes". Shown first, with the weight in brackets. */
   original?: string;
 }
 
 /**
- * The shared formatter (R8.13): "1 cup flour (125 g · 4.4 oz)", "2 potatoes (430 g · 15 oz)", or just
- * "430 g · 15 oz" without an original. Count-canonical amounts with no unit weight show the count only.
+ * A canonical amount in metric (R8.13): "430 g", "2 potatoes (430 g)" with an original count, "2" for a count
+ * with no unit weight. Count-canonical amounts with no unit weight show the count (or the original) only.
  */
 export function formatAmount(
   canonical: number,
   ingredient: Pick<ConvertibleIngredient, "canonicalUnit" | "unitWeightG">,
   opts: FormatOptions = {},
 ): string {
-  let both: string;
-  if (ingredient.canonicalUnit === "count") {
-    both = ingredient.unitWeightG
-      ? formatMetricImperial(canonical * ingredient.unitWeightG)
-      : formatQuantity(canonical, "count");
-  } else {
-    both = formatMetricImperial(canonical);
+  const grams = ingredient.canonicalUnit === "count" ? (ingredient.unitWeightG ? canonical * ingredient.unitWeightG : null) : canonical;
+  if (!opts.original) return grams === null ? formatQuantity(canonical, "count") : formatGrams(grams);
+  return grams === null ? opts.original : `${opts.original} (${formatGrams(grams)})`;
+}
+
+/** Units that are already metric: a recipe line in these needs no conversion after it. */
+const METRIC = new Set(["mg", "g", "kg", "ml", "dl", "l"]);
+/** Spoons convert to ml even when the ingredient has a density: "2 tbsp (30 ml)" is how a cook checks a spoon. */
+const SPOONS = new Set(["tsp", "tbsp"]);
+
+/**
+ * A recipe amount as recipe pages show it (R8.13, hybrid): the recipe's own wording, then the metric conversion
+ * only. "1 cup" flour → "1 cup (125 g)" (grams when the ingredient converts, else "1 cup (235 ml)"); "8 oz" →
+ * "8 oz (225 g)"; "2 tbsp" → "2 tbsp (30 ml)"; "2" potatoes → "2 (430 g)"; already-metric amounts ("400 g",
+ * "250 ml"), counts with no unit weight, and vague amounts ("a pinch", "to taste") as written.
+ */
+export function formatRecipeAmount(amount: number, measure: string, ingredient?: ConvertibleIngredient): string {
+  const def = unitDef(measure);
+  const original = formatOriginal(amount, measure);
+  if (def.kind === "vague") return original;
+  if (amount <= 0) return "";
+  if (METRIC.has(def.key)) return original;
+  if (def.kind === "weight") return `${original} (${formatGrams(amount * def.factor)})`;
+  if (def.kind === "volume" && SPOONS.has(def.key)) return `${original} (${formatMl(amount * def.factor)})`;
+  const r = ingredient ? toCanonical(amount, measure, ingredient) : null;
+  if (def.kind === "count") return r?.ok ? formatAmount(r.canonicalAmount, ingredient!, { original }) : original;
+  // An imperial volume (cup, fl oz, pint, quart, gallon): grams when the ingredient converts, else ml.
+  if (r?.ok) {
+    const grams = r.canonicalUnit === "g" ? r.canonicalAmount : ingredient!.unitWeightG ? r.canonicalAmount * ingredient!.unitWeightG : null;
+    if (grams !== null) return `${original} (${formatGrams(grams)})`;
   }
-  if (!opts.original) return both;
-  if (ingredient.canonicalUnit === "count" && !ingredient.unitWeightG) return opts.original;
-  return `${opts.original} (${both})`;
+  return `${original} (${formatMl(amount * def.factor)})`;
+}
+
+/** °F → °C, rounded to the nearest 5 as oven dials are: 350 → 175, 425 → 220. */
+export function fahrenheitToCelsius(f: number): number {
+  return Math.round(((f - 32) * 5) / 9 / 5) * 5;
+}
+
+const FAHRENHEIT = /(\d{2,3})(?:\s*(?:°|º|˚|degrees?|deg\.?)\s*F(?:ahrenheit)?|F)\b/g;
+
+/** Recipe text with each Fahrenheit temperature followed by Celsius: "Bake at 350°F" → "Bake at 350°F (175°C)". */
+export function withCelsius(text: string): string {
+  return text.replace(FAHRENHEIT, (m: string, f: string) => `${m} (${fahrenheitToCelsius(Number(f))}°C)`);
 }
 
 /** Original wording of an amount: "1½ cups", "2 cloves", "8 oz", "2" (count), "a pinch", "" (no amount). */

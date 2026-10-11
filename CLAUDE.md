@@ -106,7 +106,9 @@ URLs are blocked in the CLI; serve things over HTTP. Screenshots never go into t
 - `cuisine` and `mainProtein` come from `packages/core/taxonomy.ts` only. The Claude skill embeds the same lists.
 - Every user-facing PRD requirement has a Playwright test tagged with its ID (`@R6.5`). Add the tag when you
   add the test; `pnpm e2e:coverage` fails on untagged requirements.
-- UI: brutalist, Catppuccin, mobile-first, shadcn/ui + Tailwind. Metric and imperial are always shown together.
+- UI: brutalist, Catppuccin, mobile-first, shadcn/ui + Tailwind. Only metric is displayed (PRD R8.13):
+  recipe pages show the recipe's wording plus the metric conversion (`1 cup flour (125 g)`), everything else is
+  metric only. Imperial is accepted as input, never shown.
 
 ## People
 

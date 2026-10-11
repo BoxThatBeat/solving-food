@@ -42,9 +42,10 @@ function AddSupplyBody({ hid, uid, close }: { hid: string; uid: string; close: (
   };
   const add = () => {
     if (!pick || !canon?.ok) return;
-    const entered = `${n} ${unit === "count" ? "" : unitLabel(unit, n)}`.trim();
+    // Typed in any allowed unit (oz, cups…), recorded and shown in metric (R8.13).
+    const entered = amountText(canon.canonicalAmount, { canonicalUnit: pick.canonicalUnit, unitWeightG: pick.unitWeightG });
     sendCommand(hid, uid, "addSupply", { ingredientId: pick.id, amount: canon.canonicalAmount, location, entered });
-    notify({ kind: "success", message: pick.freeUse ? `${pick.name}: noted as bought (staples aren't tracked by amount)` : `${amountText(canon.canonicalAmount, { canonicalUnit: pick.canonicalUnit, unitWeightG: pick.unitWeightG })} ${pick.name} added to supply` });
+    notify({ kind: "success", message: pick.freeUse ? `${pick.name}: noted as bought (staples aren't tracked by amount)` : `${entered} ${pick.name} added to supply` });
     close();
   };
   return (

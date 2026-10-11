@@ -179,7 +179,7 @@ export function SupplyAdjust({ item, ingredient, unit, hid, uid }: { item: Suppl
     if (!valid) return;
     const c = unit.portions ? { ok: true as const, canonicalAmount: value } : toCanonical(value, u, conv);
     if (!c.ok) return;
-    sendCommand(hid, uid, "correctSupply", { supplyId: item.id, target: c.canonicalAmount, ...(item.ingredientId ? { ingredientId: item.ingredientId } : {}), note: `I actually have ${value} ${unitLabel(u, value) || (unit.portions ? "portions" : "")}`.trim() });
+    sendCommand(hid, uid, "correctSupply", { supplyId: item.id, target: c.canonicalAmount, ...(item.ingredientId ? { ingredientId: item.ingredientId } : {}), note: `I actually have ${amountText(c.canonicalAmount, unit)}` });
     notify({ kind: "success", message: `${item.label} corrected to ${amountText(c.canonicalAmount, unit)}` });
   };
   return (

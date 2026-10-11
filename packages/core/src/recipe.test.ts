@@ -161,22 +161,22 @@ describe("steps and scaling (R4.11, R4.13)", () => {
     const c = content();
     const segs = renderStep(c.steps[0]!.text, c.ingredients, lookup);
     expect(segs[0]).toEqual({ kind: "text", text: "Melt " });
-    expect(segs[1]).toMatchObject({ kind: "ingredient", name: "the butter", amount: "2 tbsp (28 g · 1 oz)" });
+    expect(segs[1]).toMatchObject({ kind: "ingredient", name: "the butter", amount: "2 tbsp (30 ml)" });
     expect(renderStepText(c.steps[0]!.text, c.ingredients, lookup)).toBe(
-      "Melt the butter (2 tbsp (28 g · 1 oz)) and fry chicken breasts (4 (700 g · 1.5 lb)).",
+      "Melt the butter (2 tbsp (30 ml)) and fry chicken breasts (4 (700 g)).",
     );
   });
   it("partial mentions show their own amount; name-only mentions show none", () => {
     const c = content();
     const segs = renderStep(c.steps[1]!.text, c.ingredients, lookup).filter((s) => s.kind === "ingredient");
-    expect(segs.map((s) => s.kind === "ingredient" && s.amount)).toEqual(["200 g · 7.1 oz", "200 g · 7.1 oz", ""]);
+    expect(segs.map((s) => s.kind === "ingredient" && s.amount)).toEqual(["200 g", "200 g", ""]);
   });
   it("scale multiplies amounts and partial placeholders", () => {
     const s = scale(content(), 8);
     expect(s.servings).toBe(8);
     expect(s.ingredients[1]!.amount).toBe(800);
     expect(s.steps[1]!.text).toContain("{{ing:l2|400|g}}");
-    expect(lineText(content().ingredients[2]!, lookup, 2)).toEqual({ amount: "4 tbsp (57 g · 2 oz)", name: "the butter" });
+    expect(lineText(content().ingredients[2]!, lookup, 2)).toEqual({ amount: "4 tbsp (59 ml)", name: "the butter" });
   });
   it("refsIn and nextLineId", () => {
     expect(refsIn(content().steps[1]!.text)).toEqual(["l2", "l4"]);

@@ -249,7 +249,7 @@ function ReviewFlow({
                             −
                           </button>
                           <output className="flex min-w-[5.75rem] items-center justify-center border-x-2 border-line px-1 font-mono text-[0.6875rem] font-extrabold" aria-label={`${name} amount`}>
-                            {formatCanonical(u.canonicalAmount, unit, ing?.unitWeightG).replace(" · ", " · ")}
+                            {formatCanonical(u.canonicalAmount, unit, ing?.unitWeightG)}
                           </output>
                           <button type="button" aria-label={`More ${name}`} onClick={() => setUsed((l) => l.map((x) => (x.ingredientId === u.ingredientId ? { ...x, canonicalAmount: x.canonicalAmount + stepAmt } : x)))} className="h-10 w-9 cursor-pointer bg-pg text-lg font-extrabold">
                             +

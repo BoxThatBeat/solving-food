@@ -57,8 +57,8 @@ Add @salmon fillet{600%g} and @lemon{1}, sliced. Roast ~{12%minutes} more.
 - **Every ingredient appears as an `@` token with its quantity** at least once. Amounts in later mentions of the
   same ingredient are added together (batter + topping), so give each addition its own amount, or none.
 - **Salt and pepper are two tokens**: `@salt{}` and `@black pepper{}`, even when the recipe lists them on one line.
-- **Keep the recipe's own units** (cups, tbsp, oz, lb, g). The app converts and shows metric and imperial
-  together. Convert Unicode fractions to decimals (`½` → `0.5`). Never invent grams the recipe doesn't give.
+- **Keep the recipe's own units** (cups, tbsp, oz, lb, g). The app converts and shows the metric amount
+  after the recipe's wording. Convert Unicode fractions to decimals (`½` → `0.5`). Never invent grams the recipe doesn't give.
 - **Count ingredients** use a bare number or a count noun: `@egg{2}`, `@garlic{3%cloves}`, `@lemon{0.5}`.
 - **Preparation stays outside the token**: `@onion{1}, diced` not `@diced onion{1}`.
 - **No amount given** ("salt to taste", "oil for frying"): `@salt{}`. It is marked optional and not tracked.

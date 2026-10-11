@@ -1,5 +1,5 @@
 // The Supply page (PRD R8.1–R8.15; TECHNICAL_SPECS §6, §12; prototype page "Supply"). Each ingredient as
-// `current (projected)` in metric and imperial, where projected = unexpired − what the period's uncooked meals use;
+// `current (projected)` in metric, where projected = unexpired − what the period's uncooked meals use;
 // location tabs and category / expiring soon / low stock filters; expired lots prompt Still good / Threw it out;
 // leftovers as prepared portions; free-use staples with when they were last bought. Tapping a row opens its purchases,
 // correction, and history inline (the full history is /supply/:id).

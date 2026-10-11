@@ -287,7 +287,7 @@ function HistoryRow({
               return (
                 <Badge key={d.ingredientId} className="bg-peach-soft text-onc uppercase">
                   {d.delta > 0 ? "+" : "−"}
-                  {formatCanonical(Math.abs(d.delta), u.u, u.w).split(" · ")[0]} {ingredientName(d.ingredientId)}
+                  {formatCanonical(Math.abs(d.delta), u.u, u.w)} {ingredientName(d.ingredientId)}
                 </Badge>
               );
             })

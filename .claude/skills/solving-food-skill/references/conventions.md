@@ -43,7 +43,7 @@ every file imports the same way.
 
 ## Amounts and units
 
-- Keep the recipe's units: cups, tbsp, tsp, oz, lb, g, ml, cloves. The app shows both metric and imperial.
+- Keep the recipe's units: cups, tbsp, tsp, oz, lb, g, ml, cloves. The app shows the recipe's wording with the metric amount after it.
 - If the recipe gives both ("1 cup / 240 ml"), use the first one shown.
 - Unicode fractions become decimals: `½` → `0.5`, `⅓` → `0.33`, `1¾` → `1.75`.
 - Ranges: write the range (`@garlic{2-3%cloves}`); the app uses the middle.
