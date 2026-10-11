@@ -203,3 +203,37 @@ test("M3 pages and sheets in Latte and Mocha: supply with every flag, add supply
   await expect(page.getByTestId("history-row").first()).toBeVisible();
   await expectNoSeriousViolations(page, "/history");
 });
+
+test("M4 pages and dialogs in Latte and Mocha: members with invites, the invite banner, data, the leave warning, another household", async ({ page, household }) => {
+  test.slow();
+  const { adminDb, addMember } = await import("../fixtures/admin");
+  const { FieldValue } = await import("firebase-admin/firestore");
+  await addMember(household.hid, `sam-${household.hid}`, "Sam");
+  await adminDb.doc(`households/${household.hid}/invites/pat@example.com`).set({ inviteeEmailLower: "pat@example.com", householdName: "Silbrass Pvt", invitedBy: household.uid, invitedByName: "Aaron", createdAt: FieldValue.serverTimestamp() });
+  const other = adminDb.collection("households").doc();
+  await other.set({ name: "Cottage", createdBy: "someone", periodDays: 7, budgetCents: 0, currency: "CAD", timezone: "America/Toronto", defaultServings: 2, plannedMealTypes: ["dinner"], pcxStoreId: "x", currentPeriodId: null, settings: {} });
+  await adminDb.doc(`households/${other.id}/invites/${household.uid}`).set({ inviteeUid: household.uid, householdName: "Cottage", invitedBy: "someone", invitedByName: "Kim", createdAt: FieldValue.serverTimestamp() });
+  for (const flavour of ["latte", "mocha"] as const) {
+    if (flavour === "mocha") {
+      await page.goto("/settings/theme");
+      await page.getByRole("button", { name: "Mocha" }).click();
+    }
+    await page.goto("/settings/members");
+    await expect(page.getByRole("region", { name: "Invites" })).toBeVisible();
+    await expect(page.getByRole("list", { name: "Pending invites" })).toContainText("pat@example.com");
+    await page.getByLabel("Search people by name").fill("a");
+    await expectNoSeriousViolations(page, `/settings/members (${flavour})`);
+    await page.getByRole("button", { name: "Leave this household" }).click();
+    await expect(page.getByRole("alertdialog")).toBeVisible();
+    await expectNoSeriousViolations(page, `leave dialog (${flavour})`);
+    await page.keyboard.press("Escape");
+    await page.goto("/settings/data");
+    await expect(page.getByTestId("read-estimate")).toHaveText(/About/);
+    await expectNoSeriousViolations(page, `/settings/data (${flavour})`);
+    await page.goto("/settings");
+    await expectNoSeriousViolations(page, `/settings with invites (${flavour})`);
+    await page.goto("/welcome/household");
+    await expect(page.getByRole("heading", { name: "Create a household" })).toBeVisible();
+    await expectNoSeriousViolations(page, `/welcome/household, another household (${flavour})`);
+  }
+});

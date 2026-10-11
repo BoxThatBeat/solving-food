@@ -124,7 +124,7 @@ function MembersPage() {
                     <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">{joined(m.joinedAtMs)}</span>
                   </span>
                   {me ? null : (
-                    <Button variant="secondary" size="sm" className="shadow-none" onClick={() => setRemoving(m)} aria-label={`Remove ${m.displayName}`}>
+                    <Button variant="secondary" size="sm" className="border-2 px-2 py-1.5 text-[0.6875rem] shadow-none" onClick={() => setRemoving(m)} aria-label={`Remove ${m.displayName}`}>
                       Remove
                     </Button>
                   )}

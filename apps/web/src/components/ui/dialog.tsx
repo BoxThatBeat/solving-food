@@ -53,7 +53,7 @@ export function ConfirmDialog({
             <Button
               size="sm"
               disabled={busy}
-              className={cn(destructive && "bg-red text-onc")}
+              className={cn(destructive && "bg-red-soft text-ink")}
               onClick={onConfirm}
             >
               {confirmLabel}

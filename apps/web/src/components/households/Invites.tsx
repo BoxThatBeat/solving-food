@@ -69,7 +69,7 @@ export function InviteBanner({ me, householdIds }: { me: Me; householdIds: strin
   return (
     <section
       aria-label="Invites"
-      className="mx-4 mt-2 flex flex-col gap-2.5 rounded-ui border-bw bg-yellow p-3 text-ink shadow-hard md:mx-7 md:mt-4"
+      className="mx-4 mt-2 mb-2 flex flex-col gap-2.5 rounded-ui border-bw bg-yellow md:mb-0 p-3 text-ink shadow-hard md:mx-7 md:mt-4 min-[95rem]:mx-auto min-[95rem]:w-[calc(93.75rem-3.5rem)]"
     >
       <span className="flex items-center gap-1.5 font-mono text-[0.6875rem] font-bold tracking-[0.06rem] uppercase">
         <Mail aria-hidden className="size-3.5" strokeWidth={3} />
