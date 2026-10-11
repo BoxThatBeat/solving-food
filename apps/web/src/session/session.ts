@@ -97,6 +97,7 @@ export class SessionStore {
   private profile: UserDoc | null | undefined;
   private directory: DirectoryDoc | null | undefined;
   private householdIds: string[] | undefined;
+  private committed = new Set<string>(); // household ids whose member doc this device wrote and saw committed
 
   start(): void {
     if (this.started) return;
@@ -137,6 +138,7 @@ export class SessionStore {
     this.profile = undefined;
     this.directory = undefined;
     this.householdIds = undefined;
+    this.committed.clear();
   }
 
   private onAuthUser(u: User | null): void {
@@ -220,8 +222,10 @@ export class SessionStore {
           // members/{uid} lives at households/{hid}/members/{uid}
           // Only memberships the server has acknowledged: the shell's listeners on a household are refused by the
           // rules until its creation batch (household + member doc) has actually been committed.
+          // A membership whose batch this device already saw commit (membershipCommitted) counts even while the
+          // snapshot still flags it pending, otherwise the active household would flip back and forth around the ack.
           const ids = snap.docs
-            .filter((d) => !d.metadata.hasPendingWrites)
+            .filter((d) => !d.metadata.hasPendingWrites || this.committed.has(d.ref.parent.parent?.id ?? ""))
             .map((d) => d.ref.parent.parent?.id)
             .filter((id): id is string => !!id)
             .sort();
@@ -238,6 +242,20 @@ export class SessionStore {
         onError,
       ),
     );
+  }
+
+  /**
+   * A membership this device just wrote and the server has acknowledged (the batch's commit resolved). The members
+   * listener will report it too, but on a phone that can take several seconds after the write (the watch stream has to
+   * catch up to the commit), during which first run would sit on "create a household" with the invite already gone.
+   */
+  membershipCommitted(uid: string, hid: string): void {
+    if (this.user?.uid !== uid) return;
+    this.committed.add(hid);
+    const ids = [...new Set([...(this.householdIds ?? []), hid])].sort();
+    this.householdIds = ids;
+    rememberHouseholds(uid, ids);
+    this.derive();
   }
 
   private derive(): void {

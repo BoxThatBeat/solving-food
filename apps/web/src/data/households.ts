@@ -32,6 +32,7 @@ import {
 } from "@solving-food/core";
 import { db } from "@/firebase/app";
 import { useLiveDoc, useLiveQuery } from "./live";
+import { session } from "@/session/session";
 import { useReadySession } from "@/session/useSession";
 
 export function useHousehold(hid: string | null) {
@@ -218,6 +219,7 @@ export async function acceptInvite(invite: { hid: string }, me: { uid: string; e
     if (isDenied(e)) throw new HouseholdActionError("That invite is no longer open.");
     throw e;
   }
+  session.membershipCommitted(me.uid, invite.hid); // into the app now, not when the listener catches up
 }
 
 export async function declineInvite(invite: { hid: string }, me: { uid: string; email: string }): Promise<void> {
@@ -260,5 +262,6 @@ export async function createHousehold(input: NewHouseholdInput, me: { uid: strin
     if (isDenied(e)) throw new HouseholdActionError(`You've already created ${MAX_HOUSEHOLDS_CREATED} households, the most anyone can. A household you created stops counting when it's deleted (its last member leaves).`);
     throw e;
   }
+  session.membershipCommitted(me.uid, hRef.id);
   return hRef.id;
 }
