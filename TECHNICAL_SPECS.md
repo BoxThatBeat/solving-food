@@ -1109,6 +1109,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | M4 | Households | Directory, invites by name and email, multiple households (≤ 3), member management, last-member deletion, data download & import |
 | M5 | Smarts | Suggestions & weights, expiry badges and alerts, optimiser, staples cadence, PC Express module (auth, store and product search, weekly maintenance job) |
 | M6 | Sides | Sides on meals (ingredients eaten as-is, per-person portion snapshotted on the meal), seed sides, Settings → Sides, sides in the grocery builder, budget, Supply deduction at Done cooking, plan rows and History |
+| M7 | Review fixes | Owner review after M6: units display v3 (one unit system on recipe pages), version history hardening, recipe page actions (no .cook download), Recipes skeletons, Restart period (R3.1), kitchen tool names lower-case and matched by `toolKey`, Plan page layout |
 
 Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix. The detailed, task-level plan for each milestone lives in `Planning/`.
 

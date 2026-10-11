@@ -1,6 +1,6 @@
 # M7 — Review fixes
 
-Status: in progress (items 1–4 done by agent 1; agent 2 appends the rest)
+Status: done (items 1–4 agent 1, items 5–8 agent 2; owner checks below)
 
 ## Goal
 
@@ -137,11 +137,30 @@ R8.13, R4.19, R4.21, R4.2 (agent 1); R3.1, R11.1, R4.14, R6.1, R6.2, R6.11, R6.1
   `{"ok":true}`. `pnpm repair:versions -- --write` live: 125 recipes, 125 already have their current snapshot, 0
   written (every recipe also has `versions/1`; the three edited ones have all their versions).
 
+## Verification (items 5–7)
+
+- Lint, typecheck: clean. Core unit 409/409 (+6 restart, +62 tools), web unit 7/7. Rules and functions untouched
+  (the periods rule already allows the restart's writes).
+- Playwright, `--workers=1`: desktop-1080p rollover 3/3; plan, responsive, suggestions, optimiser 26 passed + 1 skipped
+  (tablet-only); cooking, a11y, recipes-browse, recipe-edit, settings, recipe-detail 41 passed + 1 skipped (one blank-page
+  load flake in the older tools test re-ran green alone). phone-ios rollover, settings, plan, responsive, recipe-detail
+  36 passed + 1 skipped (tablet-only).
+- `pnpm e2e:coverage`: all done milestones ok; M7 11/11 tagged (R3.1 new).
+
+### 8. Bookkeeping
+- [x] This plan (items 5–7, verification, deviations, owner checks), M7 row in `Planning/README.md` and spec §15.
+
 ## Owner items
 
 - On the phone: open Ground Beef Tacos (v2) or Veggie Pizza Squares (v3) → Version history; v1 should be listed
   (briefly "Checking for older versions…") and restorable. If a recipe still shows only its current version, note
   which one.
+
+- Settings → Household → Restart period → Tomorrow: the Plan page should show tomorrow's dates with your planned
+  meals marked "Carried over"; cooked ones stay in History. Today restarts from this morning.
+- Settings → Kitchen tools: one chip per tool with "also: …" under it; add what you own (e.g. skillet, pot, sheet pan,
+  baking dish, bowl) and check a recipe that says "frying pan" or "9x13 pan" is no longer flagged.
+- Plan page on the phone: no Grocery list button, protein bars just above the optimiser, "See more →" under Suggested.
 
 ## Deviations and assumptions
 
@@ -157,3 +176,16 @@ R8.13, R4.19, R4.21, R4.2 (agent 1); R3.1, R11.1, R4.14, R6.1, R6.2, R6.11, R6.1
   version, note the recipe's name: the live data says every recipe has all its versions.
 - Item 4: the skeleton is shown for re-orders on Recipes and Meals only; the Create meal sheet and Plan/History lists
   keep re-ordering in place.
+- Item 5: restarting when the current period hasn't started yet (an earlier "Tomorrow", then "Today") moves that
+  period's start and end instead of creating another period, so nothing is carried twice; its ID stays the date it was
+  created for. The period before it keeps the end the first restart gave it, so for that one day History's spend could
+  count a receipt in both; accepted as rare.
+- Item 5: a period ID already used by an earlier restart gets a "-2", "-3" suffix (nothing parses period IDs).
+- Item 5: the old period ends where the new one starts (for Tomorrow that is midnight tonight), not at the moment of the
+  tap, so periods never overlap; the Plan page switches to the new period immediately.
+- Item 6: "pan" alone means skillet, but a sized "pan" (9x13 pan) means baking dish. "Electric mixer" counts as a stand
+  mixer; a hand mixer stays separate. Cast-iron pans count as skillets. The chip label is the key (canonical name or the
+  plainest spelling, "wok" for "large wok"), not the most common spelling.
+- Item 6: adding a second spelling of an owned tool is refused with a message instead of stored.
+- Item 7: the link reads "See more →" with the accessible name "See more suggested recipes" (WCAG 2.5.3: the name
+  contains the visible text).

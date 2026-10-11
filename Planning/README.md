@@ -12,6 +12,7 @@ ordered, checkable tasks with the files they touch, the tests that prove them, a
 | [M4-households.md](M4-households.md) | Households | M3 | Directory, invites, multiple households, member management, data download & import |
 | [M5-smarts.md](M5-smarts.md) | Smarts | M3 (M4 optional) | Suggestions, weights, protein goals, optimiser, expiry alerts, staples cadence, PC Express module |
 | [M6-sides.md](M6-sides.md) | Sides | M5 | Sides on meals with per-person portions, seed sides, Settings → Sides, sides on the grocery list, in the budget, deducted from Supply at Done cooking |
+| [M7-review-fixes.md](M7-review-fixes.md) | Review fixes | M6 | Owner review: units v3, version history, recipe page actions, Recipes skeletons, restart period, kitchen tool names, Plan page layout |
 
 ## How to use these plans
 
