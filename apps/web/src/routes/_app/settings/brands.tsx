@@ -1,9 +1,14 @@
 // Settings → Brands (PRD R7.3, R11.7; spec §8): ingredient → preferred product, pack amount + measure, store. The
 // grocery list uses the product name (so ChatGPT orders the right thing), rounds to its pack, and sends it to its store.
-// Manual entry now; the PC Express product search (R7.10) arrives in M5.
+// M5: the PC Express product search (R7.10) fills the mapping with an exact product (code, name, pack) and its live
+// price; manual entry stays for anything else. Rows show the live price when one is fresh.
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { enterableMeasures, packLabel, type BrandMappingDoc, type Measure } from "@solving-food/core";
+import { enterableMeasures, formatCents, LIVE_PRICE_MAX_AGE_DAYS, packLabel, type BrandMappingDoc, type Measure, type PcxProduct } from "@solving-food/core";
+import { PcxProductSearch } from "@/components/settings/PcxProductSearch";
+import { PcxStatusLine } from "@/components/settings/PcxStorePicker";
+import { useLivePrices } from "@/data/livePrices";
+import { useNow } from "@/data/supply";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/input";
@@ -31,6 +36,14 @@ function BrandsPage() {
   const [editing, setEditing] = React.useState<{ ingredient: IngredientEntry; m?: BrandMappingDoc } | null>(null);
   const rows = (mappings.docs ?? []).map((d) => ({ id: d.id, m: d.data, name: ing.byId.get(d.id)?.name ?? d.id })).sort((a, b) => a.name.localeCompare(b.name));
   const storeName = (id: string) => stores.docs?.find((x) => x.id === id)?.data.name ?? "a deleted store";
+  const live = useLivePrices(hh.data?.pcxStoreId);
+  const now = useNow(60_000);
+  const priceLine = (m: BrandMappingDoc) => {
+    const p = m.productCode ? live.get(m.productCode) : undefined;
+    if (!p) return null;
+    const days = Math.floor((now - p.fetchedAtMs) / 86_400_000);
+    return `${formatCents(p.priceCents)} · ${days > LIVE_PRICE_MAX_AGE_DAYS ? "stale" : "live"} ${days === 0 ? "today" : `${days}d ago`}`;
+  };
 
   return (
     <SettingsPage title="Brands" wide>
@@ -52,6 +65,13 @@ function BrandsPage() {
                   <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
                     {packLabel(r.m.packAmount, r.m.packMeasure)} · {storeName(r.m.storeId)}
                   </span>
+                  {priceLine(r.m) ? (
+                    <span className="font-mono text-[0.625rem] font-bold uppercase" data-testid="brand-price">
+                      {priceLine(r.m)}
+                    </span>
+                  ) : r.m.productCode ? (
+                    <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">PC Express product · estimate until priced</span>
+                  ) : null}
                 </span>
                 <Button size="sm" variant="secondary" className="shadow-hard-sm" onClick={() => setEditing({ ingredient: ing.byId.get(r.id) ?? ({ id: r.id, name: r.name } as IngredientEntry), m: r.m })} aria-label={`Edit brand for ${r.name}`}>
                   Edit
@@ -65,12 +85,16 @@ function BrandsPage() {
         </Card>
         <Card className="gap-3">
           <CardTitle>{editing?.m ? `Edit ${editing.ingredient.name}` : "Add a brand"}</CardTitle>
+          {hh.data ? <PcxStatusLine hid={hh.id} /> : null}
           <MappingForm
             key={editing ? `${editing.ingredient.id}:${editing.m ? "e" : "n"}` : "new"}
+            hid={hh.id}
+            pcxStoreId={hh.data?.pcxStoreId}
+            pcxStoreName={hh.data?.pcxStoreName}
             uid={s.user.uid}
             ingredients={ing.list ?? []}
             initial={editing}
-            stores={(stores.docs ?? []).map((x) => ({ id: x.id, name: x.data.name }))}
+            stores={(stores.docs ?? []).map((x) => ({ id: x.id, name: x.data.name, kind: x.data.kind }))}
             defaultStoreId={hh.data?.defaultStoreId}
             onCancel={editing ? () => setEditing(null) : undefined}
             onSave={async (ingredientId, m) => {
@@ -86,6 +110,9 @@ function BrandsPage() {
 }
 
 function MappingForm({
+  hid,
+  pcxStoreId,
+  pcxStoreName,
   uid,
   ingredients,
   initial,
@@ -94,10 +121,13 @@ function MappingForm({
   onSave,
   onCancel,
 }: {
+  hid: string;
+  pcxStoreId: string | undefined;
+  pcxStoreName: string | undefined;
   uid: string;
   ingredients: readonly IngredientEntry[];
   initial: { ingredient: IngredientEntry; m?: BrandMappingDoc } | null;
-  stores: Array<{ id: string; name: string }>;
+  stores: Array<{ id: string; name: string; kind: string }>;
   defaultStoreId?: string | undefined;
   onSave: (ingredientId: string, m: BrandMappingDoc) => Promise<void>;
   onCancel?: (() => void) | undefined;
@@ -112,7 +142,19 @@ function MappingForm({
   // Stores arrive with a listener: fall back to the default store (or the first) until one is chosen.
   const storeId = chosenStore || (defaultStoreId && stores.some((x) => x.id === defaultStoreId) ? defaultStoreId : (stores[0]?.id ?? ""));
   const [error, setError] = React.useState<string | null>(null);
+  const [code, setCode] = React.useState<string | undefined>(initial?.m?.productCode);
   const n = Number(amount);
+  const pick = (p: PcxProduct) => {
+    setProduct(p.brand && !p.name.toLowerCase().startsWith(p.brand.toLowerCase()) ? `${p.brand} ${p.name}` : p.name);
+    setCode(p.productCode);
+    if (p.packAmount && p.packMeasure) {
+      setAmount(String(p.packAmount));
+      setMeasure(p.packMeasure);
+    }
+    // A PC Express product is bought at a PC Express store.
+    const pcx = stores.find((x) => x.kind === "pcExpress");
+    if (pcx) setStoreId(pcx.id);
+  };
 
   return (
     <form
@@ -125,13 +167,23 @@ function MappingForm({
         if (!storeId) return setError("Pick a store");
         setError(null);
         try {
-          await onSave(ingredient.id, { productName: product.trim(), packAmount: n, packMeasure: m, storeId });
+          await onSave(ingredient.id, { productName: product.trim(), packAmount: n, packMeasure: m, storeId, ...(code ? { productCode: code } : {}) });
         } catch (err) {
           setError(`Couldn't save: ${(err as Error).message}`);
         }
       }}
     >
       {initial?.m ? null : <IngredientPicker ingredients={ingredients} value={ingredient ?? undefined} onPick={(i) => setIngredient(i)} uid={uid} label="Ingredient" />}
+      {pcxStoreId ? <PcxProductSearch hid={hid} pcxStoreId={pcxStoreId} initialQuery={initial?.ingredient.name ?? ingredient?.name ?? ""} key={ingredient?.id ?? "none"} onPick={pick} /> : null}
+      {code ? (
+        <p className="m-0 font-mono text-[0.625rem] font-bold uppercase" data-testid="linked-product">
+          Linked to PC Express product {code}
+          {pcxStoreName ? ` at ${pcxStoreName}` : ""} ·{" "}
+          <button type="button" onClick={() => setCode(undefined)} className="cursor-pointer bg-transparent p-0 font-mono text-[0.625rem] font-bold text-ink uppercase underline">
+            Unlink
+          </button>
+        </p>
+      ) : null}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="bm-product" className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">
           PRODUCT
@@ -179,7 +231,6 @@ function MappingForm({
           </Button>
         ) : null}
       </div>
-      <p className="m-0 text-[0.75rem] font-semibold text-sub">PC Express product search arrives in M5.</p>
     </form>
   );
 }
