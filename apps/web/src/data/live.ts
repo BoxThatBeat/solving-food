@@ -41,6 +41,8 @@ export interface LiveQuery<T> {
   docs: Array<{ id: string; data: T }> | undefined;
   error: Error | null;
   pending: boolean;
+  /** The docs come from this device's cache only; the server hasn't confirmed the result yet. */
+  fromCache: boolean;
 }
 
 export function useLiveQuery<T>(q: Query | null, key: string | null): LiveQuery<T> {
@@ -48,6 +50,7 @@ export function useLiveQuery<T>(q: Query | null, key: string | null): LiveQuery<
     docs: undefined,
     error: null,
     pending: false,
+    fromCache: true,
     key,
   });
   useEffect(() => {
@@ -60,12 +63,13 @@ export function useLiveQuery<T>(q: Query | null, key: string | null): LiveQuery<
           docs: snap.docs.map((d) => ({ id: d.id, data: d.data() as T })),
           error: null,
           pending: snap.metadata.hasPendingWrites,
+          fromCache: snap.metadata.fromCache,
           key,
         }),
-      (error) => setState({ docs: [], error, pending: false, key }),
+      (error) => setState({ docs: [], error, pending: false, fromCache: false, key }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
-  if (state.key !== key) return { docs: undefined, error: null, pending: false };
+  if (state.key !== key) return { docs: undefined, error: null, pending: false, fromCache: true };
   return state;
 }

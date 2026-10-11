@@ -600,7 +600,7 @@ The **structured Firestore document** is the source of truth (§4.1). The manual
 
 ### Versioning
 
-Every save writes the recipe and a `versions/{n}` snapshot in **one batch**. Rules require `version == previous + 1`. Restoring an old version is just saving its snapshot as a new version.
+Every save writes the recipe and a `versions/{n}` snapshot in **one batch**. Rules require `version == previous + 1`. Restoring an old version is just saving its snapshot as a new version. Every path that creates a recipe (editor, drop folder, household import) writes `versions/1` in the same batch, so the first edit can always be undone. The Version history sheet merges its live listener with one `getDocsFromServer` read when it opens and says "Checking for older versions…" until the server has answered, so a phone whose cache holds only the snapshot it wrote never shows that as the whole history (M7). `scripts/repair-versions.ts` (dry run by default, `--write`, create-only) adds a missing snapshot of a recipe's current version from the recipe document.
 
 ### Search
 

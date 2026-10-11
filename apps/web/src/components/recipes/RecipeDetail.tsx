@@ -638,6 +638,11 @@ function VersionHistory({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent title="Version history" description="Every save is a version; restoring saves the old one as a new version">
         {versions.docs === undefined ? <p className="m-0 text-sm font-semibold">Loading…</p> : null}
+        {versions.docs !== undefined && !versions.confirmed ? (
+          <p className="m-0 text-sm font-semibold text-sub" role="status">
+            Checking for older versions…
+          </p>
+        ) : null}
         <ol className="m-0 flex list-none flex-col gap-2.5 p-0">
           {list.map((v) => {
             const at = millis(v.data.editedAt);

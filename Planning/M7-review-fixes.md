@@ -25,6 +25,22 @@ R8.13, R4.19, R4.21, R4.2.
       SKILL.md and references/conventions.md.
 - [x] Unit tests (`units.test.ts`, `recipe.test.ts`) and e2e (recipe-detail, cooking, sharing) on the new strings.
 
+### 2. "Editing a recipe creates a v2 but there is no more v1 and I can't revert" (R4.19)
+- [x] Checked the hypothesis first: every creation path (editor `createRecipe`, drop folder `importCook`, household
+      import `createRecipeFromCook`) already writes `versions/1` in the same batch, and the live data (read-only, 125
+      recipes) has `versions/1` for every recipe; the three edited ones have 1,2 / 1,2,3 / 1,2. The hypothesis is
+      wrong and no recipe content was lost.
+- [x] Likeliest cause on the phone: the history sheet rendered the live listener's first, cache-only result as the
+      whole history; a phone that wrote v2 itself has v2 cached and v1 only on the server. `useVersions()` now also
+      reads the versions from the server once when the sheet opens, merges the two, and the sheet says "Checking for
+      older versions…" until the server has answered (`useLiveQuery` exposes `fromCache`).
+- [x] `scripts/repair-versions.ts` (`pnpm repair:versions`, dry run by default, `--write`, create-only, idempotent)
+      writes a missing `versions/{current}` snapshot from the recipe doc. Tested on the emulator; live dry run: 0
+      missing.
+- [x] Functions test: the drop-folder import's `versions/1` matches the recipe (editor shape), also for a pending
+      duplicate. E2E (`recipe-edit.spec.ts`, @R4.19 @R4.16): a recipe dropped through the Drop page, history opened
+      before editing, edited, history shows v2 and v1, v1 restored as v3.
+
 ## Deviations and assumptions
 
 - Imperial volumes that aren't kitchen measures (fl oz, pints, quarts, gallons) are treated like imperial weights:

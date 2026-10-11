@@ -53,7 +53,10 @@ describe("drop folder", () => {
     expect(r!.data.proteinApproximate).toBe(false);
     const base = r!.data.imagePaths[0] as string;
     for (const size of [480, 960, 1920]) expect(await fileExists(`${base}/${size}.webp`)).toBe(true);
-    expect((await db.doc(`recipes/${r!.id}/versions/1`).get()).exists).toBe(true);
+    // Its v1 snapshot exists in the editor's shape, so the first edit (v2) can be undone (M7 review item 2, R4.19).
+    const v1 = (await db.doc(`recipes/${r!.id}/versions/1`).get()).data();
+    expect(v1).toMatchObject({ title: "Cake Mix Brownies", version: 1, status: "active", editedBy: UID, imagePaths: r!.data.imagePaths, ingredients: r!.data.ingredients, steps: r!.data.steps });
+    expect(v1!.editedAt).toBeTruthy();
     await poll(async () => !(await fileExists(`recipe-drop/${UID}/cake-mix-brownies.cook`)), 10_000, ".cook deleted");
     expect(await fileExists(`recipe-drop/${UID}/Pasted image 20240116181103.png`)).toBe(false);
     const n = await poll(async () => (await notifications()).find((x) => String(x.message).includes("Cake Mix Brownies")), 10_000, "notification");
@@ -80,6 +83,7 @@ describe("drop folder", () => {
     const pending = list.find((x) => x.data.status === "pendingDuplicateReview")!;
     const original = list.find((x) => x.data.status === "active")!;
     expect(pending.data.possibleDuplicateOf).toBe(original.id);
+    expect((await db.doc(`recipes/${pending.id}/versions/1`).get()).data()).toMatchObject({ version: 1, status: "pendingDuplicateReview", editedBy: UID });
     const n = await poll(async () => (await notifications()).find((x) => String(x.message).includes("looks like a duplicate")), 10_000, "dupe notification");
     expect(n).toMatchObject({ kind: "info", link: "/recipes?review=1" });
     expect((await db.doc("recipeIndex/0").get()).data()?.recipes?.[pending.id]).toBeUndefined();

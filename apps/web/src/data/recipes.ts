@@ -11,6 +11,7 @@ import {
   deleteField,
   doc,
   getDocFromServer,
+  getDocsFromServer,
   query,
   serverTimestamp,
   where,
@@ -19,6 +20,7 @@ import {
 } from "firebase/firestore";
 import { deriveRecipe, type IngredientLookup, type RecipeContent, type RecipeDoc, type RecipeVersionDoc } from "@solving-food/core";
 import { db } from "@/firebase/app";
+import { useEffect, useState } from "react";
 import { useLiveDoc, useLiveQuery } from "./live";
 
 export type StoredRecipe = RecipeDoc & { createdAt: Timestamp; updatedAt: Timestamp; trashedAt?: Timestamp };
@@ -34,11 +36,35 @@ export function useRecipesWithStatus(status: "trashed" | "pendingDuplicateReview
   );
 }
 
+export type StoredVersion = RecipeVersionDoc & { editedAt: Timestamp };
+
+/**
+ * A recipe's version snapshots (§4.4). The live listener answers from this device's cache first, and a long-lived
+ * phone cache may hold only the snapshot it wrote itself (M7 review: "there is no more v1"), so the history also
+ * asks the server once when it opens and merges the two. `confirmed` is false until the server has answered.
+ */
 export function useVersions(id: string | null, enabled = true) {
-  return useLiveQuery<RecipeVersionDoc & { editedAt: Timestamp }>(
-    id && enabled ? collection(db, "recipes", id, "versions") : null,
-    id && enabled ? `recipes/${id}/versions` : null,
-  );
+  const on = !!id && enabled;
+  const live = useLiveQuery<StoredVersion>(on ? collection(db, "recipes", id, "versions") : null, on ? `recipes/${id}/versions` : null);
+  const [server, setServer] = useState<{ key: string; docs: Array<{ id: string; data: StoredVersion }> } | null>(null);
+  useEffect(() => {
+    if (!on) return;
+    let gone = false;
+    getDocsFromServer(collection(db, "recipes", id, "versions"))
+      .then((snap) => {
+        if (!gone) setServer({ key: id, docs: snap.docs.map((d) => ({ id: d.id, data: d.data() as StoredVersion })) });
+      })
+      .catch(() => undefined); // offline: the live listener's cached result is all there is
+    return () => {
+      gone = true;
+    };
+  }, [on, id]);
+  const fromServer = server && server.key === id ? server.docs : null;
+  if (live.docs === undefined && !fromServer) return { docs: undefined, confirmed: false, error: live.error };
+  const byId = new Map<string, { id: string; data: StoredVersion }>();
+  for (const d of fromServer ?? []) byId.set(d.id, d);
+  for (const d of live.docs ?? []) byId.set(d.id, d);
+  return { docs: [...byId.values()], confirmed: !live.fromCache || !!fromServer, error: live.error };
 }
 
 /** Keys that may be absent; a merge write deletes them when the new state doesn't have them. */

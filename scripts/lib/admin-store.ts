@@ -19,8 +19,11 @@ export interface AdminStore {
   where: "emulator" | "live";
   /** Documents that exist, by path. */
   getMany(paths: string[]): Promise<Map<string, Record<string, unknown>>>;
-  /** Full overwrites, in batches of up to 400 (or `chunk`, pausing `pauseMs` between batches). */
-  setMany(docs: Array<{ path: string; data: Record<string, Plain | undefined> }>, opts?: { chunk?: number; pauseMs?: number }): Promise<void>;
+  /** Full overwrites, in batches of up to 400 (or `chunk`, pausing `pauseMs` between batches). `createOnly` fails a
+   * batch instead of overwriting a document that exists. */
+  setMany(docs: Array<{ path: string; data: Record<string, Plain | undefined> }>, opts?: { chunk?: number; pauseMs?: number; createOnly?: boolean }): Promise<void>;
+  /** Every document of a top-level collection (IDs and data). */
+  listAll(collection: string): Promise<Array<{ id: string; data: Record<string, unknown> }>>;
   /** Simple equality query on a top-level collection. */
   queryEq(collection: string, field: string, value: string): Promise<Array<{ id: string; data: Record<string, unknown> }>>;
 }
@@ -57,10 +60,17 @@ function adminStore(where: "emulator" | "live"): AdminStore {
       const n = opts.chunk ?? 400;
       for (let i = 0; i < docs.length; i += n) {
         const b = db.batch();
-        for (const d of docs.slice(i, i + n)) b.set(db.doc(d.path), stripUndefined(d.data));
+        for (const d of docs.slice(i, i + n)) {
+          if (opts.createOnly) b.create(db.doc(d.path), stripUndefined(d.data));
+          else b.set(db.doc(d.path), stripUndefined(d.data));
+        }
         await b.commit();
         if (opts.pauseMs && i + n < docs.length) await new Promise((r) => setTimeout(r, opts.pauseMs));
       }
+    },
+    async listAll(collection) {
+      const snap = await db.collection(collection).get();
+      return snap.docs.map((d) => ({ id: d.id, data: d.data() }));
     },
     async queryEq(collection, field, value) {
       const snap = await db.collection(collection).where(field, "==", value).get();
@@ -125,12 +135,21 @@ function restStore(): AdminStore {
       }
       return out;
     },
-    async setMany(docs) {
+    async setMany(docs, opts = {}) {
       for (let i = 0; i < docs.length; i += 400) {
         await post(`${api}:commit`, {
-          writes: docs.slice(i, i + 400).map((d) => ({ update: { name: `${root}/${d.path}`, fields: encodeFields(d.data) } })),
+          writes: docs.slice(i, i + 400).map((d) => ({
+            update: { name: `${root}/${d.path}`, fields: encodeFields(d.data) },
+            ...(opts.createOnly ? { currentDocument: { exists: false } } : {}),
+          })),
         });
       }
+    },
+    async listAll(collection) {
+      const res = (await post(`${api}:runQuery`, { structuredQuery: { from: [{ collectionId: collection }] } })) as Array<{
+        document?: { name: string; fields?: Record<string, RestValue> };
+      }>;
+      return res.filter((r) => r.document).map((r) => ({ id: r.document!.name.split("/").at(-1)!, data: decodeFields(r.document!.fields ?? {}) }));
     },
     async queryEq(collection, field, value) {
       const res = (await post(`${api}:runQuery`, {

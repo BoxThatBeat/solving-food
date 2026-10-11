@@ -6,7 +6,7 @@
 import type { Page } from "@playwright/test";
 import { CUISINES, MAIN_PROTEINS, taxonomyLabel } from "../../packages/core/src/index";
 import { adminDb } from "../fixtures/admin";
-import { makeRecipe, uniqueTitle, waitForIndexed } from "../fixtures/recipes";
+import { makeRecipe, uniqueCook, uniqueTitle, waitForIndexed } from "../fixtures/recipes";
 import { expect, test } from "../fixtures/test";
 import { detail, RecipesPage } from "../pages/recipes";
 
@@ -151,6 +151,43 @@ test("anyone can edit; every save is a version and an old version can be restore
   await expect(detail(page).locator("#recipe-title")).toHaveText(title);
   await expect(detail(page).getByText(/SHARED LIBRARY · V3/)).toBeVisible();
   expect((await adminDb.doc(`recipes/${id}`).get()).data()).toMatchObject({ version: 3, title, servings: 2 });
+});
+
+test("a recipe imported through the drop folder keeps its v1: edit it, see v1 and v2 in the history, restore v1", { tag: ["@R4.19", "@R4.16"] }, async ({ page, household }) => {
+  // The live library arrived through the drop folder (M7 review: "editing creates a v2 but there is no more v1").
+  const title = uniqueTitle("Dropped Flatbread");
+  const cook = uniqueCook("easy-flatbread-no-yeast.cook", { title, image: null });
+  await page.goto("/drop");
+  await page.getByLabel("Choose .cook files and photos").setInputFiles([{ name: "dropped-flatbread.cook", mimeType: "text/plain", buffer: Buffer.from(cook) }]);
+  const ok = page.getByTestId("notifications").getByRole("status").filter({ hasText: `Imported "${title}"` });
+  await expect(ok).toBeVisible({ timeout: 45_000 });
+  const id = (await adminDb.collection("recipes").where("title", "==", title).get()).docs[0]!.id;
+  expect((await adminDb.doc(`recipes/${id}/versions/1`).get()).data()).toMatchObject({ title, version: 1, editedBy: household.uid });
+
+  await ok.getByRole("link", { name: "Open recipe" }).click();
+  await expect(detail(page).locator("#recipe-title")).toHaveText(title);
+  // Open the history once before editing, as a phone that has been browsing the library would have.
+  await detail(page).getByRole("button", { name: "Version history" }).click();
+  const sheet = page.getByRole("dialog", { name: "Version history" });
+  await expect(sheet.getByRole("listitem")).toHaveCount(1);
+  await page.keyboard.press("Escape");
+
+  await detail(page).getByRole("link", { name: "Edit", exact: true }).click();
+  const form = page.getByRole("form", { name: "Edit recipe" });
+  await form.getByLabel("Title").fill(`${title} (thin)`);
+  await form.getByRole("button", { name: "Save recipe" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Saved as v2 for everyone" })).toBeVisible();
+  await expect(detail(page).locator("#recipe-title")).toHaveText(`${title} (thin)`);
+
+  await detail(page).getByRole("button", { name: "Version history" }).click();
+  await expect(sheet.getByRole("listitem")).toHaveCount(2);
+  await expect(sheet.getByRole("listitem").first()).toContainText(`v2 · ${title} (thin)`);
+  await expect(sheet.getByRole("listitem").last()).toContainText(`v1 · ${title}`);
+  await sheet.getByRole("button", { name: "Restore version 1" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Restored v1 as v3 for everyone" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(detail(page).locator("#recipe-title")).toHaveText(title);
+  expect((await adminDb.doc(`recipes/${id}`).get()).data()).toMatchObject({ version: 3, title });
 });
 
 test("someone else saving while you edit shows \"edited elsewhere\" with reload or overwrite", { tag: ["@R4.19"] }, async ({ page, household: _ }) => {
