@@ -143,6 +143,8 @@ flowchart LR
 - **R5.6** When cooking a meal with several recipes, the user **chooses the order**. Each recipe's name shows its total time underneath, for quick reference.
 - **R5.7** **Creating a meal happens on the Plan page.** The user presses **Create meal**, then picks **one or more recipes** using the shared search, filter, and sort component (R4.7) with multi-select, with Suggested recipes shown first. Alternatively they pick a **saved meal**. They set the meal type (R5.5) and servings (default R11.12), then press **Add to plan**. The **Add to plan** button on a recipe page or card is a shortcut that creates a one-recipe meal after the same two choices.
 - **R5.8** **Saving a meal.** While creating a meal, or later from the plan or the review flow (*"Save this meal?"*), the user can give it a **name** and save it to the Meals list (R5.2). Saving doesn't change the planned item; it adds a reusable copy. A planned meal created from a saved meal remembers which one, so the saved meal collects ratings and cook stats.
+- **R5.9** **Sides.** A meal can have **sides**: things eaten as they are, without a recipe (frozen fries, frozen vegetables, corn chips, potato chips, rice, bread rolls). While creating a meal the user picks sides from a **search dropdown**; they can be changed later from the plan item. Only purchasable sides exist (no "homemade bread" side; that's a recipe). Saved meals keep their sides. Sides show on the plan row ("Salmon + fries, peas") and in History, count in the budget meter and the budget impact, and are ignored by suggestions and the optimiser. A meal still needs at least one recipe.
+- **R5.10** **Side portions.** Each side has a **portion per person**, stored on the meal when it is created, so a meal for N servings needs N portions. Sides are ingredients and are **tracked in Supply** like any other: **Done cooking** subtracts the portions, the review can correct them, and the grocery list subtracts what's already in supply. Free-use ingredients (R8.14) can't be tracked sides.
 
 ---
 
@@ -150,7 +152,7 @@ flowchart LR
 
 ### 6.1 Plan Page
 
-- **R6.1** The Plan page shows the **meals selected for the current period** as a list that can be sorted and filtered. Its primary action is **Create meal** (R5.7).
+- **R6.1** The Plan page shows the **meals selected for the current period** as a list that can be sorted and filtered; each row shows the meal's name or recipes and its sides (R5.9). Its primary action is **Create meal** (R5.7).
 - **R6.2** **Period coverage view.** Above the list, the Plan page shows the plan period as a **calendar-like strip**: one cell per day, labelled with its weekday and date for orientation, and one row per meal type the household plans (R11.13; breakfast, lunch, and dinner by default).
   - Cells **fill from left to right** as meals are added. Five dinners planned in a 7-day period fill the first five dinner cells, and the row reads **5/7**. It's a visual version of "5 of 7 dinners planned", **not a schedule**. Meals are never assigned to specific days, and the cells can't be tapped to pick a day.
   - A meal-prep recipe or leftover portions fill one cell per portion they cover (e.g. 4 lunches from one batch fill 4 lunch cells).
@@ -218,6 +220,7 @@ flowchart LR
 - **R7.8** **Purchase confirmation.** After an order is delivered or a store trip is done, the user is shown the list of items to confirm. They can adjust for substitutions and out-of-stock items. If they change nothing, the app assumes everything was bought and arrived. The result is added to supply.
 - **R7.9** **Freeze prompt for bulk buys.** Confirming a bulk purchase of a freezable item (e.g. 3 kg of chicken from Costco) asks *"Freeze some of this?"* and lets the user choose how much to freeze.
 - **R7.10** **Product search for brand mapping.** The brand mapping page has an in-app **PC Express product search** showing name, pack size, image, and current price at the household's store. Picking a result links the ingredient to that exact product.
+- **R7.11** **Sides on the list.** The sides of planned meals (R5.9, R5.10) are added to the grocery list like recipe ingredients: portion × servings, minus supply and incoming, rounded up to packs, priced, and grouped by store.
 
 ---
 
@@ -258,7 +261,7 @@ flowchart LR
 
 ## 10. History
 
-- **R10.1** The History page lists everything cooked: date, meal, ratings, who cooked it, notes, and deviations from the recipe.
+- **R10.1** The History page lists everything cooked: date, meal (with its sides, R5.9), ratings, who cooked it, notes, and deviations from the recipe.
 - **R10.2** It uses the same filter and sort component as the other lists.
 - **R10.3** It shows stats: most-cooked recipes, average rating by cuisine, and spend per period. Spend is the estimated cost of every grocery list confirmed as received in the period, using the prices known at the time.
 
@@ -281,6 +284,7 @@ Everything here belongs to the household except the theme, which is per user.
 - **R11.11** **Timezone.** Set when the household is created (default *America/Toronto*). Period boundaries and expiry days are worked out in it.
 - **R11.12** **Default servings.** The number of servings a recipe is planned for unless the user changes it (asked when the household is created, e.g. 4). Recipes added to the plan are scaled to it.
 - **R11.13** **Planned meal types.** Which of breakfast, lunch, and dinner the household plans. All three are on by default. Each one that's on gets a row in the period coverage strip (R6.2), a protein goal (R6.14), and a line in the protein summary (R6.17). Snacks are always available and never shown in the strip.
+- **R11.14** **Sides.** A **Sides** page lists the sides the household can pick (R5.9): a shipped list of common ones (frozen fries, frozen vegetables, chips, rice, buns, bread) plus any ingredient the household flags as a side, including one it creates there. Each side shows its portion per person in metric, which the household can change. A changed portion applies to meals created afterwards; meals already planned or saved keep the portion they were made with.
 
 ---
 

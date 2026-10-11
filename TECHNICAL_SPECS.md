@@ -1051,6 +1051,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | M3 | Supply & Cooking | Commands, ledger, manual add, confirmation with freeze prompt, cooking views and layouts, timers with push, Done cooking → review corrections, leftovers, projected supply, expiry and the expired-lot prompt, History page and stats, supply-based recipe filters |
 | M4 | Households | Directory, invites by name and email, multiple households (≤ 3), member management, last-member deletion, data download & import |
 | M5 | Smarts | Suggestions & weights, expiry badges and alerts, optimiser, staples cadence, PC Express module (auth, store and product search, weekly maintenance job) |
+| M6 | Sides | Sides on meals (ingredients eaten as-is, per-person portion snapshotted on the meal), seed sides, Settings → Sides, sides in the grocery builder, budget, Supply deduction at Done cooking, plan rows and History |
 
 Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix. The detailed, task-level plan for each milestone lives in `Planning/`.
 

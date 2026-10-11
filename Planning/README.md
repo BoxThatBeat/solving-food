@@ -11,6 +11,7 @@ ordered, checkable tasks with the files they touch, the tests that prove them, a
 | [M3-supply-cooking.md](M3-supply-cooking.md) | Supply & Cooking | M2 | Commands + ledger, Supply page, receive groceries, cooking views, timers, review flow, leftovers, expiry, History |
 | [M4-households.md](M4-households.md) | Households | M3 | Directory, invites, multiple households, member management, data download & import |
 | [M5-smarts.md](M5-smarts.md) | Smarts | M3 (M4 optional) | Suggestions, weights, protein goals, optimiser, expiry alerts, staples cadence, PC Express module |
+| [M6-sides.md](M6-sides.md) | Sides | M5 | Sides on meals with per-person portions, seed sides, Settings → Sides, sides on the grocery list, in the budget, deducted from Supply at Done cooking |
 
 ## How to use these plans
 
