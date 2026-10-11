@@ -33,6 +33,7 @@ import { Route as AppSettingsDataRouteImport } from './routes/_app/settings/data
 import { Route as AppSettingsHouseholdRouteImport } from './routes/_app/settings/household'
 import { Route as AppSettingsMembersRouteImport } from './routes/_app/settings/members'
 import { Route as AppSettingsPreferencesRouteImport } from './routes/_app/settings/preferences'
+import { Route as AppSettingsSidesRouteImport } from './routes/_app/settings/sides'
 import { Route as AppSettingsStoresRouteImport } from './routes/_app/settings/stores'
 import { Route as AppSettingsThemeRouteImport } from './routes/_app/settings/theme'
 import { Route as AppSettingsToolsRouteImport } from './routes/_app/settings/tools'
@@ -165,6 +166,11 @@ const AppSettingsPreferencesRoute = AppSettingsPreferencesRouteImport.update({
   path: '/settings/preferences',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsSidesRoute = AppSettingsSidesRouteImport.update({
+  id: '/settings/sides',
+  path: '/settings/sides',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsStoresRoute = AppSettingsStoresRouteImport.update({
   id: '/settings/stores',
   path: '/settings/stores',
@@ -246,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/settings/household': typeof AppSettingsHouseholdRoute
   '/settings/members': typeof AppSettingsMembersRoute
   '/settings/preferences': typeof AppSettingsPreferencesRoute
+  '/settings/sides': typeof AppSettingsSidesRoute
   '/settings/stores': typeof AppSettingsStoresRoute
   '/settings/theme': typeof AppSettingsThemeRoute
   '/settings/tools': typeof AppSettingsToolsRoute
@@ -283,6 +290,7 @@ export interface FileRoutesByTo {
   '/settings/household': typeof AppSettingsHouseholdRoute
   '/settings/members': typeof AppSettingsMembersRoute
   '/settings/preferences': typeof AppSettingsPreferencesRoute
+  '/settings/sides': typeof AppSettingsSidesRoute
   '/settings/stores': typeof AppSettingsStoresRoute
   '/settings/theme': typeof AppSettingsThemeRoute
   '/settings/tools': typeof AppSettingsToolsRoute
@@ -322,6 +330,7 @@ export interface FileRoutesById {
   '/_app/settings/household': typeof AppSettingsHouseholdRoute
   '/_app/settings/members': typeof AppSettingsMembersRoute
   '/_app/settings/preferences': typeof AppSettingsPreferencesRoute
+  '/_app/settings/sides': typeof AppSettingsSidesRoute
   '/_app/settings/stores': typeof AppSettingsStoresRoute
   '/_app/settings/theme': typeof AppSettingsThemeRoute
   '/_app/settings/tools': typeof AppSettingsToolsRoute
@@ -361,6 +370,7 @@ export interface FileRouteTypes {
     | '/settings/household'
     | '/settings/members'
     | '/settings/preferences'
+    | '/settings/sides'
     | '/settings/stores'
     | '/settings/theme'
     | '/settings/tools'
@@ -398,6 +408,7 @@ export interface FileRouteTypes {
     | '/settings/household'
     | '/settings/members'
     | '/settings/preferences'
+    | '/settings/sides'
     | '/settings/stores'
     | '/settings/theme'
     | '/settings/tools'
@@ -436,6 +447,7 @@ export interface FileRouteTypes {
     | '/_app/settings/household'
     | '/_app/settings/members'
     | '/_app/settings/preferences'
+    | '/_app/settings/sides'
     | '/_app/settings/stores'
     | '/_app/settings/theme'
     | '/_app/settings/tools'
@@ -633,6 +645,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsPreferencesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/sides': {
+      id: '/_app/settings/sides'
+      path: '/settings/sides'
+      fullPath: '/settings/sides'
+      preLoaderRoute: typeof AppSettingsSidesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/stores': {
       id: '/_app/settings/stores'
       path: '/settings/stores'
@@ -735,6 +754,7 @@ interface AppRouteChildren {
   AppSettingsHouseholdRoute: typeof AppSettingsHouseholdRoute
   AppSettingsMembersRoute: typeof AppSettingsMembersRoute
   AppSettingsPreferencesRoute: typeof AppSettingsPreferencesRoute
+  AppSettingsSidesRoute: typeof AppSettingsSidesRoute
   AppSettingsStoresRoute: typeof AppSettingsStoresRoute
   AppSettingsThemeRoute: typeof AppSettingsThemeRoute
   AppSettingsToolsRoute: typeof AppSettingsToolsRoute
@@ -768,6 +788,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsHouseholdRoute: AppSettingsHouseholdRoute,
   AppSettingsMembersRoute: AppSettingsMembersRoute,
   AppSettingsPreferencesRoute: AppSettingsPreferencesRoute,
+  AppSettingsSidesRoute: AppSettingsSidesRoute,
   AppSettingsStoresRoute: AppSettingsStoresRoute,
   AppSettingsThemeRoute: AppSettingsThemeRoute,
   AppSettingsToolsRoute: AppSettingsToolsRoute,

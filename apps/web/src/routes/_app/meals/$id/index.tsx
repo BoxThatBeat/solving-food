@@ -4,7 +4,7 @@
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Star, X } from "lucide-react";
-import { formatProtein, MEAL_RECIPES_MAX, taxonomyLabel, type RecipeRef } from "@solving-food/core";
+import { formatPortion, formatProtein, MEAL_RECIPES_MAX, taxonomyLabel, type MealSide, type RecipeRef } from "@solving-food/core";
 import { EmptyState, PageBody } from "@/components/AppShell";
 import { useNotify } from "@/components/notifications-context";
 import { useCreateMeal } from "@/components/plan/plan-sheet-context";
@@ -17,6 +17,9 @@ import { Stepper } from "@/components/ui/stepper";
 import { useSession } from "@/session/useSession";
 import { deleteMeal, setMealFavourite, updateMeal, useMeal, useMealFavourites, useRecipeDocs } from "@/data/plan";
 import { useRecipeIndex } from "@/search/useRecipeSearch";
+import { useIngredientsById } from "@/data/ingredients";
+import { useSides } from "@/data/sides";
+import { SidePicker } from "@/components/plan/SidePicker";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/meals/$id/")({
@@ -38,6 +41,9 @@ function MealPage() {
   const [renaming, setRenaming] = React.useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [adding, setAdding] = React.useState(false);
+  // Sides (R5.9): names resolve signed out too (public gets); the picker needs the signed-in ingredient list.
+  const sideIngs = useIngredientsById(data?.sides?.map((x) => x.ingredientId) ?? []);
+  const sideList = useSides(!!ready);
 
   if (meal.data === undefined) return <PageBody>Loading…</PageBody>;
   if (!data)
@@ -48,7 +54,7 @@ function MealPage() {
     );
 
   const uid = ready?.user.uid;
-  const save = (patch: { name?: string; recipes?: RecipeRef[] }) =>
+  const save = (patch: { name?: string; recipes?: RecipeRef[]; sides?: MealSide[] }) =>
     uid ? updateMeal(id, patch, uid).catch((e) => notify({ kind: "error", message: `Couldn't save: ${(e as Error).message}` })) : undefined;
   const total = data.recipes.reduce((a, r) => {
     const rec = recipes.get(r.recipeId);
@@ -178,6 +184,29 @@ function MealPage() {
             </Button>
           )
         ) : null}
+      </section>
+      <section aria-label="Sides" className="flex flex-col gap-2.5">
+        <SectionLabel hint="Per person">Sides</SectionLabel>
+        {ready ? (
+          <>
+            <SidePicker value={data.sides ?? []} onChange={(next) => void save({ sides: next })} sides={sideList.list} ingredientOf={(sid) => sideIngs.get(sid)} />
+            <span className="text-[0.75rem] font-semibold text-sub">Portions are kept with the meal; Settings → Sides sets them for sides added from now on.</span>
+          </>
+        ) : data.sides?.length ? (
+          <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
+            {data.sides.map((x) => {
+              const ing = sideIngs.get(x.ingredientId);
+              return (
+                <li key={x.ingredientId} className="rounded-ui border-2 border-line bg-base px-3 py-1.5 text-[0.8125rem] font-extrabold first-letter:uppercase">
+                  {ing?.name ?? "Side"}
+                  {ing ? <span className="ml-1.5 font-mono text-[0.625rem] font-bold">{formatPortion(x.portion, ing)}</span> : null}
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="m-0 text-[0.8125rem] font-semibold text-sub">No sides.</p>
+        )}
       </section>
       {!ready ? (
         <p className="m-0 text-sm font-semibold">

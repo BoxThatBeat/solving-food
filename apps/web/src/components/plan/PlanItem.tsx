@@ -12,7 +12,9 @@ import {
   formatProtein,
   PLANNABLE_MEAL_TYPES,
   SERVINGS_MAX,
+  sidesLine,
   taxonomyLabel,
+  type MealSide,
   type MealType,
 } from "@solving-food/core";
 import { Badge, SectionLabel } from "@/components/ui/chip";
@@ -23,6 +25,9 @@ import { Stepper } from "@/components/ui/stepper";
 import { useNotify } from "@/components/notifications-context";
 import { removePlanItem, restorePlanItem, saveItemAsMeal, updatePlanItem, type StoredPlanItem } from "@/data/plan";
 import { sendCommand } from "@/data/supply";
+import type { IngredientEntry } from "@/data/ingredients";
+import { useSides } from "@/data/sides";
+import { SidePicker } from "./SidePicker";
 import type { StoredRecipe } from "@/data/recipes";
 import { cn } from "@/lib/utils";
 import { MEAL_LABEL } from "./plan-sheet-context";
@@ -55,7 +60,7 @@ function costLine(v: PlanItemView): string {
   return v.cost.cents > 0 ? `+${formatCents(v.cost.cents)} TO BUY${unknown}` : `$0 · NOTHING EXTRA TO BUY${unknown}`;
 }
 
-export function PlanItemCard({ v, recipes, onOpen, hid, uid }: { v: PlanItemView; recipes: Map<string, StoredRecipe>; onOpen: () => void; hid: string; uid: string }) {
+export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v: PlanItemView; recipes: Map<string, StoredRecipe>; ingredients: Map<string, IngredientEntry>; onOpen: () => void; hid: string; uid: string }) {
   const notify = useNotify();
   const navigate = useNavigate();
   const it = v.item;
@@ -70,6 +75,10 @@ export function PlanItemCard({ v, recipes, onOpen, hid, uid }: { v: PlanItemView
   const multi = it.recipes.length > 1;
   const leftovers = (["lunch", "breakfast"] as const).filter((t) => t !== it.mealType && (it.coverage[t] ?? 0) > 0);
   const trashed = it.recipes.some((r) => recipes.get(r.recipeId)?.status === "trashed");
+  // Sides (R5.9): an unnamed meal's title already lists them ("Salmon + french fries"); otherwise they get a line.
+  const sideNames = (it.sides ?? []).map((x) => ingredients.get(x.ingredientId)?.name).filter((n): n is string => !!n);
+  const lower = v.title.toLowerCase();
+  const sides = it.sides?.length && !sideNames.every((n) => lower.includes(n.toLowerCase())) ? sidesLine(it.sides, (id) => ingredients.get(id)?.name) : "";
   const remove = async () => {
     const snapshot = { ...it };
     try {
@@ -90,6 +99,11 @@ export function PlanItemCard({ v, recipes, onOpen, hid, uid }: { v: PlanItemView
             {status === "planned" ? (leftover ? "Leftover" : "To cook") : status}
           </Badge>
         </div>
+        {sides ? (
+          <span className="font-mono text-[0.625rem] font-bold uppercase" data-testid="plan-item-sides">
+            With {sides}
+          </span>
+        ) : null}
         {leftover ? (
           <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">Leftovers · 1 portion{v.leftover?.useBy ? ` · use by ${v.leftover.useBy}` : ""}</span>
         ) : !multi ? (
@@ -168,6 +182,7 @@ export function PlanItemSheet({
   hid,
   uid,
   recipes,
+  ingredients,
   plannedMealTypes,
   onOpenChange,
 }: {
@@ -175,23 +190,47 @@ export function PlanItemSheet({
   hid: string;
   uid: string;
   recipes: Map<string, StoredRecipe>;
+  ingredients: Map<string, IngredientEntry>;
   plannedMealTypes: readonly string[];
   onOpenChange: (open: boolean) => void;
 }) {
   return (
     <Sheet open={!!v} onOpenChange={onOpenChange}>
-      {v ? <PlanItemBody key={v.id} v={v} hid={hid} uid={uid} recipes={recipes} plannedMealTypes={plannedMealTypes} close={() => onOpenChange(false)} /> : null}
+      {v ? <PlanItemBody key={v.id} v={v} hid={hid} uid={uid} recipes={recipes} ingredients={ingredients} plannedMealTypes={plannedMealTypes} close={() => onOpenChange(false)} /> : null}
     </Sheet>
   );
 }
 
-function PlanItemBody({ v, hid, uid, recipes, plannedMealTypes, close }: { v: PlanItemView; hid: string; uid: string; recipes: Map<string, StoredRecipe>; plannedMealTypes: readonly string[]; close: () => void }) {
+function sameSides(a: readonly MealSide[], b: readonly MealSide[]): boolean {
+  return a.length === b.length && a.every((x, i) => x.ingredientId === b[i]!.ingredientId && x.portion === b[i]!.portion);
+}
+
+function PlanItemBody({
+  v,
+  hid,
+  uid,
+  recipes,
+  ingredients,
+  plannedMealTypes,
+  close,
+}: {
+  v: PlanItemView;
+  hid: string;
+  uid: string;
+  recipes: Map<string, StoredRecipe>;
+  ingredients: Map<string, IngredientEntry>;
+  plannedMealTypes: readonly string[];
+  close: () => void;
+}) {
   const notify = useNotify();
   const it = v.item;
   const [servings, setServings] = React.useState(it.servings);
   const [mealType, setMealType] = React.useState<MealType>(it.mealType);
+  const [sides, setSides] = React.useState<MealSide[]>(it.sides ?? []);
+  const sideList = useSides(it.kind === "meal");
   const titles = it.recipes.map((r) => recipes.get(r.recipeId)?.title ?? "Recipe");
-  const [name, setName] = React.useState(it.name ?? defaultMealName(titles));
+  const sideNames = sides.map((x) => ingredients.get(x.ingredientId)?.name ?? sideList.byId.get(x.ingredientId)?.ingredient.name ?? "side");
+  const [name, setName] = React.useState(it.name ?? defaultMealName(titles, sideNames));
   const [busy, setBusy] = React.useState(false);
   const types: MealType[] = [...PLANNABLE_MEAL_TYPES.filter((t) => plannedMealTypes.includes(t) || t === it.mealType), "snack"];
   const editable = it.status === "planned";
@@ -200,7 +239,7 @@ function PlanItemBody({ v, hid, uid, recipes, plannedMealTypes, close }: { v: Pl
     setBusy(true);
     try {
       const coverage = coverageFor({ kind: it.kind, mealType, recipes: it.recipes }, (id) => recipes.get(id));
-      await updatePlanItem(hid, v.id, { servings, mealType, coverage });
+      await updatePlanItem(hid, v.id, { servings, mealType, coverage, ...(sameSides(sides, it.sides ?? []) ? {} : { sides }) });
       notify({ kind: "success", message: "Plan updated" });
       close();
     } catch (e) {
@@ -212,7 +251,7 @@ function PlanItemBody({ v, hid, uid, recipes, plannedMealTypes, close }: { v: Pl
     if (!name.trim()) return;
     setBusy(true);
     try {
-      await saveItemAsMeal(hid, v.id, name, it.recipes, uid);
+      await saveItemAsMeal(hid, v.id, name, it.recipes, uid, sides);
       notify({ kind: "success", message: `Saved “${name.trim()}” to Meals`, link: { to: "/meals", label: "Meals" } });
       setBusy(false);
     } catch (e) {
@@ -236,7 +275,7 @@ function PlanItemBody({ v, hid, uid, recipes, plannedMealTypes, close }: { v: Pl
           <Button variant="secondary" onClick={remove} className="flex-none">
             Remove
           </Button>
-          <Button className="flex-1" disabled={busy || !editable || (servings === it.servings && mealType === it.mealType)} onClick={save}>
+          <Button className="flex-1" disabled={busy || !editable || (servings === it.servings && mealType === it.mealType && sameSides(sides, it.sides ?? []))} onClick={save}>
             Save changes
           </Button>
         </div>
@@ -273,6 +312,16 @@ function PlanItemBody({ v, hid, uid, recipes, plannedMealTypes, close }: { v: Pl
         </span>
         <Stepper label="Servings" decLabel="Fewer servings" incLabel="More servings" labelledBy="pi-servings" value={servings} min={1} max={SERVINGS_MAX} onChange={setServings} />
       </div>
+      {it.kind === "meal" && (editable || sides.length) ? (
+        <section aria-label="Sides" className="flex flex-col gap-2">
+          <SectionLabel hint="Per person">Sides</SectionLabel>
+          {editable ? (
+            <SidePicker value={sides} onChange={setSides} sides={sideList.list} servings={servings} ingredientOf={(id) => ingredients.get(id)} />
+          ) : (
+            <p className="m-0 text-[0.875rem] font-bold first-letter:uppercase">{sideNames.join(", ")}</p>
+          )}
+        </section>
+      ) : null}
       {it.savedMealId ? (
         <p className="m-0 text-[0.8125rem] font-semibold">
           Planned from a saved meal.{" "}

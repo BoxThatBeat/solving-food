@@ -78,6 +78,7 @@ function IngredientForm({ id, initial }: { id: string; initial: IngredientDoc })
   const [freezable, setFreezable] = React.useState(initial.freezable);
   const [isStaple, setIsStaple] = React.useState(initial.isStaple);
   const [freeUse, setFreeUse] = React.useState(initial.freeUse);
+  const [sidePortion, setSidePortion] = React.useState(numStr(initial.side?.portion));
   const [busy, setBusy] = React.useState(false);
 
   const draft = {
@@ -108,6 +109,8 @@ function IngredientForm({ id, initial }: { id: string; initial: IngredientDoc })
           freezable,
           isStaple: isStaple || freeUse,
           freeUse,
+          // A side (R5.9) for every household; free-use ingredients aren't tracked, so they can't be sides.
+          side: !freeUse && toNum(sidePortion) ? { portion: toNum(sidePortion)! } : undefined,
         },
         s.user.uid,
         false,
@@ -203,6 +206,19 @@ function IngredientForm({ id, initial }: { id: string; initial: IngredientDoc })
           </ToggleChip>
         </div>
         {isStaple || freeUse ? <F label="Bought every … days" value={cadence} onChange={setCadence} numeric /> : null}
+      </Card>
+      <Card>
+        <SectionLabel hint="R5.9 · blank = not a side">Side</SectionLabel>
+        <F
+          label={`Portion per person (${draft.canonicalUnit === "count" ? "pieces" : "g"})`}
+          value={freeUse ? "" : sidePortion}
+          onChange={setSidePortion}
+          numeric
+          disabled={freeUse}
+        />
+        <span className="text-[0.75rem] font-semibold text-sub">
+          {freeUse ? "Free-use ingredients aren't tracked, so they can't be sides." : "Eaten as is with a meal (fries, rice, buns). Households can change the portion in Settings → Sides."}
+        </span>
       </Card>
       <Button onClick={save} disabled={busy || !name.trim() || measures.length === 0}>
         {busy ? "Saving…" : "Save ingredient"}

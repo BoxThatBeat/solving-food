@@ -826,7 +826,7 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 /plan  /recipes  /recipes/new  /recipes/trash  /recipes/:id  /recipes/:id/edit  /recipes/:id/cook
 /meals  /meals/:id  /meals/:id/cook  /supply  /supply/:id  /grocery  /history       (/meals/:id renders signed out too)
 /plan/:itemId/cook  (cook a planned meal)   /review/:eventId  (the review flow for a cook event)       (M3)
-/settings/{household,members,brands,stores,tools,preferences,weights,theme,data}
+/settings/{household,members,brands,stores,sides,tools,preferences,weights,theme,data}
 /welcome/household  (first run: join by invite or create; signed in: create another household, M4)
 /drop            (upload .cook files, see import results)
 /not-invited     (signed in with an address that isn't on the allowlist)
@@ -839,7 +839,9 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 ### Key components
 
 - **`<CollectionView>`**: shared search, filter, and sort for Recipes, Meals, Plan, and History, with a **Suggested** sort. Filter state lives in the URL.
-- **`<CreateMealSheet>`**: the Plan page's primary action (R5.7). Tabs *Recipes* (multi-select `<CollectionView>`, Suggested sort first, selected recipes pinned at the top with per-recipe multiplier) and *Saved meals*; then meal type, servings, optional name + "Save as meal" (R5.8); Add to plan.
+- **`<CreateMealSheet>`**: the Plan page's primary action (R5.7). Tabs *Recipes* (multi-select `<CollectionView>`, Suggested sort first, selected recipes pinned at the top with per-recipe multiplier) and *Saved meals*; then meal type, servings, sides (M6, `<SidePicker>`), optional name + "Save as meal" (R5.8); Add to plan.
+- **`<SidePicker>`** (M6, R5.9): a combobox over the household's effective sides (`useSides()`: `ingredient.side` ∪ `settings.sides`, ranked by `searchIngredients`), options show the portion per person in metric (`formatPortion`: "150 g", "1 (55 g)"), picked sides are chips with "Remove X" buttons and the meal total (× servings). Used by Create meal, the plan item sheet, and the saved meal page. Picking snapshots the current portion onto the meal.
+- **Settings → Sides** (M6, R11.14): the effective side list (name, portion, Shipped / Changed / Household badge) with Change (grams, or pieces for ingredients with a unit weight), Reset for a changed shipped side, Remove for a household-flagged one; "Flag an ingredient" uses `<IngredientPicker>` (its create-new path covers new ingredients) then a portion. Free-use ingredients are refused with an explanation. Writes `settings.sides` whole.
 - **`<BudgetMeter>`**: sticky on the Plan page (a compact bar on phones, a card in the desktop's right column); turns red below zero; shows "n prices unknown".
 - **`<SupplyBadge>`**: the "have / need" chip next to recipe ingredients. As built (M3): "have 250 g", "have 250 g ⚠" (not enough at the shown servings), "none", or "staple"; unexpired supply only. Recipe cards show CAN MAKE when projected supply covers every tracked ingredient and ALMOST at ≥ 85 % of the tracked grams ("Use what's left", R4.4, uses the same threshold).
 - **`<CoverageStrip>`**: the period coverage view (R6.2). One row per meal type, one cell per day, filled left to right from plan items' `coverage`. Cooked or eaten cells are solid, planned cells are outlined, and overflow shows as "+n". Cells aren't interactive.

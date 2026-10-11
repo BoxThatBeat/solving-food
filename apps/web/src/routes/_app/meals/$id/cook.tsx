@@ -29,7 +29,7 @@ function CookMeal() {
   const servings = search.servings ?? hh.data?.defaultServings ?? 4;
   return (
     <CookSession
-      target={{ key: `meal-${id}-${servings}`, title: meal.data.name, kicker: "Meal", recipes: meal.data.recipes, servings, savedMealId: id, exitTo: `/meals/${id}`, path: `/meals/${id}/cook` }}
+      target={{ key: `meal-${id}-${servings}`, title: meal.data.name, kicker: "Meal", recipes: meal.data.recipes, sides: meal.data.sides, servings, savedMealId: id, exitTo: `/meals/${id}`, path: `/meals/${id}/cook` }}
       hid={hh.id}
       uid={s.user.uid}
       tools={hh.data?.settings?.tools ?? []}

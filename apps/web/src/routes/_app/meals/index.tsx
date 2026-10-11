@@ -2,7 +2,7 @@
 // recipe index (no function at this scale). Meals are born in Create meal (R5.8); there's no "new meal" page.
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { applyCollection, collectionSearchSchema, mealRow, optionCount, SORT_LABELS, tagCounts, toSearchParams, type CollectionSearch } from "@solving-food/core";
+import { applyCollection, collectionSearchSchema, mealRow, optionCount, sidesLine, SORT_LABELS, tagCounts, toSearchParams, type CollectionSearch } from "@solving-food/core";
 import { EmptyState, PageBody } from "@/components/AppShell";
 import { CollectionView } from "@/components/CollectionView";
 import { MealCard } from "@/components/meals/MealCard";
@@ -11,6 +11,7 @@ import { useNotify } from "@/components/notifications-context";
 import { Button } from "@/components/ui/button";
 import { useActiveHousehold } from "@/data/households";
 import { useMealFacts } from "@/data/meals";
+import { useAllIngredients } from "@/data/ingredients";
 import { setMealFavourite, useMeals, usePlanItems } from "@/data/plan";
 import { useRecipeIndex } from "@/search/useRecipeSearch";
 import { useSuggestions } from "@/data/suggestions";
@@ -29,7 +30,10 @@ function MealsPage() {
   const meals = useMeals();
   const summaries = useRecipeIndex();
   const byId = React.useMemo(() => new Map((summaries ?? []).map((r) => [r.id, r])), [summaries]);
-  const rows = React.useMemo(() => (meals.docs ?? []).map((m) => mealRow(m.id, m.data, (id) => byId.get(id))), [meals.docs, byId]);
+  const ingredients = useAllIngredients();
+  const sideName = React.useCallback((id: string) => ingredients.byId.get(id)?.name, [ingredients.byId]);
+  const rows = React.useMemo(() => (meals.docs ?? []).map((m) => mealRow(m.id, m.data, (id) => byId.get(id), sideName)), [meals.docs, byId, sideName]);
+  const sidesOf = (id: string) => sidesLine(meals.docs?.find((m) => m.id === id)?.data.sides, sideName);
   const suggestions = useSuggestions();
   const factsOf = useMealFacts(hh.id, rows, suggestions.byId);
   const planItems = usePlanItems(hh.id, hh.data?.currentPeriodId);
@@ -97,6 +101,7 @@ function MealsPage() {
               <li key={r.id} className="min-w-0">
                 <MealCard
                   row={rows.find((x) => x.id === r.id)!}
+                  sides={sidesOf(r.id)}
                   facts={factsOf(r.id)}
                   recipes={(id) => byId.get(id)}
                   inPlan={inPlan.has(r.id)}

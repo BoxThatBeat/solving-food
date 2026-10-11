@@ -31,7 +31,7 @@ import { useIngredientsById } from "./ingredients";
 import { useSupply } from "./supply";
 import { millis, useBrandMappings, useDraftList, useOrderedLists, usePeriod, usePlanItems, useRecipeDocs, useSourcingRules, useStores, type StoredPlanItem } from "./plan";
 
-export function usePlanModel(opts: { extraRecipeIds?: readonly string[] } = {}) {
+export function usePlanModel(opts: { extraRecipeIds?: readonly string[]; extraIngredientIds?: readonly string[] } = {}) {
   const hh = useActiveHousehold();
   const hid = hh.id;
   const household = hh.data;
@@ -61,15 +61,18 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[] } = {}) 
   const recipeIds = useMemo(() => [...new Set([...items.flatMap((i) => i.data.recipes.map((r) => r.recipeId)), ...(extraKey ? extraKey.split(",") : [])])], [items, extraKey]);
   const recipes = useRecipeDocs(recipeIds);
 
+  const extraIngKey = (opts.extraIngredientIds ?? []).join(",");
+  // Side ingredients (R5.10) price and count like recipe ones, so they're loaded too.
+  const sideIds = useMemo(() => [...new Set([...items.flatMap((i) => (i.data.sides ?? []).map((s) => s.ingredientId)), ...(extraIngKey ? extraIngKey.split(",") : [])])], [items, extraIngKey]);
   const ingredientIds = useMemo(() => {
-    const ids = new Set<string>();
+    const ids = new Set<string>(sideIds);
     for (const r of recipes.values()) for (const id of r.ingredientIds) ids.add(id);
     for (const m of mappings.docs ?? []) ids.add(m.id);
     for (const it of Object.values(draft.data?.items ?? {})) if (it.ingredientId) ids.add(it.ingredientId);
     for (const l of ordered.docs ?? []) for (const it of Object.values(l.data.items)) if (it.ingredientId) ids.add(it.ingredientId);
     for (const it of supply.items.values()) if (it.ingredientId) ids.add(it.ingredientId);
     return [...ids];
-  }, [recipes, mappings.docs, draft.data, ordered.docs, supply.items]);
+  }, [recipes, mappings.docs, draft.data, ordered.docs, supply.items, sideIds]);
   const ingredients = useIngredientsById(ingredientIds);
 
   const ctx: BuildContext = useMemo(() => {
@@ -91,7 +94,7 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[] } = {}) 
     };
   }, [stores.docs, mappings.docs, rules.docs, ingredients, recipes, ordered.docs, household?.defaultStoreId, unexpired, livePrices]);
 
-  const inputs: PlanItemInput[] = useMemo(() => items.map((i) => ({ id: i.id, status: i.data.status, servings: i.data.servings, recipes: i.data.recipes })), [items]);
+  const inputs: PlanItemInput[] = useMemo(() => items.map((i) => ({ id: i.id, status: i.data.status, servings: i.data.servings, recipes: i.data.recipes, sides: i.data.sides })), [items]);
   const built = useMemo(() => buildList(inputs, ctx), [inputs, ctx]);
   const costs = useMemo(() => itemCosts(inputs, ctx), [inputs, ctx]);
   // Projected supply (R8.4): unexpired − what the period's uncooked items will use.
@@ -108,7 +111,8 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[] } = {}) 
 
   // Ready to price: every recipe loaded and every ingredient they use.
   const recipesReady = recipeIds.every((id) => recipes.has(id));
-  const wantedIngredients = new Set([...recipes.values()].flatMap((r) => r.ingredientIds));
+  // Sides too: an unloaded side ingredient would be skipped by lineFor and the meter would read low.
+  const wantedIngredients = new Set([...[...recipes.values()].flatMap((r) => r.ingredientIds), ...sideIds]);
   const ingredientsReady = [...wantedIngredients].every((id) => ingredients.has(id));
   const ready = !!household && !supply.loading && planItems.docs !== undefined && recipesReady && ingredientsReady && stores.docs !== undefined && ordered.docs !== undefined && mappings.docs !== undefined;
 

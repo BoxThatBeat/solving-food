@@ -6,7 +6,7 @@
 import * as React from "react";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
-import { formatDuration, missingTools, scaleFactor, type MealType, type RecipeRef } from "@solving-food/core";
+import { formatDuration, missingTools, scaleFactor, type MealSide, type MealType, type RecipeRef } from "@solving-food/core";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useNotify } from "@/components/notifications-context";
@@ -32,6 +32,8 @@ export interface CookTarget {
   planItemId?: string | undefined;
   savedMealId?: string | undefined;
   mealType?: MealType | undefined;
+  /** The meal's sides (R5.10): Done cooking deducts their portions too. */
+  sides?: MealSide[] | undefined;
   /** Where ✕ goes. */
   exitTo: string;
   /** Base path of this cook view, for timer notification links. */
@@ -117,6 +119,7 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
       ...(target.planItemId ? { planItemId: target.planItemId } : {}),
       ...(target.savedMealId ? { savedMealId: target.savedMealId } : {}),
       ...(target.mealType ? { mealType: target.mealType } : {}),
+      ...(target.sides?.length ? { sides: target.sides } : {}),
     });
     try {
       sessionStorage.removeItem(PROGRESS(target.key));

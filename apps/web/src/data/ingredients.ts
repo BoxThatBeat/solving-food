@@ -77,8 +77,8 @@ export async function saveIngredient(id: string, data: Omit<IngredientDoc, "need
   await setDoc(doc(db, "ingredients", id), body, { merge: true });
 }
 
-/** Optional numeric fields; omitting one in an edit clears it. */
-export const OPTIONAL_INGREDIENT_KEYS = ["densityGPerMl", "unitWeightG", "proteinPer100g", "defaultPackAmount", "defaultPackMeasure", "defaultCadenceDays"];
+/** Optional fields; omitting one in an edit clears it (the editor always sends `side` when the ingredient is one). */
+export const OPTIONAL_INGREDIENT_KEYS = ["densityGPerMl", "unitWeightG", "proteinPer100g", "defaultPackAmount", "defaultPackMeasure", "defaultCadenceDays", "side"];
 
 /** Ranks ingredients for a query: exact name/alias, then prefix, then word prefix, then substring (the picker). */
 export function searchIngredients(list: readonly IngredientEntry[], query: string, max = 8): IngredientEntry[] {

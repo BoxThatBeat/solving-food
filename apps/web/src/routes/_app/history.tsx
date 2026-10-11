@@ -13,6 +13,7 @@ import {
   deviations,
   eventAverage,
   formatCanonical,
+  sidesLine,
   formatCents,
   formatPeriodRange,
   mostCooked,
@@ -72,15 +73,19 @@ function HistoryPage() {
     return m;
   }, [ratings.docs]);
 
+  // Sides as cooked (R5.9): named on the row and searchable.
+  const sideIds = React.useMemo(() => [...new Set(evs.flatMap((x) => (x.e.sides ?? []).map((s) => s.ingredientId)))], [evs]);
+  const sideIngredients = useIngredientsById(sideIds);
+  const sideName = React.useCallback((id: string) => sideIngredients.get(id)?.name, [sideIngredients]);
   const rows = React.useMemo(
     () =>
       evs.map((x) => {
-        const row = combineSummaries(x.id, x.e.title ?? x.e.titles.join(" + "), x.e.recipeIds.map((recipeId) => ({ recipeId, servingsMultiplier: 1 })), (id) => byId.get(id), x.at, x.e.mealType ? [x.e.mealType] : []);
+        const row = combineSummaries(x.id, x.e.title ?? x.e.titles.join(" + "), x.e.recipeIds.map((recipeId) => ({ recipeId, servingsMultiplier: 1 })), (id) => byId.get(id), x.at, x.e.mealType ? [x.e.mealType] : [], { sides: x.e.sides, sideName });
         // Search finds events by their recipe titles too, deleted ones included.
         row.ingredientNames = [...row.ingredientNames, ...x.e.titles];
         return row;
       }),
-    [evs, byId],
+    [evs, byId, sideName],
   );
   const factsOf = React.useCallback(
     (id: string): HouseholdFacts => {
@@ -169,7 +174,7 @@ function HistoryPage() {
           <ol className="m-0 flex list-none flex-col gap-3 p-0" aria-label="Cooked">
             {result.items.map((r) => {
               const x = viewById.get(r.id)!;
-              return <HistoryRow key={r.id} id={r.id} e={x.e} at={x.at} fmt={fmt} uid={s.user.uid} members={members} ratings={ratingsBy.get(r.id) ?? []} statusOf={statusOf} ingredientName={(id) => devIngredients.get(id)?.name ?? id.replace(/-/g, " ")} unitOf={(id) => ({ u: devIngredients.get(id)?.canonicalUnit ?? "g", w: devIngredients.get(id)?.unitWeightG })} />;
+              return <HistoryRow key={r.id} id={r.id} e={x.e} at={x.at} fmt={fmt} uid={s.user.uid} members={members} ratings={ratingsBy.get(r.id) ?? []} statusOf={statusOf} sides={sidesLine(x.e.sides, sideName)} ingredientName={(id) => devIngredients.get(id)?.name ?? sideIngredients.get(id)?.name ?? id.replace(/-/g, " ")} unitOf={(id) => ({ u: devIngredients.get(id)?.canonicalUnit ?? "g", w: devIngredients.get(id)?.unitWeightG })} />;
             })}
           </ol>
         )}
@@ -227,7 +232,10 @@ function HistoryRow({
   statusOf,
   ingredientName,
   unitOf,
+  sides,
 }: {
+  /** "french fries, frozen peas" (R5.9). */
+  sides: string;
   id: string;
   e: StoredEvent;
   at: number;
@@ -254,6 +262,11 @@ function HistoryRow({
       <span className="flex min-w-0 flex-1 flex-col gap-1.5">
         <span className="font-mono text-[0.625rem] font-bold uppercase">{fmt.format(at)}</span>
         <span className="text-[1rem] leading-tight font-extrabold">{e.title ?? e.titles.join(" + ")}</span>
+        {sides && !(e.title ?? "").toLowerCase().includes(sides.toLowerCase()) ? (
+          <span className="font-mono text-[0.625rem] font-bold uppercase" data-testid="history-sides">
+            With {sides}
+          </span>
+        ) : null}
         {multi || e.recipeIds.some((r) => statusOf(r) !== "active") ? (
           <span className="flex flex-wrap gap-x-2 gap-y-0.5 text-[0.75rem] font-semibold">
             {e.recipeIds.map((rid, i) => {

@@ -1,7 +1,8 @@
 // <CreateMealSheet> (PRD R5.7, R5.8; TECHNICAL_SPECS §7 "Creating meals", §12): the Plan page's primary action.
 // Step 1 picks one or more recipes with the shared <CollectionView> in multi-select mode (Suggested first, selected
 // recipes pinned on top with a servings multiplier), or a saved meal. Step 2 sets the meal type, servings (default
-// R11.12), and optionally a name + "Save as meal", shows the budget impact, and adds the plan item.
+// R11.12), sides (R5.9, picked from a search dropdown with the household's portion per person snapshotted), and
+// optionally a name + "Save as meal", shows the budget impact, and adds the plan item.
 import * as React from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
@@ -20,6 +21,7 @@ import {
   tagCounts,
   taxonomyLabel,
   type CollectionSearch,
+  type MealSide,
   type MealType,
   type RecipeRef,
 } from "@solving-food/core";
@@ -33,6 +35,8 @@ import { useNotify } from "@/components/notifications-context";
 import { useHouseholdFacts, useNotes } from "@/data/householdRecipes";
 import { createMeal, useMeals } from "@/data/plan";
 import { usePlanModel } from "@/data/planModel";
+import { useSides } from "@/data/sides";
+import { SidePicker } from "./SidePicker";
 import { useSuggestions } from "@/data/suggestions";
 import { useRecipeIndex, useRecipeSearch } from "@/search/useRecipeSearch";
 import { useReadySession } from "@/session/useSession";
@@ -65,10 +69,16 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
   const all = React.useMemo(() => summaries ?? [], [summaries]);
   const byId = React.useMemo(() => new Map(all.map((r) => [r.id, r])), [all]);
   const meals = useMeals();
-  const mealRows = React.useMemo(() => (meals.docs ?? []).map((m) => ({ ...mealRow(m.id, m.data, (id) => byId.get(id)), doc: m.data })).sort((a, b) => a.title.localeCompare(b.title)), [meals.docs, byId]);
+  const sideList = useSides();
+  const sideName = React.useCallback((id: string) => sideList.byId.get(id)?.ingredient.name, [sideList.byId]);
+  const mealRows = React.useMemo(
+    () => (meals.docs ?? []).map((m) => ({ ...mealRow(m.id, m.data, (id) => byId.get(id), sideName), doc: m.data })).sort((a, b) => a.title.localeCompare(b.title)),
+    [meals.docs, byId, sideName],
+  );
 
   const preMeal = request.savedMealId ? meals.docs?.find((m) => m.id === request.savedMealId) : undefined;
   const [selected, setSelected] = React.useState<RecipeRef[]>(() => (request.recipeIds ?? []).map((recipeId) => ({ recipeId, servingsMultiplier: 1 })));
+  const [sides, setSides] = React.useState<MealSide[]>([]);
   const [savedMealId, setSavedMealId] = React.useState<string | undefined>(request.savedMealId);
   const [step, setStep] = React.useState<Step>(request.recipeIds?.length || request.savedMealId ? "details" : "pick");
   const [tab, setTab] = React.useState<Tab>("recipes");
@@ -84,10 +94,11 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
   if (preMeal && appliedMeal !== preMeal.id) {
     setAppliedMeal(preMeal.id);
     setSelected(preMeal.data.recipes.filter((r) => byId.size === 0 || byId.has(r.recipeId)));
+    setSides(preMeal.data.sides ?? []);
     setName(preMeal.data.name);
   }
 
-  const model = usePlanModel({ extraRecipeIds: selected.map((r) => r.recipeId) });
+  const model = usePlanModel({ extraRecipeIds: selected.map((r) => r.recipeId), extraIngredientIds: sides.map((x) => x.ingredientId) });
   const household = model.household;
   const plannedTypes = household?.plannedMealTypes ?? [...PLANNABLE_MEAL_TYPES];
   const mealTypes: MealType[] = [...PLANNABLE_MEAL_TYPES.filter((t) => plannedTypes.includes(t)), "snack"];
@@ -97,7 +108,8 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
   const effectiveServings = servings ?? household?.defaultServings ?? 4;
 
   const titles = selected.map((r) => byId.get(r.recipeId)?.title ?? model.recipes.get(r.recipeId)?.title ?? "Recipe");
-  const autoName = savedMealId ? name : defaultMealName(titles);
+  const sideNames = sides.map((x) => sideName(x.ingredientId) ?? model.ingredients.get(x.ingredientId)?.name ?? "side");
+  const autoName = savedMealId ? name : defaultMealName(titles, sideNames);
   const shownName = nameTouched || savedMealId ? name : autoName;
 
   // Recipes tab: shared filters and text search over the index.
@@ -119,6 +131,8 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
     if (!m) return;
     setSavedMealId(id);
     setSelected(m.doc.recipes.filter((r) => byId.has(r.recipeId)));
+    // A saved meal keeps its sides with the portions it was saved with (R5.9, R5.10).
+    setSides(m.doc.sides ?? []);
     setName(m.title);
     setNameTouched(true);
     setSaveAsMeal(false);
@@ -127,9 +141,9 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
 
   const impact = React.useMemo(() => {
     if (!model.ready || !selected.length) return null;
-    const planned = model.items.map((i) => ({ id: i.id, status: i.data.status, servings: i.data.servings, recipes: i.data.recipes }));
-    return addedCost(planned, { id: "new", status: "planned", servings: effectiveServings, recipes: selected }, model.ctx);
-  }, [model.ready, model.items, model.ctx, selected, effectiveServings]);
+    const planned = model.items.map((i) => ({ id: i.id, status: i.data.status, servings: i.data.servings, recipes: i.data.recipes, sides: i.data.sides }));
+    return addedCost(planned, { id: "new", status: "planned", servings: effectiveServings, recipes: selected, sides }, model.ctx);
+  }, [model.ready, model.items, model.ctx, selected, sides, effectiveServings]);
 
   const canName = !savedMealId;
   const submit = async () => {
@@ -140,6 +154,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
     }
     const input = {
       recipes: selected,
+      ...(sides.length ? { sides } : {}),
       ...(savedMealId ? { savedMealId } : {}),
       mealType: effectiveType,
       servings: effectiveServings,
@@ -304,7 +319,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
   return (
     <SheetContent
       title="Add to plan"
-      description="Meal type, servings, and an optional name"
+      description="Meal type, servings, sides, and an optional name"
       footer={
         <div className="flex flex-col gap-2">
           {error ? (
@@ -320,7 +335,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
     >
       <div className="flex flex-col gap-1.5">
         <span className="text-[1.0625rem] leading-tight font-extrabold" data-testid="create-meal-title">
-          {fromMeal ? fromMeal.title : titles.join(" + ") || "No recipes picked"}
+          {fromMeal ? fromMeal.title : defaultMealName(titles, sideNames) || "No recipes picked"}
         </span>
         {fromMeal ? <span className="font-mono text-[0.625rem] font-bold text-sub uppercase">Saved meal · {titles.join(" + ")}</span> : null}
         {selected.some((r) => r.servingsMultiplier !== 1) ? (
@@ -361,6 +376,12 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
         </span>
         <Stepper label="Servings" decLabel="Fewer servings" incLabel="More servings" labelledBy="cm-servings" value={effectiveServings} min={1} max={SERVINGS_MAX} onChange={setServings} />
       </div>
+
+      <section aria-label="Sides" className="flex flex-col gap-2">
+        <SectionLabel hint="Optional · per person">Sides</SectionLabel>
+        <span className="-mt-1 text-[0.75rem] font-semibold text-sub">Fries, rice, buns: eaten as is, no recipe. They go on the grocery list.</span>
+        <SidePicker value={sides} onChange={setSides} sides={sideList.list} servings={effectiveServings} ingredientOf={(id) => model.ingredients.get(id)} />
+      </section>
 
       {canName ? (
         <div className="flex flex-col gap-2 rounded-ui border-2 border-line bg-base p-3">

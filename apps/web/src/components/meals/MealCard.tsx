@@ -15,7 +15,10 @@ export function MealCard({
   onFavourite,
   onCopyLink,
   onPlan,
+  sides,
 }: {
+  /** "fries, peas": the meal's sides (R5.9). */
+  sides?: string;
   row: MealRow;
   facts: HouseholdFacts;
   recipes: (id: string) => RecipeSummary | undefined;
@@ -53,6 +56,11 @@ export function MealCard({
           {facts.costPerServingCents != null ? ` · ${formatCents(facts.costPerServingCents)}/serv` : ""} · {formatProtein(row.proteinPerServingG, row.proteinApproximate)} protein
           {facts.timesCooked ? ` · made ${facts.timesCooked}×` : ""}
         </span>
+        {sides ? (
+          <span className="font-mono text-[0.625rem] font-bold uppercase" data-testid="meal-sides">
+            With {sides}
+          </span>
+        ) : null}
       </div>
       <ul className="m-0 flex-1 list-none p-0">
         {row.recipeIds.map((id) => {

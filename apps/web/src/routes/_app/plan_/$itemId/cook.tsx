@@ -46,6 +46,7 @@ function CookPlanItem() {
         planItemId: itemId,
         savedMealId: it.savedMealId,
         mealType: it.mealType,
+        sides: it.sides,
         exitTo: "/plan",
         path: `/plan/${itemId}/cook`,
       }}

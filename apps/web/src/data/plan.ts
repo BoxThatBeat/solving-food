@@ -25,6 +25,7 @@ import {
 import {
   buildPlanItem,
   carriedItemId,
+  cleanSides,
   mergeDraft,
   carryOver,
   DEFAULT_STORE_ID,
@@ -43,6 +44,7 @@ import {
   type GroceryListDoc,
   type HouseholdDoc,
   type MealDoc,
+  type MealSide,
   type MealType,
   type PeriodDoc,
   type PlanItemDoc,
@@ -230,7 +232,7 @@ export async function createMeal(
     const mRef = doc(collection(db, "meals"));
     mealId = mRef.id;
     created = mRef.id;
-    b.set(mRef, { ...newMeal(input.name ?? "", input.recipes, uid), createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    b.set(mRef, { ...newMeal(input.name ?? "", input.recipes, uid, input.sides), createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
   }
   const item = buildPlanItem(input, { periodId, uid, recipes, ...(mealId ? { savedMealId: mealId } : {}) });
   const iRef = doc(collection(db, "households", hid, "planItems"));
@@ -239,8 +241,10 @@ export async function createMeal(
   return { planItemId: iRef.id, ...(created ? { mealId: created } : {}) };
 }
 
-export function updatePlanItem(hid: string, id: string, patch: Partial<Pick<PlanItemDoc, "servings" | "mealType" | "coverage" | "name" | "savedMealId">>) {
-  return updateDoc(doc(db, "households", hid, "planItems", id), patch);
+/** Field-level update; `sides: []` removes the field (sides only exist when there are some). */
+export function updatePlanItem(hid: string, id: string, patch: Partial<Pick<PlanItemDoc, "servings" | "mealType" | "coverage" | "name" | "savedMealId" | "sides">>) {
+  const { sides, ...rest } = patch;
+  return updateDoc(doc(db, "households", hid, "planItems", id), { ...rest, ...(sides !== undefined ? { sides: sides.length ? cleanSides(sides) : deleteField() } : {}) });
 }
 
 export function removePlanItem(hid: string, id: string) {
@@ -253,10 +257,10 @@ export function restorePlanItem(hid: string, id: string, item: StoredPlanItem) {
 }
 
 /** "Save as meal" for an unsaved planned item (R5.8): adds a reusable copy and links the item to it. */
-export async function saveItemAsMeal(hid: string, itemId: string, name: string, recipes: readonly RecipeRef[], uid: string): Promise<string> {
+export async function saveItemAsMeal(hid: string, itemId: string, name: string, recipes: readonly RecipeRef[], uid: string, sides?: readonly MealSide[]): Promise<string> {
   const b = writeBatch(db);
   const mRef = doc(collection(db, "meals"));
-  b.set(mRef, { ...newMeal(name, recipes, uid), createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  b.set(mRef, { ...newMeal(name, recipes, uid, sides), createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
   b.update(doc(db, "households", hid, "planItems", itemId), { savedMealId: mRef.id, name: name.trim() });
   await b.commit();
   return mRef.id;
@@ -264,8 +268,9 @@ export async function saveItemAsMeal(hid: string, itemId: string, name: string, 
 
 // ---------- saved meals
 
-export function updateMeal(id: string, patch: Partial<Pick<MealDoc, "name" | "recipes">>, uid: string) {
-  return updateDoc(doc(db, "meals", id), { ...patch, updatedBy: uid, updatedAt: serverTimestamp() });
+export function updateMeal(id: string, patch: Partial<Pick<MealDoc, "name" | "recipes" | "sides">>, uid: string) {
+  const { sides, ...rest } = patch;
+  return updateDoc(doc(db, "meals", id), { ...rest, ...(sides !== undefined ? { sides: sides.length ? cleanSides(sides) : deleteField() } : {}), updatedBy: uid, updatedAt: serverTimestamp() });
 }
 
 export function deleteMeal(id: string) {
@@ -471,9 +476,9 @@ export async function undoOrder(hid: string, listId: string): Promise<void> {
  * "Save this meal?" from the review flow (R5.8): writes the saved meal and points the plan item at it. Returns the new
  * meal's ID at once (writes queue offline); a plan item that's gone since is skipped.
  */
-export function saveMealFromReview(hid: string, planItemId: string | undefined, name: string, recipes: readonly RecipeRef[], uid: string): string {
+export function saveMealFromReview(hid: string, planItemId: string | undefined, name: string, recipes: readonly RecipeRef[], uid: string, sides?: readonly MealSide[]): string {
   const mRef = doc(collection(db, "meals"));
-  void setDoc(mRef, { ...newMeal(name, recipes, uid), createdAt: serverTimestamp(), updatedAt: serverTimestamp() }).catch((e) => console.error("save meal failed", e));
+  void setDoc(mRef, { ...newMeal(name, recipes, uid, sides), createdAt: serverTimestamp(), updatedAt: serverTimestamp() }).catch((e) => console.error("save meal failed", e));
   if (planItemId) void updateDoc(doc(db, "households", hid, "planItems", planItemId), { savedMealId: mRef.id, name: name.trim() }).catch(() => undefined);
   return mRef.id;
 }

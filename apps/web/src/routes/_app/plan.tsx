@@ -78,6 +78,8 @@ function PlanPage() {
   const ended = endMs !== null && now >= endMs;
 
   const titleOf = React.useCallback((id: string) => m.recipes.get(id)?.title ?? byId.get(id)?.title, [m.recipes, byId]);
+  // Sides (R5.9) by ingredient name: "Salmon + french fries, frozen peas" on unnamed rows, searchable by name.
+  const sideNameOf = React.useCallback((id: string) => m.ingredients.get(id)?.name, [m.ingredients]);
   // Pending commands show at once: a finished meal reads as cooked, an eaten one as eaten (§6 optimistic view).
   const optimistic = React.useMemo(() => {
     const out = new Map<string, "cooked" | "eaten">();
@@ -92,10 +94,10 @@ function PlanPage() {
     () =>
       m.items.map((i) => {
         const status = optimistic.get(i.id) ?? i.data.status;
-        const v: PlanItemView = { id: i.id, item: i.data, title: planItemTitle(i.data, titleOf), cost: m.ready ? m.costs.get(i.id) : undefined, status };
+        const v: PlanItemView = { id: i.id, item: i.data, title: planItemTitle(i.data, titleOf, sideNameOf), cost: m.ready ? m.costs.get(i.id) : undefined, status };
         if (status === "planned" && i.data.kind === "meal") {
           // R6.7: the soonest-expiring lot this meal would use, when it expires within the period (or within days).
-          const needs = mealRequirements(i.data.recipes, i.data.servings, m.ctx);
+          const needs = mealRequirements(i.data.recipes, i.data.servings, m.ctx, i.data.sides);
           const e = earliestExpiringUse(needs, (id) => m.lotsByIngredient.get(id), supplyNow);
           if (e && (e.expiresMs <= (endMs ?? 0) || daysLeft(e.expiresMs, supplyNow, tz) <= USE_SOON_DAYS)) {
             const name = m.ingredients.get(e.ingredientId)?.name ?? e.ingredientId.replace(/-/g, " ");
@@ -109,13 +111,13 @@ function PlanPage() {
         }
         return v;
       }),
-    [m.items, titleOf, m.costs, m.ready, optimistic, m.ctx, m.lotsByIngredient, m.ingredients, m.supply.items, supplyNow, endMs, tz],
+    [m.items, titleOf, sideNameOf, m.costs, m.ready, optimistic, m.ctx, m.lotsByIngredient, m.ingredients, m.supply.items, supplyNow, endMs, tz],
   );
   const rows = React.useMemo(
     () => stripModel(views.map((v) => ({ coverage: v.item.coverage, status: v.status })), cells.length, m.household?.plannedMealTypes ?? []),
     [views, cells.length, m.household?.plannedMealTypes],
   );
-  const listRows = React.useMemo(() => views.map((v) => planItemRow(v.id, v.item, (id) => byId.get(id), v.title)), [views, byId]);
+  const listRows = React.useMemo(() => views.map((v) => planItemRow(v.id, v.item, (id) => byId.get(id), v.title, sideNameOf)), [views, byId, sideNameOf]);
   const suggestions = useSuggestions();
   // The list's Suggested and Expiring first sorts: each item's recipes' scores, combined (M5).
   const factsOf = React.useCallback(
@@ -230,7 +232,7 @@ function PlanPage() {
                   {g.items
                     .sort((a, b) => MEAL_TYPE_ORDER[a.item.mealType] - MEAL_TYPE_ORDER[b.item.mealType])
                     .map((v) => (
-                      <PlanItemCard key={v.id} v={v} recipes={m.recipes} hid={m.hid} uid={s.user.uid} onOpen={() => setOpenItem(v.id)} />
+                      <PlanItemCard key={v.id} v={v} recipes={m.recipes} ingredients={m.ingredients} hid={m.hid} uid={s.user.uid} onOpen={() => setOpenItem(v.id)} />
                     ))}
                 </section>
               ))
@@ -267,7 +269,7 @@ function PlanPage() {
         </div>
       </div>
 
-      <PlanItemSheet v={open} hid={m.hid} uid={s.user.uid} recipes={m.recipes} plannedMealTypes={m.household?.plannedMealTypes ?? []} onOpenChange={(o) => !o && setOpenItem(null)} />
+      <PlanItemSheet v={open} hid={m.hid} uid={s.user.uid} recipes={m.recipes} ingredients={m.ingredients} plannedMealTypes={m.household?.plannedMealTypes ?? []} onOpenChange={(o) => !o && setOpenItem(null)} />
     </PageBody>
   );
 }

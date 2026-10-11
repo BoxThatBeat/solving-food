@@ -42,7 +42,7 @@ R5.9, R5.10, R7.11, R11.14.
 - [x] `firestore.rules`: `validIngredient` side, `validMeal` sides, `validPlanItem` sides (meal only), finishCooking
       payload key.
 - [x] Seed validator: a side needs `portion > 0`, a default pack, and can't be free-use.
-- [ ] Web: `OPTIONAL_INGREDIENT_KEYS` + `side`; `data/sides.ts` (`useSides`, `saveSides`).
+- [x] Web: `OPTIONAL_INGREDIENT_KEYS` + `side`; `data/sides.ts` (`useSides`, `saveSides`).
 
 ### 2. Core math
 - [x] `grocery.ts`: `SideRef`, `PlanItemInput.sides`, `needsFor` adds portion × servings (free-use skipped).
@@ -63,14 +63,14 @@ R5.9, R5.10, R7.11, R11.14.
       garlic bread, salad kit with price estimates. Validate, prices check.
 
 ### 5. UI
-- [ ] `<SidePicker>`.
-- [ ] Create meal: Sides section, saved meal copies sides, budget impact, auto name, submit.
-- [ ] `data/plan.ts` + `planModel.ts`: sides through create/update/save, side ingredients loaded, `ready` gating.
-- [ ] Plan row sub-line, plan item sheet Sides editor, save as meal keeps sides.
-- [ ] Settings → Sides page and link.
-- [ ] Meals: detail page shows/edits sides; list rows "with …".
-- [ ] History rows list sides.
-- [ ] Cooking: finish sends sides; review pre-fills them.
+- [x] `<SidePicker>`.
+- [x] Create meal: Sides section, saved meal copies sides, budget impact, auto name, submit.
+- [x] `data/plan.ts` + `planModel.ts`: sides through create/update/save, side ingredients loaded, `ready` gating.
+- [x] Plan row sub-line, plan item sheet Sides editor, save as meal keeps sides.
+- [x] Settings → Sides page and link.
+- [x] Meals: detail page shows/edits sides; list rows "with …".
+- [x] History rows list sides.
+- [x] Cooking: finish sends sides; review pre-fills them.
 - [ ] Design-compare Plan, Create meal, Settings → Sides (phone 430×932, desktop 1920×1080).
 
 ### 6. Tests

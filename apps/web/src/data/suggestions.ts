@@ -67,7 +67,8 @@ export function useScoringSnapshot(m: PlanModel, mealType: MealType | null = nul
       mealType,
       recipes: summaries,
       extraLines,
-      planned: m.items.map((i) => ({ id: i.id, status: i.data.status, servings: i.data.servings, recipes: i.data.recipes })),
+      // Sides count as planned needs (spent and projected supply match the Plan page); ranking stays recipe-only.
+      planned: m.items.map((i) => ({ id: i.id, status: i.data.status, servings: i.data.servings, recipes: i.data.recipes, sides: i.data.sides })),
       plannedRecipeIds,
       unexpired: [...m.unexpired],
       incoming: [...m.ctx.incoming],

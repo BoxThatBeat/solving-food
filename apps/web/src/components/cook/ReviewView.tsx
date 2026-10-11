@@ -13,6 +13,7 @@ import {
   leftoverPortionsByType,
   mealRequirements,
   totalPortions,
+  type MealSide,
   type RecipeRef,
 } from "@solving-food/core";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,8 @@ interface Source {
   leftoverPortions: number;
   reviewStatus: "pending" | "done";
   cookedBy: string;
+  /** The meal's sides (R5.10): their portions are in `used` like recipe amounts. */
+  sides: MealSide[];
   /** Still on its way to the server (offline or just sent). */
   pending: boolean;
 }
@@ -51,7 +54,8 @@ export function ReviewView({ hid, uid, eventId, tz }: { hid: string; uid: string
     [event.data, finishCmd],
   );
   const recipes = useRecipeDocs(refs.map((r) => r.recipeId));
-  const ingredientIds = React.useMemo(() => [...recipes.values()].flatMap((r) => r.ingredientIds), [recipes]);
+  const pendingSides = React.useMemo(() => (finishCmd?.command.type === "finishCooking" ? (finishCmd.command.payload.sides ?? []) : []), [finishCmd]);
+  const ingredientIds = React.useMemo(() => [...[...recipes.values()].flatMap((r) => r.ingredientIds), ...pendingSides.map((x) => x.ingredientId)], [recipes, pendingSides]);
   const recipeIngredients = useIngredientsById(ingredientIds);
   const members = useMemberNames(hid);
 
@@ -59,11 +63,11 @@ export function ReviewView({ hid, uid, eventId, tz }: { hid: string; uid: string
   const source: Source | null = React.useMemo(() => {
     if (event.data) {
       const e = event.data;
-      return { title: e.title ?? e.titles.join(" + "), recipeIds: e.recipeIds, refs: e.recipeIds.map((recipeId) => ({ recipeId, servingsMultiplier: 1 })), savedMealId: e.savedMealId, planItemId: e.planItemId, used: e.used, leftoverPortions: e.leftoverPortions, reviewStatus: e.reviewStatus, cookedBy: e.cookedBy, pending: false };
+      return { title: e.title ?? e.titles.join(" + "), recipeIds: e.recipeIds, refs: e.recipeIds.map((recipeId) => ({ recipeId, servingsMultiplier: 1 })), savedMealId: e.savedMealId, planItemId: e.planItemId, used: e.used, leftoverPortions: e.leftoverPortions, reviewStatus: e.reviewStatus, cookedBy: e.cookedBy, sides: e.sides ?? [], pending: false };
     }
     if (finishCmd?.command.type === "finishCooking" && refs.every((r) => recipes.has(r.recipeId)) && ingredientIds.every((id) => recipeIngredients.has(id))) {
       const p = finishCmd.command.payload;
-      const needs = mealRequirements(p.recipes, p.servings, { recipes: (id) => recipes.get(id), ingredients: (id) => recipeIngredients.get(id) });
+      const needs = mealRequirements(p.recipes, p.servings, { recipes: (id) => recipes.get(id), ingredients: (id) => recipeIngredients.get(id) }, pendingSides);
       return {
         title: p.title ?? p.recipes.map((r) => recipes.get(r.recipeId)?.title ?? "Recipe").join(" + "),
         recipeIds: p.recipes.map((r) => r.recipeId),
@@ -74,11 +78,12 @@ export function ReviewView({ hid, uid, eventId, tz }: { hid: string; uid: string
         leftoverPortions: totalPortions(leftoverPortionsByType(p.recipes, (id) => recipes.get(id))),
         reviewStatus: "pending",
         cookedBy: uid,
+        sides: pendingSides,
         pending: true,
       };
     }
     return null;
-  }, [event.data, finishCmd, recipes, recipeIngredients, ingredientIds, refs, uid]);
+  }, [event.data, finishCmd, recipes, recipeIngredients, ingredientIds, refs, uid, pendingSides]);
 
   if (event.data === undefined) return <Shell title="Review" onClose={() => void navigate({ to: "/plan" })} />;
   if (!source)
@@ -178,7 +183,7 @@ function ReviewFlow({
 
   const saveMeal = () => {
     if (!mealName.trim()) return;
-    const id = saveMealFromReview(hid, source.planItemId, mealName, source.refs, uid);
+    const id = saveMealFromReview(hid, source.planItemId, mealName, source.refs, uid, source.sides);
     setSavedMealId(id);
     notify({ kind: "success", message: `Saved “${mealName.trim()}” to Meals`, link: { to: "/meals", label: "Meals" } });
   };

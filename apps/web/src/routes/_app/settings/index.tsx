@@ -17,6 +17,7 @@ const SECTIONS = [
   { to: "/settings/members", label: "Members", sub: "Invite by email or name, remove, leave" },
   { to: "/settings/brands", label: "Brands", sub: "Preferred products per ingredient" },
   { to: "/settings/stores", label: "Stores", sub: "PC Express store, Costco, sourcing rules" },
+  { to: "/settings/sides", label: "Sides", sub: "Fries, rice, buns, chips… portion per person" },
   { to: "/settings/tools", label: "Kitchen tools", sub: "Equipment the household owns" },
   { to: "/settings/preferences", label: "Preferences", sub: "Likes, dislikes, dietary restrictions, protein goals" },
   { to: "/settings/weights", label: "Suggestion weights", sub: "What raises or lowers a suggestion" },
