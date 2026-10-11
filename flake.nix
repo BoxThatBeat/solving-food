@@ -31,6 +31,15 @@
             export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
             # Same fallback fonts on every machine (NixOS laptop, Ubuntu CI runner), so screenshots match.
             export FONTCONFIG_FILE=${pkgs.makeFontsConf { fontDirectories = [ pkgs.dejavu_fonts ]; }}
+            # WebKit (phone-ios, tablet) links the nixpkgs libglvnd, which finds Mesa through
+            # /run/opengl-driver. That path only exists on NixOS; on the Ubuntu CI runner EGL finds no
+            # vendor, the web process aborts ("Could not create EGL display: no supported platform
+            # available") and every WebKit test fails with "browser has been closed" at newPage. Point
+            # glvnd at the flake's own Mesa there (software rendering via surfaceless EGL). On NixOS the
+            # host driver keeps winning, so laptop screenshots are unchanged.
+            if [ ! -d /run/opengl-driver ]; then
+              export __EGL_VENDOR_LIBRARY_DIRS=${pkgs.mesa}/share/glvnd/egl_vendor.d
+            fi
           '';
         };
       });
