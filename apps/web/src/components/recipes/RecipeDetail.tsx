@@ -1,4 +1,4 @@
-// Recipe detail (PRD R4.8, R4.11, R4.13, R4.14, R4.21, R4.22, R4.26, R6.15; spec §12). Renders for signed-out
+// Recipe detail (PRD R4.8, R4.11, R4.13, R4.14, R4.21, R4.26, R6.15; spec §12). Renders for signed-out
 // visitors too (share links): then only the global recipe shows, without notes, favourites, supply badges, stats, or
 // edit controls.
 import * as React from "react";
@@ -7,11 +7,8 @@ import { doc } from "firebase/firestore";
 import { ArrowLeft, X } from "lucide-react";
 import {
   unexpiredByIngredient,
-  cooklangFilename,
   formatProtein,
-  imageVariant,
   lineText,
-  recipeToCooklang,
   renderStep,
   scaleFactor,
   taxonomyLabel,
@@ -20,9 +17,9 @@ import {
   type RecipeVersionDoc,
   fahrenheitOnly,
 } from "@solving-food/core";
-import { db, publicUrl } from "@/firebase/app";
+import { db } from "@/firebase/app";
 import { useLiveDoc } from "@/data/live";
-import { contentOf, restoreRecipe, restoreVersion, trashRecipe, useVersions, type StoredRecipe } from "@/data/recipes";
+import { restoreRecipe, restoreVersion, trashRecipe, useVersions, type StoredRecipe } from "@/data/recipes";
 import { lookupFromMap, useIngredientsById, type IngredientEntry } from "@/data/ingredients";
 import { saveNote, setFavourite, useHouseholdFacts, useNote } from "@/data/householdRecipes";
 import { useNotify } from "@/components/notifications-context";
@@ -107,20 +104,6 @@ export function RecipeDetail({
     }
   };
 
-  const exportCook = () => {
-    const base = recipe.imagePaths[0];
-    const text = recipeToCooklang(contentOf(recipe), base ? { imageUrl: publicUrl(imageVariant(base, 1920)) } : {});
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = cooklangFilename(recipe.title);
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    notify({ kind: "success", message: `Downloaded ${a.download}` });
-  };
-
   const toggleFav = () => {
     if (!ctx) return;
     setFavourite(ctx.hid, id, !facts.favourite).catch(() => notify({ kind: "error", message: "Couldn't update the favourite" }));
@@ -194,14 +177,6 @@ export function RecipeDetail({
           <button type="button" onClick={copyLink} className="cursor-pointer rounded-ui border-2 border-line bg-base px-2.5 py-2 text-[0.8125rem] font-extrabold text-ink shadow-[3px_3px_0_var(--line)]">
             Copy link
           </button>
-          <button
-            type="button"
-            onClick={exportCook}
-            aria-label="Export .cook file"
-            className="cursor-pointer rounded-ui border-2 border-line bg-base px-2 py-2 font-mono text-xs font-bold text-ink shadow-[3px_3px_0_var(--line)]"
-          >
-            .cook
-          </button>
           {ctx && openCreateMeal && recipe.status === "active" ? (
             <button
               type="button"
@@ -219,15 +194,6 @@ export function RecipeDetail({
               className="rounded-ui border-2 border-line bg-base px-2.5 py-2 text-[0.8125rem] font-extrabold text-ink no-underline shadow-[3px_3px_0_var(--line)]"
             >
               Cook →
-            </Link>
-          ) : null}
-          {ctx && recipe.status !== "trashed" ? (
-            <Link
-              to="/recipes/$id/edit"
-              params={{ id }}
-              className="rounded-ui border-2 border-line bg-base px-2.5 py-2 text-[0.8125rem] font-extrabold text-ink no-underline shadow-[3px_3px_0_var(--line)]"
-            >
-              Edit
             </Link>
           ) : null}
         </div>
@@ -457,13 +423,18 @@ export function RecipeDetail({
             {updated ? ` · ${DATE.format(new Date(updated))}` : ""}
             {ctx ? (
               <>
-                <button type="button" onClick={() => setHistoryOpen(true)} className="cursor-pointer bg-transparent p-0 font-sans text-[0.6875rem] font-extrabold text-ink normal-case underline">
+                <button type="button" onClick={() => setHistoryOpen(true)} className={FOOTER_ACTION}>
                   Version history
                 </button>
                 {recipe.status !== "trashed" ? (
-                  <button type="button" onClick={() => setConfirmDelete(true)} className="cursor-pointer bg-transparent p-0 font-sans text-[0.6875rem] font-extrabold text-ink normal-case underline">
-                    Delete
-                  </button>
+                  <>
+                    <Link to="/recipes/$id/edit" params={{ id }} className={FOOTER_ACTION}>
+                      Edit
+                    </Link>
+                    <button type="button" onClick={() => setConfirmDelete(true)} className={FOOTER_ACTION}>
+                      Delete
+                    </button>
+                  </>
                 ) : null}
               </>
             ) : null}
@@ -495,6 +466,9 @@ export function RecipeDetail({
     </article>
   );
 }
+
+/** The text actions under the recipe (Version history · Edit · Delete): underlined links, 24 px tall hit targets. */
+const FOOTER_ACTION = "inline-flex min-h-6 cursor-pointer items-center bg-transparent p-0 font-sans text-[0.6875rem] font-extrabold text-ink normal-case underline";
 
 function timerLabel(s: number): string {
   if (s < 60) return `${s} SEC`;

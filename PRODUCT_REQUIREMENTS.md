@@ -116,10 +116,10 @@ flowchart LR
 - **R4.19** **Anyone can edit any recipe**, and the change applies for all users. There are no private copies or forks. Edits are versioned so mistakes can be undone.
 - **R4.20** **Deduplication.** When a recipe is added, the app checks for an existing one with the same source URL, a near-identical title, or a very similar ingredient set. If it finds one, the user chooses to keep the existing recipe, keep the new one, or keep both. Drop-folder imports that look like duplicates wait in a review list until someone decides.
 
-### 4.4 Sharing & Export
+### 4.4 Sharing
 
 - **R4.21** A **Copy link** button shares a recipe or meal. The link opens the normal recipe or meal page, which is readable without an account.
-- **R4.22** Users can export a recipe as a `.cook` file.
+- R4.22 *Withdrawn after M6 (owner's review): the recipe page has no `.cook` download. Recipes still leave the app as `.cook` files inside the household data download (R11.10).*
 
 ### 4.5 Cooking Timers & Layouts
 

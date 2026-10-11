@@ -41,6 +41,15 @@ R8.13, R4.19, R4.21, R4.2.
       duplicate. E2E (`recipe-edit.spec.ts`, @R4.19 @R4.16): a recipe dropped through the Drop page, history opened
       before editing, edited, history shows v2 and v1, v1 restored as v3.
 
+### 3. Recipe page: no .cook download; Edit moves to the bottom (R4.21, R4.22 withdrawn)
+- [x] The `.cook` button and its export code are gone from the recipe page; Copy link stays. The `sharing.spec.ts`
+      export test and its `@R4.22` tag are removed; R4.22 is marked withdrawn in the PRD (no longer a bold ID, so
+      coverage doesn't ask for it); spec §12 and §14.1 updated. `recipeToCooklang()` stays in core (the household data
+      download writes each recipe as a `.cook`).
+- [x] Edit is a text link under the recipe, in the Version history · Edit · Delete row, same style as Delete. The
+      three links got a 24 px minimum height (WCAG 2.5.8 target size). Tests find it by role and name, so they're
+      unchanged; the sharing test checks the .cook button is gone.
+
 ## Deviations and assumptions
 
 - Imperial volumes that aren't kitchen measures (fl oz, pints, quarts, gallons) are treated like imperial weights:
