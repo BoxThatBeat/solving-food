@@ -77,6 +77,16 @@ R8.13, R4.19, R4.21, R4.2.
   for tap targets. The header row on phones (Back, Save, Copy link, + Plan, Cook →) still wraps Cook → to a second
   line at 430 px, as before with fewer buttons.
 
+- Deployed with `pnpm run deploy` (hosting, functions, rules, indexes): https://solvingfood.web.app 200, healthcheck
+  `{"ok":true}`. `pnpm repair:versions -- --write` live: 125 recipes, 125 already have their current snapshot, 0
+  written (every recipe also has `versions/1`; the three edited ones have all their versions).
+
+## Owner items
+
+- On the phone: open Ground Beef Tacos (v2) or Veggie Pizza Squares (v3) → Version history; v1 should be listed
+  (briefly "Checking for older versions…") and restorable. If a recipe still shows only its current version, note
+  which one.
+
 ## Deviations and assumptions
 
 - Imperial volumes that aren't kitchen measures (fl oz, pints, quarts, gallons) are treated like imperial weights:
