@@ -1,6 +1,6 @@
 # M7 — Review fixes
 
-Status: in progress
+Status: in progress (items 1–4 done by agent 1; agent 2 appends the rest)
 
 ## Goal
 
@@ -60,6 +60,22 @@ R8.13, R4.19, R4.21, R4.2.
 - [x] E2E (`recipes-browse.spec.ts`, @R4.2): switching A–Z → Suggested shows skeletons (aria-busy, no text), then the
       sorted cards; the page object's `titles()` / `goto()` wait for the list to settle. The never-cooked card check
       asserts no stats text.
+
+## Verification (items 1–4)
+
+- Lint, typecheck: clean. Core unit 341/341, web unit 7/7, functions (emulator) 9 files / 54 tests.
+- Playwright, `--workers=1`: recipes-browse, recipe-detail, recipe-edit, sharing, cooking: desktop-1080p 28 passed
+  (+1 skipped touch-only; the manual-entry test and an R2.9 sign-in flake re-run green), phone-ios 29/29. Also on
+  desktop-1080p: meals, a11y, drop-folder, responsive, data-transfer, sides 32/32. Visual baselines for the Recipes
+  library re-recorded (cards lost the "NEVER COOKED HERE" line). After the footer change recipe-edit, sharing,
+  recipe-detail re-ran 16/16 on both projects.
+- `pnpm e2e:coverage`: all done milestones ok; M7 4/4 tagged.
+- Design-compare (Latte, phone 430×932 and desktop 1920×1080) of Recipes and the recipe page against the prototype:
+  layout, tokens and card shapes match. Intentional differences: never-cooked cards show no line (the prototype
+  says "NEVER COOKED HERE"; the owner asked for nothing); the recipe page's Version history · Edit · Delete links sit
+  on their own row under the "SHARED LIBRARY · V1" line at 13 px (were 11 px inline; Delete wrapped alone on phones),
+  for tap targets. The header row on phones (Back, Save, Copy link, + Plan, Cook →) still wraps Cook → to a second
+  line at 430 px, as before with fewer buttons.
 
 ## Deviations and assumptions
 

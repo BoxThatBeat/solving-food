@@ -417,28 +417,28 @@ export function RecipeDetail({
               </a>
             </span>
           ) : null}
-          <span className="flex flex-wrap items-center gap-2 uppercase">
+          <span className="uppercase">
             SHARED LIBRARY · V{recipe.version}
             {editor ? ` · EDITED BY ${editor}` : ""}
             {updated ? ` · ${DATE.format(new Date(updated))}` : ""}
-            {ctx ? (
-              <>
-                <button type="button" onClick={() => setHistoryOpen(true)} className={FOOTER_ACTION}>
-                  Version history
-                </button>
-                {recipe.status !== "trashed" ? (
-                  <>
-                    <Link to="/recipes/$id/edit" params={{ id }} className={FOOTER_ACTION}>
-                      Edit
-                    </Link>
-                    <button type="button" onClick={() => setConfirmDelete(true)} className={FOOTER_ACTION}>
-                      Delete
-                    </button>
-                  </>
-                ) : null}
-              </>
-            ) : null}
           </span>
+          {ctx ? (
+            <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <button type="button" onClick={() => setHistoryOpen(true)} className={FOOTER_ACTION}>
+                Version history
+              </button>
+              {recipe.status !== "trashed" ? (
+                <>
+                  <Link to="/recipes/$id/edit" params={{ id }} className={FOOTER_ACTION}>
+                    Edit
+                  </Link>
+                  <button type="button" onClick={() => setConfirmDelete(true)} className={FOOTER_ACTION}>
+                    Delete
+                  </button>
+                </>
+              ) : null}
+            </span>
+          ) : null}
           {!ctx ? (
             <span className="normal-case">
               Shared from Solving Food. <Link to="/sign-in" className="font-extrabold text-ink">Sign in</Link> to save it, add notes, or plan it.
@@ -468,7 +468,7 @@ export function RecipeDetail({
 }
 
 /** The text actions under the recipe (Version history · Edit · Delete): underlined links, 24 px tall hit targets. */
-const FOOTER_ACTION = "inline-flex min-h-6 cursor-pointer items-center bg-transparent p-0 font-sans text-[0.6875rem] font-extrabold text-ink normal-case underline";
+const FOOTER_ACTION = "inline-flex min-h-6 cursor-pointer items-center bg-transparent p-0 font-sans text-[0.8125rem] font-extrabold text-ink normal-case underline";
 
 function timerLabel(s: number): string {
   if (s < 60) return `${s} SEC`;
