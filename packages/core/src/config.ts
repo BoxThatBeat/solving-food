@@ -17,8 +17,9 @@ export const CURRENCY = "CAD";
 export const DEFAULT_HOUSEHOLD_NAME = "Home";
 
 /**
- * PC Express store for prices (R6.22): Loblaws Greenbank Road, Ottawa.
- * Placeholder until M5 looks the real store ID up with `pcxSearchStores` and replaces this constant.
+ * PC Express store for prices (R6.22): Loblaws Greenbank Road, Ottawa. A placeholder ID: the PC Express functions
+ * resolve it by name with the store search on first use and cache the real ID (functions/src/pcx/client.ts), so
+ * households keep working whatever the real ID is. A household that picks a store in Settings stores the real ID.
  */
 export const DEFAULT_PCX_STORE_ID = "loblaws-greenbank-road";
 

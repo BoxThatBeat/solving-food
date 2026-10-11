@@ -107,7 +107,11 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Timer callables (`scheduleTimer`, `cancelTimer`, M3) | counted in the 2M above | one per timer start, pause, adjust, cancel: < 3,000 / month | — |
 | Cloud Tasks (queue `timers`, created by the `timers` task function's deploy, M3) | 1M operations / month | < 2,000 (cooking timers: enqueue + delete) | 500× |
 | Cloud Messaging (web push) | free | < 2,000 pushes / month | — |
-| Secret Manager | 6 active secret versions, 10,000 accesses / month | 2 secrets (PC Express credentials), ~500 accesses | 20× |
+| Secret Manager | 6 active secret versions, 10,000 accesses / month | 2 secrets (PC Express credentials), read when an instance of `maintenance` or a PC Express callable starts: < 500 accesses / month. Bound only once `PCX_ENABLED=true` (M5) | 20× |
+| PC Express callables (`pcxSearchStores`, `pcxSearchProducts`, `pcxStatus`, M5) | counted in the 2M above | Settings → Stores / Brands only: < 300 / month; searches are capped at 30 per member per hour (`pcxRate/{uid}`: 1 read + 1 write each) | — |
+| Outbound requests from functions (PC Express, M5) | Cloud Run egress to the internet: 1 GiB / month free (North America) | one or two small JSON requests per search, plus one per mapped product per week (~50): < 2,000 requests, < 50 MB / month | 20× |
+| Price writes (M5) | in the 20,000 writes / day | ≤ 12 per product search (each result's price) + one per mapped product per week; prices nobody refreshed for 60 days are deleted weekly | — |
+| Suggestions and optimiser (M5) | no functions | client-only, in Web Workers; the scoring snapshot reuses the plan model's listeners plus cook events (shared with History) and `prices` at the household's store | — |
 | Cloud Build (function deploys) | 2,500 build-minutes / month | ~10 deploys × ~2 min | 100× |
 | Artifact Registry | 0.5 GB storage | one image per function; cleanup policy deletes images older than 1 day | — |
 | Cloud Run (2nd gen functions run on it) | 2M requests, 180k vCPU-s / month | same as Functions invocations; 256 MiB, max 2 instances | 200× |
@@ -198,6 +202,12 @@ meals/{mealId}                                    // SAVED meals only (R5.2); un
 
 prices/{pcxStoreId}_{productCode}                 // PC Express price at one store
   productName, priceCents, packAmount, packMeasure, pcxStoreId, productCode, fetchedAt
+                                                  // as built (M5): keyed by the store ID the household stores (the
+                                                  // default placeholder included), written by the product search and the
+                                                  // weekly refresh; deleted after 60 days without a refresh
+pcxSession/state                                  // function-only (M5): token cache, resolved default store ID, last
+                                                  // error, consecutive refresh failures
+pcxRate/{uid}                                     // function-only (M5): PC Express searches this hour
 
 users/{uid}/notifications/{id}                    // bottom-banner notifications (§12)
   kind: "info"|"success"|"error", message, link?, createdAt, dismissedAt?
@@ -217,6 +227,7 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
                                  defaultServings,                          // plan items are scaled to this (R11.12)
                                  plannedMealTypes: ("breakfast"|"lunch"|"dinner")[],   // default all three (R11.13)
                                  pcxStoreId,                               // PC Express store for prices; default Loblaws Greenbank Road
+                                 pcxStoreName?,                            // as built (M5): the picked store's name
                                  defaultStoreId,                           // store for items no mapping or rule sends elsewhere (§8);
                                                                            // set with the default stores (M2)
                                  currentPeriodId, settings: { scoreWeights{}, tools[],
@@ -239,7 +250,8 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
   notes/{recipeId}               text, updatedBy                            // household's recipe notes
   stats/{type_targetId}          timesCooked, lastCookedAt, ratingSum, ratingCount   // function-maintained
 
-  periods/{periodId}             start, end, budgetCents                    // snapshot at creation; follows a budget change
+  periods/{periodId}             start, end, budgetCents,                   // snapshot at creation; follows a budget change
+                                 dismissedLots?                            // (M5) lot IDs whose expiry alert was dismissed
                                                                            // made in Settings during the period. ID = local
                                                                            // start date ("2026-10-05"), so rollovers are idempotent
   planItems/{itemId}             periodId, kind: "meal"|"leftover", mealType, servings,
@@ -450,6 +462,25 @@ score(r) = Σ wᵢ · fᵢ(r, plan, supply)     each fᵢ ∈ [0, 1]
 
 The **Suggested sort** (§3 of the PRD) applies the same scoring to any filtered list. Weights and presets are stored in `households/{hid}.settings.scoreWeights`.
 
+**As built (M5):** `packages/core/src/scoring/` (factors, weights, presets) runs in `apps/web/src/workers/scoring.worker.ts`
+on a snapshot of the household (plan, projected supply, spare expiring supply, stats, favourites, cook events of the last
+four periods, preferences, tools, protein goals, prices), debounced 300 ms; the engine only runs while a page shows
+scores. Weights are 0–5 per factor (Balanced is the default; presets from the prototype: Use it up, Cheap week,
+Adventurous). Ranking uses `raw = Σ w·f(raising) − Σ w·f(lowering)`, monotone in every weight; the card shows
+`100 · raw / Σ w(raising)`, clamped. Details: expiryUrgency = Σ (share of the spare expiring amount the recipe uses) ×
+1/(1 + daysLeft/3), where "spare" is what planned meals won't use (FEFO), within the period or the next four days;
+rating is Bayesian (as if two people rated it 6); historicalPref = (1 − e^(−made/5)) × (0.4 + 0.6 e^(−days/120)) + 0.4
+for a favourite; variety is half recipe novelty over four periods and a quarter each for the cuisine's and protein's
+share of recent cooks; preferences = likes matched (0, 0.6, 0.8, 1); cost = marginal cost / (a quarter of the budget
+left), 1 when over budget; sameProtein/sameCuisine = other planned meals with it / 2; recentlyCooked = 1 within a week,
+0 after three; a recipe with nothing tracked counts half missing. Missing kitchen tools (when tools are set), dislikes,
+and diets (vegetarian, vegan, pescatarian, gluten-free, dairy-free, nut-free, no pork, no shellfish; by main protein,
+ingredient category, and ingredient ID) are hard filters: never suggested or offered to the optimiser, and last in a
+Suggested sort. Likes and dislikes are typed strings (`cuisine:`, `protein:`, `ingredient:`, `text:`). "Why" chips: the
+expiry factor first when it counts, then the strongest raising factors (two in all), and the strongest lowering one.
+Collections also sort by **Expiring first** and filter **Uses expiring**; a saved meal or plan item scores as the mean
+of its recipes.
+
 ### Expiry badges & alerts
 
 For each planned item, the client finds the earliest-expiring lot among its ingredients that the item would use, and shows a badge when it expires within the period (R6.7). Supply expiring with no planned use raises an alert with suggestions sorted by `expiryUrgency` (R6.13).
@@ -464,9 +495,19 @@ For each planned item, the client finds the earliest-expiring lot among its ingr
 
 An optional **"meets protein goal"** toggle turns the protein goal into a hard filter for the optimiser.
 
+**As built (M5):** `packages/core/src/optimiser.ts` in `apps/web/src/workers/optimiser.worker.ts`. Candidates: the meal
+type's recipes (untagged ones count as dinners), not planned, not blocked, each under the budget alone, the best 80 by
+score. Set score = Σ score/100 + 0.08 per shared ingredient (up to 4) − 0.12 per repeated cuisine or protein − 0.25 ×
+cost/budget; caps default to ⌈n/2⌉ per cuisine and per protein ("other" and "none" uncapped); cost = the grocery
+builder's marginal cost of the set on top of the plan (`marginalCostFn`: shared packs are bought once). Each attempt
+leaves out half of every shown set at random, so Next finds genuinely different sets; the first call makes 40 attempts
+before showing anything, every call has a 2.5 s budget, and 200 fruitless attempts in a row end the search. Relax
+options: +$10, one more per cuisine/protein, any protein. Shown as a card on the Plan page (as the prototype draws it).
+Accept writes one plan item per recipe in a batch.
+
 ### Protein summary
 
-The Plan page shows, for each meal type, the average `proteinPerServingG` of the planned items next to the household goal (R6.17). This is computed on the client.
+The Plan page shows, for each meal type, the average `proteinPerServingG` of the planned items next to the household goal (R6.17). This is computed on the client. As built (M5): a bar per meal type (accent at or above the goal, peach below); goals are set in Settings → Preferences with an on/off switch each (a missing key is "off").
 
 ---
 
@@ -519,6 +560,24 @@ PC Express has **no official public API**. Third-party scrapers exist, but they'
 1. A **weekly scheduled maintenance function** (the project's one Cloud Scheduler job, shared with the trash purge in §4.4) collects every distinct `(pcxStoreId, productCode)` pair across households and refreshes `prices/{pcxStoreId}_{productCode}`.
 2. Prices are resolved in this order: **live price** for the household's store (fetched ≤ 14 days ago) → **`data/price-estimates.json`** (per-ingredient price of a pack: `priceCents`, `packAmount`, `packMeasure`, plus a derived `centsPerUnit`) → unknown. Unknown prices count as $0, and the item is marked "price unknown" on the meter. The estimates are bundled into the web app (no Firestore reads, works offline); `pnpm prices:check` keeps them complete for the seed.
 3. If a fetch or sign-in fails, the function logs it, leaves old prices in place, and posts an error notification to the **project owner**, whose uid is set in the function's config (`OWNER_UID` parameter). The app falls back to estimates automatically as prices age.
+
+**As built (M5):** `functions/src/pcx/`: `endpoints.ts` (URLs, headers, defensive response parsing; the public web API
+key and an optional sign-in URL are non-secret config in `functions/.env`), `client.ts` (sign-in → token in memory and
+`pcxSession/state`; a failed sign-in is reported and requests go with the API key alone; the default store placeholder
+is resolved by searching for "Greenbank" once and cached), `stub.ts` (fixtures and failure modes, used under the
+emulator and in tests), `index.ts` (callables and `refreshPrices`). The secrets are bound only when `PCX_ENABLED=true`
+(a deploy that names a missing secret fails); otherwise everything answers "not connected" and estimates are used.
+The product search writes each result's price (with a readable pack) to `prices/*`, so a picked product is priced at
+once; the weekly refresh walks every household's mapped products, keeps old prices on failure, notifies the owner, and
+logs `pcx refresh failed twice` on a second bad week in a row (the log-based alert, SETUP.md). The Loblaws Greenbank
+Road store ID is not committed: it is resolved at runtime (deviation from "kept in `packages/core` config"). The budget
+meter shows the source mix ("3 live · 9 estimated · 1 price unknown"); brand rows show the live price and its age.
+
+**Staples cadence as built (M5):** `packages/core/src/cadence.ts`. Prompts are for staples and free-use ingredients
+only, at most one at a time (most overdue first), not for anything already on the draft, the plan lines, or an
+ordered list. Yes adds a `cadence_<ingredientId>` line (source `cadence`) to the draft; Not yet sends a `snoozeCadence`
+command (cadence is function-only) for a quarter interval, at least a day; the next purchase clears the snooze. Shown on
+the Grocery and Plan pages.
 
 ---
 

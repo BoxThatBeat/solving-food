@@ -2,7 +2,7 @@
 
 > Everything here is **non-secret** (the Firebase web config is shipped to browsers by design).
 > Secrets (PC Express credentials) live only in Secret Manager; see "Secrets" below.
-> Last verified: 2026-10-10 (M4)
+> Last verified: 2026-10-10 (M5)
 
 ## Decision: one project, no dev
 
@@ -156,6 +156,39 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   pick a display name, and see "Join Silbrass Pvt".
 - **Backups:** Settings → Data → Download household data (one Firestore read per document; the page shows an estimate).
   There are still no automatic backups.
+
+## M5 operations (2026-10-10)
+
+- **New functions:** callables `pcxSearchStores`, `pcxSearchProducts`, `pcxStatus` (members only, 30 searches per
+  member per hour in `pcxRate/{uid}`). The weekly `maintenance` job gained the PC Express price refresh (still the one
+  Cloud Scheduler job). New command type `snoozeCadence` ("Not yet" on an "Are you out of …?" prompt).
+- **Firestore:** `prices/{pcxStoreId}_{productCode}` (read by allowlisted users, written by functions), `pcxSession/state`
+  and `pcxRate/{uid}` (function-only: token cache, health, rate limits). Periods may carry `dismissedLots`; households may
+  carry `pcxStoreName`. No new indexes.
+- **PC Express is off until the owner switches it on** (the secrets did not exist when M5 was deployed; checked with
+  `firebase functions:secrets:get PCX_EMAIL`, which answered 404). Until then the store and product searches say
+  "PC Express not connected", the weekly refresh is skipped, and every price is the bundled estimate. To connect:
+  1. `firebase functions:secrets:set PCX_EMAIL --project solvingfood` and `… PCX_PASSWORD` (the PC Express account
+     `buitenwerfa@gmail.com`).
+  2. In `functions/.env` set `PCX_ENABLED=true` and `PCX_API_KEY=<the x-apikey header the PC Express website sends>`
+     (public, not a secret: open https://www.loblaws.ca, search for anything, and copy the `x-apikey` request header of a
+     `pcx-bff` call from the browser dev tools). Optionally `PCX_SIGNIN_URL` for a token endpoint; without it requests
+     go with the API key only. Commit and deploy (`firebase deploy --only functions`). The deploy binds the two secrets
+     to `maintenance` and the three callables and grants their service account access.
+  3. Settings → Stores → PC Express store: search "Greenbank" and pick Loblaws Greenbank Road (the default is resolved by
+     name at runtime and cached in `pcxSession/state.defaultStoreId`), then link products in Settings → Brands.
+  The endpoints in `functions/src/pcx/endpoints.ts` follow the website as publicly documented and were never called from
+  this project (tests use the stub); if the first searches fail, that file is the one to fix.
+- **Price refresh alert (owner, Cloud console):** Logging → Log-based metrics → create a counter on
+  `resource.type="cloud_run_revision" AND jsonPayload.message="pcx refresh failed twice"` (or `textPayload:"pcx refresh
+  failed twice"`), then Monitoring → Alerting → a policy on that metric > 0 that emails the owner. Each failed refresh
+  also posts an error banner to the owner (`OWNER_UID` param, default the owner's uid above).
+- **Emulators:** the PC Express functions always use the stub under the emulator. Switch its failure modes with a doc
+  `_stubPcx/config` (or `_stubPcx/{hid}` for one household): `{ mode: "ok" | "notConfigured" | "signInFails" | "down" |
+  "priceFails" }`; `{ prices: { "<code>": dollars } }` overrides a price.
+- **Scoring data:** the scoring and optimiser workers bundle the ingredient seed (`data/ingredients/*.json`) for
+  categories, conversions, and pack sizes; ingredients created in the app are known to them once a planned recipe or
+  supply loads them.
 
 ## CI/CD (GitHub Actions)
 
