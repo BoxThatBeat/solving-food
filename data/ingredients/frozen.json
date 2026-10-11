@@ -17,7 +17,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 100
+    }
   },
   {
     "id": "frozen-pea",
@@ -38,7 +41,10 @@
     "freezable": true,
     "isStaple": true,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 80
+    }
   },
   {
     "id": "frozen-corn",
@@ -58,7 +64,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 80
+    }
   },
   {
     "id": "frozen-mixed-vegetable",
@@ -78,7 +87,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 100
+    }
   },
   {
     "id": "frozen-spinach",
@@ -138,7 +150,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 125
+    }
   },
   {
     "id": "frozen-stir-fry-vegetable",
@@ -158,7 +173,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 100
+    }
   },
   {
     "id": "edamame",
@@ -178,7 +196,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 75
+    }
   },
   {
     "id": "frozen-mixed-berry",
@@ -382,7 +403,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 150
+    }
   },
   {
     "id": "hash-brown",
@@ -402,7 +426,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 100
+    }
   },
   {
     "id": "frozen-pizza",
@@ -583,5 +610,93 @@
     "isStaple": false,
     "freeUse": false,
     "needsReview": false
+  },
+  {
+    "id": "sweet-potato-fry",
+    "name": "sweet potato fries",
+    "aliases": ["frozen sweet potato fries", "sweet potato fry"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 2,
+    "shelfLifeDays": {
+      "freezer": 365
+    },
+    "defaultPackAmount": 567,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false,
+    "side": {
+      "portion": 150
+    }
+  },
+  {
+    "id": "tater-tot",
+    "name": "tater tots",
+    "aliases": ["frozen tater tots", "potato tots", "tots"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 2.5,
+    "shelfLifeDays": {
+      "freezer": 365
+    },
+    "defaultPackAmount": 907,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false,
+    "side": {
+      "portion": 120
+    }
+  },
+  {
+    "id": "onion-ring",
+    "name": "onion rings",
+    "aliases": ["frozen onion rings", "battered onion rings"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 4,
+    "shelfLifeDays": {
+      "freezer": 365
+    },
+    "defaultPackAmount": 400,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false,
+    "side": {
+      "portion": 80
+    }
+  },
+  {
+    "id": "garlic-bread",
+    "name": "garlic bread",
+    "aliases": ["frozen garlic bread", "garlic toast", "texas toast"],
+    "category": "frozen",
+    "defaultLocation": "freezer",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 8,
+    "shelfLifeDays": {
+      "freezer": 180
+    },
+    "defaultPackAmount": 350,
+    "defaultPackMeasure": "weight",
+    "freezable": true,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false,
+    "side": {
+      "portion": 75
+    }
   }
 ]

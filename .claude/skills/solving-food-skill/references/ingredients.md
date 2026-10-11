@@ -2,7 +2,7 @@
 
 # Ingredient names the app already knows
 
-475 ingredients. Use one of these names (or an alias in brackets) for the `@ingredient` token whenever it
+480 ingredients. Use one of these names (or an alias in brackets) for the `@ingredient` token whenever it
 means the same thing; the importer matches names and aliases, ignoring case and plurals. A name that matches nothing
 creates a new ingredient flagged for review, which is fine for genuinely new items but should be rare. Put
 preparation and descriptors outside the token: `@garlic{2%cloves}, minced`, not `@minced garlic{2%cloves}`.
@@ -97,6 +97,7 @@ preparation and descriptors outside the token: `@garlic{2%cloves}, minced`, not 
 - roma tomato (plum tomato)
 - romaine lettuce (romaine, romaine heart, romaine lettuce heart, chopped romaine)
 - rutabaga (swede)
+- salad kit (bagged salad kit, caesar salad kit, chopped salad kit)
 - shallot
 - snow peas (snow pea pod)
 - spaghetti squash
@@ -312,7 +313,7 @@ preparation and descriptors outside the token: `@garlic{2%cloves}, minced`, not 
 - tahini (sesame paste, tahini paste)
 - tomato paste (canned tomato paste)
 - tomato sauce (passata, tomato passata, canned tomato sauce, strained tomatoes)
-- tortilla chips (corn tortilla chips, nacho chips)
+- tortilla chips (corn tortilla chips, nacho chips, corn chips)
 - vegetable broth (vegetable stock, veggie broth, sodium reduced vegetable broth)
 - vegetable oil (oil, cooking oil, neutral oil, vegetable cooking oil, neutral cooking oil)
 - walnuts (walnut halves, chopped walnuts, walnut pieces)
@@ -494,11 +495,15 @@ preparation and descriptors outside the token: `@garlic{2%cloves}, minced`, not 
 - frozen stir fry vegetables (stir fry vegetables, frozen stir-fry mix, stir fry vegetable mix)
 - frozen strawberries (frozen whole strawberries)
 - frozen waffles (eggo waffles, toaster waffles)
+- garlic bread (frozen garlic bread, garlic toast, texas toast)
 - hash browns (frozen hash browns, shredded hash browns, hash brown patties)
 - ice cream (vanilla ice cream, chocolate ice cream)
+- onion rings (frozen onion rings, battered onion rings)
 - perogies (frozen perogies, pierogi, pierogies, cheddar perogies)
 - pie shell (frozen pie crust, pie crust, deep dish pie shell, frozen pie shell)
 - puff pastry (frozen puff pastry, puff pastry sheet)
+- sweet potato fries (frozen sweet potato fries, sweet potato fry)
+- tater tots (frozen tater tots, potato tots, tots)
 - whipped topping (frozen whipped topping, cool whip)
 
 ## beverages

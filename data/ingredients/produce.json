@@ -1667,7 +1667,10 @@
     "freezable": false,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 80
+    }
   },
   {
     "id": "red-bell-pepper",
@@ -2262,5 +2265,27 @@
     "isStaple": false,
     "freeUse": false,
     "needsReview": false
+  },
+  {
+    "id": "salad-kit",
+    "name": "salad kit",
+    "aliases": ["bagged salad kit", "caesar salad kit", "chopped salad kit"],
+    "category": "produce",
+    "defaultLocation": "fridge",
+    "allowedMeasures": ["weight"],
+    "canonicalUnit": "g",
+    "proteinPer100g": 3,
+    "shelfLifeDays": {
+      "fridge": 5
+    },
+    "defaultPackAmount": 300,
+    "defaultPackMeasure": "weight",
+    "freezable": false,
+    "isStaple": false,
+    "freeUse": false,
+    "needsReview": false,
+    "side": {
+      "portion": 100
+    }
   }
 ]

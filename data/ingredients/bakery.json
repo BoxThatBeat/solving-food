@@ -69,7 +69,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 70
+    }
   },
   {
     "id": "sourdough-bread",
@@ -90,7 +93,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 80
+    }
   },
   {
     "id": "baguette",
@@ -111,7 +117,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 80
+    }
   },
   {
     "id": "hamburger-bun",
@@ -132,7 +141,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 55
+    }
   },
   {
     "id": "hot-dog-bun",
@@ -153,7 +165,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 45
+    }
   },
   {
     "id": "dinner-roll",
@@ -174,7 +189,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 35
+    }
   },
   {
     "id": "flour-tortilla",
@@ -203,7 +221,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 100
+    }
   },
   {
     "id": "whole-wheat-tortilla",
@@ -245,7 +266,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 78
+    }
   },
   {
     "id": "pita",
@@ -266,7 +290,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 60
+    }
   },
   {
     "id": "naan",
@@ -287,7 +314,10 @@
     "freezable": true,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 90
+    }
   },
   {
     "id": "english-muffin",

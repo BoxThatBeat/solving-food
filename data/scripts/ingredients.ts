@@ -62,6 +62,12 @@ export function validateIngredients(items: SeedIngredient[]): string[] {
     if (i.isStaple && !i.defaultCadenceDays) problems.push(`${where}: staples need defaultCadenceDays`);
     if (i.defaultPackMeasure && !i.allowedMeasures.includes(i.defaultPackMeasure)) problems.push(`${where}: pack measure not allowed`);
     if ((i.defaultPackAmount === undefined) !== (i.defaultPackMeasure === undefined)) problems.push(`${where}: pack amount and measure go together`);
+    // Sides (R5.9, R5.10): bought in packs, tracked (so never free-use), a positive per-person portion.
+    if (i.side) {
+      if (!(i.side.portion > 0)) problems.push(`${where}: side portion must be positive`);
+      if (!i.defaultPackAmount) problems.push(`${where}: a side needs a default pack`);
+      if (i.freeUse) problems.push(`${where}: a free-use ingredient can't be a side`);
+    }
   }
   if (items.length < MIN_INGREDIENTS) problems.push(`only ${items.length} ingredients; M1 ships at least ${MIN_INGREDIENTS}`);
   return problems;

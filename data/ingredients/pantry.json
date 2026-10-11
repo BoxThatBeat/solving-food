@@ -1383,12 +1383,15 @@
     "freezable": false,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 30
+    }
   },
   {
     "id": "tortilla-chip",
     "name": "tortilla chips",
-    "aliases": ["corn tortilla chips", "nacho chips"],
+    "aliases": ["corn tortilla chips", "nacho chips", "corn chips"],
     "category": "pantry",
     "defaultLocation": "pantry",
     "allowedMeasures": ["weight"],
@@ -1402,7 +1405,10 @@
     "freezable": false,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 50
+    }
   },
   {
     "id": "potato-chip",
@@ -1421,7 +1427,10 @@
     "freezable": false,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 50
+    }
   },
   {
     "id": "popcorn-kernel",
@@ -1482,7 +1491,10 @@
     "freezable": false,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 60
+    }
   },
   {
     "id": "protein-powder",

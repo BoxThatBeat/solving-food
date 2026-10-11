@@ -23,7 +23,10 @@
     "freezable": false,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 75
+    }
   },
   {
     "id": "jasmine-rice",
@@ -44,7 +47,10 @@
     "freezable": false,
     "isStaple": true,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 75
+    }
   },
   {
     "id": "basmati-rice",
@@ -64,7 +70,10 @@
     "freezable": false,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 75
+    }
   },
   {
     "id": "brown-rice",
@@ -84,7 +93,10 @@
     "freezable": false,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 75
+    }
   },
   {
     "id": "arborio-rice",
@@ -145,7 +157,10 @@
     "freezable": false,
     "isStaple": true,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 60
+    }
   },
   {
     "id": "couscous",
@@ -165,7 +180,10 @@
     "freezable": false,
     "isStaple": false,
     "freeUse": false,
-    "needsReview": false
+    "needsReview": false,
+    "side": {
+      "portion": 60
+    }
   },
   {
     "id": "pearl-barley",
