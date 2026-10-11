@@ -15,6 +15,8 @@ import { useAllIngredients } from "@/data/ingredients";
 import { setMealFavourite, useMeals, usePlanItems } from "@/data/plan";
 import { useRecipeIndex } from "@/search/useRecipeSearch";
 import { useSuggestions } from "@/data/suggestions";
+import { useSettling } from "@/lib/useSettling";
+import { MealCardSkeleton, SettlingGrid } from "@/components/SettlingGrid";
 
 export const Route = createFileRoute("/_app/meals/")({
   validateSearch: (s) => collectionSearchSchema.parse(s),
@@ -46,6 +48,12 @@ function MealsPage() {
   }, [rows, search.q, byId]);
   const result = React.useMemo(() => applyCollection(rows, search, factsOf, matches), [rows, search, factsOf, matches]);
   const tags = React.useMemo(() => tagCounts(rows), [rows]);
+  // Skeleton cards while a re-sort settles (M7), as on Recipes.
+  const scoreSort = (!search.sort && !search.q) || search.sort === "expiry";
+  const resorting = useSettling(meals.docs ? result.items.map((r) => r.id).join(",") : "", {
+    waiting: !!meals.docs && rows.length > 0 && scoreSort && suggestions.ranked === null,
+    quietKey: search.q ?? "",
+  });
   const onSearchChange = React.useCallback(
     (next: CollectionSearch, opts?: { replace?: boolean }) => void navigate({ to: "/meals", search: toSearchParams(next) as never, replace: opts?.replace ?? false }),
     [navigate],
@@ -96,9 +104,15 @@ function MealsPage() {
         ) : meals.docs && result.items.length === 0 ? (
           <EmptyState>No meals match.</EmptyState>
         ) : (
-          <ul className="m-0 grid list-none grid-cols-1 gap-3.5 p-0 md:grid-cols-[repeat(auto-fill,minmax(20rem,1fr))]" aria-label="Saved meals">
+          <SettlingGrid
+            busy={resorting}
+            label="Saved meals"
+            count={result.items.length || 3}
+            skeleton={<MealCardSkeleton />}
+            className="m-0 grid list-none grid-cols-1 gap-3.5 p-0 md:grid-cols-[repeat(auto-fill,minmax(20rem,1fr))]"
+          >
             {result.items.map((r) => (
-              <li key={r.id} className="min-w-0">
+              <li key={r.id} className="min-w-0" data-card-id={r.id}>
                 <MealCard
                   row={rows.find((x) => x.id === r.id)!}
                   sides={sidesOf(r.id)}
@@ -111,7 +125,7 @@ function MealsPage() {
                 />
               </li>
             ))}
-          </ul>
+          </SettlingGrid>
         )}
       </CollectionView>
     </PageBody>

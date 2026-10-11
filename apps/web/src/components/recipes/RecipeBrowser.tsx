@@ -24,6 +24,8 @@ import { usePlanModel } from "@/data/planModel";
 import { DuplicateReviewSheet } from "./DuplicateReview";
 import { useCreateMeal } from "@/components/plan/plan-sheet-context";
 import { useSuggestions } from "@/data/suggestions";
+import { useSettling } from "@/lib/useSettling";
+import { RecipeCardSkeleton, SettlingGrid } from "@/components/SettlingGrid";
 
 export function RecipeBrowser({
   search,
@@ -72,6 +74,14 @@ export function RecipeBrowser({
   const fav = (id: string, title: string, on: boolean) => {
     setFavourite(hh.id, id, on).catch(() => notify({ kind: "error", message: `Couldn't update favourite for ${title}` }));
   };
+
+  // Re-sorts show skeleton cards instead of re-flowing live ones (M7): while a score sort waits for its first scores,
+  // and briefly whenever the order changes (sort, filters, or new scores), but not while typing a search.
+  const scoreSort = (!search.sort && !search.q) || search.sort === "expiry";
+  const resorting = useSettling(summaries ? result.items.map((r) => r.id).join(",") : "", {
+    waiting: !!summaries && scoreSort && suggestions.ranked === null,
+    quietKey: search.q ?? "",
+  });
 
   const pendingCount = pending.docs?.length ?? 0;
   const sortLabel = SORT_LABELS[search.sort ?? "suggested"].toUpperCase();
@@ -151,19 +161,22 @@ export function RecipeBrowser({
           </button>
         </EmptyState>
       ) : (
-        <ul
+        <SettlingGrid
+          busy={resorting}
+          label="Recipes"
+          count={result.items.length || 6}
+          skeleton={<RecipeCardSkeleton />}
           className={cn(
             "m-0 grid list-none gap-x-3 gap-y-3.5 p-0",
             compact ? "grid-cols-2 xl:grid-cols-[repeat(auto-fill,minmax(13.75rem,1fr))]" : "grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(13.75rem,1fr))]",
           )}
-          aria-label="Recipes"
         >
           {result.items.map((r) => (
-            <li key={r.id} className="min-w-0">
+            <li key={r.id} className="min-w-0" data-card-id={r.id}>
               <RecipeCard recipe={r} facts={factsOf(r.id)} selected={r.id === selectedId} search={params} onFavourite={(on) => fav(r.id, r.title, on)} onPlan={openCreateMeal ? () => openCreateMeal({ recipeIds: [r.id] }) : undefined} />
             </li>
           ))}
-        </ul>
+        </SettlingGrid>
       )}
       <DuplicateReviewSheet open={!!reviewOpen} onOpenChange={setReview} />
     </CollectionView>

@@ -111,6 +111,38 @@ test.describe("filters and sorts", () => {
     expect(titles.indexOf("Garlic Rice and Chicken")).toBeLessThan(titles.indexOf("Homemade Cheeseburger Macaroni")); // 60 g vs 45 g
   });
 
+  test("re-sorting shows skeleton cards (no text, aria-busy) instead of moving live cards, then the sorted cards", { tag: ["@R4.2"] }, async ({ page, household: _ }) => {
+    const r = new RecipesPage(page);
+    await r.goto("?sort=name"); // the whole library: A–Z and Suggested never agree on its order
+    await expect(r.list.getByTestId("recipe-card").first()).toBeVisible();
+    // Record whether skeletons ever appear: they may only last the 150 ms minimum.
+    await r.list.evaluate((ul) => {
+      const w = window as unknown as { __skeleton?: { seen: boolean; busy: boolean; text: string } };
+      w.__skeleton = { seen: false, busy: false, text: "" };
+      new MutationObserver(() => {
+        const sk = ul.querySelectorAll("[data-testid=card-skeleton]");
+        if (sk.length) {
+          w.__skeleton!.seen = true;
+          w.__skeleton!.busy ||= ul.getAttribute("aria-busy") === "true";
+          w.__skeleton!.text += [...sk].map((e) => e.textContent).join("");
+        }
+      }).observe(ul, { childList: true, subtree: true, attributes: true });
+    });
+    const sheet = await r.openFilters();
+    await sheet.getByRole("button", { name: "Suggested", exact: true }).click();
+    await r.apply(sheet);
+    await expect(page).not.toHaveURL(/sort=name/);
+    await expect.poll(() => page.evaluate(() => (window as unknown as { __skeleton: { seen: boolean } }).__skeleton.seen)).toBe(true);
+    const seen = await page.evaluate(() => (window as unknown as { __skeleton: { busy: boolean; text: string } }).__skeleton);
+    expect(seen.busy).toBe(true);
+    expect(seen.text.trim()).toBe(""); // skeletons carry no text
+    // Then the live cards come back, sorted, and the list is no longer busy.
+    await r.settled();
+    await expect(r.list.getByTestId("card-skeleton")).toHaveCount(0);
+    await expect(r.list.getByTestId("recipe-card").first()).toBeVisible();
+    await expect(page.getByTestId("recipe-count")).toContainText("SUGGESTED");
+  });
+
   test("the Meals page uses the same search, filter, and sort component", { tag: ["@R4.7"] }, async ({ page, household: _ }) => {
     await page.goto("/meals");
     await expect(page.getByRole("searchbox", { name: "Search meals…" })).toBeVisible();
@@ -179,7 +211,8 @@ test.describe("favourites and cards", () => {
     await r.goto("?cuisine=greek");
     const tzatziki = r.card("Tzatziki Sauce");
     await expect(tzatziki).toContainText(/5 MIN · GREEK · 26 G PROTEIN/i); // uppercased by CSS
-    await expect(tzatziki).toContainText("NEVER COOKED HERE");
+    // Never cooked: no stats line at all (M7 review), not "never cooked" or "0×".
+    await expect(tzatziki).not.toContainText(/NEVER COOKED|MADE|0×/i);
     await expect(tzatziki.getByRole("img", { name: "Tzatziki Sauce" })).toBeVisible();
 
     await r.goto(`?q=${encodeURIComponent(title)}`);

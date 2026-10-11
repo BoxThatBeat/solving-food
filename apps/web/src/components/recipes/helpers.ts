@@ -39,8 +39,9 @@ export function srcSetFor(base: string): string {
 // Day first, as the prototype writes dates ("LAST 21 SEP").
 const SHORT_DATE = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
 
+/** "MADE 14× · LAST 21 SEP"; empty when the household has never cooked it (the card then shows no line, M7). */
 export function madeLine(f: HouseholdFacts): string {
-  if (!f.timesCooked) return "NEVER COOKED HERE";
+  if (!f.timesCooked) return "";
   const last = f.lastCookedAtMs ? ` · LAST ${SHORT_DATE.format(new Date(f.lastCookedAtMs)).toUpperCase()}` : "";
   return `MADE ${f.timesCooked}×${last}`;
 }

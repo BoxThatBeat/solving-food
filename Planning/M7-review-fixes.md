@@ -50,6 +50,17 @@ R8.13, R4.19, R4.21, R4.2.
       three links got a 24 px minimum height (WCAG 2.5.8 target size). Tests find it by role and name, so they're
       unchanged; the sharing test checks the .cook button is gone.
 
+### 4. Recipes page: no "never cooked" text; skeleton while re-sorting (R4.5, R4.2)
+- [x] Cards show no stats line for a never-cooked recipe (`madeLine()` returns ""); cooked ones keep "MADE n× · LAST
+      …". PRD R4.5 says so. The recipe page's "Never cooked in this household" stat stays (not a card).
+- [x] `useSettling()` + `<SettlingGrid>` on Recipes and Meals: skeleton cards (same size, no text, `aria-busy`) while
+      a score sort waits for its first scores (capped at 4 s) and for ≥ 150 ms after any re-order (sort, filters, new
+      scores re-ranking); typing a search re-orders without a skeleton. Keyboard focus on a card goes to the list
+      while busy and back to the same card after. Spec §12 updated.
+- [x] E2E (`recipes-browse.spec.ts`, @R4.2): switching A–Z → Suggested shows skeletons (aria-busy, no text), then the
+      sorted cards; the page object's `titles()` / `goto()` wait for the list to settle. The never-cooked card check
+      asserts no stats text.
+
 ## Deviations and assumptions
 
 - Imperial volumes that aren't kitchen measures (fl oz, pints, quarts, gallons) are treated like imperial weights:
@@ -59,3 +70,8 @@ R8.13, R4.19, R4.21, R4.2.
   `formatGrams()` would say `910 g`). Other magnitudes use `formatGrams()` rounding.
 - °C → °F rounds to the nearest 5 (`180°C` → `355°F`), as asked, not to oven-dial 25s.
 - Household notes (written by the household) are shown as typed; only the recipe's own notes are rewritten.
+- Item 2: the reported loss could not be reproduced and the hypothesis (drop-folder imports without `versions/1`) was
+  wrong; the fix hardens the history sheet against a cache-only result. If the owner still sees only the current
+  version, note the recipe's name: the live data says every recipe has all its versions.
+- Item 4: the skeleton is shown for re-orders on Recipes and Meals only; the Create meal sheet and Plan/History lists
+  keep re-ordering in place.

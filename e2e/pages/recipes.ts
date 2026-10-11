@@ -13,13 +13,19 @@ export class RecipesPage {
   card(title: string): Locator {
     return this.list.getByTestId("recipe-card").filter({ has: this.page.getByRole("heading", { name: title, exact: true }) });
   }
-  titles(): Promise<string[]> {
+  /** Card titles in order, once a re-sort has settled (skeleton cards while `aria-busy`, M7). */
+  async titles(): Promise<string[]> {
+    await this.settled();
     return this.list.getByRole("heading", { level: 3 }).allTextContents();
+  }
+  async settled(): Promise<void> {
+    await expect(this.list).not.toHaveAttribute("aria-busy", "true");
   }
 
   async goto(query = ""): Promise<void> {
     await this.page.goto(`/recipes${query}`);
     await expect(this.page.getByTestId("recipe-count")).not.toHaveText("LOADING…");
+    if (await this.list.count()) await this.settled();
   }
 
   async searchFor(q: string): Promise<void> {

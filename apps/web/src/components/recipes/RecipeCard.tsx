@@ -1,5 +1,5 @@
 // <RecipeCard> (Planning/M1 §3, PRD R4.5, R6.15): image, title, time, cuisine, protein per serving ("~" when an
-// ingredient lacks protein data), favourite toggle, the household's cook stats ("made n times", R4.5), and the
+// ingredient lacks protein data), favourite toggle, the household's cook stats ("made n times", R4.5; nothing when never cooked), and the
 // "can make" mark when supply left after the plan covers it (R4.3).
 // The card is a link; the favourite toggle sits beside it, not inside (no nested interactive elements).
 import { Link } from "@tanstack/react-router";
@@ -68,7 +68,7 @@ export function RecipeCard({
             {r.totalMin} MIN · {taxonomyLabel(r.cuisine)} · {protein === "—" ? "PROTEIN —" : `${protein} PROTEIN`}
           </span>
           <h3 className="m-0 text-[0.9375rem] leading-[1.15] font-extrabold text-pretty @[16rem]:text-[1.0625rem]">{r.title}</h3>
-          <span className="font-mono text-[0.625rem] font-semibold">{madeLine(facts)}</span>
+          {facts.timesCooked ? <span className="font-mono text-[0.625rem] font-semibold">{madeLine(facts)}</span> : null}
         </div>
       </Link>
       <button
