@@ -1,5 +1,5 @@
 // Recipe detail (TECHNICAL_SPECS §14.1 recipe-detail.spec.ts, M1 parts): what the page shows, amounts in the recipe's
-// wording plus metric only (R8.13), inline amounts in steps, servings scaling, the tools flag, and protein per serving. Supply badges are M3.
+// one unit system per amount (R8.13 v3), inline amounts in steps, servings scaling, the tools flag, and protein per serving. Supply badges are M3.
 import { adminDb } from "../fixtures/admin";
 import { makeRecipe, seedRecipeId, uniqueTitle } from "../fixtures/recipes";
 import { expect, test } from "../fixtures/test";
@@ -54,22 +54,23 @@ test("household notes save per household", { tag: ["@R4.8"] }, async ({ page, ho
   await expect(detail(page).getByLabel("HOUSEHOLD NOTES")).toHaveValue("Use the cast iron pan.");
 });
 
-test("amounts are shown in the recipe's wording with the metric conversion only, inline in the steps too", { tag: ["@R8.13", "@R4.11"] }, async ({ page, household: _ }) => {
+test("amounts show one unit system: imperial weights and pints convert to metric only, cups/spoons/counts as written, inline in the steps too", { tag: ["@R8.13", "@R4.11"] }, async ({ page, household: _ }) => {
   const id = await seedRecipeId("Roasted Salmon With Tomatoes");
   await page.goto(`/recipes/${id}`);
   const d = detail(page);
   const row = (name: string) => d.locator("section[aria-labelledby=ing-h] li").filter({ hasText: name });
-  await expect(row("Cherry tomatoes").getByTestId("ingredient-amount")).toHaveText(/^2 pints \(\d+ g\)$/);
-  await expect(row("Garlic").getByTestId("ingredient-amount")).toHaveText(/^3 cloves \(\d+ g\)$/);
-  await expect(row("Salmon fillet").getByTestId("ingredient-amount")).toHaveText(/^1 lb \(450 g\)$/);
+  await expect(row("Cherry tomatoes").getByTestId("ingredient-amount")).toHaveText(/^950 ml$/);
+  await expect(row("Garlic").getByTestId("ingredient-amount")).toHaveText(/^3 cloves$/);
+  await expect(row("Salmon fillet").getByTestId("ingredient-amount")).toHaveText(/^450 g$/);
   // No-amount ingredients are optional and say so.
   await expect(row("Kosher salt")).toContainText("OPTIONAL");
 
   // Steps: the ingredient's name with its amount right where it's used.
   const steps = d.locator("section[aria-labelledby=steps-h]");
-  // The recipe's wording first, then the metric conversion only: never an imperial conversion.
-  await expect(steps).toContainText(/salmon fillet\s*1 lb \(450 g\)/i);
-  await expect(steps).toContainText(/cherry tomatoes\s*2 pints \(600 g\)/i);
+  // One unit system per amount (R8.13 v3): the lb and pints are converted to metric only, never both.
+  await expect(steps).toContainText(/salmon fillet\s*450 g/i);
+  await expect(steps).toContainText(/cherry tomatoes\s*950 ml/i);
+  await expect(d.locator("section[aria-labelledby=ing-h]")).not.toContainText(/\b(lb|oz|pints?)\b/);
   await expect(d.locator("section[aria-labelledby=ing-h]")).not.toContainText(/\d (g|kg|ml|L) · [\d.<]+ ?(oz|lb)/);
   await expect(steps).not.toContainText(/\d (g|kg|ml|L) · [\d.<]+ ?(oz|lb)/);
 });
@@ -79,14 +80,14 @@ test("scaling servings updates every amount", { tag: ["@R4.13"] }, async ({ page
   await page.goto(`/recipes/${id}`);
   const d = detail(page);
   const rice = d.locator("section[aria-labelledby=ing-h] li").filter({ hasText: "Jasmine rice" }).getByTestId("ingredient-amount");
-  await expect(rice).toHaveText(/^1 cup \(/);
+  await expect(rice).toHaveText(/^1 cup$/);
   await expect(d.getByText("As written")).toBeVisible();
 
   await d.getByRole("button", { name: "More servings" }).click();
   await d.getByRole("button", { name: "More servings" }).click();
   await expect(d.getByLabel("Servings", { exact: true })).toHaveText("4");
   await expect(d.getByText("Scaled ×2 · amounts update")).toBeVisible();
-  await expect(rice).toHaveText(/^2 cups \(/);
+  await expect(rice).toHaveText(/^2 cups$/);
   await expect(d.locator("section[aria-labelledby=steps-h]")).toContainText(/jasmine rice\s*2 cups/i);
   await expect(d.locator("section[aria-labelledby=ing-h]")).toContainText("4 SERVINGS");
 
@@ -94,7 +95,7 @@ test("scaling servings updates every amount", { tag: ["@R4.13"] }, async ({ page
   await d.getByRole("button", { name: "Fewer servings" }).click();
   await d.getByRole("button", { name: "Fewer servings" }).click();
   await expect(d.getByLabel("Servings", { exact: true })).toHaveText("1");
-  await expect(rice).toHaveText(/^0\.5 cup|^½ cup/);
+  await expect(rice).toHaveText(/^½ cup$/);
 });
 
 test("tools: says when the household has none configured, and flags missing tools when it has", { tag: ["@R4.14"] }, async ({ page, household }) => {

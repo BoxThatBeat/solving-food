@@ -33,8 +33,8 @@ ordered, checkable tasks with the files they touch, the tests that prove them, a
 - Business logic goes in `packages/core` with unit tests; the web app and functions only call it.
 - Clients never write function-only collections (supply, stats, cookEvents, ratings, cadence).
 - Free tier: before adding any Firebase/GCP feature, update the §2 quota table in the spec.
-- Metric only wherever an amount is shown (R8.13, changed after M5): recipe pages show the recipe's wording plus
-  metric (`formatRecipeAmount()`), everything else metric only (`formatAmount()` / `formatCanonical()` from core).
-  Older milestone plans that say "metric + imperial" describe what was built then.
+- Units (R8.13 v3, changed in M7): recipe pages show one unit system per amount (`formatRecipeAmount()`: imperial
+  weights to metric only, cups/spoons as written) and Fahrenheit only (`fahrenheitOnly()`); everything else metric
+  only (`formatAmount()` / `formatCanonical()` from core). Older milestone plans describe the rule of their day.
 - Mobile-first, then tablet, 1080p, 4K. Every page must look intentional at 360 px and 3840 px.
 - The word is **Supply**, never inventory.

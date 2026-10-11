@@ -4,7 +4,7 @@ import {
   enterableMeasures,
   formatAmount,
   formatGrams,
-  fahrenheitToCelsius,
+  celsiusToFahrenheit,
   formatMl,
   formatOriginal,
   formatRecipeAmount,
@@ -14,7 +14,7 @@ import {
   toCanonical,
   unitLabel,
   UNITS,
-  withCelsius,
+  fahrenheitOnly,
   type ConvertibleIngredient,
 } from "./units";
 
@@ -155,19 +155,27 @@ describe("formatting (R8.13)", () => {
     expect(formatAmount(426, potato)).toBe("430 g");
     expect(formatAmount(2000, flour)).toBe("2.0 kg");
   });
-  it("recipe amounts: the recipe's wording plus metric only (spec examples)", () => {
-    expect(formatRecipeAmount(1, "cup", flour)).toBe("1 cup (125 g)");
-    expect(formatRecipeAmount(1, "cup", bayLeaf)).toBe("1 cup (235 ml)");
-    expect(formatRecipeAmount(1, "cup")).toBe("1 cup (235 ml)");
-    expect(formatRecipeAmount(8, "oz")).toBe("8 oz (225 g)");
-    expect(formatRecipeAmount(1.5, "lb", bayLeaf)).toBe("1.5 lb (680 g)");
-    expect(formatRecipeAmount(2, "pint", { allowedMeasures: ["count", "volume"], canonicalUnit: "count", unitWeightG: 17, densityGPerMl: 0.6 })).toBe("2 pints (570 g)");
-    expect(formatRecipeAmount(2, "fl oz")).toBe("2 fl oz (59 ml)");
-    expect(formatRecipeAmount(2, "count", potato)).toBe("2 (430 g)");
-    expect(formatRecipeAmount(2, "clove", garlic)).toBe("2 cloves (10 g)");
+  it("recipe amounts: one unit system per line, never both (R8.13 v3)", () => {
+    // Imperial weights convert to metric only.
+    expect(formatRecipeAmount(2, "lb")).toBe("900 g");
+    expect(formatRecipeAmount(1, "lb")).toBe("450 g");
+    expect(formatRecipeAmount(8, "oz")).toBe("225 g");
+    expect(formatRecipeAmount(1.5, "lb", bayLeaf)).toBe("675 g");
+    expect(formatRecipeAmount(4, "lb")).toBe("1.8 kg");
+    // Imperial volumes that aren't kitchen measures convert to ml / L only.
+    expect(formatRecipeAmount(2, "fl oz")).toBe("59 ml");
+    expect(formatRecipeAmount(2, "pint", { allowedMeasures: ["count", "volume"], canonicalUnit: "count", unitWeightG: 17, densityGPerMl: 0.6 })).toBe("950 ml");
+    expect(formatRecipeAmount(1, "quart")).toBe("950 ml");
+    expect(formatRecipeAmount(1, "gallon")).toBe("3.8 L");
+    // Kitchen measures read as written, no metric after them.
+    expect(formatRecipeAmount(1, "cup", flour)).toBe("1 cup");
+    expect(formatRecipeAmount(2, "cup", bayLeaf)).toBe("2 cups");
+    expect(formatRecipeAmount(2, "tbsp", milk)).toBe("2 tbsp");
+    expect(formatRecipeAmount(0.5, "tsp")).toBe("½ tsp");
+    // Counts, metric and vague amounts as written.
+    expect(formatRecipeAmount(2, "count", potato)).toBe("2");
+    expect(formatRecipeAmount(3, "clove", garlic)).toBe("3 cloves");
     expect(formatRecipeAmount(2, "count", bayLeaf)).toBe("2");
-    expect(formatRecipeAmount(2, "tbsp", milk)).toBe("2 tbsp (30 ml)");
-    expect(formatRecipeAmount(0.5, "tsp")).toBe("½ tsp (2.5 ml)");
     expect(formatRecipeAmount(250, "ml", milk)).toBe("250 ml");
     expect(formatRecipeAmount(1.5, "l")).toBe("1.5 L");
     expect(formatRecipeAmount(400, "g")).toBe("400 g");
@@ -175,21 +183,33 @@ describe("formatting (R8.13)", () => {
     expect(formatRecipeAmount(0, "to taste")).toBe("to taste");
     expect(formatRecipeAmount(0, "cup")).toBe("");
   });
-  it("the conversion after a recipe amount is never imperial", () => {
+  it("a recipe amount never shows two unit systems and never an imperial weight or non-kitchen volume", () => {
     const units = Object.keys(UNITS);
     fc.assert(
       fc.property(fc.double({ min: 0.01, max: 1e4, noNaN: true }), fc.constantFrom(...units), fc.constantFrom(flour, potato, milk, bayLeaf, garlic, undefined), (amount, measure, ing) => {
-        const conv = /\(([^)]*)\)$/.exec(formatRecipeAmount(amount, measure, ing))?.[1] ?? "";
-        expect(conv).not.toMatch(/\b(oz|lb|cups?|fl oz|pints?|quarts?|gallons?|tsp|tbsp)\b/);
+        const out = formatRecipeAmount(amount, measure, ing);
+        expect(out).not.toContain("(");
+        expect(out).not.toMatch(/\b(oz|lb|fl oz|pints?|quarts?|gallons?)\b/);
+        if (["cup", "tbsp", "tsp"].includes(measure)) expect(out).not.toMatch(/\b(g|kg|ml|L)\b/);
       }),
     );
   });
-  it("adds Celsius after Fahrenheit in recipe text", () => {
-    expect(fahrenheitToCelsius(350)).toBe(175);
-    expect(fahrenheitToCelsius(425)).toBe(220);
-    expect(withCelsius("Bake at 350°F for 20 min.")).toBe("Bake at 350°F (175°C) for 20 min.");
-    expect(withCelsius("Heat to 400 °F, or 450 degrees F")).toBe("Heat to 400 °F (205°C), or 450 degrees F (230°C)");
-    expect(withCelsius("Preheat to 200°C. Add 2 F-shaped pieces.")).toBe("Preheat to 200°C. Add 2 F-shaped pieces.");
+  it("scaling scales the shown amount", () => {
+    expect(formatRecipeAmount(2 * 2, "cup", flour)).toBe("4 cups");
+    expect(formatRecipeAmount(2 * 2, "lb")).toBe("1.8 kg");
+    expect(formatRecipeAmount(900 * 2, "g")).toBe("1800 g");
+  });
+  it("temperatures in recipe text are Fahrenheit only, never Celsius", () => {
+    expect(celsiusToFahrenheit(180)).toBe(355);
+    expect(celsiusToFahrenheit(200)).toBe(390);
+    expect(celsiusToFahrenheit(220)).toBe(430);
+    expect(fahrenheitOnly("Bake at 350°F for 20 min.")).toBe("Bake at 350°F for 20 min.");
+    expect(fahrenheitOnly("Preheat the oven to 220°C.")).toBe("Preheat the oven to 430°F.");
+    expect(fahrenheitOnly("Heat to 200 degrees C, or 180C")).toBe("Heat to 390°F, or 355°F");
+    expect(fahrenheitOnly("Bake in 350°F (175°C) oven")).toBe("Bake in 350°F oven");
+    expect(fahrenheitOnly("Roast at 180°C (350°F) until golden")).toBe("Roast at 350°F until golden");
+    expect(fahrenheitOnly("Add 2 C-shaped pieces and 3 cups water.")).toBe("Add 2 C-shaped pieces and 3 cups water.");
+    expect(fahrenheitOnly("Cook 10 min.")).toBe("Cook 10 min.");
   });
   it("count-only ingredients show the count", () => {
     expect(formatAmount(2, bayLeaf, { original: "2 bay leaves" })).toBe("2 bay leaves");

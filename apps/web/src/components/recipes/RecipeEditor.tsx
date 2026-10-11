@@ -506,7 +506,7 @@ export function RecipeEditor({
         <ol className="m-0 flex list-none flex-col gap-2 p-0">
           {prep.fields.map((f, k) => (
             <li key={f.id} className="flex items-center gap-2">
-              <Input {...register(`prepTasks.${k}.text`)} aria-label={`Prep task ${k + 1}`} placeholder="e.g. Preheat oven to 200°C" className="py-2 shadow-none" />
+              <Input {...register(`prepTasks.${k}.text`)} aria-label={`Prep task ${k + 1}`} placeholder="e.g. Preheat oven to 400°F" className="py-2 shadow-none" />
               <IconBtn label={`Remove prep task ${k + 1}`} onClick={() => prep.remove(k)}>
                 <Trash2 aria-hidden className="size-3.5" />
               </IconBtn>

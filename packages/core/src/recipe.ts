@@ -4,7 +4,7 @@
 import { z } from "zod";
 import { CUISINES, MAIN_PROTEINS, MEAL_TYPES } from "./taxonomy";
 import { recipeIngredientSchema, recipeStepSchema, prepTaskSchema, type RecipeDoc } from "./types";
-import { formatRecipeAmount, withCelsius, toCanonical, unitDef, type ConvertibleIngredient } from "./units";
+import { formatRecipeAmount, fahrenheitOnly, toCanonical, unitDef, type ConvertibleIngredient } from "./units";
 import { slugify } from "./names";
 
 export type RecipeIngredient = z.infer<typeof recipeIngredientSchema>;
@@ -190,7 +190,7 @@ export type StepSegment =
       lineId: string;
       /** The recipe's wording of the ingredient ("the butter"). */
       name: string;
-      /** Inline amount, the recipe's wording plus metric (R8.13): "30 g", "½ cup (120 g)", "2 tbsp (30 ml)". Empty when none. */
+      /** Inline amount, one unit system, see formatRecipeAmount (R8.13 v3): "30 g", "½ cup", "900 g". Empty when none. */
       amount: string;
     };
 
@@ -208,7 +208,7 @@ export function renderStep(
   let last = 0;
   for (const m of text.matchAll(PLACEHOLDER)) {
     const at = m.index ?? 0;
-    if (at > last) out.push({ kind: "text", text: withCelsius(text.slice(last, at)) });
+    if (at > last) out.push({ kind: "text", text: fahrenheitOnly(text.slice(last, at)) });
     last = at + m[0].length;
     const line = lines.find((l) => l.id === m[1]);
     if (!line) continue;
@@ -221,23 +221,23 @@ export function renderStep(
       amount: amount > 0 ? amountText(amount * factor, measure, line.ingredientId, lookup) : "",
     });
   }
-  if (last < text.length) out.push({ kind: "text", text: withCelsius(text.slice(last)) });
+  if (last < text.length) out.push({ kind: "text", text: fahrenheitOnly(text.slice(last)) });
   return out;
 }
 
-/** Plain-text step with inline amounts: "Add the butter (2 tbsp (30 ml)) and stir." */
+/** Plain-text step with inline amounts: "Add the butter (2 tbsp) and stir." */
 export function renderStepText(text: string, lines: readonly RecipeIngredient[], lookup: IngredientLookup, factor = 1): string {
   return renderStep(text, lines, lookup, factor)
     .map((s) => (s.kind === "text" ? s.text : s.amount ? `${s.name} (${s.amount})` : s.name))
     .join("");
 }
 
-/** An amount as recipe pages show it (R8.13): the recipe's wording plus metric, see `formatRecipeAmount()`. */
+/** An amount as recipe pages show it (R8.13): one unit system per line (v3), see `formatRecipeAmount()`. */
 export function amountText(amount: number, measure: string, ingredientId: string, lookup: IngredientLookup): string {
   return formatRecipeAmount(amount, measure, lookup(ingredientId));
 }
 
-/** An ingredient line for the list: { amount: "1 cup (125 g)", name: "flour" }. */
+/** An ingredient line for the list: { amount: "1 cup", name: "flour" }. */
 export function lineText(line: RecipeIngredient, lookup: IngredientLookup, factor = 1): { amount: string; name: string } {
   return {
     amount: line.amount > 0 || unitDef(line.measure).kind === "vague" ? amountText(line.amount * factor, line.measure, line.ingredientId, lookup) : "",

@@ -31,7 +31,8 @@ test("Copy link gives a link that opens for someone without an account, without 
   await expect(d.getByRole("img", { name: "Baked Feta Pasta" })).toBeVisible();
   await expect(d.locator("section[aria-labelledby=ing-h] li")).toHaveCount(8);
   await expect(d.locator("section[aria-labelledby=ing-h]")).toContainText("AMOUNT");
-  await expect(d.locator("section[aria-labelledby=ing-h]")).toContainText("8 oz (225 g)"); // feta, 8 oz: the recipe's wording plus metric only (R8.13)
+  await expect(d.locator("section[aria-labelledby=ing-h]")).toContainText("225 g"); // feta, 8 oz: converted to metric only (R8.13)
+  await expect(d.locator("section[aria-labelledby=ing-h]")).not.toContainText(/\boz\b/);
   await expect(d.locator("section[aria-labelledby=steps-h] ol > li")).toHaveCount(6);
   // No household data, no edit controls.
   await expect(v.getByText("Secret family tweak")).toHaveCount(0);

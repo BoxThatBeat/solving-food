@@ -108,9 +108,11 @@ URLs are blocked in the CLI; serve things over HTTP. Screenshots never go into t
 - `cuisine` and `mainProtein` come from `packages/core/taxonomy.ts` only. The Claude skill embeds the same lists.
 - Every user-facing PRD requirement has a Playwright test tagged with its ID (`@R6.5`). Add the tag when you
   add the test; `pnpm e2e:coverage` fails on untagged requirements.
-- UI: brutalist, Catppuccin, mobile-first, shadcn/ui + Tailwind. Only metric is displayed (PRD R8.13):
-  recipe pages show the recipe's wording plus the metric conversion (`1 cup flour (125 g)`), everything else is
-  metric only. Imperial is accepted as input, never shown.
+- UI: brutalist, Catppuccin, mobile-first, shadcn/ui + Tailwind. Units (PRD R8.13, rule v3): recipe pages show
+  one unit system per amount, never both: imperial weights and fl oz/pints/quarts/gallons convert to metric only
+  (`2 lb` → `900 g`), cups and spoons read as written with no metric (`1 cup flour`, `2 tbsp`), counts and metric as
+  written; temperatures are Fahrenheit only, never Celsius. Everything else (Supply, grocery, History, review) is
+  metric only, and cups/spoons still convert to grams for Supply.
 
 ## People
 

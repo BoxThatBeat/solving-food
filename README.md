@@ -37,7 +37,7 @@ and history, while the recipe library is shared by everyone.
 The core loop is short. You **plan** a period (a week by default) from recipes and saved meals, the app builds the
 **grocery list**, you order it and **confirm what arrived**, you **cook** from the step view, and you **review** the
 meal: what was really used, what's left over, how good it was. Each step feeds the next: the review corrects supply,
-supply shapes the next list, ratings and history shape suggestions. Amounts are shown in metric (recipes keep their own wording with the metric amount after it), and
+supply shapes the next list, ratings and history shape suggestions. Amounts are shown in metric (recipes show cups and spoons as written, convert pounds and ounces to metric, and give temperatures in Fahrenheit), and
 protein per serving is the one nutrient it tracks.
 
 Under the hood it is a React PWA on Firebase (Hosting, Auth, Firestore, Storage, Cloud Functions, push notifications),

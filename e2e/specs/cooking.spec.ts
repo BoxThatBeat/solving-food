@@ -16,13 +16,16 @@ test("mise en place lists the prep tasks, then step mode shows one step with inl
   await expect(page.getByRole("heading", { name: "Mise en place" })).toBeVisible();
   const tasks = page.getByRole("list", { name: "Prep tasks" });
   await expect(tasks.getByRole("checkbox")).toHaveCount(2);
+  await expect(tasks).toContainText("Preheat the oven to 430°F"); // the recipe's 220°C, Fahrenheit only (R8.13)
+  await expect(tasks).not.toContainText("°C");
   await tasks.getByRole("checkbox", { name: /Dice the onion/ }).click();
   await expect(page.getByTestId("mise-count")).toHaveText("1 OF 2 READY");
   await page.getByRole("button", { name: "Start step mode →" }).click();
 
   const card = page.getByTestId("step-card");
   await expect(card).toContainText("Step 1 of 3", { ignoreCase: true });
-  await expect(page.getByTestId("step-text")).toContainText("chicken thigh600 g in olive oil2 tbsp (30 ml)"); // inline amounts: recipe wording + metric only (R4.11, R8.13)
+  await expect(page.getByTestId("step-text")).toContainText("chicken thigh600 g in olive oil2 tbsp"); // inline amounts, one unit system: spoons as written (R4.11, R8.13)
+  await expect(page.getByTestId("step-text")).not.toContainText("ml");
   await expect(page.getByTestId("awake")).toBeVisible();
   expect(await page.evaluate(() => (window as unknown as { __wakeLocks: number }).__wakeLocks)).toBeGreaterThan(0);
 

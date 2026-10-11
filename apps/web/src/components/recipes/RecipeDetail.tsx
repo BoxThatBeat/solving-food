@@ -18,7 +18,7 @@ import {
   type DirectoryDoc,
   type HouseholdDoc,
   type RecipeVersionDoc,
-  withCelsius,
+  fahrenheitOnly,
 } from "@solving-food/core";
 import { db, publicUrl } from "@/firebase/app";
 import { useLiveDoc } from "@/data/live";
@@ -436,7 +436,7 @@ export function RecipeDetail({
         {recipe.notes ? (
           <div className="flex flex-col gap-1.5 rounded-ui border-2 border-line bg-base p-3">
             <SectionLabel>Recipe notes</SectionLabel>
-            <p className="m-0 text-sm leading-[1.45] font-semibold whitespace-pre-line">{withCelsius(recipe.notes)}</p>
+            <p className="m-0 text-sm leading-[1.45] font-semibold whitespace-pre-line">{fahrenheitOnly(recipe.notes)}</p>
           </div>
         ) : null}
 
