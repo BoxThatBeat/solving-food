@@ -146,6 +146,7 @@ R8.13, R4.19, R4.21, R4.2 (agent 1); R3.1, R11.1, R4.14, R6.1, R6.2, R6.11, R6.1
   load flake in the older tools test re-ran green alone). phone-ios rollover, settings, plan, responsive, recipe-detail
   36 passed + 1 skipped (tablet-only).
 - `pnpm e2e:coverage`: all done milestones ok; M7 11/11 tagged (R3.1 new).
+- Deployed again with `pnpm run deploy` after items 5–7: https://solvingfood.web.app 200, healthcheck `{"ok":true}`.
 
 ### 8. Bookkeeping
 - [x] This plan (items 5–7, verification, deviations, owner checks), M7 row in `Planning/README.md` and spec §15.
