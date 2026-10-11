@@ -861,6 +861,7 @@ Mobile-first CSS (Tailwind) with min-width breakpoints. Layouts add panes and co
 Techniques:
 
 - **Fluid type and spacing:** the root font size uses `clamp()` (e.g. `clamp(16px, 0.45vw + 12px, 22px)`) so rem-based text, spacing, and border widths scale smoothly between breakpoints. Brutalist borders and shadows are in rem, so they stay proportional on 4K.
+- **Form controls are never under 16px on touch devices.** iOS Safari zooms the page when a focused `input`, `select`, or `textarea` has smaller text and does not zoom back out when the keyboard closes. A `(pointer: coarse)` base rule sets them to `max(1rem, 16px)`, and components whose utilities would override it carry `pointer-coarse:text-[1rem]`. Desktop keeps the prototype's 15px controls, so only touch-device screenshot baselines changed (as built 2026-10-11).
 - **Readable measure:** text blocks are capped at ~70ch. Extra space goes to more columns or panes, never to longer lines.
 - **Auto-filling grids:** recipe and meal cards use `grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr))`, so 4K gets more cards per row without hand-tuned breakpoints.
 - **Container queries** (`@container`) for components like `<RecipeCard>` and `<BudgetMeter>`, so they adapt to the pane they're in rather than the whole window.

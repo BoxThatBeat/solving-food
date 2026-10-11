@@ -180,6 +180,16 @@
   textarea::placeholder {
     color: var(--sub);
   }
+  /* iOS Safari zooms the page when a focused control's text is under 16px, and never zooms back out when the
+     keyboard closes. Touch devices get 1rem controls (the root is never below 16px); desktop keeps the design's
+     15px. Utilities override this layer, so components set `pointer-coarse:text-[1rem]` on their own classes. */
+  @media (pointer: coarse) {
+    input,
+    select,
+    textarea {
+      font-size: max(1rem, 16px);
+    }
+  }
   :focus-visible {
     outline: 0.1875rem solid var(--ink);
     outline-offset: 0.125rem;

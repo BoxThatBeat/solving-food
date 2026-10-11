@@ -55,7 +55,7 @@ export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<H
   return (
     <textarea
       className={cn(
-        "box-border w-full min-w-0 rounded-ui border-bw bg-base px-3.5 py-3 font-sans text-[0.9375rem] leading-normal font-semibold text-ink shadow-hard outline-none focus-visible:outline-[0.1875rem] focus-visible:outline-offset-2 focus-visible:outline-ink aria-invalid:border-red",
+        "box-border w-full min-w-0 rounded-ui border-bw bg-base px-3.5 py-3 font-sans text-[0.9375rem] pointer-coarse:text-[1rem] leading-normal font-semibold text-ink shadow-hard outline-none focus-visible:outline-[0.1875rem] focus-visible:outline-offset-2 focus-visible:outline-ink aria-invalid:border-red",
         className,
       )}
       {...props}

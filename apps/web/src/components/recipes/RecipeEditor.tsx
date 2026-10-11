@@ -466,8 +466,8 @@ export function RecipeEditor({
               <li key={f.id} className="flex flex-col gap-1.5 rounded-ui border-2 border-line bg-pg p-2.5">
                 <div className="flex items-center gap-2">
                   <span className="grid size-7 flex-none place-items-center rounded-ui border-2 border-line bg-acc font-mono text-xs font-extrabold text-onc">{k + 1}</span>
-                  <Input {...register(`steps.${k}.section`)} placeholder="Section (optional)" aria-label={`Step ${k + 1} section`} className="py-1.5 text-xs shadow-none" />
-                  <Input {...register(`steps.${k}.timerMinutes`)} inputMode="decimal" placeholder="Timer min" aria-label={`Step ${k + 1} timer minutes`} className="w-24 flex-none py-1.5 text-xs shadow-none" />
+                  <Input {...register(`steps.${k}.section`)} placeholder="Section (optional)" aria-label={`Step ${k + 1} section`} className="py-1.5 text-xs pointer-coarse:text-[1rem] shadow-none" />
+                  <Input {...register(`steps.${k}.timerMinutes`)} inputMode="decimal" placeholder="Timer min" aria-label={`Step ${k + 1} timer minutes`} className="w-24 flex-none py-1.5 text-xs pointer-coarse:text-[1rem] shadow-none" />
                   <IconBtn label={`Move step ${k + 1} up`} disabled={k === 0} onClick={() => steps.move(k, k - 1)}>
                     <ArrowUp aria-hidden className="size-3.5" />
                   </IconBtn>
@@ -812,7 +812,7 @@ function IngredientLine({
             </Select>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Input {...register(`ingredients.${index}.displayText`)} aria-label={`Wording for ingredient ${index + 1}`} placeholder="Wording in the recipe (e.g. fresh basil)" className="min-w-0 flex-1 py-1.5 text-xs shadow-none" />
+            <Input {...register(`ingredients.${index}.displayText`)} aria-label={`Wording for ingredient ${index + 1}`} placeholder="Wording in the recipe (e.g. fresh basil)" className="min-w-0 flex-1 py-1.5 text-xs pointer-coarse:text-[1rem] shadow-none" />
             <label className="flex items-center gap-1.5 text-xs font-bold">
               <input type="checkbox" {...register(`ingredients.${index}.optional`)} className="size-4 accent-[var(--ink)]" /> Optional
             </label>
