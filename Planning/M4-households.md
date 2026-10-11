@@ -1,6 +1,39 @@
 # M4 — Households
 
-Status: not started
+Status: in progress
+
+## Verification (2026-10-10)
+
+| Layer | Result |
+|---|---|
+| Lint, typecheck | clean |
+| Unit (`pnpm test`) | core 268 passed (21 files; new: export format round trip, zip, remap by fingerprint, ledger reconcile, invite inbox helpers), web 7 passed |
+| Rules (`pnpm test:rules`) | 89 passed (new: invites by uid and email, accept via invite, member create needs `uid`, remove and leave, collection-group invite reads scoped to the invitee, `imports/` upload) |
+| Functions on the emulators | 39 passed (new in `functions/test/households.test.ts`: last-member cleanup, concurrent leaves, counter floor, Storage prefix emptied; `importHousehold` replace, recipe match by ID and fingerprint, missing recipes recreated, members untouched, bad file fails) |
+| Playwright M4 specs (`households`, `isolation`, `data-transfer`, M4 a11y, `@R2.7` review) | 17/17 passed on desktop-1080p and on phone-ios |
+| Playwright desktop-1080p (full) | 128 passed, 10 failed; all 10 passed on a `--last-failed` re-run (9 were 45 s load timeouts late in the run, 1 a real race in the cancelled-invite test, fixed in `fa3a944`) |
+| Playwright phone-ios (full, 2 workers) | 118 passed, 6 skipped, 16 failed (none in an M4 spec: plan, recipe-edit, review, settings, supply, sharing, theme, timers; mostly 45 s timeouts late in a 24-minute run on this 7 GB machine). Re-run of the 16 with one worker: **16 passed** (`--last-failed --workers=1`, 3.1 min: plan 3, recipe-edit 2, review 1, settings 1, sharing 1, supply 4, theme 1, timers 3). No real failures |
+| Playwright phone-android, tablet, desktop-firefox, 4K | not run for M4 on this machine (memory); CI runs the matrix after the push |
+| `pnpm e2e:coverage` | M4 11/11 requirement IDs tagged |
+| Live | __LIVE__ |
+
+## What's left for the owner
+
+1. Push `master` (still open from M0–M3). CI then runs the full Playwright matrix (phone-android, tablet,
+   desktop-firefox, 4K included) that wasn't run locally for M4.
+2. The exit criteria below, on real devices:
+   - Invite the spouse by email from **Settings → Members → Invite by email**; they sign in on their phone at
+     https://solvingfood.web.app with that address, pick a display name, accept "Join Silbrass Pvt", and see the plan.
+   - Create a second household from the household sheet ("+ New household"), plan it, and check that neither
+     household sees the other's supply.
+   - **Settings → Data**: download one household's data and import it into a fresh household; compare plan, supply,
+     and history.
+   - Last-member leave in a **throwaway household only** (it deletes that household and everything in it); check the
+     "n of 3 created" count drops. Never on Silbrass Pvt.
+3. Sign-off on feel (Members page, invite banner, household sheet, Data page).
+4. Open items from M1–M3: the M1 skill import test, M2's phone checks, the M3 real-device exit criteria (PC Express
+   receive with a freeze split, tablet cooking with a locked-phone timer alert, phone review, expired-lot prompt,
+   airplane-mode finish), and the Playwright projects not run locally since M2.
 
 ## Goal
 
@@ -97,3 +130,42 @@ No new collections.
 
 - Directory search exposes every user's display name to every allowlisted user. Accepted (friends and family).
 - Export reads can be large for an old household; run it rarely. There are no automatic backups by decision.
+
+## Deviations and decisions (2026-10-10)
+
+- **Household sheet rows** show "n members · timezone · serves n" instead of the prototype's "n MEMBERS · n PLANNED":
+  the planned count would need a plan-items query per household on every open of the sheet (other households'
+  current periods aren't loaded), while timezone and servings are on the household doc already listed.
+- **Members get their own page** (`/settings/members`: list, invite by name, invite by email, pending invites, remove,
+  leave) linked from Settings, instead of the prototype's inline invite search inside the Settings household card.
+  Settings itself shows the signed-in person's **Invites** card; a banner shows new invites on any page.
+- **Invite by email when the address is already allowlisted:** the client tries allowlist entry + invite in one batch
+  and, if the rules refuse it (the entry exists), writes the invite alone (spec §10 as built).
+- **Leaving your last household is allowed** (PRD R2.13: any member can leave; the PRD wins over the prototype). With
+  no household left the app goes to `/welcome/household`, which lists invites above the create form.
+- **Import keeps the importing household's name, creator, and creation date**; members, invites, commands, devices,
+  and timers are never exported (spec §13).
+- **Fingerprint-matched recipes are not flagged `needsReview`**: recipes have no review flag, and a fingerprint match is
+  the same recipe by definition. Recipes recreated from their `.cook` have no image.
+- **`importHousehold` runs outside the command transaction** (an import writes far more than 500 documents); the
+  `commands` function now has 512 MiB and 300 s (spec §2 quota table updated).
+- **Destructive confirm buttons use `bg-red-soft`** (ink on the prototype's red is below AA for button text). This also
+  changes M1's Trash dialog.
+
+## Design-compare notes (phone 430×932, desktop 1920×1080, Latte)
+
+Compared (by the agent that built M4, commit `699b8e2`) with the prototype's Settings household card, the household ("house") sheet, and the shell's household chip.
+Matched: the HOUSEHOLD chip with name ▾ and the mono members line, sheet rows with the → mark and hard shadow on inactive households and accent fill on
+the active one (a check icon instead of the prototype's ●), mono kickers, Archivo Black titles, the bordered cards with hard shadows, the Invite buttons in
+accent, small Remove buttons, and mono uppercase sub-lines (joined date, who invited you). Open invites are a
+"Pending invites" card with Cancel buttons rather than the prototype's single mono PENDING line.
+
+Intentional differences:
+
+- Members and Data are separate Settings pages (the prototype has no Data page and keeps invites inline); they use the
+  same card, kicker, and button language.
+- The invite banner (not in the prototype) spans the page width above the page title, styled as the app's other
+  notice cards.
+- Household sheet rows show timezone and servings instead of the planned count (see Deviations).
+- The last-member leave dialog and the import replace warning are not in the prototype; they use the shared dialog
+  with the soft red destructive button.
