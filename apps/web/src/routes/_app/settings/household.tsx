@@ -181,6 +181,8 @@ function HouseholdForm({ hid, household }: { hid: string; household: HouseholdDo
 }
 
 const DAY_LABEL: Record<RestartDay, string> = { today: "today", tomorrow: "tomorrow" };
+/** Read in event handlers only (the restart is worked out at the moment of the tap). */
+const clock = () => Date.now();
 
 /**
  * "Restart period" (R3.1): Today / Tomorrow, each behind a confirmation that says what happens. A no-op (the current
@@ -191,7 +193,8 @@ function RestartPeriod({ hid, household }: { hid: string; household: HouseholdDo
   const online = useOnline();
   const period = usePeriod(hid, household.currentPeriodId);
   const items = usePlanItems(hid, household.currentPeriodId);
-  const [day, setDay] = React.useState<RestartDay | null>(null);
+  const [choice, setChoice] = React.useState<{ day: RestartDay; at: number } | null>(null);
+  const day = choice?.day ?? null;
   const [busy, setBusy] = React.useState(false);
   const tz = household.timezone;
   const startMs = millis(period.data?.start);
@@ -200,14 +203,15 @@ function RestartPeriod({ hid, household }: { hid: string; household: HouseholdDo
   const planned = (items.docs ?? []).filter((d) => d.data.status === "planned").length;
   // Wait for the current period so the no-op check is right.
   const loading = !!household.currentPeriodId && period.data === undefined;
-  const next = day ? restartBounds(Date.now(), day, household.periodDays, tz) : null;
+  const next = choice ? restartBounds(choice.at, choice.day, household.periodDays, tz) : null;
 
   const choose = (d: RestartDay) => {
-    if (planRestart(current, Date.now(), d, household.periodDays, tz).kind === "noop") {
+    const at = clock();
+    if (planRestart(current, at, d, household.periodDays, tz).kind === "noop") {
       notify({ kind: "info", message: `The current period already starts ${DAY_LABEL[d]}. Nothing to restart.` });
       return;
     }
-    setDay(d);
+    setChoice({ day: d, at });
   };
   const confirm = async () => {
     if (!day) return;
@@ -218,7 +222,7 @@ function RestartPeriod({ hid, household }: { hid: string; household: HouseholdDo
       else if (r.kind === "changed") notify({ kind: "error", message: "Someone else just changed the period. Check the Plan page and try again." });
       else if (r.kind === "noop") notify({ kind: "info", message: `The current period already starts ${DAY_LABEL[day]}. Nothing to restart.` });
       else notify({ kind: "success", message: r.kind === "moved" ? `The period now starts ${DAY_LABEL[day]}` : `New period started ${DAY_LABEL[day]}${r.carried ? ` · ${r.carried} planned meal${r.carried === 1 ? "" : "s"} moved` : ""}`, link: { to: "/plan", label: "Plan" } });
-      setDay(null);
+      setChoice(null);
     } catch (e) {
       notify({ kind: "error", message: `Couldn't restart the period: ${(e as Error).message}` });
     } finally {
@@ -247,7 +251,7 @@ function RestartPeriod({ hid, household }: { hid: string; household: HouseholdDo
       {!online ? <span className="text-[0.75rem] font-semibold text-sub">You're offline. Restarting the period needs a connection.</span> : null}
       <ConfirmDialog
         open={day !== null}
-        onOpenChange={(o) => !o && !busy && setDay(null)}
+        onOpenChange={(o) => !o && !busy && setChoice(null)}
         title={`Restart the period ${day ? DAY_LABEL[day] : ""}?`}
         confirmLabel={busy ? "Restarting…" : "Restart period"}
         busy={busy}
