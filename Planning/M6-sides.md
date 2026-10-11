@@ -1,6 +1,6 @@
 # M6 — Sides
 
-Status: in progress
+Status: done (exit criteria are for the owner to try on the phone)
 
 ## Goal
 
@@ -76,10 +76,10 @@ R5.9, R5.10, R7.11, R11.14.
 ### 6. Tests
 - [x] Rules tests.
 - [x] e2e: `sides.spec.ts` (one file instead of six, see Deviations): @R5.9 @R5.10 @R7.11 @R11.14 @R10.1.
-- [ ] `pnpm e2e:coverage`.
+- [x] `pnpm e2e:coverage`.
 
 ### 7. Ship
-- [ ] Deploy (rules + functions + hosting), upload ingredient seed live (no `--force`), healthcheck.
+- [x] Deploy (rules + functions + hosting), upload ingredient seed live (no `--force`), healthcheck.
 
 ## Exit criteria
 
@@ -143,6 +143,12 @@ dropdown as the ingredient picker (accent active row, mono right-hand detail). P
 header bar, rows with a mono amount, a grey badge, and a secondary Change button; the flag form is a second card
 (first on phones so it isn't below 35 rows). Fixed during the pass: the picker used `type="search"`, whose native
 blue clear button doesn't match the prototype's inputs.
+
+## Deploy (2026-10-11)
+
+`pnpm run deploy`: hosting, Firestore rules and indexes, Storage rules, every function updated in one pass.
+`pnpm ingredients:upload` (live, no `--force`): 35 written, 445 unchanged, 0 edited in the app. https://solvingfood.web.app
+→ 200; `healthcheck` → ok.
 
 ## What's left for the owner
 
