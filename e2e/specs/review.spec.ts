@@ -4,6 +4,7 @@
 import { adminDb } from "../fixtures/admin";
 import { expect, test } from "../fixtures/test";
 import { PlanPage, seedPeriod, seedPlanItem } from "../pages/plan";
+import { uniqueTitle } from "../fixtures/recipes";
 import { commandsSettled, cookEvents, expectSupply, makeCookRecipe, seedSupply } from "../pages/supply";
 
 test("Done cooking subtracts the recipe's amounts right away and records leftovers; the review then corrects by the difference (R9.3, R9.2)", { tag: ["@R9.3", "@R9.2", "@R5.3", "@R8.1"] }, async ({ page, household }) => {
@@ -88,17 +89,19 @@ test("an unsaved meal of several recipes offers Save this meal; the meal is then
   await page.goto(`/plan/${itemId}/cook`);
   await page.getByRole("button", { name: "Done cooking", exact: true }).click();
   await expect(page.getByTestId("rating-card")).toHaveCount(2);
+  // Saved meals are a global collection and several projects can share one emulator: the name must be unique.
+  const mealName = uniqueTitle("Weeknight duo");
   const prompt = page.getByTestId("save-meal-prompt");
-  await prompt.getByLabel("Meal name").fill("Weeknight duo");
+  await prompt.getByLabel("Meal name").fill(mealName);
   await prompt.getByRole("button", { name: "Save" }).click();
   await expect(page.getByTestId("rating-card")).toHaveCount(3);
   await page.getByTestId("rating-card").filter({ hasText: "The meal" }).getByRole("button", { name: "10 out of 10" }).click();
   await page.getByRole("tab", { name: "3 · Leftovers" }).click();
   await page.getByRole("button", { name: "Save & update supply" }).click();
   await commandsSettled(household.hid, 2);
-  const meal = await adminDb.collection("meals").where("name", "==", "Weeknight duo").get();
+  const meal = await adminDb.collection("meals").where("name", "==", mealName).get();
   expect(meal.size).toBe(1);
   const st = (await adminDb.doc(`households/${household.hid}/stats/meal_${meal.docs[0]!.id}`).get()).data();
   expect(st).toMatchObject({ ratingSum: 10, ratingCount: 1 });
-  await expect(new PlanPage(page).item("Weeknight duo")).toContainText(/Saved meal/i);
+  await expect(new PlanPage(page).item(mealName)).toContainText(/Saved meal/i);
 });

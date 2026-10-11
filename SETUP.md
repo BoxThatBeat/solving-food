@@ -113,7 +113,7 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   After adding seed ingredients run `pnpm prices:check` (and `-- --write` to refresh `centsPerUnit`).
 - **Firestore emulator heap:** a single local run of phone-ios + desktop-1080p together (~190 tests on one emulator)
   ran the Firestore emulator out of Java heap once specs created a fresh recipe per test. The specs now reuse their
-  recipes per worker; locally, run big project sets one at a time (CI shards already split them). Raising the heap with
+  recipes per worker; locally, run big project sets one at a time (CI runs one browser project per job, each with its own Emulator Suite). Raising the heap with
   `JAVA_TOOL_OPTIONS` is not an option: the Storage rules runtime treats the JVM's "Picked up …" line as an error.
 
 ## M3 operations (2026-10-10)
@@ -160,13 +160,14 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
 ## CI/CD (GitHub Actions)
 
 - `.github/workflows/checks.yml`: on PRs and pushes to `master`: lint, typecheck, unit tests, build, requirement-tag
-  coverage, rules + functions tests on the emulators, the Playwright suite (2 shards), and a Hosting preview channel
+  coverage, rules + functions tests on the emulators, the Playwright suite (one job per browser project, each with its own Emulator Suite), and a Hosting preview channel
   for PRs from this repo. Every step runs in the Nix dev shell, so CI has the same toolchain and browsers as local.
 - `.github/workflows/deploy.yml`: after Checks succeed on a push to `master` (or by manual dispatch), builds and runs
   `firebase deploy --only hosting,functions,firestore,storage`, then smoke-checks the site and `healthcheck`.
 - **Branch protection (owner, in GitHub):** Settings → Branches → Add branch ruleset (or classic rule) for `master`:
   require a pull request, require status checks to pass: `Lint, types, unit, coverage`,
-  `Rules and functions (emulator)`, `Playwright (shard 1/2)`, `Playwright (shard 2/2)`. Do this after the M0
+  `Rules and functions (emulator)`, `Playwright (phone-ios)`, `Playwright (phone-android)`, `Playwright (desktop-1080p)`,
+  `Playwright (layouts)`. Do this after the M0
   commits are pushed and Checks has run once, so the check names are offered in the picker.
 
 ## Local toolchain

@@ -12,7 +12,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: CI,
   retries: CI ? 1 : 0,
-  workers: CI ? 4 : undefined,
+  // Two per job on CI: each browser project has its own runner and Emulator Suite (checks.yml), and the emulators are
+  // the bottleneck there, not the browsers.
+  workers: CI ? 2 : undefined,
   timeout: 45_000,
   expect: {
     timeout: 10_000,
