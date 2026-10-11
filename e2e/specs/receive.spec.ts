@@ -70,7 +70,7 @@ test("a bulk buy of something freezable asks to freeze some (R7.9)", { tag: ["@R
   await sheet.getByRole("button", { name: "Everything arrived · add to supply" }).click();
   const bulk = page.getByRole("dialog", { name: "Bulk buy" });
   await expect(bulk.getByTestId("freeze-prompt")).toContainText("Freeze some of this?"); // only the chicken: rice doesn't freeze
-  await expect(bulk.getByTestId("freeze-prompt")).toContainText("3.0 kg · 6.6 lb of chicken thigh arrived");
+  await expect(bulk.getByTestId("freeze-prompt")).toContainText("3.0 kg of chicken thigh arrived");
   await bulk.getByRole("button", { name: "Increase amount to freeze" }).click(); // 1500 → 1750
   await bulk.getByRole("button", { name: /^Freeze 1\.8 kg/ }).click();
   expect(await commandsSettled(household.hid)).toEqual([]);

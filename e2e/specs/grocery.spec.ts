@@ -15,7 +15,7 @@ async function gotoGrocery(page: Page) {
   await expect(page.getByText("Building the list…")).toHaveCount(0, { timeout: 20_000 });
 }
 
-test("built from the plan, rounded to packs, free-use excluded, metric and imperial (R7.1, R7.2)", { tag: ["@R7.1", "@R7.2", "@smoke"] }, async ({ page, household }) => {
+test("built from the plan, rounded to packs, free-use excluded, metric only (R7.1, R7.2, R8.13)", { tag: ["@R7.1", "@R7.2", "@R8.13", "@smoke"] }, async ({ page, household }) => {
   const raw = `e2e-loose-${Math.random().toString(36).slice(2, 8)}`;
   await adminDb.doc(`ingredients/${raw}`).set({ name: raw.replace(/-/g, " "), aliases: [], category: "produce", defaultLocation: "fridge", allowedMeasures: ["weight"], canonicalUnit: "g", proteinPer100g: 1, shelfLifeDays: { fridge: 5 }, freezable: false, isStaple: false, freeUse: false, needsReview: false });
   forgetIngredients();
@@ -27,11 +27,12 @@ test("built from the plan, rounded to packs, free-use excluded, metric and imper
   await expect(pcx).toBeVisible();
   // 1200 g chicken thighs → 2 × 1 kg (default pack); 280 g spinach → 1 × 312 g; 150 g of an ingredient with no pack → raw.
   await expect(line(page, "Chicken thigh")).toContainText("×2");
-  await expect(line(page, "Chicken thigh")).toContainText("need 1.2 kg · 2.6 lb");
+  await expect(line(page, "Chicken thigh")).toContainText("need 1.2 kg →");
   await expect(line(page, "Chicken thigh")).toContainText("$25.98");
   await expect(line(page, "Baby spinach")).toContainText("×1");
-  await expect(line(page, new RegExp(raw.replace(/-/g, " "), "i"))).toContainText("150 g · 5.3 oz");
+  await expect(line(page, new RegExp(raw.replace(/-/g, " "), "i"))).toContainText("150 g");
   await expect(line(page, /olive oil/i)).toHaveCount(0);
+  await expect(pcx).not.toContainText(/\d ?(oz|lb)\b/); // no imperial anywhere on the list (R8.13)
   // The stored draft holds the same lines (deterministic IDs).
   await expect.poll(async () => Object.keys((await adminDb.doc(`households/${household.hid}/groceryLists/draft`).get()).data()?.items ?? {}).sort()).toEqual(["baby-spinach", "chicken-thigh", raw].sort());
 });

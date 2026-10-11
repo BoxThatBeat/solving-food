@@ -1,5 +1,5 @@
-// Recipe detail (TECHNICAL_SPECS §14.1 recipe-detail.spec.ts, M1 parts): what the page shows, amounts in metric and
-// imperial, inline amounts in steps, servings scaling, the tools flag, and protein per serving. Supply badges are M3.
+// Recipe detail (TECHNICAL_SPECS §14.1 recipe-detail.spec.ts, M1 parts): what the page shows, amounts in the recipe's
+// wording plus metric only (R8.13), inline amounts in steps, servings scaling, the tools flag, and protein per serving. Supply badges are M3.
 import { adminDb } from "../fixtures/admin";
 import { makeRecipe, seedRecipeId, uniqueTitle } from "../fixtures/recipes";
 import { expect, test } from "../fixtures/test";
@@ -54,22 +54,24 @@ test("household notes save per household", { tag: ["@R4.8"] }, async ({ page, ho
   await expect(detail(page).getByLabel("HOUSEHOLD NOTES")).toHaveValue("Use the cast iron pan.");
 });
 
-test("amounts are shown in the recipe's wording with metric and imperial, inline in the steps too", { tag: ["@R8.13", "@R4.11"] }, async ({ page, household: _ }) => {
+test("amounts are shown in the recipe's wording with the metric conversion only, inline in the steps too", { tag: ["@R8.13", "@R4.11"] }, async ({ page, household: _ }) => {
   const id = await seedRecipeId("Roasted Salmon With Tomatoes");
   await page.goto(`/recipes/${id}`);
   const d = detail(page);
   const row = (name: string) => d.locator("section[aria-labelledby=ing-h] li").filter({ hasText: name });
-  await expect(row("Cherry tomatoes").getByTestId("ingredient-amount")).toHaveText(/^2 pints \(\d+ g · [\d.]+ lb\)$/);
-  await expect(row("Garlic").getByTestId("ingredient-amount")).toHaveText(/^3 cloves \(\d+ g · [\d.]+ oz\)$/);
-  await expect(row("Salmon fillet").getByTestId("ingredient-amount")).toHaveText(/\d+ g · 1(\.0)? lb/);
+  await expect(row("Cherry tomatoes").getByTestId("ingredient-amount")).toHaveText(/^2 pints \(\d+ g\)$/);
+  await expect(row("Garlic").getByTestId("ingredient-amount")).toHaveText(/^3 cloves \(\d+ g\)$/);
+  await expect(row("Salmon fillet").getByTestId("ingredient-amount")).toHaveText(/^1 lb \(450 g\)$/);
   // No-amount ingredients are optional and say so.
   await expect(row("Kosher salt")).toContainText("OPTIONAL");
 
   // Steps: the ingredient's name with its amount right where it's used.
   const steps = d.locator("section[aria-labelledby=steps-h]");
-  // Weights read as metric · imperial; volumes and counts keep the recipe's wording first.
-  await expect(steps).toContainText(/salmon fillet\s*450 g · 1(\.0)? lb/i);
-  await expect(steps).toContainText(/cherry tomatoes\s*2 pints \(600 g · 1\.3 lb\)/i);
+  // The recipe's wording first, then the metric conversion only: never an imperial conversion.
+  await expect(steps).toContainText(/salmon fillet\s*1 lb \(450 g\)/i);
+  await expect(steps).toContainText(/cherry tomatoes\s*2 pints \(600 g\)/i);
+  await expect(d.locator("section[aria-labelledby=ing-h]")).not.toContainText(/\d (g|kg|ml|L) · [\d.<]+ ?(oz|lb)/);
+  await expect(steps).not.toContainText(/\d (g|kg|ml|L) · [\d.<]+ ?(oz|lb)/);
 });
 
 test("scaling servings updates every amount", { tag: ["@R4.13"] }, async ({ page, household: _ }) => {

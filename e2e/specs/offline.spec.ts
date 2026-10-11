@@ -31,7 +31,7 @@ test("finish a meal, correct supply, and tick groceries offline; they apply afte
   const rice = await supply.open("Jasmine rice");
   await rice.getByLabel("Correct it · I actually have").fill("1500");
   await rice.getByRole("button", { name: "Apply" }).click();
-  await expect(rice.getByTestId("supply-current")).toHaveText("1.5 kg · 3.3 lb");
+  await expect(rice.getByTestId("supply-current")).toHaveText("1.5 kg");
   await expect(page.getByTestId("supply-count")).toContainText("SYNCING");
 
   // Tick a grocery line.

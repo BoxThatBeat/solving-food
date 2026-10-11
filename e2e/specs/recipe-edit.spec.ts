@@ -87,7 +87,7 @@ test("manual entry: title, fixed cuisine and protein lists, tags, tools, ingredi
   await expect(d.locator("#recipe-title")).toHaveText(title);
   await expect(d.getByText("KOREAN", { exact: true }).or(d.getByText("Korean", { exact: true })).first()).toBeVisible();
   await expect(d.locator("section[aria-labelledby=ing-h] li")).toHaveCount(2);
-  await expect(d.locator("section[aria-labelledby=ing-h]")).toContainText(/6 (pieces )?\(660 g · 1\.5 lb\)/);
+  await expect(d.locator("section[aria-labelledby=ing-h]")).toContainText(/6 (pieces )?\(660 g\)/);
   await expect(d.locator("section[aria-labelledby=steps-h]")).toContainText(/Rub the chicken thigh\s*6.*with garlic\s*2 tsp/i);
   await expect(d.getByText("⏱ 35 min")).toBeVisible();
   await expect(d.getByText("oven", { exact: true })).toBeVisible();

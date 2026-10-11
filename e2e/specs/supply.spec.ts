@@ -1,5 +1,5 @@
 // supply.spec.ts (TECHNICAL_SPECS §14.1): starts empty; add via the ingredient picker in an allowed measurement;
-// current (projected) in metric and imperial; Staples for free-use; per-lot expiry flags; expired lots excluded until
+// current (projected) in metric only; Staples for free-use; per-lot expiry flags; expired lots excluded until
 // Still good / Threw it out; freeze/thaw; ±5/±25 + Apply corrections; discard; filters; transaction history with
 // infinite scroll; live for another member.
 import { adminDb } from "../fixtures/admin";
@@ -7,7 +7,7 @@ import { expect, test } from "../fixtures/test";
 import { makePlanRecipe, seedPeriod, seedPlanItem } from "../pages/plan";
 import { commandsSettled, expectSupply, seedSupply, supplyDoc, SupplyPage } from "../pages/supply";
 
-test("starts empty; add an ingredient in an allowed measurement; shown in metric and imperial (R8.2, R8.3, R8.13)", { tag: ["@R8.2", "@R8.3", "@R8.13", "@R8.1", "@smoke"] }, async ({ page, household }) => {
+test("starts empty; add an ingredient in an allowed measurement; shown in metric only (R8.2, R8.3, R8.13)", { tag: ["@R8.2", "@R8.3", "@R8.13", "@R8.1", "@smoke"] }, async ({ page, household }) => {
   const supply = new SupplyPage(page);
   await supply.goto();
   await expect(page.getByText(/Supply starts empty/)).toBeVisible();
@@ -18,10 +18,10 @@ test("starts empty; add an ingredient in an allowed measurement; shown in metric
   // Lentils allow weight and volume: 2 cups at 0.81 g/ml = 383 g.
   await sheet.getByRole("button", { name: "cups" }).click();
   await sheet.getByLabel("Amount").fill("2");
-  await expect(sheet.getByText("= 380 g · 14 oz")).toBeVisible();
+  await expect(sheet.getByText("= 380 g", { exact: true })).toBeVisible();
   await sheet.getByRole("button", { name: /^Add 380 g/ }).click();
   await expect(supply.row("Dried red lentil")).toBeVisible();
-  await expect(supply.row("Dried red lentil").getByTestId("supply-current")).toHaveText("380 g · 14 oz");
+  await expect(supply.row("Dried red lentil").getByTestId("supply-current")).toHaveText("380 g");
   await expectSupply(household.hid, "dried-red-lentil", 383.273);
   // Supply is written by the function only: the command doc is what the client wrote.
   expect(await commandsSettled(household.hid)).toEqual([]);
@@ -40,7 +40,7 @@ test("current (projected after planned meals); expiry flags per lot; Staples gro
   const supply = new SupplyPage(page);
   await supply.goto();
   const chicken = supply.row("Chicken thigh");
-  await expect(chicken.getByTestId("supply-current")).toHaveText("1.0 kg · 2.2 lb");
+  await expect(chicken.getByTestId("supply-current")).toHaveText("1.0 kg");
   await expect(chicken.getByTestId("supply-projected")).toHaveText("(400 g after plan)");
   await expect(chicken).toContainText(/Fresh · [89]D/i);
   const spinach = supply.row("Baby spinach");
@@ -108,7 +108,7 @@ test("freeze part of a lot, thaw it; correct with ±5/±25 + Apply; discard (R8.
   await expect(box).toHaveValue("820");
   await row.getByRole("button", { name: "Apply" }).click();
   await expectSupply(household.hid, "chicken-thigh", 820);
-  await expect(row.getByTestId("supply-current")).toHaveText("820 g · 1.8 lb");
+  await expect(row.getByTestId("supply-current")).toHaveText("820 g");
 
   // Discard a purchase.
   await supply.goto();
@@ -167,9 +167,9 @@ test("another member sees supply change without a reload (NFR5)", { tag: ["@NFR5
   await mine.goto();
   const theirs = new SupplyPage(secondMember.page);
   await theirs.goto();
-  await expect(theirs.row("Jasmine rice").getByTestId("supply-current")).toHaveText("2.0 kg · 4.4 lb");
+  await expect(theirs.row("Jasmine rice").getByTestId("supply-current")).toHaveText("2.0 kg");
   const row = await mine.open("Jasmine rice");
   await row.getByLabel("Correct it · I actually have").fill("1500");
   await row.getByRole("button", { name: "Apply" }).click();
-  await expect(theirs.row("Jasmine rice").getByTestId("supply-current")).toHaveText("1.5 kg · 3.3 lb", { timeout: 20_000 });
+  await expect(theirs.row("Jasmine rice").getByTestId("supply-current")).toHaveText("1.5 kg", { timeout: 20_000 });
 });
