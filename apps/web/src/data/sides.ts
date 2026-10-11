@@ -6,15 +6,21 @@ import { useMemo } from "react";
 import { deleteField, doc, updateDoc } from "firebase/firestore";
 import { effectiveSides, type EffectiveSide, type SideSettings } from "@solving-food/core";
 import { db } from "@/firebase/app";
-import { useActiveHousehold } from "./households";
+import { useSession } from "@/session/useSession";
+import { useHousehold } from "./households";
 import { useAllIngredients, type IngredientEntry } from "./ingredients";
 
 export type SideEntry = EffectiveSide<IngredientEntry>;
 
-/** Every side the active household can pick, with its current portion. `list` is undefined while loading. */
+/**
+ * Every side the active household can pick, with its current portion. `list` is undefined while loading. Safe on pages
+ * that render signed out (it then stays empty): it reads the session without requiring it.
+ */
 export function useSides(enabled = true): { list: SideEntry[] | undefined; byId: Map<string, SideEntry>; settings: SideSettings } {
-  const hh = useActiveHousehold();
-  const all = useAllIngredients(enabled);
+  const session = useSession();
+  const on = enabled && session.status === "ready";
+  const hh = useHousehold(on && session.status === "ready" ? session.activeHouseholdId : null);
+  const all = useAllIngredients(on);
   const settings = hh.data?.settings.sides;
   return useMemo(() => {
     const list = all.list ? effectiveSides(all.list, settings) : undefined;
