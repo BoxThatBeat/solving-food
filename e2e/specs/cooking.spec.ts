@@ -22,7 +22,7 @@ test("mise en place lists the prep tasks, then step mode shows one step with inl
 
   const card = page.getByTestId("step-card");
   await expect(card).toContainText("Step 1 of 3", { ignoreCase: true });
-  await expect(page.getByTestId("step-text")).toContainText("2 pints (600 g)"); // inline amount, recipe wording + metric (R4.11, R8.13)
+  await expect(page.getByTestId("step-text")).toContainText("chicken thigh600 g in olive oil2 tbsp (30 ml)"); // inline amounts: recipe wording + metric only (R4.11, R8.13)
   await expect(page.getByTestId("awake")).toBeVisible();
   expect(await page.evaluate(() => (window as unknown as { __wakeLocks: number }).__wakeLocks)).toBeGreaterThan(0);
 
