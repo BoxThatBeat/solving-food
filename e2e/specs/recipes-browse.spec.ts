@@ -86,10 +86,10 @@ test.describe("filters and sorts", () => {
     await expect(r.card("Oat Flour Banana Muffins")).toBeVisible();
     expect(await r.titles()).not.toContain("Tzatziki Sauce");
 
-    // Supply filters are live since M3 (supply-based browsing below); "Uses expiring" waits for M5.
+    // Supply filters are live since M3 (supply-based browsing below); "Uses expiring" since M5 (suggestions.spec.ts).
     sheet = await r.openFilters();
     await expect(sheet.getByRole("button", { name: /^Can make/ })).toBeEnabled();
-    await expect(sheet.getByRole("button", { name: "Uses expiring" })).toBeDisabled();
+    await expect(sheet.getByRole("button", { name: /^Uses expiring/ })).toBeEnabled();
     // Cost per serving is live since M2 (estimates); grocery and plan specs cover prices.
     await expect(sheet.getByRole("button", { name: /^≤ \$4/ })).toBeEnabled();
   });

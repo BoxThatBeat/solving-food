@@ -119,7 +119,7 @@ test("brand mappings: add one by hand; the grocery list uses its name and pack (
   await page.goto("/settings/brands");
   await page.getByLabel("Ingredient").fill("baby spin");
   await page.getByRole("option", { name: /baby spinach/i }).first().click();
-  await page.getByLabel("PRODUCT").fill("Organic baby spinach clamshell");
+  await page.getByLabel("PRODUCT", { exact: true }).fill("Organic baby spinach clamshell");
   await page.getByLabel("PACK SIZE").fill("142");
   await page.getByRole("button", { name: "Save brand" }).click();
   const row = page.getByTestId("brand-row").filter({ hasText: "Organic baby spinach clamshell" });
