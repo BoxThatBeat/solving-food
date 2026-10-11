@@ -82,6 +82,7 @@ flowchart LR
 - The household configures the **plan period length in days** (default 7).
 - A plan is a list of meals for that period, each assigned to a meal type (breakfast, lunch, dinner, snack), not to specific days. A meal is one or more recipes (§5).
 - There is **no limit** on how many meals a plan can hold, and users can add to the plan and generate a new grocery list at any point during the period.
+- **R3.1** **Restart period.** In Settings → Household, **Restart period** with a choice of **Today** or **Tomorrow** ends the current period now and starts a new one of the configured length at midnight (household timezone) on the chosen day. Meals not yet cooked move into it exactly as at the end of a period (R6.6); cooked meals stay in the old period and in History. A confirmation says how many planned meals will move. Choosing the day the current period already starts on changes nothing and says so. It needs a connection, like the rollover.
 
 ---
 
@@ -275,7 +276,7 @@ Everything here belongs to the household except the theme, which is per user.
 - **R11.2** **Food preferences.** Favourite foods and cuisines, dislikes, and dietary restrictions, set once for the whole household and used in scoring.
 - **R11.3** **Suggestion weights** (R6.12).
 - **R11.4** **Protein goals** per meal type (R6.14).
-- **R11.5** **Plan period** length in days.
+- **R11.5** **Plan period** length in days, and **Restart period** (R3.1).
 - **R11.6** **Budget** for planned meals per period.
 - **R11.7** **Brand mappings** and **stores** (dedicated page, §7).
 - **R11.8** **Household members**: invite by email or by name (R2.4), remove members, leave the household (with the last-member warning, R2.13).

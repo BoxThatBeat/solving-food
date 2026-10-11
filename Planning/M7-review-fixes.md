@@ -9,7 +9,7 @@ agent appends the remaining review items.
 
 ## Requirements covered
 
-R8.13, R4.19, R4.21, R4.2.
+R8.13, R4.19, R4.21, R4.2 (agent 1); R3.1, R11.1, R4.14, R6.1, R6.2, R6.11, R6.17 (agent 2).
 
 ## Items (agent 1)
 
@@ -60,6 +60,24 @@ R8.13, R4.19, R4.21, R4.2.
 - [x] E2E (`recipes-browse.spec.ts`, @R4.2): switching A–Z → Suggested shows skeletons (aria-busy, no text), then the
       sorted cards; the page object's `titles()` / `goto()` wait for the list to settle. The never-cooked card check
       asserts no stats text.
+
+## Items (agent 2)
+
+### 5. Restart the plan period today or tomorrow (R3.1, new)
+- [x] Core `planRestart()` / `restartBounds()` / `periodIdFor()` (`period.ts`): noop when the current period already
+      starts on the chosen day; move a period that hasn't started yet (an earlier "Tomorrow"); otherwise a new period of
+      `periodDays` from local midnight of the chosen day, the old one ending where the new one starts. Unit tests incl. a
+      DST case and a property (no overlap, starts today/tomorrow).
+- [x] `restartPeriod()` in `data/plan.ts`: one transaction; the rollover's carry code is factored into
+      `plannedCandidates` / `readCarry` / `writeCarry` and used by both, so carried IDs, leftover checks and the budget
+      snapshot are identical. Aborts when `currentPeriodId` changed since it was read. Periods rule unchanged (it already
+      allows `start`/`end`/`budgetCents` with `end > start`).
+- [x] Settings → Household → Plan & budget: "Restart period" with Today / Tomorrow, a confirm dialog ("Ends the current
+      period now; n planned meals move to the new one (12–18 OCT)"), a no-op message, disabled with a note offline.
+- [x] PRD R3.1 (and R11.5 points at it), spec §7 "Restart period" paragraph and §12 routes line.
+- [x] E2E `rollover.spec.ts` @R3.1: two planned + one cooked meal, restart for tomorrow, both carried, strip and range
+      show the new dates, old period kept (ends at the new start) with its cooked meal; Tomorrow again is a no-op;
+      Today then moves the not-yet-started period without carrying again.
 
 ## Verification (items 1–4)
 

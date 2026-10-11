@@ -11,6 +11,9 @@ import {
   nextPeriod,
   periodBounds,
   periodCells,
+  periodIdFor,
+  planRestart,
+  restartBounds,
 } from "./period";
 
 const TZ = "America/Toronto";
@@ -82,6 +85,56 @@ describe("periods in America/Toronto", () => {
         expect(periodCells(a.startMs, a.endMs, tz)).toHaveLength(days);
       }),
       { numRuns: 300 },
+    );
+  });
+});
+
+describe("restart period (R3.1)", () => {
+  // 2026-10-11 15:00 in Toronto (EDT, UTC−4).
+  const now = Date.UTC(2026, 9, 11, 19, 0);
+  it("starts at local midnight today or tomorrow and runs periodDays", () => {
+    const t = restartBounds(now, "today", 7, TZ);
+    expect(t).toMatchObject({ id: "2026-10-11", startDate: "2026-10-11", endDate: "2026-10-18", startMs: Date.UTC(2026, 9, 11, 4) });
+    const m = restartBounds(now, "tomorrow", 7, TZ);
+    expect(m).toMatchObject({ id: "2026-10-12", endDate: "2026-10-19", startMs: Date.UTC(2026, 9, 12, 4), endMs: Date.UTC(2026, 9, 19, 4) });
+    // Across the November DST change the period is still whole local days.
+    const nov = restartBounds(Date.UTC(2026, 9, 30, 16), "tomorrow", 7, TZ);
+    expect(nov.endMs - nov.startMs).toBe(7 * 24 * H + H);
+  });
+  it("is a no-op when the current period already starts that day", () => {
+    const cur = periodBounds("2026-10-11", 7, TZ);
+    expect(planRestart(cur, now, "today", 7, TZ).kind).toBe("noop");
+    expect(planRestart(periodBounds("2026-10-12", 7, TZ), now, "tomorrow", 7, TZ).kind).toBe("noop");
+  });
+  it("ends a running period where the new one starts", () => {
+    const cur = periodBounds("2026-10-05", 7, TZ);
+    const today = planRestart(cur, now, "today", 7, TZ);
+    expect(today).toMatchObject({ kind: "new", oldEndMs: Date.UTC(2026, 9, 11, 4), bounds: { id: "2026-10-11" } });
+    const tomorrow = planRestart(cur, now, "tomorrow", 3, TZ);
+    expect(tomorrow).toMatchObject({ kind: "new", oldEndMs: Date.UTC(2026, 9, 12, 4), bounds: { id: "2026-10-12", endDate: "2026-10-15" } });
+    // A period that started today and is restarted for tomorrow ends tonight.
+    expect(planRestart(periodBounds("2026-10-11", 7, TZ), now, "tomorrow", 7, TZ)).toMatchObject({ kind: "new", oldEndMs: Date.UTC(2026, 9, 12, 4) });
+  });
+  it("moves a period that hasn't started yet instead of creating another", () => {
+    expect(planRestart(periodBounds("2026-10-12", 7, TZ), now, "today", 7, TZ)).toMatchObject({ kind: "move", bounds: { startDate: "2026-10-11" } });
+  });
+  it("takes a free ID when an earlier restart used the date", () => {
+    expect(periodIdFor("2026-10-12", () => false)).toBe("2026-10-12");
+    const used = new Set(["2026-10-12", "2026-10-12-2"]);
+    expect(periodIdFor("2026-10-12", (id) => used.has(id))).toBe("2026-10-12-3");
+  });
+  it("property: the new period never overlaps the old one and starts today or tomorrow", () => {
+    fc.assert(
+      fc.property(fc.integer({ min: Date.UTC(2025, 0, 1), max: Date.UTC(2028, 0, 1) }), fc.integer({ min: -20, max: 1 }), fc.integer({ min: 1, max: 28 }), fc.boolean(), (t, offset, days, tomorrow) => {
+        const cur = periodBounds(addDays(localDate(t, TZ), offset), days, TZ);
+        fc.pre(cur.endMs > t);
+        const p = planRestart(cur, t, tomorrow ? "tomorrow" : "today", days, TZ);
+        expect(p.bounds.startDate).toBe(addDays(localDate(t, TZ), tomorrow ? 1 : 0));
+        if (p.kind === "new") {
+          expect(p.oldEndMs).toBeLessThanOrEqual(p.bounds.startMs);
+          expect(p.oldEndMs).toBeGreaterThan(cur.startMs);
+        }
+      }),
     );
   });
 });

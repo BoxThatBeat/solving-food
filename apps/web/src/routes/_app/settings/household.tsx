@@ -1,9 +1,10 @@
-// Settings → Household (PRD R11.5, R11.6, R11.11, R11.12, R11.13; spec §12): name, plan period length, budget,
+// Settings → Household (PRD R11.5, R11.6, R11.11, R11.12, R11.13, R3.1; spec §12): name, plan period length, budget,
 // timezone, default servings, planned meal types. Zod-validated; writes households/{hid}. A new period length applies
-// from the next period; a budget change also updates the current period's budget.
+// from the next period; a budget change also updates the current period's budget. "Restart period" (R3.1, M7) ends the
+// current period now and starts a new one today or tomorrow (`restartPeriod`, the rollover's carry code).
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { formatCents, householdSettingsInputSchema, PERIOD_DAYS_MAX, PLANNABLE_MEAL_TYPES, SERVINGS_MAX, type HouseholdDoc, type HouseholdSettingsInput, type PlannableMealType } from "@solving-food/core";
+import { formatCents, formatPeriodRange, householdSettingsInputSchema, planRestart, restartBounds, type RestartDay, PERIOD_DAYS_MAX, PLANNABLE_MEAL_TYPES, SERVINGS_MAX, type HouseholdDoc, type HouseholdSettingsInput, type PlannableMealType } from "@solving-food/core";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/input";
@@ -12,7 +13,9 @@ import { Stepper } from "@/components/ui/stepper";
 import { Button } from "@/components/ui/button";
 import { useNotify } from "@/components/notifications-context";
 import { useActiveHousehold } from "@/data/households";
-import { saveHouseholdSettings } from "@/data/plan";
+import { millis, restartPeriod, saveHouseholdSettings, usePeriod, usePlanItems } from "@/data/plan";
+import { ConfirmDialog } from "@/components/ui/dialog";
+import { useOnline } from "@/hooks/useOnline";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/settings/household")({
@@ -140,6 +143,7 @@ function HouseholdForm({ hid, household }: { hid: string; household: HouseholdDo
             />
           </div>
         </div>
+        <RestartPeriod hid={hid} household={household} />
         <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
           <legend className="mb-2 font-mono text-[0.6875rem] font-bold tracking-[0.09rem] uppercase">Planned meal types</legend>
           <div className="grid grid-cols-3 gap-2">
@@ -173,5 +177,88 @@ function HouseholdForm({ hid, household }: { hid: string; household: HouseholdDo
         </Button>
       </div>
     </form>
+  );
+}
+
+const DAY_LABEL: Record<RestartDay, string> = { today: "today", tomorrow: "tomorrow" };
+
+/**
+ * "Restart period" (R3.1): Today / Tomorrow, each behind a confirmation that says what happens. A no-op (the current
+ * period already starts that day) only says so. Needs a connection, like the rollover.
+ */
+function RestartPeriod({ hid, household }: { hid: string; household: HouseholdDoc }) {
+  const notify = useNotify();
+  const online = useOnline();
+  const period = usePeriod(hid, household.currentPeriodId);
+  const items = usePlanItems(hid, household.currentPeriodId);
+  const [day, setDay] = React.useState<RestartDay | null>(null);
+  const [busy, setBusy] = React.useState(false);
+  const tz = household.timezone;
+  const startMs = millis(period.data?.start);
+  const endMs = millis(period.data?.end);
+  const current = startMs !== null && endMs !== null ? { startMs, endMs } : null;
+  const planned = (items.docs ?? []).filter((d) => d.data.status === "planned").length;
+  // Wait for the current period so the no-op check is right.
+  const loading = !!household.currentPeriodId && period.data === undefined;
+  const next = day ? restartBounds(Date.now(), day, household.periodDays, tz) : null;
+
+  const choose = (d: RestartDay) => {
+    if (planRestart(current, Date.now(), d, household.periodDays, tz).kind === "noop") {
+      notify({ kind: "info", message: `The current period already starts ${DAY_LABEL[d]}. Nothing to restart.` });
+      return;
+    }
+    setDay(d);
+  };
+  const confirm = async () => {
+    if (!day) return;
+    setBusy(true);
+    try {
+      const r = await restartPeriod(hid, day);
+      if (r.kind === "offline") notify({ kind: "error", message: "You're offline. Restart the period when you're back online." });
+      else if (r.kind === "changed") notify({ kind: "error", message: "Someone else just changed the period. Check the Plan page and try again." });
+      else if (r.kind === "noop") notify({ kind: "info", message: `The current period already starts ${DAY_LABEL[day]}. Nothing to restart.` });
+      else notify({ kind: "success", message: r.kind === "moved" ? `The period now starts ${DAY_LABEL[day]}` : `New period started ${DAY_LABEL[day]}${r.carried ? ` · ${r.carried} planned meal${r.carried === 1 ? "" : "s"} moved` : ""}`, link: { to: "/plan", label: "Plan" } });
+      setDay(null);
+    } catch (e) {
+      notify({ kind: "error", message: `Couldn't restart the period: ${(e as Error).message}` });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2 border-t-2 border-dashed border-line pt-3">
+      <span className="flex flex-col gap-0.5">
+        <span id="hs-restart" className="text-[0.9375rem] font-extrabold">
+          Restart period
+        </span>
+        <span className="font-mono text-[0.625rem] font-bold text-sub uppercase">
+          {current ? `Now ${formatPeriodRange(current.startMs, current.endMs, tz)} · ` : ""}start a new {household.periodDays}-day period
+        </span>
+      </span>
+      <div role="group" aria-labelledby="hs-restart" className="flex gap-2">
+        <Button type="button" variant="secondary" size="sm" disabled={!online || busy || loading} onClick={() => choose("today")}>
+          Today
+        </Button>
+        <Button type="button" variant="secondary" size="sm" disabled={!online || busy || loading} onClick={() => choose("tomorrow")}>
+          Tomorrow
+        </Button>
+      </div>
+      {!online ? <span className="text-[0.75rem] font-semibold text-sub">You're offline. Restarting the period needs a connection.</span> : null}
+      <ConfirmDialog
+        open={day !== null}
+        onOpenChange={(o) => !o && !busy && setDay(null)}
+        title={`Restart the period ${day ? DAY_LABEL[day] : ""}?`}
+        confirmLabel={busy ? "Restarting…" : "Restart period"}
+        busy={busy}
+        onConfirm={() => void confirm()}
+      >
+        <p className="m-0">
+          Ends the current period now; {planned} planned meal{planned === 1 ? "" : "s"} move{planned === 1 ? "s" : ""} to the new one
+          {next ? ` (${formatPeriodRange(next.startMs, next.endMs, tz)})` : ""}.
+        </p>
+        <p className="m-0 mt-2 text-sub">Cooked meals stay in the old period and in History. The new period's budget is {formatCents(household.budgetCents)}.</p>
+      </ConfirmDialog>
+    </div>
   );
 }

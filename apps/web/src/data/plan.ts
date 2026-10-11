@@ -20,6 +20,7 @@ import {
   updateDoc,
   where,
   writeBatch,
+  type Transaction,
   type Unsubscribe,
 } from "firebase/firestore";
 import {
@@ -37,6 +38,9 @@ import {
   type StoredLotLike,
   newMeal,
   nextPeriod,
+  periodIdFor,
+  planRestart,
+  type RestartDay,
   type BrandMappingDoc,
   type CoverageRecipe,
   type CreateMealInput,
@@ -141,6 +145,43 @@ export function millis(v: unknown): number | null {
 
 // ---------- household bootstrap: rollover (§7) and default stores (Planning/M2 §5)
 
+type Carry = { from: StoredPlanItem; fromId: string; exists: boolean };
+
+/** Still-planned items of the current period (queries can't run inside a client transaction: re-checked in it). */
+async function plannedCandidates(hid: string, periodId: string): Promise<string[]> {
+  return (await getDocs(query(collection(db, "households", hid, "planItems"), where("periodId", "==", periodId), where("status", "==", "planned")))).docs.map((d) => d.id);
+}
+
+/**
+ * Transaction reads for carrying planned items from `fromPeriodId` into `toPeriodId` (rollover and restart share it):
+ * each candidate re-checked, leftovers only while their batch is still good (spec §7: an expired or eaten-up batch
+ * stays behind), and whether the deterministic carried copy already exists.
+ */
+async function readCarry(tx: Transaction, hid: string, fromPeriodId: string, candidates: readonly string[], toPeriodId: string, now: number): Promise<Carry[]> {
+  const carry: Carry[] = [];
+  for (const id of candidates) {
+    const s = await tx.get(doc(db, "households", hid, "planItems", id));
+    const item = s.data() as StoredPlanItem | undefined;
+    if (!item || item.status !== "planned" || item.periodId !== fromPeriodId) continue;
+    if (item.kind === "leftover" && item.leftoverSupplyId) {
+      const lo = (await tx.get(doc(db, "households", hid, "supply", item.leftoverSupplyId))).data() as { lots?: StoredLotLike[] } | undefined;
+      const lots = (lo?.lots ?? []).map((l) => lotFromDoc(l, millis));
+      if (unexpiredAmount(lots, now) <= 0) continue;
+    }
+    const c = await tx.get(doc(db, "households", hid, "planItems", carriedItemId(toPeriodId, id)));
+    carry.push({ from: item, fromId: id, exists: c.exists() });
+  }
+  return carry;
+}
+
+/** Writes the carried copies (`<toPeriodId>_<fromId>`, `carriedFromId`); the originals stay in their period as history. */
+function writeCarry(tx: Transaction, hid: string, toPeriodId: string, carry: readonly Carry[]): void {
+  for (const c of carry) {
+    if (c.exists) continue;
+    tx.set(doc(db, "households", hid, "planItems", carriedItemId(toPeriodId, c.fromId)), { ...carryOver(c.from, c.fromId, toPeriodId), addedAt: c.from.addedAt ?? serverTimestamp() });
+  }
+}
+
 export type BootstrapResult = "ok" | "rolled" | "offline" | "error";
 
 /**
@@ -162,10 +203,7 @@ export async function bootstrapHousehold(hid: string, now = Date.now()): Promise
   if (!needPeriod && !needStores) return "ok";
 
   // Queries can't run inside a client transaction: find the candidates first, re-check each inside it.
-  const candidates =
-    needPeriod && curId && cur
-      ? (await getDocs(query(collection(db, "households", hid, "planItems"), where("periodId", "==", curId), where("status", "==", "planned")))).docs.map((d) => d.id)
-      : [];
+  const candidates = needPeriod && curId && cur ? await plannedCandidates(hid, curId) : [];
 
   let rolled = false;
   await runTransaction(db, async (tx) => {
@@ -178,30 +216,12 @@ export async function bootstrapHousehold(hid: string, now = Date.now()): Promise
     const bounds = needPeriod && stillCurrent ? (cur ? nextPeriod(cur.end.toMillis(), hd.periodDays, hd.timezone, now) : firstPeriod(now, hd.periodDays, hd.timezone)) : null;
     const pRef = bounds ? doc(db, "households", hid, "periods", bounds.id) : null;
     const pSnap = pRef ? await tx.get(pRef) : null;
-    const carry: Array<{ from: StoredPlanItem; fromId: string; exists: boolean }> = [];
-    if (bounds && curId) {
-      for (const id of candidates) {
-        const s = await tx.get(doc(db, "households", hid, "planItems", id));
-        const item = s.data() as StoredPlanItem | undefined;
-        if (!item || item.status !== "planned" || item.periodId !== curId) continue;
-        // Leftovers roll over only while their batch is still good (spec §7): an expired or eaten-up batch stays behind.
-        if (item.kind === "leftover" && item.leftoverSupplyId) {
-          const lo = (await tx.get(doc(db, "households", hid, "supply", item.leftoverSupplyId))).data() as { lots?: StoredLotLike[] } | undefined;
-          const lots = (lo?.lots ?? []).map((l) => lotFromDoc(l, millis));
-          if (unexpiredAmount(lots, now) <= 0) continue;
-        }
-        const c = await tx.get(doc(db, "households", hid, "planItems", carriedItemId(bounds.id, id)));
-        carry.push({ from: item, fromId: id, exists: c.exists() });
-      }
-    }
+    const carry = bounds && curId ? await readCarry(tx, hid, curId, candidates, bounds.id, now) : [];
     const storeSnaps = !hd.defaultStoreId ? await Promise.all(DEFAULT_STORES.map((s) => tx.get(doc(db, "households", hid, "stores", s.id)))) : [];
     // ---- writes
     if (bounds && pRef && pSnap) {
       if (!pSnap.exists()) tx.set(pRef, { start: Timestamp.fromMillis(bounds.startMs), end: Timestamp.fromMillis(bounds.endMs), budgetCents: hd.budgetCents });
-      for (const c of carry) {
-        if (c.exists) continue;
-        tx.set(doc(db, "households", hid, "planItems", carriedItemId(bounds.id, c.fromId)), { ...carryOver(c.from, c.fromId, bounds.id), addedAt: c.from.addedAt ?? serverTimestamp() });
-      }
+      writeCarry(tx, hid, bounds.id, carry);
       update.currentPeriodId = bounds.id;
       rolled = true;
     }
@@ -214,6 +234,56 @@ export async function bootstrapHousehold(hid: string, now = Date.now()): Promise
     if (Object.keys(update).length) tx.update(hRef, update);
   });
   return rolled ? "rolled" : "ok";
+}
+
+// ---------- restart the period (R3.1, Settings → Household)
+
+export type RestartResult = { kind: "noop" | "moved" | "restarted" | "offline" | "changed"; periodId?: string; carried?: number };
+
+/**
+ * "Restart period": ends the current period now and starts one of `periodDays` at local midnight today or tomorrow
+ * (core `planRestart`). Uncooked planned items are carried exactly as the rollover carries them (same transaction
+ * helpers, deterministic IDs, budget snapshot); cooked and eaten items stay in the old period, which ends where the
+ * new one starts. A period that hasn't started yet (an earlier "Tomorrow") is moved instead. Needs a connection.
+ * Returns "changed" when another member changed the current period in the meantime (nothing written).
+ */
+export async function restartPeriod(hid: string, day: RestartDay, now = Date.now()): Promise<RestartResult> {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return { kind: "offline" };
+  const hRef = doc(db, "households", hid);
+  const h = (await getDoc(hRef)).data() as HouseholdDoc | undefined;
+  if (!h) throw new Error("Household not found");
+  const curId = h.currentPeriodId;
+  const candidates = curId ? await plannedCandidates(hid, curId) : [];
+  return runTransaction(db, async (tx): Promise<RestartResult> => {
+    // ---- reads
+    const hd = (await tx.get(hRef)).data() as HouseholdDoc | undefined;
+    if (!hd || (hd.currentPeriodId ?? null) !== (curId ?? null)) return { kind: "changed" };
+    const curRef = curId ? doc(db, "households", hid, "periods", curId) : null;
+    const cur = curRef ? ((await tx.get(curRef)).data() as StoredPeriod | undefined) : undefined;
+    const plan = planRestart(cur ? { startMs: cur.start.toMillis(), endMs: cur.end.toMillis() } : null, now, day, hd.periodDays, hd.timezone);
+    if (plan.kind === "noop") return { kind: "noop", ...(curId ? { periodId: curId } : {}) };
+    const start = Timestamp.fromMillis(plan.bounds.startMs);
+    const end = Timestamp.fromMillis(plan.bounds.endMs);
+    if (plan.kind === "move" && curRef && curId) {
+      tx.update(curRef, { start, end, budgetCents: hd.budgetCents });
+      return { kind: "moved", periodId: curId };
+    }
+    // A period ID is its start date; an earlier restart may have used it (then "date-2", …).
+    const taken = new Set<string>();
+    for (let n = 1; n < 20; n++) {
+      const id = n === 1 ? plan.bounds.id : `${plan.bounds.id}-${n}`;
+      if (!(await tx.get(doc(db, "households", hid, "periods", id))).exists()) break;
+      taken.add(id);
+    }
+    const newId = periodIdFor(plan.bounds.id, (id) => taken.has(id));
+    const carry = curId ? await readCarry(tx, hid, curId, candidates, newId, now) : [];
+    // ---- writes
+    tx.set(doc(db, "households", hid, "periods", newId), { start, end, budgetCents: hd.budgetCents });
+    if (curRef && cur && plan.kind === "new") tx.update(curRef, { end: Timestamp.fromMillis(plan.oldEndMs) });
+    writeCarry(tx, hid, newId, carry);
+    tx.update(hRef, { currentPeriodId: newId });
+    return { kind: "restarted", periodId: newId, carried: carry.length };
+  });
 }
 
 // ---------- Create meal (R5.7, R5.8)

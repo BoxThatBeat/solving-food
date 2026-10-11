@@ -103,6 +103,40 @@ export function nextPeriod(prevEndMs: number, periodDays: number, tz: string, no
   return b;
 }
 
+export type RestartDay = "today" | "tomorrow";
+
+/**
+ * What "Restart period" (R3.1, Settings → Household) does. The new period starts at local midnight of today or
+ * tomorrow and runs `periodDays` days.
+ * - `noop`: the current period already starts on that day.
+ * - `move`: the current period hasn't started yet (an earlier restart chose tomorrow): its own start and end move,
+ *   nothing is carried and no period is created.
+ * - `new`: a new period is created; the current one ends where the new one starts (`oldEndMs`, at most its own
+ *   end), so periods never overlap and anything cooked or bought before then stays in the old one.
+ */
+export type RestartPlan =
+  | { kind: "noop"; bounds: PeriodBounds }
+  | { kind: "move"; bounds: PeriodBounds }
+  | { kind: "new"; bounds: PeriodBounds; oldEndMs: number };
+
+export function restartBounds(nowMs: number, day: RestartDay, periodDays: number, tz: string): PeriodBounds {
+  return periodBounds(addDays(localDate(nowMs, tz), day === "tomorrow" ? 1 : 0), periodDays, tz);
+}
+
+export function planRestart(current: { startMs: number; endMs: number } | null, nowMs: number, day: RestartDay, periodDays: number, tz: string): RestartPlan {
+  const bounds = restartBounds(nowMs, day, periodDays, tz);
+  if (!current) return { kind: "new", bounds, oldEndMs: bounds.startMs };
+  if (localDate(current.startMs, tz) === bounds.startDate) return { kind: "noop", bounds };
+  if (current.startMs > bounds.startMs) return { kind: "move", bounds };
+  return { kind: "new", bounds, oldEndMs: Math.min(current.endMs, bounds.startMs) };
+}
+
+/** The ID for a period starting on `date`: the date, or "date-2", "date-3"… when an earlier restart already used it. */
+export function periodIdFor(date: LocalDate, taken: (id: string) => boolean): string {
+  if (!taken(date)) return date;
+  for (let n = 2; ; n++) if (!taken(`${date}-${n}`)) return `${date}-${n}`;
+}
+
 export function isEnded(period: { endMs: number }, nowMs: number): boolean {
   return nowMs >= period.endMs;
 }
