@@ -191,6 +191,13 @@ Intentional differences:
 - The PC Express store picker and product search are not in the prototype; they use the app's card, input, and list row
   styles.
 
+## Deploy (2026-10-11)
+
+`firebase deploy --only hosting,functions,firestore,storage`: hosting, Firestore rules and indexes, Storage rules, and
+every function updated; `pcxSearchStores`, `pcxSearchProducts`, `pcxStatus` created (no secrets bound: PC Express off).
+The first attempt failed in non-interactive mode for want of an `OWNER_UID` value (a param default isn't used
+non-interactively); it is now in `functions/.env`. https://solvingfood.web.app → 200; `healthcheck` → `{"ok":true}`.
+
 ## What's left for the owner
 
 1. **Connect PC Express** (SETUP.md "M5 operations"): set the `PCX_EMAIL` and `PCX_PASSWORD` secrets, put
