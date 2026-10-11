@@ -2,7 +2,7 @@
 
 > Everything here is **non-secret** (the Firebase web config is shipped to browsers by design).
 > Secrets (PC Express credentials) live only in Secret Manager; see "Secrets" below.
-> Last verified: 2026-10-10 (M3)
+> Last verified: 2026-10-10 (M4)
 
 ## Decision: one project, no dev
 
@@ -138,6 +138,24 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
 - **Free-use list:** `data/free-use.json` (the seed's free-use ingredient IDs, used by the Recipes page's "can make") is
   regenerated with `pnpm free-use:write` after changing the ingredient seed; a unit test fails while it is stale.
 - **Existing data:** nothing to migrate. Households start with empty supply (R8.2); the first command creates docs.
+
+## M4 operations (2026-10-10)
+
+- **New function:** `householdCleanup` (Firestore `onDocumentDeleted` on `households/{hid}/members/{uid}`, 300 s):
+  when the last member leaves, deletes the household and every subcollection, empties `imports/{hid}/` in Storage, and
+  decrements the creator's `householdsCreated` (floor 0). It never touches a household that still has a member. Do not
+  test it on the live project: it deletes data by design.
+- **`commands` function** now runs with 512 MiB and a 300 s timeout (the `importHousehold` command unzips an export and
+  rewrites the household outside a single transaction). Import logs: `importHousehold` with `writes` / `deletes`.
+- **Indexes:** collection-group single-field overrides on `invites.inviteeUid` and `invites.inviteeEmailLower` (for the
+  "my invites" queries), deployed with `firestore.indexes.json`.
+- **Storage:** `imports/{hid}/{uuid}.zip` (members upload, ≤ 20 MB, nobody reads it but the function, which deletes it
+  after the import).
+- **Inviting the spouse:** Settings → Members → Invite by email. That adds the address to the allowlist (no more
+  `pnpm seed:allowlist` needed) and creates the invite; they sign in at https://solvingfood.web.app with that address,
+  pick a display name, and see "Join Silbrass Pvt".
+- **Backups:** Settings → Data → Download household data (one Firestore read per document; the page shows an estimate).
+  There are still no automatic backups.
 
 ## CI/CD (GitHub Actions)
 
