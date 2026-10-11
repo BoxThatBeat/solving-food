@@ -103,6 +103,8 @@ URLs are blocked in the CLI; serve things over HTTP. Screenshots never go into t
 - Supply is never written by the client. Every supply change is a command document applied by a function
   (spec §6). Don't shortcut this, even for "simple" cases.
 - Say **Supply**, never "inventory", in UI text.
+- Sides (M6) are ingredients with a per-person `portion` (canonical), snapshotted onto meals and plan items when
+  created; everything downstream (builder, functions, History) reads the meal's copy, never Settings.
 - `cuisine` and `mainProtein` come from `packages/core/taxonomy.ts` only. The Claude skill embeds the same lists.
 - Every user-facing PRD requirement has a Playwright test tagged with its ID (`@R6.5`). Add the tag when you
   add the test; `pnpm e2e:coverage` fails on untagged requirements.
