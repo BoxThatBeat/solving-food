@@ -42,7 +42,8 @@ export function OptimiserCard({
   const notify = useNotify();
   const [n, setN] = React.useState(4);
   const [mealType, setMealType] = React.useState<MealType>("dinner");
-  const defaultMax = Math.max(10, Math.min(500, Math.round(Math.max(0, remainingCents) / 100 / 5) * 5 || 60));
+  // "4 dinners under $60" by default, or what's left of the budget when that is less.
+  const defaultMax = Math.max(10, Math.min(60, Math.floor(Math.max(0, remainingCents) / 100 / 5) * 5));
   const [max, setMax] = React.useState<number | null>(null);
   const maxDollars = max ?? defaultMax;
   const [proteinOnly, setProteinOnly] = React.useState(false);

@@ -138,9 +138,12 @@ export function missingIds(needs: ReadonlyMap<string, number>, ctx: Pick<ScoreCo
   return [...needs].filter(([id, n]) => Math.max(0, ctx.projected.get(id) ?? 0) + 1e-9 < n).map(([id]) => id);
 }
 
-/** missingIngredients: share of tracked ingredients supply doesn't cover. */
+/**
+ * missingIngredients: share of tracked ingredients supply doesn't cover. A recipe with nothing tracked (only vague or
+ * free-use lines) counts as half missing: it would otherwise look free and fully stocked and top every list.
+ */
 export function missingIngredients(needs: ReadonlyMap<string, number>, ctx: Pick<ScoreContext, "projected">): number {
-  return needs.size ? clamp01(missingIds(needs, ctx).length / needs.size) : 0;
+  return needs.size ? clamp01(missingIds(needs, ctx).length / needs.size) : 0.5;
 }
 
 /** rating: Bayesian household average / 10 (unrated = the prior, 0.6). */

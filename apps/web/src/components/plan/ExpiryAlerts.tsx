@@ -1,6 +1,7 @@
 // Expiry alerts on the Plan page (PRD R6.13; TECHNICAL_SPECS §7 "Expiry badges & alerts"): supply expiring within the
 // period that no planned meal uses, with how much isn't covered and the recipes that use the most of it (each one tap
 // from Create meal). Dismiss hides an alert for the rest of the period (its lots go on the period document).
+import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import { expiresPhrase, expiryAlerts, formatCanonical, recipesUsing, type ExpiringSpare, type RecipeSummary, type ScoreResult } from "@solving-food/core";
 
@@ -35,13 +36,15 @@ export function ExpiryAlerts({
   onAdd: (recipeId: string) => void;
   onDismiss: (lotIds: string[]) => void;
 }) {
+  const [all, setAll] = React.useState(false);
   const alerts = expiryAlerts(spare, dismissed, (id) => ingredient(id)?.canonicalUnit);
   if (!alerts.length) return null;
+  const shown = all ? alerts : alerts.slice(0, 3);
   const candidates = summaries.filter((r) => !plannedIds.has(r.id) && !scores.get(r.id)?.blocked);
   return (
     <section aria-label="Expiring supply" data-testid="expiry-alerts" className="flex flex-col gap-2.5 rounded-ui border-bw bg-peach p-3 text-onc shadow-hard">
       <span className="font-mono text-[0.65625rem] font-extrabold tracking-[0.09rem]">USE IT OR LOSE IT</span>
-      {alerts.map((a) => {
+      {shown.map((a) => {
         const ing = ingredient(a.ingredientId);
         const name = ing?.name ?? a.ingredientId.replace(/-/g, " ");
         const Name = name.charAt(0).toUpperCase() + name.slice(1);
@@ -89,6 +92,11 @@ export function ExpiryAlerts({
           </div>
         );
       })}
+      {alerts.length > shown.length ? (
+        <button type="button" onClick={() => setAll(true)} className="cursor-pointer self-start bg-transparent p-0 text-[0.8125rem] font-extrabold text-onc underline">
+          {alerts.length - shown.length} more expiring
+        </button>
+      ) : null}
     </section>
   );
 }

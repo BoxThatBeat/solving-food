@@ -62,7 +62,7 @@ export interface ScoreResult {
   expiring: { ingredientId: string; daysLeft: number; used: number } | null;
 }
 
-const short = (ctx: ScoreContext, id: string) => (ctx.ingredient(id)?.name ?? id.replace(/-/g, " ")).split(/[ ,(]/)[0]!;
+const short = (ctx: ScoreContext, id: string) => (ctx.ingredient(id)?.name ?? id.replace(/-/g, " ")).split(/[,(]/)[0]!.trim();
 const dl = (d: number) => (d <= 0 ? "today" : d === 1 ? "1d" : `${d}d`);
 
 /** Scores one recipe. */
@@ -144,7 +144,9 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
   const reasons: Reason[] = [];
   if (blocked) reasons.push({ key: "blocked", label: blocked, tone: "bad" });
   // Expiry leads when it counts at all (R6.13: "shows it prominently"), then the strongest other raising factors.
-  const pos = contrib.filter(([, c]) => c > 0.05).sort((a, b) => (a[0] === "expiryUrgency" ? -1 : b[0] === "expiryUrgency" ? 1 : b[1] - a[1]));
+  // Chips only for facts worth saying: no "Unrated" or "Made 0×".
+  const sayable = (k: FactorKey) => !(k === "rating" && !(s && s.ratingCount > 0)) && !(k === "historicalPref" && !(s?.timesCooked) && !ctx.favourites.has(r.id));
+  const pos = contrib.filter(([k, c]) => c > 0.05 && sayable(k)).sort((a, b) => (a[0] === "expiryUrgency" ? -1 : b[0] === "expiryUrgency" ? 1 : b[1] - a[1]));
   for (const [k] of pos.slice(0, 2)) reasons.push({ key: k, label: label(k), tone: k === "expiryUrgency" ? "expiry" : "good" });
   const neg = contrib.filter(([, c]) => c < -0.05).sort((a, b) => a[1] - b[1])[0];
   if (neg && !blocked) reasons.push({ key: neg[0], label: label(neg[0]), tone: "bad" });

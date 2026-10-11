@@ -203,7 +203,7 @@ describe("individual factors", () => {
     expect(supplyUtilisation(needs, c)).toBeCloseTo(450 / 500);
     expect(missingIngredients(needs, c)).toBeCloseTo(0.5);
     expect(supplyUtilisation(new Map(), c)).toBe(0);
-    expect(missingIngredients(new Map(), c)).toBe(0);
+    expect(missingIngredients(new Map(), c)).toBe(0.5);
   });
 
   it("recipeNeeds scales to the household's servings and skips free-use", () => {
@@ -317,7 +317,7 @@ describe("hard filters and ranking", () => {
     const top = suggest([...others, salmon], c, DEFAULT_WEIGHTS);
     expect(top[0]!.id).toBe("salmon");
     expect(top[0]!.reasons[0]).toMatchObject({ key: "expiryUrgency", tone: "expiry" });
-    expect(top[0]!.reasons[0]!.label).toMatch(/^Uses salmon · 2d$/);
+    expect(top[0]!.reasons[0]!.label).toMatch(/^Uses salmon fillet · 2d$/);
     expect(top[0]!.expiring).toMatchObject({ ingredientId: "salmon-fillet", daysLeft: 2 });
   });
 
