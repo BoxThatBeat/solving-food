@@ -15,7 +15,7 @@ export const addSupplyPayload = z.object({
   ingredientId: id,
   amount: amount.positive(),
   location: z.enum(STORAGE_LOCATIONS),
-  /** What the person typed, for the transaction note ("2 cups"). */
+  /** The amount added, in metric, for the transaction note ("380 g"; R8.13). */
   entered: z.string().max(60).optional(),
 });
 
