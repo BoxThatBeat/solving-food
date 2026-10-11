@@ -176,6 +176,9 @@ ingredients/{ingredientId}
   defaultPackAmount?, defaultPackMeasure?,        // pack rounding when there's no brand mapping (§8)
   defaultCadenceDays?,                            // staples cadence before the household has bought it twice (§8)
   freezable, isStaple, freeUse, needsReview      // freeUse → tracked by staples cadence only (§5)
+  side?: { portion }                              // (M6) a side (R5.9): eaten as is; portion per person, canonical
+                                                  // (g, or count for count-canonical items). Seeded or set in the
+                                                  // ingredient editor; never on a freeUse ingredient
 
 recipes/{recipeId}                                // source of truth (structured)
   title, slug, servings, prepMin, cookMin, cuisine, mainProtein, tags[], tools[],   // cuisine/mainProtein from fixed lists
@@ -198,6 +201,7 @@ recipeIndex/{chunkN}                              // ≤ ~500 compact summaries 
 
 meals/{mealId}                                    // SAVED meals only (R5.2); unsaved meals live inside plan items
   name, recipes: [{ recipeId, servingsMultiplier }],   // 1..12 recipes, multiplier 0.5–10
+  sides?: [{ ingredientId, portion }],                 // (M6) ≤ 12; portion per person, canonical, snapshotted (R5.10)
   createdBy, updatedBy, createdAt, updatedAt
 
 prices/{pcxStoreId}_{productCode}                 // PC Express price at one store
@@ -232,7 +236,10 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
                                                                            // set with the default stores (M2)
                                  currentPeriodId, settings: { scoreWeights{}, tools[],
                                  preferences: { likes[], dislikes[], diets[] },
-                                 proteinGoals: { breakfast?, lunch?, dinner?, snack? } }   // g per serving; absent = off
+                                 proteinGoals: { breakfast?, lunch?, dinner?, snack? },    // g per serving; absent = off
+                                 sides?: { [ingredientId]: { portion } } }  // (M6) household-flagged sides and portion
+                                                                           // overrides (R11.14); effective portion =
+                                                                           // settings.sides[id] ?? ingredient.side
   members/{uid}                  uid, displayName, joinedAt                // no roles; uid duplicated for the collection-group query
   invites/{inviteeKey}           inviteeUid? | inviteeEmailLower?, householdName, invitedBy, invitedByName, createdAt
                                  // key = uid for directory invites, or the lower-cased email for email invites (R2.4)
@@ -256,6 +263,8 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
                                                                            // start date ("2026-10-05"), so rollovers are idempotent
   planItems/{itemId}             periodId, kind: "meal"|"leftover", mealType, servings,
                                  recipes: [{ recipeId, servingsMultiplier }],   // kind=meal: the meal itself (R5.1), 1..n recipes
+                                 sides?: [{ ingredientId, portion }],        // (M6) kind=meal only, ≤ 12; portion snapshotted
+                                                                             // at creation, so Settings changes don't move it
                                  savedMealId?, name?,                        // set when created from / saved as a Meals-list meal (R5.8)
                                  leftoverSupplyId?, sourcePlanItemId?,       // kind=leftover → the batch they came from
                                  coverage: { breakfast?, lunch?, dinner? },   // slots it fills (R6.2)
@@ -267,7 +276,8 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
                                  reviewStatus: "pending"|"done", ratedBy[]
                                  // as built (M3): + title, periodId?, savedMealId?, mealType, servings, defaults[] (recipe
                                  // amounts at the planned servings), deducted[] (what the ledger took), takes[] (per lot),
-                                 // leftoverSupplyId?, leftoverPlanItemIds[], reviewedBy?, note?. `used` = defaults until a
+                                 // leftoverSupplyId?, leftoverPlanItemIds[], reviewedBy?, note?, sides? (M6, as cooked).
+                                 // `used` = defaults until a
                                  // review confirms amounts. ID chosen by the client (in the finishCooking payload)
   ratings/{ratingId}             uid, cookEventId, targetType: "recipe"|"meal", targetId, score, createdAt
                                  // ID <eventId>_<uid>_<type>_<targetId>: one per person and target; re-rating replaces
@@ -381,13 +391,13 @@ Firestore writes queue up offline, but callable functions don't. So every action
 |---|---|
 | `addSupply` | Manual add (R8.2): `purchase` (+) lot with estimated expiry |
 | `receiveGroceries` | `purchase` (+) per confirmed item → new lots; optional `freeze` split (R7.9); grocery list → received; update cadence |
-| `finishCooking` | Issued by **Done cooking**, before any review (R9.3). `cook` (−) per recipe ingredient at the planned servings (FEFO, skipping free-use ingredients); `leftover` (+) lot of `defaultLeftoverPortions`; leftover plan items (§7); plan item → cooked; cook event with `reviewStatus: pending` |
+| `finishCooking` | Issued by **Done cooking**, before any review (R9.3). `cook` (−) per recipe ingredient at the planned servings and per side at portion × servings (M6, R5.10; the payload's `sides`, else the plan item's) (FEFO, skipping free-use ingredients); `leftover` (+) lot of `defaultLeftoverPortions`; leftover plan items (§7); plan item → cooked; cook event with `reviewStatus: pending` |
 | `submitReview` | Per-user rating for the meal and/or its recipes; updates `stats/*`. When the reviewer also confirms **used amounts and leftovers**, the function writes `correction` (±) transactions for the difference between the recipe defaults already deducted and the confirmed amounts, adjusts the leftover lot and its plan items to the confirmed count, and marks the review `done`. Later ratings from other members only add ratings |
 | `correctSupply` | `correction` (± delta to reach the stated amount). Recorded as-is: the app doesn't ask why or try to infer unplanned consumption |
 | `discard` | `discard` (−) on a lot. Also what **Threw it out** sends for an expired lot (R8.15) |
 | `extendExpiry` | **Still good** on an expired lot (R8.15): 0-delta transaction that sets `expiryExtendedTo` (default +3 days, or a chosen date) so the lot counts again |
 | `freeze` / `thaw` | 0-delta transaction; moves the lot and switches its active expiry |
-| `markEaten` | `eaten` (−) on a leftover portion or snack; leftover plan item → eaten |
+| `markEaten` | `eaten` (−) on a leftover portion or snack (with its sides); leftover plan item → eaten |
 | `importHousehold` | Replaces the household's data from an uploaded export file (§13) |
 
 ### Rules
@@ -517,6 +527,7 @@ The Plan page shows, for each meal type, the average `proteinPerServingG` of the
 
 ```
 needs     = Σ requirements of planned, uncooked items (scaled by servings), excluding free-use ingredients
+            + Σ side.portion × item.servings over each planned item's sides (M6, R7.11; free-use sides skipped)
 incoming  = Σ amounts on this household's grocery lists with status "ordered" (copied, not yet received)
 shortfall = max(0, needs − unexpired supply − incoming)
 packSize  = brandMapping.packAmount ?? ingredient.defaultPackAmount ?? shortfall   // no rounding if unknown
@@ -778,6 +789,8 @@ match /prices/{id}       { allow read: if allowed(); }       // write: functions
 ```
 
 **Verified email (M0 decision):** `allowed()` also requires `email_verified`. The Email/Password provider must be enabled for email-link sign-in, which would otherwise let anyone register an allowlisted address they don't own with a password. Email-link sign-in always verifies the address, so real users are unaffected. The collection-group `members` rule checks the duplicated `uid` *field* rather than the document ID, because Firestore can only prove a query safe from the fields it filters on. A collection-group single-field index on `members.uid` is declared in `firestore.indexes.json`.
+
+**Sides (M6):** `validIngredient` accepts `side` only as `{ portion: number > 0 }`; `validMeal` and `validPlanItem` accept `sides` as a list of at most 12, and a plan item may carry `sides` only when `kind == 'meal'`; the `finishCooking` payload may carry `sides`. Entry shapes are checked by the client's zod schemas and again by the function (§6), which ignores malformed entries.
 
 Share links work for both recipes and meals: `allow get: if true` on both, and a meal page reads its recipes the same way. Public `get` on single documents can't be enumerated, so the exposure is limited to someone who already has a link.
 

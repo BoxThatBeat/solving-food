@@ -19,6 +19,7 @@ import {
   leftoverMealTypeOf,
   leftoverPortionsByType,
   leftoverSupplyId,
+  cleanSides,
   mealRequirements,
   newLotFor,
   ratingId,
@@ -34,6 +35,7 @@ import {
   type CommandPayload,
   type IngredientDoc,
   type LedgerLot,
+  type MealSide,
   type MealType,
   type PlannableMealType,
   type RecipeDoc,
@@ -175,15 +177,15 @@ export async function finishCooking(ctx: Ctx, p: CommandPayload<"finishCooking">
 
   const recipes = (await Promise.all(p.recipes.map((r) => ctx.recipe(r.recipeId)))).map((r, i) => ({ ref: p.recipes[i]!, doc: r }));
   const present = recipes.filter((r) => r.doc);
-  const ings = await ingredientsFor(
-    ctx,
-    present.flatMap((r) => r.doc!.ingredientIds ?? []),
-  );
+  // Sides (R5.10): the command's, else the plan item's (portions snapshotted when the meal was created).
+  const sides = p.sides ?? sidesOf(planData?.sides);
+  const ings = await ingredientsFor(ctx, [...present.flatMap((r) => r.doc!.ingredientIds ?? []), ...sides.map((x) => x.ingredientId)]);
   const byId = new Map(present.map((r) => [r.ref.recipeId, r.doc!]));
   const needs = mealRequirements(
     present.map((r) => r.ref),
     p.servings,
     { recipes: (id) => byId.get(id), ingredients: (id) => ings.get(id) },
+    sides,
   );
   const titles = recipes.map((r) => r.doc?.title ?? "Recipe");
   const title = p.title ?? (planData?.name as string | undefined) ?? titles.join(" + ");
@@ -257,6 +259,7 @@ export async function finishCooking(ctx: Ctx, p: CommandPayload<"finishCooking">
   if (periodId) eventDoc.periodId = periodId;
   if (savedMealId) eventDoc.savedMealId = savedMealId;
   if (portions > 0) eventDoc.leftoverSupplyId = loId;
+  if (sides.length) eventDoc.sides = sides.map((x) => ({ ingredientId: x.ingredientId, portion: x.portion }));
   ctx.tx.set(eventRef, eventDoc);
 
   // "Made n times" and last cooked (R4.5) count at cooking; ratings arrive with the review.
@@ -286,6 +289,12 @@ function leftoverItem(ctx: Ctx, o: { periodId: string; mealType: MealType; title
 }
 
 const round = (n: number) => Math.round(n * 1e6) / 1e6;
+
+/** A stored `sides` field, validated (a malformed one counts as none). */
+function sidesOf(v: unknown): MealSide[] {
+  if (!Array.isArray(v)) return [];
+  return cleanSides(v.filter((x): x is MealSide => !!x && typeof x === "object" && typeof x.ingredientId === "string" && typeof x.portion === "number"));
+}
 
 // ---------- submitReview (R9.2–R9.4, R5.3, R6.9)
 
@@ -505,8 +514,9 @@ export async function markEaten(ctx: Ctx, p: CommandPayload<"markEaten">): Promi
     // A snack eaten as is: its ingredients come out of supply like a cooked meal's.
     const refs = (it.recipes ?? []) as Array<{ recipeId: string; servingsMultiplier: number }>;
     const docs = new Map((await Promise.all(refs.map((r) => ctx.recipe(r.recipeId)))).filter((r): r is RecipeDoc & { id: string } => !!r).map((r) => [r.id, r]));
-    const ings = await ingredientsFor(ctx, [...docs.values()].flatMap((r) => r.ingredientIds ?? []));
-    const needs = mealRequirements(refs, it.servings as number, { recipes: (id) => docs.get(id), ingredients: (id) => ings.get(id) });
+    const sides = sidesOf(it.sides);
+    const ings = await ingredientsFor(ctx, [...[...docs.values()].flatMap((r) => r.ingredientIds ?? []), ...sides.map((x) => x.ingredientId)]);
+    const needs = mealRequirements(refs, it.servings as number, { recipes: (id) => docs.get(id), ingredients: (id) => ings.get(id) }, sides);
     await ctx.store.load(needs.keys());
     for (const [id, amount] of needs) {
       const d = ctx.store.get(id);

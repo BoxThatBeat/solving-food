@@ -53,7 +53,7 @@ function sampleInput(): ExportInput {
       },
     ],
     recipes: [{ id: "r1", title: "Dal Makhani", fingerprint: "fp1", cook: "---\ntitle: Dal\n---\nCook." }],
-    meals: [{ id: "m1", name: "Dal night", recipes: [{ recipeId: "r1", servingsMultiplier: 1 }] }],
+    meals: [{ id: "m1", name: "Dal night", recipes: [{ recipeId: "r1", servingsMultiplier: 1 }], sides: [{ ingredientId: "naan", portion: 90 }] }],
     nowMs: Date.UTC(2026, 9, 10, 15),
   };
 }
@@ -85,6 +85,7 @@ describe("export zip round trip", () => {
     const parsed = readExportZip(zipExport(built));
     expect(parsed.export).toEqual(built.export);
     expect(parsed.meals).toEqual(built.meals);
+    expect(parsed.meals[0]!.sides).toEqual([{ ingredientId: "naan", portion: 90 }]);
     expect([...parsed.cook.values()]).toEqual(["---\ntitle: Dal\n---\nCook."]);
     expect(parsed.export.household.fields).not.toHaveProperty("name");
     expect(parsed.export.household.fields).not.toHaveProperty("createdBy");

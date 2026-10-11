@@ -76,6 +76,7 @@ describe("commands (§6, validCommand)", () => {
   it("a member creates a pending command as themselves", async () => {
     await assertSucceeds(setDoc(doc(dbAs(ALICE), "households/h-alice/commands/c1"), cmd("addSupply", { ingredientId: "rice", amount: 500, location: "pantry" })));
     await assertSucceeds(setDoc(doc(dbAs(ALICE), "households/h-alice/commands/c2"), cmd("finishCooking", { cookEventId: "e9", planItemId: "p1", recipes: [{ recipeId: "r", servingsMultiplier: 1 }], servings: 4 })));
+    await assertSucceeds(setDoc(doc(dbAs(ALICE), "households/h-alice/commands/c2s"), cmd("finishCooking", { cookEventId: "e10", recipes: [{ recipeId: "r", servingsMultiplier: 1 }], servings: 4, sides: [{ ingredientId: "fries", portion: 150 }] })));
     await assertSucceeds(setDoc(doc(dbAs(ALICE), "households/h-alice/commands/c3"), cmd("submitReview", { cookEventId: "e1", ratings: [], used: [], leftoverPortions: 2 })));
   });
   it("refuses another uid, a non-pending status, unknown types, extra payload keys, extra fields, or a client time", async () => {

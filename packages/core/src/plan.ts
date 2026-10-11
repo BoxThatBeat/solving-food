@@ -6,7 +6,7 @@
 
 import { z } from "zod";
 import { MEAL_TYPES, PLANNABLE_MEAL_TYPES, type MealType, type PlannableMealType } from "./taxonomy";
-import { MEAL_NAME_MAX, MEAL_RECIPES_MAX, type PlanItemDoc } from "./types";
+import { MEAL_NAME_MAX, MEAL_RECIPES_MAX, MEAL_SIDES_MAX, type MealSide, type PlanItemDoc } from "./types";
 import { SERVINGS_MAX } from "./config";
 
 export type Coverage = Partial<Record<PlannableMealType, number>>;
@@ -94,6 +94,8 @@ export function stripCount(row: Pick<StripRow, "filled" | "days" | "overflow">):
 export const createMealInputSchema = z
   .object({
     recipes: z.array(z.object({ recipeId: z.string().min(1), servingsMultiplier: z.number().positive().max(10) })).min(1, "Pick at least one recipe").max(MEAL_RECIPES_MAX),
+    /** Sides (R5.9) with the household's current portion per person (R5.10), resolved by the client. */
+    sides: z.array(z.object({ ingredientId: z.string().min(1), portion: z.number().positive() })).max(MEAL_SIDES_MAX, `At most ${MEAL_SIDES_MAX} sides`).optional(),
     savedMealId: z.string().min(1).optional(),
     mealType: z.enum(MEAL_TYPES),
     servings: z.number().int().min(1).max(SERVINGS_MAX),
@@ -119,6 +121,8 @@ export function buildPlanItem(
     status: "planned",
     addedBy: ctx.uid,
   };
+  const sides = cleanSides(v.sides);
+  if (sides.length) item.sides = sides;
   const savedMealId = ctx.savedMealId ?? v.savedMealId;
   if (savedMealId) item.savedMealId = savedMealId;
   const name = v.name?.trim();
@@ -126,17 +130,40 @@ export function buildPlanItem(
   return item;
 }
 
-/** Default name offered for a multi-recipe meal: "Carnitas + Pico de gallo + Tortillas". */
-export function defaultMealName(titles: readonly string[]): string {
-  const s = titles.join(" + ");
+/** Sides as stored: one entry per ingredient (first wins), positive portions only, at most MEAL_SIDES_MAX. */
+export function cleanSides(sides: ReadonlyArray<{ ingredientId: string; portion: number }> | undefined): MealSide[] {
+  const seen = new Set<string>();
+  const out: MealSide[] = [];
+  for (const s of sides ?? []) {
+    if (!s.ingredientId || !(s.portion > 0) || seen.has(s.ingredientId)) continue;
+    seen.add(s.ingredientId);
+    out.push({ ingredientId: s.ingredientId, portion: s.portion });
+  }
+  return out.slice(0, MEAL_SIDES_MAX);
+}
+
+/** "fries, peas": a meal's sides by name (R5.9). Empty when there are none. */
+export function sidesLine(sides: ReadonlyArray<{ ingredientId: string }> | undefined, nameOf: (ingredientId: string) => string | undefined): string {
+  return (sides ?? []).map((s) => nameOf(s.ingredientId) ?? "side").join(", ");
+}
+
+/** Default name offered for a multi-recipe meal: "Carnitas + Pico de gallo + Tortillas", sides after: "Salmon + fries, peas". */
+export function defaultMealName(titles: readonly string[], sideNames: readonly string[] = []): string {
+  const s = [titles.join(" + "), sideNames.join(", ")].filter(Boolean).join(" + ");
   return s.length <= MEAL_NAME_MAX ? s : `${s.slice(0, MEAL_NAME_MAX - 1)}…`;
 }
 
-/** The title a plan item shows: its name, else its recipe titles. */
-export function planItemTitle(item: Pick<PlanItemDoc, "name" | "recipes">, titleOf: (id: string) => string | undefined): string {
+/** The title a plan item shows: its name, else its recipe titles, then its sides ("Salmon + fries, peas"). */
+export function planItemTitle(
+  item: Pick<PlanItemDoc, "name" | "recipes"> & { sides?: PlanItemDoc["sides"] },
+  titleOf: (id: string) => string | undefined,
+  sideNameOf?: (ingredientId: string) => string | undefined,
+): string {
   if (item.name) return item.name;
   const titles = item.recipes.map((r) => titleOf(r.recipeId) ?? "Recipe");
-  return titles.join(" + ") || "Meal";
+  const base = titles.join(" + ") || "Meal";
+  const sides = sideNameOf ? sidesLine(item.sides, sideNameOf) : "";
+  return sides ? `${base} + ${sides}` : base;
 }
 
 /** A planned item carried into the next period at rollover (§7): same meal, fresh period, pointing back. */
@@ -154,7 +181,7 @@ export function carriedItemId(periodId: string, fromId: string): string {
 /** Grouping order on the Plan page: breakfast, lunch, dinner, snack. */
 export const MEAL_TYPE_ORDER: Record<MealType, number> = { breakfast: 0, lunch: 1, dinner: 2, snack: 3 };
 
-/** Average protein per serving of the plan's items per meal type (R6.17's summary; goals arrive in M5). */
+/** Average protein per serving of the plan's items per meal type (R6.17's summary). Recipes only: sides are ignored. */
 export function proteinSummary(
   items: ReadonlyArray<Pick<PlanItemDoc, "mealType" | "recipes" | "status">>,
   proteinOf: (recipeId: string) => number | null | undefined,

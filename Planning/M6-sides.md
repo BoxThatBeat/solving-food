@@ -36,29 +36,30 @@ R5.9, R5.10, R7.11, R11.14.
 - [ ] Spec §4.1, §4.2, §6, §7, §8, §10, §12, §14.1; §15 M6 row (done); `Planning/README.md` row (done).
 
 ### 1. Data model
-- [ ] `types.ts`: `ingredient.side`, `mealSideSchema`, `MEAL_SIDES_MAX = 12`, `meal.sides`, `planItem.sides`,
+- [x] `types.ts`: `ingredient.side`, `mealSideSchema`, `MEAL_SIDES_MAX = 12`, `meal.sides`, `planItem.sides`,
       `settings.sides`, `cookEvent.sides`. `commands.ts`: `finishCooking.sides`.
-- [ ] `export.ts` `exportMealSchema.sides`; `importHousehold` `resolveMeals` copies sides.
-- [ ] `firestore.rules`: `validIngredient` side, `validMeal` sides, `validPlanItem` sides (meal only), finishCooking
+- [x] `export.ts` `exportMealSchema.sides`; `importHousehold` `resolveMeals` copies sides.
+- [x] `firestore.rules`: `validIngredient` side, `validMeal` sides, `validPlanItem` sides (meal only), finishCooking
       payload key.
-- [ ] Seed validator: a side needs `portion > 0`, a default pack, and can't be free-use.
+- [x] Seed validator: a side needs `portion > 0`, a default pack, and can't be free-use.
 - [ ] Web: `OPTIONAL_INGREDIENT_KEYS` + `side`; `data/sides.ts` (`useSides`, `saveSides`).
 
 ### 2. Core math
-- [ ] `grocery.ts`: `SideRef`, `PlanItemInput.sides`, `needsFor` adds portion × servings (free-use skipped).
-- [ ] `cooking.ts`: `mealRequirements(..., sides)`.
-- [ ] `plan.ts`: `createMealInputSchema.sides`, `buildPlanItem` copies them, `planItemTitle` with sides,
+- [x] `grocery.ts`: `SideRef`, `PlanItemInput.sides`, `needsFor` adds portion × servings (free-use skipped).
+- [x] `cooking.ts`: `mealRequirements(..., sides)`.
+- [x] `plan.ts`: `createMealInputSchema.sides`, `buildPlanItem` copies them, `planItemTitle` with sides,
       `sidesLine`, `defaultMealName(titles, sideNames)`; `carryOver` keeps sides; `proteinSummary` ignores them.
-- [ ] `meal.ts`: `newMeal(..., sides)`, `combineSummaries` searchable side names, rows pass sides.
-- [ ] Unit tests: grocery (scale, packs, free-use, supply/incoming, addedCost, property), plan, cooking, meal,
+- [x] `meal.ts`: `newMeal(..., sides)`, `combineSummaries` searchable side names, rows pass sides.
+- [x] Unit tests: grocery (scale, packs, free-use, supply/incoming, addedCost, property), plan, cooking, meal,
       export, types.
+- [x] `sides.ts` (added): `effectiveSides`, `formatPortion` ("1 (55 g)"), portion input in units or grams.
 
 ### 3. Functions
-- [ ] `finishCooking` deducts sides (payload or plan item), stores `sides` on the cook event; `markEaten` snack path.
-- [ ] Functions tests: 4 × 150 g fries deducted from a 2 kg lot, review correction puts 100 g back, snack eaten.
+- [x] `finishCooking` deducts sides (payload or plan item), stores `sides` on the cook event; `markEaten` snack path.
+- [x] Functions tests: 4 × 150 g fries deducted from a 2 kg lot, review correction puts 100 g back, snack eaten.
 
 ### 4. Seed data
-- [ ] Flag existing seed ingredients as sides; add frozen fries, sweet potato fries, tater tots, onion rings,
+- [x] Flag existing seed ingredients as sides; add frozen fries, sweet potato fries, tater tots, onion rings,
       garlic bread, salad kit with price estimates. Validate, prices check.
 
 ### 5. UI
@@ -73,7 +74,7 @@ R5.9, R5.10, R7.11, R11.14.
 - [ ] Design-compare Plan, Create meal, Settings → Sides (phone 430×932, desktop 1920×1080).
 
 ### 6. Tests
-- [ ] Rules tests.
+- [x] Rules tests.
 - [ ] e2e: plan @R5.9, grocery @R7.11 @R5.10, meals @R5.9, cooking @R5.10, settings @R11.14, history.
 - [ ] `pnpm e2e:coverage`.
 

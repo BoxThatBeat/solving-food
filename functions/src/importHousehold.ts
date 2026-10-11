@@ -141,6 +141,7 @@ async function resolveMeals(p: ParsedExport, uid: string, recipes: Map<string, s
     await ref.set({
       name: m.name,
       recipes: m.recipes.map((r) => ({ recipeId: recipes.get(r.recipeId) ?? r.recipeId, servingsMultiplier: r.servingsMultiplier })),
+      ...(m.sides?.length ? { sides: m.sides.map((x) => ({ ingredientId: x.ingredientId, portion: x.portion })) } : {}),
       createdBy: uid,
       updatedBy: uid,
       createdAt: FieldValue.serverTimestamp(),

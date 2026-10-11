@@ -73,6 +73,10 @@ service cloud.firestore {
     function optNum(d, k) {
       return !(k in d) || (d[k] is number && d[k] >= 0);
     }
+    // An ingredient's side flag (R5.9): { portion } per person, canonical, positive.
+    function validSidePortion(s) {
+      return s is map && s.keys().hasOnly(['portion']) && s.portion is number && s.portion > 0;
+    }
     function validHousehold(d) {
       return d.keys().hasOnly(['name', 'createdBy', 'periodDays', 'budgetCents', 'currency', 'timezone',
                                'defaultServings', 'plannedMealTypes', 'pcxStoreId', 'pcxStoreName', 'currentPeriodId',
@@ -151,7 +155,7 @@ service cloud.firestore {
       return d.keys().hasOnly(['name', 'aliases', 'category', 'defaultLocation', 'allowedMeasures', 'canonicalUnit',
                                'densityGPerMl', 'unitWeightG', 'proteinPer100g', 'shelfLifeDays', 'defaultPackAmount',
                                'defaultPackMeasure', 'defaultCadenceDays', 'freezable', 'isStaple', 'freeUse',
-                               'needsReview', 'createdBy', 'updatedBy', 'updatedAt'])
+                               'needsReview', 'side', 'createdBy', 'updatedBy', 'updatedAt'])
         && d.keys().hasAll(['name', 'aliases', 'category', 'defaultLocation', 'allowedMeasures', 'canonicalUnit',
                             'shelfLifeDays', 'freezable', 'isStaple', 'freeUse', 'needsReview'])
         && str(d.name, 1, 80)
@@ -166,6 +170,7 @@ service cloud.firestore {
         && (!('defaultPackMeasure' in d) || d.defaultPackMeasure in ['weight', 'volume', 'count'])
         && d.shelfLifeDays is map
         && d.freezable is bool && d.isStaple is bool && d.freeUse is bool && d.needsReview is bool
+        && (!('side' in d) || validSidePortion(d.side))
         && d.updatedBy == me() && d.updatedAt == request.time;
     }
 
@@ -261,11 +266,16 @@ service cloud.firestore {
     function validMealRecipes(l) {
       return l is list && l.size() >= 1 && l.size() <= 12;
     }
+    // Sides (R5.9): ≤ 12 entries of { ingredientId, portion > 0 }; entries are checked by the client's zod schema.
+    function validSides(d) {
+      return !('sides' in d) || (d.sides is list && d.sides.size() <= 12);
+    }
     function validMeal(d) {
-      return d.keys().hasOnly(['name', 'recipes', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt'])
+      return d.keys().hasOnly(['name', 'recipes', 'sides', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt'])
         && d.keys().hasAll(['name', 'recipes', 'createdBy', 'updatedAt'])
         && str(d.name, 1, 80) && d.name.trim().size() > 0
         && validMealRecipes(d.recipes)
+        && validSides(d)
         && d.updatedBy == me() && d.updatedAt == request.time;
     }
 
@@ -321,7 +331,7 @@ service cloud.firestore {
     function payloadKeys(t) {
       return t == 'addSupply' ? ['ingredientId', 'amount', 'location', 'entered']
         : t == 'receiveGroceries' ? ['listId', 'items']
-        : t == 'finishCooking' ? ['cookEventId', 'planItemId', 'savedMealId', 'recipes', 'servings', 'mealType', 'title']
+        : t == 'finishCooking' ? ['cookEventId', 'planItemId', 'savedMealId', 'recipes', 'servings', 'mealType', 'title', 'sides']
         : t == 'submitReview' ? ['cookEventId', 'ratings', 'used', 'leftoverPortions', 'savedMealId', 'note']
         : t == 'correctSupply' ? ['supplyId', 'target', 'ingredientId', 'note']
         : t in ['discard', 'freeze', 'thaw'] ? ['supplyId', 'lotId', 'amount']
@@ -342,7 +352,7 @@ service cloud.firestore {
     }
 
     function validPlanItem(d) {
-      return d.keys().hasOnly(['periodId', 'kind', 'mealType', 'servings', 'recipes', 'savedMealId', 'name',
+      return d.keys().hasOnly(['periodId', 'kind', 'mealType', 'servings', 'recipes', 'sides', 'savedMealId', 'name',
                                'leftoverSupplyId', 'sourcePlanItemId', 'coverage', 'status', 'carriedFromId', 'addedBy',
                                'addedAt'])
         && d.keys().hasAll(['periodId', 'kind', 'mealType', 'servings', 'recipes', 'coverage', 'status', 'addedBy'])
@@ -351,6 +361,7 @@ service cloud.firestore {
         && d.mealType in ['breakfast', 'lunch', 'dinner', 'snack']
         && d.servings is number && d.servings > 0 && d.servings <= 100
         && d.recipes is list && d.recipes.size() <= 12 && (d.kind == 'leftover' || d.recipes.size() >= 1)
+        && validSides(d) && (d.kind == 'meal' || !('sides' in d))
         && d.coverage is map && d.coverage.keys().hasOnly(['breakfast', 'lunch', 'dinner'])
         && d.status in ['planned', 'cooked', 'skipped', 'eaten']
         && optStr(d, 'name', 80) && optStr(d, 'savedMealId', 200) && optStr(d, 'carriedFromId', 200)

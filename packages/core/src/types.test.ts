@@ -78,6 +78,9 @@ describe("document schemas accept the spec examples", () => {
         densityGPerMl: 1.03,
       }),
     ).toBeTruthy();
+    const fries = { ...common, name: "frozen french fries", allowedMeasures: ["weight"], canonicalUnit: "g" };
+    expect(ingredientSchema.safeParse({ ...fries, side: { portion: 150 } }).success).toBe(true);
+    expect(ingredientSchema.safeParse({ ...fries, side: { portion: 0 } }).success).toBe(false);
   });
 
   it("recipes", () => {
@@ -122,6 +125,17 @@ describe("document schemas accept the spec examples", () => {
 
   it("recipes: cuisine must come from the fixed list", () => {
     expect(recipeSchema.shape.cuisine.safeParse("klingon").success).toBe(false);
+  });
+
+  it("sides: on ingredients, meals, plan items, settings, cook events (R5.9, R5.10)", () => {
+    const fries = { ingredientId: "fries", portion: 150 };
+    const meal = { name: "Fish", recipes: [{ recipeId: "r", servingsMultiplier: 1 }], createdBy: "u1", updatedAt: ts };
+    expect(mealSchema.safeParse({ ...meal, sides: [fries] }).success).toBe(true);
+    expect(mealSchema.safeParse({ ...meal, sides: Array.from({ length: 13 }, () => fries) }).success).toBe(false);
+    expect(mealSchema.safeParse({ ...meal, sides: [{ ingredientId: "fries", portion: 0 }] }).success).toBe(false);
+    const item = { periodId: "p1", kind: "meal", recipes: [], mealType: "dinner", servings: 4, coverage: {}, status: "planned", addedBy: "u1" };
+    expect(planItemSchema.safeParse({ ...item, sides: [fries] }).success).toBe(true);
+    expect(cookEventSchema.safeParse({ recipeIds: [], titles: [], sides: [fries], cookedBy: "u", cookedAt: ts, used: [], leftoverPortions: 0, reviewStatus: "pending", ratedBy: [] }).success).toBe(true);
   });
 
   it("meals", () => {

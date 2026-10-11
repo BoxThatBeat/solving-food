@@ -145,6 +145,17 @@ describe("household collections are member-only (R2.8)", () => {
     await assertSucceeds(deleteDoc(ref));
   });
 
+  it("plan items with sides (R5.9): meals only, at most 12; household side settings", async () => {
+    const db = dbAs(ALICE);
+    const fries = { ingredientId: "fries", portion: 150 };
+    await assertSucceeds(setDoc(doc(db, "households/h-alice/planItems/s1"), planItem({ sides: [fries] })));
+    await assertSucceeds(updateDoc(doc(db, "households/h-alice/planItems/s1"), { sides: [fries, { ingredientId: "peas", portion: 80 }] }));
+    await assertFails(setDoc(doc(db, "households/h-alice/planItems/s2"), planItem({ sides: Array.from({ length: 13 }, () => fries) })));
+    await assertFails(setDoc(doc(db, "households/h-alice/planItems/s3"), planItem({ kind: "leftover", recipes: [], sides: [fries] })));
+    await assertFails(setDoc(doc(db, "households/h-alice/planItems/s4"), planItem({ sides: "fries" })));
+    await assertSucceeds(updateDoc(doc(db, "households/h-alice"), { "settings.sides": { fries: { portion: 200 } } }));
+  });
+
   it("stores, sourcing rules, brand mappings", async () => {
     const db = dbAs(ALICE);
     await assertSucceeds(setDoc(doc(db, "households/h-alice/stores/farm"), { name: "Farmers' market", kind: "inStore", bulk: false }));
@@ -186,6 +197,10 @@ describe("saved meals (R5.2): global, public get for share links", () => {
     await assertFails(updateDoc(doc(dbAs(BOB), "meals/m1"), { createdBy: BOB.uid, updatedBy: BOB.uid, updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(doc(dbAs(BOB), "meals/m1"), { recipes: [], updatedBy: BOB.uid, updatedAt: serverTimestamp() }));
     await assertSucceeds(deleteDoc(doc(dbAs(BOB), "meals/m1")));
+  });
+  it("meals keep sides (R5.9): at most 12", async () => {
+    await assertSucceeds(setDoc(doc(dbAs(ALICE), "meals/s1"), meal(ALICE.uid, { sides: [{ ingredientId: "fries", portion: 150 }] })));
+    await assertFails(setDoc(doc(dbAs(ALICE), "meals/s2"), meal(ALICE.uid, { sides: Array.from({ length: 13 }, () => ({ ingredientId: "fries", portion: 1 })) })));
   });
   it("rejects bad meals and non-allowlisted writers", async () => {
     await assertFails(setDoc(doc(dbAs(ALICE), "meals/m2"), meal(BOB.uid)));

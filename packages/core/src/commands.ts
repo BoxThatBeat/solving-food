@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 import { MEAL_TYPES, STORAGE_LOCATIONS } from "./taxonomy";
-import { MEAL_RECIPES_MAX } from "./types";
+import { MEAL_RECIPES_MAX, MEAL_SIDES_MAX, mealSideSchema } from "./types";
 
 const id = z.string().min(1).max(200);
 const amount = z.number().finite().min(0).max(1e7);
@@ -47,6 +47,8 @@ export const finishCookingPayload = z.object({
   servings: z.number().positive().max(100),
   mealType: z.enum(MEAL_TYPES).optional(),
   title: z.string().max(200).optional(),
+  /** The meal's sides (R5.10); absent = the plan item's. */
+  sides: z.array(mealSideSchema).max(MEAL_SIDES_MAX).optional(),
 });
 
 export const ratingPayload = z.object({

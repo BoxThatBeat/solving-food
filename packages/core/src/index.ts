@@ -18,6 +18,7 @@ export * from "./pricing";
 export * from "./grocery";
 export * from "./budget";
 export * from "./meal";
+export * from "./sides";
 export * from "./expiry";
 export * from "./ledger";
 export * from "./commands";

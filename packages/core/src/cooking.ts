@@ -3,18 +3,18 @@
 
 import type { MealType, PlannableMealType } from "./taxonomy";
 import { isPlannable, type Coverage, type RecipeRef } from "./plan";
-import { needsFor, type BuildContext, type GroceryIngredient, type PlanItemInput, type RecipeLines } from "./grocery";
+import { needsFor, type BuildContext, type GroceryIngredient, type PlanItemInput, type RecipeLines, type SideRef } from "./grocery";
 import { activeExpiry, EPS, isExpired, type LedgerLot } from "./ledger";
 
 export type IngredientsOf = (id: string) => Pick<GroceryIngredient, "freeUse"> | undefined;
 export type RecipesOf = BuildContext["recipes"];
 
 /**
- * Canonical amounts a meal uses at `servings` (each recipe scaled by servings × multiplier ÷ its own servings), free-use,
- * optional, and vague lines left out (R8.14, R9.3).
+ * Canonical amounts a meal uses at `servings` (each recipe scaled by servings × multiplier ÷ its own servings, plus each
+ * side's portion × servings), free-use, optional, and vague lines left out (R8.14, R9.3, R5.10).
  */
-export function mealRequirements(refs: readonly RecipeRef[], servings: number, ctx: { recipes: RecipesOf; ingredients: IngredientsOf }): Map<string, number> {
-  return needsFor([{ id: "meal", status: "planned", servings, recipes: refs }], ctx);
+export function mealRequirements(refs: readonly RecipeRef[], servings: number, ctx: { recipes: RecipesOf; ingredients: IngredientsOf }, sides: readonly SideRef[] = []): Map<string, number> {
+  return needsFor([{ id: "meal", status: "planned", servings, recipes: refs, sides }], ctx);
 }
 
 export interface LeftoverRecipe {

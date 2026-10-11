@@ -1,6 +1,7 @@
 // The grocery builder (PRD R7.1–R7.6, R6.3, R6.4; TECHNICAL_SPECS §8 "Builder", §7 "Budget").
 //
 //   needs     = Σ requirements of planned, uncooked items (scaled by servings), excluding free-use ingredients
+//               + Σ side.portion × servings (R5.10, R7.11; free-use sides excluded)
 //   incoming  = Σ amounts on this household's lists with status "ordered" (copied, not yet received)
 //   shortfall = max(0, needs − unexpired supply − incoming)
 //   packSize  = brandMapping.packAmount ?? ingredient.defaultPackAmount ?? shortfall      // no rounding if unknown
@@ -26,11 +27,18 @@ export interface GroceryIngredient extends ConvertibleIngredient {
   defaultPackMeasure?: Measure | undefined;
 }
 
+/** A side on a meal (R5.9): an ingredient eaten as is, `portion` per person in canonical units. */
+export interface SideRef {
+  ingredientId: string;
+  portion: number;
+}
+
 export interface PlanItemInput {
   id: string;
   status: string;
   servings: number;
   recipes: readonly RecipeRef[];
+  sides?: readonly SideRef[] | undefined;
 }
 
 export interface RecipeLines {
@@ -81,7 +89,7 @@ export interface BuildContext {
 export const UNASSIGNED_STORE = "unassigned";
 const EPS = 1e-9;
 
-/** Canonical requirements of the planned items, free-use, optional, and vague lines excluded (R8.14). */
+/** Canonical requirements of the planned items and their sides, free-use, optional, and vague lines excluded (R8.14). */
 export function needsFor(items: readonly PlanItemInput[], ctx: { recipes: BuildContext["recipes"]; ingredients: (id: string) => Pick<GroceryIngredient, "freeUse"> | undefined }): Map<string, number> {
   const needs = new Map<string, number>();
   for (const it of items) {
@@ -96,6 +104,12 @@ export function needsFor(items: readonly PlanItemInput[], ctx: { recipes: BuildC
         if (ing?.freeUse) continue;
         needs.set(line.ingredientId, (needs.get(line.ingredientId) ?? 0) + line.canonicalAmount * factor);
       }
+    }
+    // Sides (R5.10): one portion per serving. A side that's also a recipe ingredient is summed.
+    for (const side of it.sides ?? []) {
+      if (!(side.portion > 0)) continue;
+      if (ctx.ingredients(side.ingredientId)?.freeUse) continue;
+      needs.set(side.ingredientId, (needs.get(side.ingredientId) ?? 0) + side.portion * it.servings);
     }
   }
   return needs;

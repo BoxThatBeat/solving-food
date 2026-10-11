@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPlanItem, carriedItemId, carryOver, coverageFor, createMealInputSchema, defaultMealName, planItemTitle, proteinSummary, stripCount, stripModel } from "./plan";
+import { buildPlanItem, carriedItemId, carryOver, cleanSides, coverageFor, createMealInputSchema, defaultMealName, planItemTitle, proteinSummary, sidesLine, stripCount, stripModel } from "./plan";
 import type { PlanItemDoc } from "./types";
 
 const recipes: Record<string, { defaultLeftoverPortions: number; leftoverMealType?: "breakfast" | "lunch" | "dinner" | "snack" }> = {
@@ -88,6 +88,37 @@ describe("Create meal", () => {
     const titles: Record<string, string> = { a: "Carnitas", b: "Pico" };
     expect(planItemTitle({ recipes: [ref("a"), ref("b")] }, (id) => titles[id])).toBe("Carnitas + Pico");
     expect(planItemTitle({ name: "Taco night", recipes: [ref("a")] }, (id) => titles[id])).toBe("Taco night");
+  });
+});
+
+describe("sides (R5.9, R5.10)", () => {
+  const base = { recipes: [ref("plain")], mealType: "dinner" as const, servings: 4, saveAsMeal: false };
+  const fries = { ingredientId: "fries", portion: 150 };
+  const peas = { ingredientId: "peas", portion: 80 };
+  const names: Record<string, string> = { fries: "fries", peas: "peas", a: "Salmon" };
+  it("the schema rejects more than 12 sides and non-positive portions", () => {
+    expect(createMealInputSchema.safeParse({ ...base, sides: [fries] }).success).toBe(true);
+    expect(createMealInputSchema.safeParse({ ...base, sides: Array.from({ length: 13 }, (_, i) => ({ ingredientId: `s${i}`, portion: 1 })) }).success).toBe(false);
+    expect(createMealInputSchema.safeParse({ ...base, sides: [{ ingredientId: "fries", portion: 0 }] }).success).toBe(false);
+    expect(createMealInputSchema.safeParse({ ...base, recipes: [], sides: [fries] }).success).toBe(false);
+  });
+  it("buildPlanItem keeps sides (deduplicated) and leaves the field off when there are none", () => {
+    expect(buildPlanItem({ ...base, sides: [fries, peas, { ingredientId: "fries", portion: 9 }] }, { periodId: "p", uid: "u", recipes: lookup }).sides).toEqual([fries, peas]);
+    expect("sides" in buildPlanItem({ ...base, sides: [] }, { periodId: "p", uid: "u", recipes: lookup })).toBe(false);
+    expect(cleanSides([{ ingredientId: "x", portion: -1 }, fries])).toEqual([fries]);
+  });
+  it("titles: recipes + sides, a name wins; default names", () => {
+    const nameOf = (id: string) => names[id];
+    expect(sidesLine([fries, peas], nameOf)).toBe("fries, peas");
+    expect(planItemTitle({ recipes: [ref("a")], sides: [fries, peas] }, nameOf, nameOf)).toBe("Salmon + fries, peas");
+    expect(planItemTitle({ recipes: [ref("a")], sides: [fries] }, nameOf)).toBe("Salmon");
+    expect(planItemTitle({ name: "Fish night", recipes: [ref("a")], sides: [fries] }, nameOf, nameOf)).toBe("Fish night");
+    expect(defaultMealName(["Salmon"], ["fries", "peas"])).toBe("Salmon + fries, peas");
+  });
+  it("carryOver keeps sides; proteinSummary ignores them", () => {
+    const orig: PlanItemDoc = { periodId: "p1", kind: "meal", mealType: "dinner", servings: 4, recipes: [ref("a")], sides: [fries], coverage: { dinner: 1 }, status: "planned", addedBy: "u" };
+    expect(carryOver(orig, "i1", "p2").sides).toEqual([fries]);
+    expect(proteinSummary([orig], () => 30)).toEqual({ dinner: { avg: 30, items: 1 } });
   });
 });
 

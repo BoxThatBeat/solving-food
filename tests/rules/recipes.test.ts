@@ -267,6 +267,10 @@ describe("ingredients (§5, R8.3)", () => {
     await assertFails(setDoc(doc(dbAs(ALICE), "ingredients", "w"), ing(BOB.uid, { updatedBy: ALICE.uid })));
     await assertFails(updateDoc(doc(dbAs(BOB), "ingredients", "garlic"), { createdBy: BOB.uid, updatedBy: BOB.uid, updatedAt: serverTimestamp() }));
     await assertFails(deleteDoc(doc(dbAs(ALICE), "ingredients", "garlic")));
+    // Sides (R5.9): a positive portion only.
+    await assertSucceeds(setDoc(doc(dbAs(ALICE), "ingredients", "fries"), ing(ALICE.uid, { side: { portion: 150 } })));
+    await assertFails(setDoc(doc(dbAs(ALICE), "ingredients", "fries2"), ing(ALICE.uid, { side: { portion: 0 } })));
+    await assertFails(setDoc(doc(dbAs(ALICE), "ingredients", "fries3"), ing(ALICE.uid, { side: { portion: 150, extra: 1 } })));
   });
 });
 

@@ -145,6 +145,7 @@ export const exportMealSchema = z.object({
   id: docIdSchema,
   name: z.string().min(1).max(80),
   recipes: z.array(z.object({ recipeId: docIdSchema, servingsMultiplier: z.number().positive() })).min(1).max(12),
+  sides: z.array(z.object({ ingredientId: docIdSchema, portion: z.number().positive() })).max(12).optional(),
 });
 export type ExportMeal = z.infer<typeof exportMealSchema>;
 
@@ -498,7 +499,7 @@ export async function gatherExport(hid: string, reader: ExportReader, nowMs: num
   for (const id of mealIds) {
     const m = await reader.meal(id);
     if (!m) continue;
-    const parsed = exportMealSchema.safeParse({ id, name: m.name, recipes: m.recipes });
+    const parsed = exportMealSchema.safeParse({ id, name: m.name, recipes: m.recipes, ...(Array.isArray(m.sides) && m.sides.length ? { sides: m.sides } : {}) });
     if (!parsed.success) continue;
     meals.push(parsed.data);
     for (const r of parsed.data.recipes) recipeIds.add(r.recipeId);

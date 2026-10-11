@@ -95,6 +95,8 @@ export const ingredientSchema = z.object({
   isStaple: z.boolean(),
   freeUse: z.boolean(),
   needsReview: z.boolean(),
+  /** Set when the ingredient is a side (R5.9): eaten as is, `portion` per person in canonical units (R5.10). */
+  side: z.object({ portion: z.number().positive() }).optional(),
   // Set when a person creates or edits an ingredient in the app (absent on seed data).
   createdBy: z.string().optional(),
   updatedBy: z.string().optional(),
@@ -186,10 +188,15 @@ export type RecipeVersionDoc = z.infer<typeof recipeVersionSchema>;
 export const MEAL_NAME_MAX = 80;
 export const MEAL_RECIPES_MAX = 12;
 export const mealRecipeSchema = z.object({ recipeId: id, servingsMultiplier: z.number().positive().max(10) });
+export const MEAL_SIDES_MAX = 12;
+/** A side on a meal (R5.9, R5.10): the ingredient and its per-person portion (canonical), snapshotted at creation. */
+export const mealSideSchema = z.object({ ingredientId: id, portion: z.number().positive() });
+export type MealSide = z.infer<typeof mealSideSchema>;
 /** A saved meal (R5.2): global like recipes, born from Create meal (R5.8). */
 export const mealSchema = z.object({
   name: z.string().trim().min(1, "Name the meal").max(MEAL_NAME_MAX),
   recipes: z.array(mealRecipeSchema).min(1).max(MEAL_RECIPES_MAX),
+  sides: z.array(mealSideSchema).max(MEAL_SIDES_MAX).optional(),
   createdBy: z.string(),
   updatedBy: z.string().optional(),
   createdAt: timestamp.optional(),
@@ -243,6 +250,8 @@ export const householdSettingsSchema = z.object({
     diets: z.array(z.string()),
   }),
   proteinGoals: proteinGoalsSchema,
+  /** Sides the household flagged and/or portion overrides (R11.14), keyed by ingredient ID; portion canonical. */
+  sides: z.record(id, z.object({ portion: z.number().positive() })).optional(),
 });
 
 export const householdNameSchema = z
@@ -356,6 +365,8 @@ export const planItemSchema = z.object({
   mealType: z.enum(MEAL_TYPES),
   servings: z.number().positive(),
   recipes: z.array(mealRecipeSchema).max(MEAL_RECIPES_MAX),
+  /** Sides (R5.9) with the portion snapshotted when the meal was created; meal items only. */
+  sides: z.array(mealSideSchema).max(MEAL_SIDES_MAX).optional(),
   savedMealId: id.optional(),
   name: z.string().max(MEAL_NAME_MAX).optional(),
   leftoverSupplyId: id.optional(),
@@ -377,6 +388,8 @@ export const cookEventSchema = z.object({
   title: z.string().optional(),
   recipeIds: z.array(id),
   titles: z.array(z.string()),
+  /** The meal's sides as cooked (R5.9, History). */
+  sides: z.array(mealSideSchema).optional(),
   mealType: z.enum(MEAL_TYPES).optional(),
   servings: z.number().positive().optional(),
   cookedBy: z.string(),

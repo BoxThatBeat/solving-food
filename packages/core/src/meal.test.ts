@@ -34,6 +34,16 @@ describe("meal rows for <CollectionView> (R4.7)", () => {
     const row = planItemRow("p1", { recipes: [{ recipeId: "pico", servingsMultiplier: 1 }], mealType: "lunch" }, byId, "Pico");
     expect(row.tags).toEqual(["lunch", "side"]);
   });
+  it("sides make a meal findable by side name, without changing protein or times (R5.9)", () => {
+    const row = mealRow("m2", { name: "Fish", recipes: [{ recipeId: "pico", servingsMultiplier: 1 }], sides: [{ ingredientId: "fries", portion: 150 }], updatedAt: new Date(5) }, byId, (id) => (id === "fries" ? "frozen french fries" : undefined));
+    expect(row.ingredientIds).toContain("fries");
+    expect(row.ingredientNames).toContain("frozen french fries");
+    expect(row).toMatchObject({ proteinPerServingG: 1, totalMin: 30 });
+  });
+  it("new meal keeps sides", () => {
+    expect(newMeal("Fish", [{ recipeId: "a", servingsMultiplier: 1 }], "u1", [{ ingredientId: "fries", portion: 150 }]).sides).toEqual([{ ingredientId: "fries", portion: 150 }]);
+    expect("sides" in newMeal("Fish", [{ recipeId: "a", servingsMultiplier: 1 }], "u1", [])).toBe(false);
+  });
   it("new meal document", () => {
     expect(newMeal(" Taco night ", [{ recipeId: "a", servingsMultiplier: 2 }], "u1")).toEqual({ name: "Taco night", recipes: [{ recipeId: "a", servingsMultiplier: 2 }], createdBy: "u1", updatedBy: "u1" });
   });

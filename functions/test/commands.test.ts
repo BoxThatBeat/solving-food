@@ -15,6 +15,7 @@ const ING = {
   rice: { name: "rice", aliases: [], category: "grains", defaultLocation: "pantry", allowedMeasures: ["weight"], canonicalUnit: "g", shelfLifeDays: { pantry: 365 }, freezable: false, isStaple: true, freeUse: false, needsReview: false },
   chicken: { name: "chicken thigh", aliases: [], category: "meat", defaultLocation: "fridge", allowedMeasures: ["weight"], canonicalUnit: "g", shelfLifeDays: { fridge: 2, freezer: 180 }, freezable: true, isStaple: false, freeUse: false, needsReview: false },
   spinach: { name: "baby spinach", aliases: [], category: "produce", defaultLocation: "fridge", allowedMeasures: ["weight"], canonicalUnit: "g", shelfLifeDays: { fridge: 5 }, freezable: false, isStaple: false, freeUse: false, needsReview: false },
+  fries: { name: "frozen french fries", aliases: ["fries"], category: "frozen", defaultLocation: "freezer", allowedMeasures: ["weight"], canonicalUnit: "g", shelfLifeDays: { freezer: 365 }, defaultPackAmount: 1000, defaultPackMeasure: "weight", freezable: true, isStaple: false, freeUse: false, needsReview: false, side: { portion: 150 } },
   oil: { name: "olive oil", aliases: [], category: "pantry", defaultLocation: "pantry", allowedMeasures: ["volume"], canonicalUnit: "g", densityGPerMl: 0.91, shelfLifeDays: {}, freezable: false, isStaple: true, freeUse: true, needsReview: false },
 };
 
@@ -274,5 +275,33 @@ describe("cooking, review, leftovers, eaten", () => {
     }
     expect((await supply("rice"))!.canonicalAmount).toBe(before - 300);
     expect((await db.doc(`households/${HID}/cookEvents/ev-off`).get()).data()!.reviewStatus).toBe("done");
+  });
+});
+
+describe("sides (R5.10)", () => {
+  it("finishCooking deducts portion × servings from the plan item's sides; the review corrects; a snack eaten deducts its sides", async () => {
+    expect((await command("addSupply", { ingredientId: "fries", amount: 2000, location: "freezer" })).status).toBe("applied");
+    await db.doc(`households/${HID}/planItems/ps`).set({ periodId: "2026-10-05", kind: "meal", mealType: "dinner", servings: 4, recipes: [{ recipeId: "r-rice", servingsMultiplier: 1 }], sides: [{ ingredientId: "fries", portion: 150 }], coverage: { dinner: 1 }, status: "planned", addedBy: UID });
+    const r = await command("finishCooking", { cookEventId: "ev-side", planItemId: "ps", recipes: [{ recipeId: "r-rice", servingsMultiplier: 1 }], servings: 4 });
+    expect(r.status).toBe("applied");
+    expect((await supply("fries"))!.canonicalAmount).toBe(1400);
+    const ev = (await db.doc(`households/${HID}/cookEvents/ev-side`).get()).data()!;
+    expect(ev.sides).toEqual([{ ingredientId: "fries", portion: 150 }]);
+    expect(ev.used).toContainEqual({ ingredientId: "fries", canonicalAmount: 600 });
+    expect(ev.deducted).toContainEqual({ ingredientId: "fries", canonicalAmount: 600 });
+
+    const used = (ev.used as Array<{ ingredientId: string; canonicalAmount: number }>).map((u) => (u.ingredientId === "fries" ? { ...u, canonicalAmount: 500 } : u));
+    expect((await command("submitReview", { cookEventId: "ev-side", ratings: [], used, leftoverPortions: 0 })).status).toBe("applied");
+    expect((await supply("fries"))!.canonicalAmount).toBe(1500);
+    expect(await txSum("fries")).toBeCloseTo(1500, 6);
+
+    // The command's sides win over the plan item's.
+    await db.doc(`households/${HID}/planItems/ps2`).set({ periodId: "2026-10-05", kind: "meal", mealType: "dinner", servings: 2, recipes: [{ recipeId: "r-rice", servingsMultiplier: 1 }], sides: [{ ingredientId: "fries", portion: 150 }], coverage: { dinner: 1 }, status: "planned", addedBy: UID });
+    expect((await command("finishCooking", { cookEventId: "ev-side2", planItemId: "ps2", recipes: [{ recipeId: "r-rice", servingsMultiplier: 1 }], servings: 2, sides: [{ ingredientId: "fries", portion: 100 }] })).status).toBe("applied");
+    expect((await supply("fries"))!.canonicalAmount).toBe(1300);
+
+    await db.doc(`households/${HID}/planItems/snack`).set({ periodId: "2026-10-05", kind: "meal", mealType: "snack", servings: 2, recipes: [{ recipeId: "r-rice", servingsMultiplier: 1 }], sides: [{ ingredientId: "fries", portion: 50 }], coverage: {}, status: "planned", addedBy: UID });
+    expect((await command("markEaten", { planItemId: "snack" })).status).toBe("applied");
+    expect((await supply("fries"))!.canonicalAmount).toBe(1200);
   });
 });

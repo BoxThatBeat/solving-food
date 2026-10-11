@@ -246,3 +246,65 @@ describe("marginalCostFn", () => {
     }
   });
 });
+
+describe("sides (R5.10, R7.11)", () => {
+  const SIDE_ING: Record<string, GroceryIngredient> = {
+    ...ING,
+    fries: { id: "fries", name: "frozen french fries", category: "frozen", freeUse: false, allowedMeasures: ["weight"], canonicalUnit: "g", defaultPackAmount: 1000, defaultPackMeasure: "weight" },
+    bun: { id: "bun", name: "hamburger bun", category: "bakery", freeUse: false, allowedMeasures: ["count", "weight"], canonicalUnit: "count", unitWeightG: 55, defaultPackAmount: 8, defaultPackMeasure: "count" },
+  };
+  const sctx = (over: Partial<BuildContext> = {}) =>
+    ctx({
+      ingredients: (id) => SIDE_ING[id],
+      prices: { estimates: { ...ctx().prices.estimates, fries: { priceCents: 499, packAmount: 1000, packMeasure: "weight" } } },
+      ...over,
+    });
+  const withSides = (id: string, servings: number, sides: PlanItemInput["sides"], status = "planned"): PlanItemInput => ({ ...plan(id, "curry", servings, status), sides });
+
+  it("adds portion × servings per side, skips free-use sides and non-positive portions", () => {
+    const n = needsFor([withSides("a", 4, [{ ingredientId: "fries", portion: 150 }, { ingredientId: "oil", portion: 10 }, { ingredientId: "bun", portion: 0 }]), withSides("b", 2, [{ ingredientId: "bun", portion: 1 }])], sctx());
+    expect(n.get("fries")).toBe(600);
+    expect(n.get("bun")).toBe(2);
+    expect(n.has("oil")).toBe(false);
+  });
+
+  it("ignores sides of cooked items and sums a side that's also a recipe ingredient", () => {
+    const n = needsFor([withSides("a", 4, [{ ingredientId: "fries", portion: 150 }], "cooked"), withSides("b", 2, [{ ingredientId: "chicken", portion: 100 }])], sctx());
+    expect(n.has("fries")).toBe(false);
+    expect(n.get("chicken")).toBe(300 + 200);
+  });
+
+  it("rounds sides up to packs and prices them; supply and incoming subtract", () => {
+    const item = withSides("a", 4, [{ ingredientId: "fries", portion: 150 }]);
+    expect(buildList([item], sctx()).items.fries).toMatchObject({ packs: 1, amount: 1000, need: 600, packLabel: "1 kg", estPriceCents: 499 });
+    expect(buildList([withSides("a", 8, [{ ingredientId: "fries", portion: 150 }])], sctx()).items.fries).toMatchObject({ packs: 2 });
+    expect(buildList([item], sctx({ supply: new Map([["fries", 2000]]) })).items.fries).toBeUndefined();
+    expect(buildList([item], sctx({ incoming: new Map([["fries", 500]]) })).items.fries).toMatchObject({ need: 100, packs: 1 });
+  });
+
+  it("addedCost includes a candidate's sides", () => {
+    const base = addedCost([], withSides("n", 4, []), sctx());
+    const withFries = addedCost([], withSides("n", 4, [{ ingredientId: "fries", portion: 150 }]), sctx());
+    expect(withFries.cents - base.cents).toBe(499);
+  });
+
+  it("property: needs with sides = needs without + Σ portion × servings; item costs still sum to the total", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.record({ servings: fc.integer({ min: 1, max: 12 }), fries: fc.integer({ min: 0, max: 400 }), bun: fc.integer({ min: 0, max: 3 }) }), { minLength: 1, maxLength: 5 }),
+        (rows) => {
+          const items = rows.map((r, i) => withSides(`i${i}`, r.servings, [{ ingredientId: "fries", portion: r.fries }, { ingredientId: "bun", portion: r.bun }]));
+          const without = needsFor(items.map((i) => ({ ...i, sides: undefined })), sctx());
+          const withS = needsFor(items, sctx());
+          const fries = rows.reduce((a, r) => a + r.fries * r.servings, 0);
+          const buns = rows.reduce((a, r) => a + r.bun * r.servings, 0);
+          expect(withS.get("fries") ?? 0).toBeCloseTo((without.get("fries") ?? 0) + fries, 6);
+          expect(withS.get("bun") ?? 0).toBeCloseTo((without.get("bun") ?? 0) + buns, 6);
+          const total = buildList(items, sctx()).totalCents;
+          const sum = [...itemCosts(items, sctx()).values()].reduce((a, c) => a + c.cents, 0);
+          expect(sum).toBe(total);
+        },
+      ),
+    );
+  });
+});

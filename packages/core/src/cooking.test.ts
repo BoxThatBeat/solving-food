@@ -27,6 +27,7 @@ const ingredients = new Map([
   ["chicken", { id: "chicken", name: "chicken", category: "meat", freeUse: false, canonicalUnit: "g" as const }],
   ["spinach", { id: "spinach", name: "spinach", category: "produce", freeUse: false, canonicalUnit: "g" as const }],
   ["oil", { id: "oil", name: "oil", category: "pantry", freeUse: true, canonicalUnit: "g" as const }],
+  ["fries", { id: "fries", name: "frozen french fries", category: "frozen", freeUse: false, canonicalUnit: "g" as const }],
 ]);
 const recipes = new Map([
   [
@@ -79,6 +80,23 @@ describe("cooking", () => {
       ["chicken", 300],
       ["spinach", 70],
     ]);
+  });
+  it("requirements include sides: portion × servings, free-use sides skipped (R5.10)", () => {
+    const m = mealRequirements([{ recipeId: "r1", servingsMultiplier: 1 }], 4, ctx, [
+      { ingredientId: "fries", portion: 150 },
+      { ingredientId: "oil", portion: 5 },
+    ]);
+    expect(Object.fromEntries(m)).toEqual({ chicken: 600, spinach: 140, fries: 600 });
+  });
+  it("a side deducted at Done cooking and corrected by the review nets to the confirmed amount", () => {
+    const lots: LedgerLot[] = [{ lotId: "f1", amount: 2000, location: "freezer", acquiredAtMs: NOW }];
+    const needs = mealRequirements([{ recipeId: "r1", servingsMultiplier: 1 }], 4, ctx, [{ ingredientId: "fries", portion: 150 }]);
+    const cook = consumeFEFO(lots, needs.get("fries")!, NOW);
+    expect(recomputeAmount(cook.lots)).toBe(1400);
+    const [d] = reviewDeltas(new Map([["fries", 600]]), new Map([["fries", 500]]));
+    expect(d).toEqual({ ingredientId: "fries", delta: -100 });
+    const after = refund(cook.lots, cook.takes, 100, () => ({ lotId: "n", amount: 0, location: "freezer", acquiredAtMs: NOW }));
+    expect(recomputeAmount(after.lots)).toBe(1500);
   });
   it("leftovers: portions by meal type, a cooked meal keeps one slot", () => {
     const by = leftoverPortionsByType(
