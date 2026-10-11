@@ -60,6 +60,7 @@ export function SidePicker({
     onChange([...value, { ingredientId: o.ingredient.id, portion: o.portion }]);
     setText("");
     setActive(0);
+    setOpen(false);
   };
   const remove = (id: string) => onChange(value.filter((v) => v.ingredientId !== id));
 
@@ -115,6 +116,7 @@ export function SidePicker({
             cancelClose();
             setOpen(true);
           }}
+          onClick={() => setOpen(true)}
           onBlur={() => {
             cancelClose();
             closeTimer.current = setTimeout(() => setOpen(false), 150);

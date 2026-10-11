@@ -33,7 +33,7 @@ R5.9, R5.10, R7.11, R11.14.
 
 ### 0. Docs
 - [x] PRD R5.9, R5.10, R7.11, R11.14; R6.1 and R10.1 wording.
-- [ ] Spec §4.1, §4.2, §6, §7, §8, §10, §12, §14.1; §15 M6 row (done); `Planning/README.md` row (done).
+- [x] Spec §4.1, §4.2, §6, §7, §8, §10, §12, §14.1; §15 M6 row (done); `Planning/README.md` row (done).
 
 ### 1. Data model
 - [x] `types.ts`: `ingredient.side`, `mealSideSchema`, `MEAL_SIDES_MAX = 12`, `meal.sides`, `planItem.sides`,
@@ -75,7 +75,7 @@ R5.9, R5.10, R7.11, R11.14.
 
 ### 6. Tests
 - [x] Rules tests.
-- [ ] e2e: plan @R5.9, grocery @R7.11 @R5.10, meals @R5.9, cooking @R5.10, settings @R11.14, history.
+- [x] e2e: `sides.spec.ts` (one file instead of six, see Deviations): @R5.9 @R5.10 @R7.11 @R11.14 @R10.1.
 - [ ] `pnpm e2e:coverage`.
 
 ### 7. Ship

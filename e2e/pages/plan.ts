@@ -112,7 +112,7 @@ export class PlanPage {
   }
 
   /** Create meal through the UI: pick recipes by title (or a saved meal), then meal type, servings, optional save. */
-  async createMeal(opts: { recipes?: string[]; savedMeal?: string; mealType?: string; servings?: number; saveAs?: string }): Promise<void> {
+  async createMeal(opts: { recipes?: string[]; savedMeal?: string; mealType?: string; servings?: number; saveAs?: string; sides?: string[] }): Promise<void> {
     const sheet = await this.openCreateMeal();
     if (opts.savedMeal) {
       await sheet.getByRole("tab", { name: /Saved meals/ }).click();
@@ -128,7 +128,7 @@ export class PlanPage {
   }
 
   /** Step 2 of Create meal (also reached directly from an "Add to plan" shortcut). */
-  async finish(opts: { mealType?: string; servings?: number; saveAs?: string }): Promise<void> {
+  async finish(opts: { mealType?: string; servings?: number; saveAs?: string; sides?: string[] }): Promise<void> {
     const sheet = this.page.getByRole("dialog", { name: "Add to plan" });
     await expect(sheet).toBeVisible();
     if (opts.mealType) await sheet.getByRole("button", { name: opts.mealType, exact: true }).click();
@@ -141,6 +141,7 @@ export class PlanPage {
         await expect(group.getByRole("status")).not.toHaveText(String(v));
       }
     }
+    for (const side of opts.sides ?? []) await pickSide(sheet, side);
     if (opts.saveAs) {
       await sheet.getByRole("checkbox", { name: "Save as meal" }).check();
       await sheet.getByLabel(/^NAME/).fill(opts.saveAs);
@@ -149,6 +150,14 @@ export class PlanPage {
     await sheet.getByRole("button", { name: /^Add to plan/ }).click();
     await expect(sheet).toBeHidden();
   }
+}
+
+/** Picks a side (R5.9) in a <SidePicker>: type its name, choose the option that starts with it. */
+export async function pickSide(scope: Locator, name: string, search = name): Promise<void> {
+  const box = scope.getByRole("combobox", { name: "Add a side" });
+  await box.fill(search);
+  await scope.getByRole("option", { name: new RegExp(`^${escape(name)}`, "i") }).click();
+  await expect(scope.getByRole("button", { name: new RegExp(`^Remove ${escape(name)}$`, "i") })).toBeVisible();
 }
 
 function escape(s: string): string {
