@@ -5,8 +5,10 @@ import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
-// Latte is the reference flavour (CLAUDE.md); the runtime theme updates <meta name="theme-color"> per flavour.
-const LATTE_PG = "#dce0e8";
+// The splash and install chrome match the app icon's navy (apps/web/public/icons) rather than a Latte
+// surface, so no light-grey field shows behind the icon; the runtime theme still updates
+// <meta name="theme-color"> per flavour once the app is up.
+const ICON_NAVY = "#262a3b";
 
 export default defineConfig({
   resolve: {
@@ -30,8 +32,8 @@ export default defineConfig({
         scope: "/",
         display: "standalone",
         orientation: "any",
-        background_color: LATTE_PG,
-        theme_color: LATTE_PG,
+        background_color: ICON_NAVY,
+        theme_color: ICON_NAVY,
         icons: [
           { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
           { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
