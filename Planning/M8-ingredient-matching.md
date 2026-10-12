@@ -91,6 +91,15 @@ R4.27 (new: ingredient review and merge), R8.16 (new: a merge moves Supply), R4.
       the one more recipes use. Tested on the emulator.
 - [x] Live run after deploy (results below): 3 merged, 59 left for review.
 
+### Fixes landed during M8
+
+- [x] Installed copies of the app never picked up a deploy until site data was cleared: the self-registered worker
+      (`injectRegister: false`) got no `skipWaiting`/`clientsClaim` from the plugin's `autoUpdate` mode, so each
+      new build waited forever behind the open app. Now prompt mode with an hourly / on-foreground update check,
+      an immediate self-reload (held behind a sticky Reload banner while cooking), and `no-cache` on the entry
+      points in `firebase.json`. Spec §12 "Updates". Devices still running the old worker need one full close of
+      the app after this deploy; every deploy after that applies on its own.
+
 ## Verification
 
 - Lint, typecheck: clean. Core unit 575/575 (ingredient.test.ts 131 + ingredientMerge.test.ts 7 new), web unit 7/7.

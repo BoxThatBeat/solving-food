@@ -11,7 +11,8 @@ import type { NotificationDoc } from "@solving-food/core";
 import { db } from "@/firebase/app";
 import { useLiveQuery } from "@/data/live";
 import { cn } from "@/lib/utils";
-import { NotificationsContext, useNotifications, type Banner, type NotificationKind } from "./notifications-context";
+import { applyUpdate, useUpdatePending } from "@/pwa/update";
+import { NotificationsContext, useNotifications, useNotify, type Banner, type NotificationKind } from "./notifications-context";
 
 export const AUTO_DISMISS_MS = 6000;
 /** At most this many banners at once; the rest collapse into a "+N more" row (a bulk drop reports one per file). */
@@ -43,8 +44,8 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       const b: Banner = { ...input, id };
       all.current.set(id, b);
       setBanners((bs) => [...bs, b]);
-      // Success and info disappear on their own; errors stay until dismissed (R12.1).
-      if (b.kind !== "error") timers.current.set(id, setTimeout(() => remove(id, true), AUTO_DISMISS_MS));
+      // Success and info disappear on their own; errors (and sticky banners) stay until dismissed (R12.1).
+      if (b.kind !== "error" && !b.sticky) timers.current.set(id, setTimeout(() => remove(id, true), AUTO_DISMISS_MS));
       return id;
     },
     [remove],
@@ -107,6 +108,17 @@ export function NotificationFeed({ uid }: { uid: string }) {
 function millis(v: unknown): number {
   const t = v as { toMillis?: () => number } | null;
   return t && typeof t.toMillis === "function" ? t.toMillis() : Date.now();
+}
+
+/** Shows the "Reload" banner when a new build is waiting behind a cook session (see pwa/update.ts). */
+export function UpdateBanner() {
+  const pending = useUpdatePending();
+  const notify = useNotify();
+  React.useEffect(() => {
+    if (!pending) return;
+    notify({ id: "pwa-update", kind: "info", sticky: true, message: "Solving Food was updated.", action: { label: "Reload", run: applyUpdate } });
+  }, [pending, notify]);
+  return null;
 }
 
 const KIND_STYLE: Record<NotificationKind, string> = {

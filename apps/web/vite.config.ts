@@ -19,7 +19,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       injectRegister: false,
       filename: "sw.js",
       includeAssets: ["fonts/*.woff2", "icons/*.png"],

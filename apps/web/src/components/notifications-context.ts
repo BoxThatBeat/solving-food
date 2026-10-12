@@ -11,6 +11,8 @@ export interface Banner {
   link2?: { to: string; label: string };
   /** An in-banner action, e.g. Undo. Running it dismisses the banner. */
   action?: { label: string; run: () => void };
+  /** Stays until dismissed or acted on, whatever the kind (the app-update banner). */
+  sticky?: boolean;
   /** Called when the banner is dismissed (by the user or the auto-dismiss timer), e.g. to write `dismissedAt`. */
   onDismiss?: () => void;
 }

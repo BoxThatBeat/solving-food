@@ -16,6 +16,7 @@ import { newId, sendCommand } from "@/data/supply";
 import type { StoredRecipe } from "@/data/recipes";
 import { useOnline } from "@/hooks/useOnline";
 import { useInstallPrompt, isStandalone } from "@/pwa/install";
+import { setUpdateDeferred } from "@/pwa/update";
 import { isIos } from "@/pwa/push";
 import { cn } from "@/lib/utils";
 import { MiseEnPlace, StepMode } from "./StepMode";
@@ -77,6 +78,11 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
   const [installAsk, setInstallAsk] = React.useState(false);
   const [finished, setFinished] = React.useState(false);
   const awake = useWakeLock(true);
+  // A new build never reloads the page mid-cook; it waits (with a Reload banner) until this session is gone.
+  React.useEffect(() => {
+    setUpdateDeferred(true);
+    return () => setUpdateDeferred(false);
+  }, []);
   // Load the review screen's code now, so Done cooking works with no signal even before the service worker has it.
   const router = useRouter();
   React.useEffect(() => {

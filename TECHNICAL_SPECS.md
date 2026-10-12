@@ -1074,6 +1074,18 @@ before the service worker has installed. The Recipes page marks "can make" from 
 free-use ingredients (`data/free-use.json`, `pnpm free-use:write`, checked by a unit test) instead of reading every
 ingredient; recipe pages read the ingredient docs themselves.
 
+### Updates
+
+The service worker is registered by the app itself (`injectRegister: false`) in `vite-plugin-pwa`'s **prompt** mode:
+a new build's worker installs and waits until the page posts `SKIP_WAITING`. (In `autoUpdate` mode the plugin only
+adds `skipWaiting`/`clientsClaim` when it injects the registration itself, so with a self-registered worker a new
+build sat waiting until every window of the app was closed, which an installed phone app almost never is.) The page
+checks for a new worker every hour and whenever the app comes to the foreground (`registration.update()`, online
+only). When one is waiting, `pwa/update.ts` applies it at once and the page reloads itself, unless a cooking
+session is mounted: then the update is held, a sticky "Solving Food was updated · Reload" banner is shown, and the
+update applies by itself when the session ends. Hosting serves `/`, `index.html`, `manifest.webmanifest`,
+`push-sw.js` and `sw.js` with `Cache-Control: no-cache`; hashed `assets/` and `fonts/` stay immutable.
+
 ---
 
 ## 13. Deployment & Operations

@@ -15,6 +15,8 @@ test("the manifest is valid and its icons exist", { tag: ["@smoke"] }, async ({ 
   expect(manifest.icons.some((i: { purpose?: string }) => i.purpose === "maskable")).toBe(true);
   for (const icon of manifest.icons) expect((await request.get(icon.src)).status()).toBe(200);
   await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#dce0e8");
+  // Prompt-mode worker: a new build waits until the page posts SKIP_WAITING (then the page reloads itself).
+  expect(await (await request.get("/sw.js")).text()).toContain("SKIP_WAITING");
 });
 
 test("the service worker registers and the shell loads offline after the first visit", async ({ page, context, browserName, uniqueEmail }) => {
