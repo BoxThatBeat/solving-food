@@ -4,7 +4,7 @@
 // The card is a link; the favourite toggle sits beside it, not inside (no nested interactive elements).
 import { Link } from "@tanstack/react-router";
 import { Plus, Star } from "lucide-react";
-import { formatProtein, taxonomyLabel, type HouseholdFacts, type RecipeSummary } from "@solving-food/core";
+import { formatMinutes, formatProtein, taxonomyLabel, type HouseholdFacts, type RecipeSummary } from "@solving-food/core";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/chip";
 import { RecipeImage } from "./RecipeImage";
@@ -65,7 +65,7 @@ export function RecipeCard({
         </div>
         <div className={cn("flex flex-col gap-[0.3125rem] px-2.5 pt-[0.5625rem] pb-[0.6875rem]", onPlan && "pr-12")}>
           <span className="font-mono text-[0.625rem] leading-[1.35] font-semibold text-sub uppercase">
-            {r.totalMin} MIN · {taxonomyLabel(r.cuisine)} · {protein === "—" ? "PROTEIN —" : `${protein} PROTEIN`}
+            <span className="normal-case">{formatMinutes(r.totalMin)}</span> · {taxonomyLabel(r.cuisine)} · {protein === "—" ? "PROTEIN —" : `${protein} PROTEIN`}
           </span>
           <h3 className="m-0 text-[0.9375rem] leading-[1.15] font-extrabold text-pretty @[16rem]:text-[1.0625rem]">{r.title}</h3>
           {facts.timesCooked ? <span className="font-mono text-[0.625rem] font-semibold">{madeLine(facts)}</span> : null}

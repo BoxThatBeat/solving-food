@@ -3,7 +3,7 @@
 // factors and the strongest lowering one), one tap from Create meal. The header links to the weights (prototype:
 // "WEIGHTS: BALANCED"); "See more" (M7) opens Recipes sorted by Suggested.
 import { Link } from "@tanstack/react-router";
-import { formatCents, formatProtein, presetOf, resolveWeights, type Reason, type RecipeSummary, type ScoreResult } from "@solving-food/core";
+import { formatCents, formatMinutes, formatProtein, presetOf, resolveWeights, type Reason, type RecipeSummary, type ScoreResult } from "@solving-food/core";
 import { EmptyState } from "@/components/AppShell";
 import { RecipeImage } from "@/components/recipes/RecipeImage";
 import { cn } from "@/lib/utils";
@@ -70,7 +70,7 @@ export function SuggestedSection({
               <span className="flex min-w-0 flex-col gap-[0.3125rem] py-0.5">
                 <span className="text-[0.90625rem] leading-tight font-extrabold">{r.title}</span>
                 <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
-                  {r.totalMin} min · {formatProtein(r.proteinPerServingG, r.proteinApproximate)}
+                  {formatMinutes(r.totalMin)} · {formatProtein(r.proteinPerServingG, r.proteinApproximate)}
                   {x.costCents !== null ? ` · +${formatCents(x.costCents)}` : ""}
                 </span>
                 <WhyChips reasons={x.reasons} />

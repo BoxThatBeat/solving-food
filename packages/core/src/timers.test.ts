@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { adjustTimer, formatClock, formatDuration, newTimer, pauseTimer, remainingMs, startTimer, tickTimers, timerPushData, timerTaskId } from "./timers";
+import { adjustTimer, formatClock, formatDuration, formatMinutes, newTimer, pauseTimer, remainingMs, startTimer, tickTimers, timerPushData, timerTaskId } from "./timers";
 
 const T0 = 1_000_000;
 
@@ -32,6 +32,13 @@ describe("timers (R4.23)", () => {
     expect(formatClock(59_001)).toBe("1:00");
     expect(formatClock(3_723_000)).toBe("1:02:03");
     expect(formatDuration(5_400_000)).toBe("1 h 30 min");
+  });
+  it("formats recipe durations with m and h", () => {
+    expect(formatMinutes(0)).toBe("0m");
+    expect(formatMinutes(45)).toBe("45m");
+    expect(formatMinutes(60)).toBe("1h");
+    expect(formatMinutes(80)).toBe("1h 20m");
+    expect(formatMinutes(120)).toBe("2h");
   });
   it("task IDs are unique per run and URL-safe; push data names the timer", () => {
     expect(timerTaskId("u/1", "t", 5)).toBe("t-u-1-t-5");

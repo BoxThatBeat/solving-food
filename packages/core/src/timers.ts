@@ -81,6 +81,13 @@ export function formatDuration(ms: number): string {
   return m % 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m / 60} h`;
 }
 
+/** A recipe duration in whole minutes: "45m", "1h 20m", "2h", "0m". Used everywhere a recipe's time shows. */
+export function formatMinutes(min: number): string {
+  const m = Math.max(0, Math.round(min));
+  if (m < 60) return `${m}m`;
+  return m % 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m / 60}h`;
+}
+
 /** Cloud Tasks task name for a timer run: unique per (uid, timer, end time), since deleted names can't be reused soon. */
 export function timerTaskId(uid: string, timerId: string, endsAtMs: number): string {
   return `t-${uid}-${timerId}-${endsAtMs}`.replace(/[^A-Za-z0-9_-]/g, "-").slice(0, 500);

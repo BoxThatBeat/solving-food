@@ -2,7 +2,7 @@
 // recipes, badges, title, meta, its recipes with times, and favourite / copy link / plan actions.
 import { Link } from "@tanstack/react-router";
 import { Star } from "lucide-react";
-import { formatCents, formatProtein, type HouseholdFacts, type MealRow, type RecipeSummary } from "@solving-food/core";
+import { formatCents, formatMinutes, formatProtein, type HouseholdFacts, type MealRow, type RecipeSummary } from "@solving-food/core";
 import { Badge } from "@/components/ui/chip";
 import { RecipeImage } from "@/components/recipes/RecipeImage";
 import { cn } from "@/lib/utils";
@@ -72,7 +72,7 @@ export function MealCard({
                   <span className="text-[0.875rem] font-bold">{r?.title ?? "Recipe in Trash"}</span>
                   {r ? (
                     <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
-                      {r.totalMin} min total · {r.activeMin} active
+                      {formatMinutes(r.totalMin)} total · {formatMinutes(r.activeMin)} active
                     </span>
                   ) : null}
                 </span>

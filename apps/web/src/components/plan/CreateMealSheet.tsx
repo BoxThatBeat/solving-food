@@ -13,6 +13,7 @@ import {
   createMealInputSchema,
   defaultMealName,
   formatCents,
+  formatMinutes,
   formatProtein,
   mealRow,
   optionCount,
@@ -274,7 +275,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                           <span className="text-sm leading-tight font-extrabold">{r.title}</span>
                           <span className="font-mono text-[0.625rem] font-semibold uppercase opacity-80">
-                            {r.totalMin} min · {taxonomyLabel(r.cuisine)} · {formatProtein(r.proteinPerServingG, r.proteinApproximate)} protein
+                            {formatMinutes(r.totalMin)} · {taxonomyLabel(r.cuisine)} · {formatProtein(r.proteinPerServingG, r.proteinApproximate)} protein
                           </span>
                         </span>
                       </button>
@@ -299,7 +300,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="text-[0.9375rem] font-extrabold">{m.title}</span>
                     <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
-                      {m.recipeIds.length} recipe{m.recipeIds.length === 1 ? "" : "s"} · {m.totalMin} min total
+                      {m.recipeIds.length} recipe{m.recipeIds.length === 1 ? "" : "s"} · {formatMinutes(m.totalMin)} total
                       {m.missing.length ? ` · ${m.missing.length} in Trash` : ""}
                     </span>
                   </span>

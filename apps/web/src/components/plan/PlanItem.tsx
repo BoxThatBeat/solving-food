@@ -9,6 +9,7 @@ import {
   coverageFor,
   defaultMealName,
   formatCents,
+  formatMinutes,
   formatProtein,
   PLANNABLE_MEAL_TYPES,
   SERVINGS_MAX,
@@ -45,9 +46,15 @@ export interface PlanItemView {
   leftover?: { useBy: string | null; expired: boolean } | undefined;
 }
 
-function recipeMeta(r: StoredRecipe | undefined): string {
+/** Uppercased by CSS; the duration stays lower case ("45m", not "45M"). */
+function recipeMeta(r: StoredRecipe | undefined): React.ReactNode {
   if (!r) return "Loading…";
-  return `${r.prepMin + r.cookMin} MIN · ${taxonomyLabel(r.cuisine).toUpperCase()} · ${formatProtein(r.proteinPerServingG, r.proteinApproximate)} PROTEIN`;
+  return (
+    <>
+      <span className="normal-case">{formatMinutes(r.prepMin + r.cookMin)}</span> · {taxonomyLabel(r.cuisine).toUpperCase()} ·{" "}
+      {formatProtein(r.proteinPerServingG, r.proteinApproximate)} PROTEIN
+    </>
+  );
 }
 
 function costLine(v: PlanItemView): string {

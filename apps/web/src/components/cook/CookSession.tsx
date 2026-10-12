@@ -6,7 +6,7 @@
 import * as React from "react";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
-import { formatDuration, missingTools, scaleFactor, type MealSide, type MealType, type RecipeRef } from "@solving-food/core";
+import { formatMinutes, missingTools, scaleFactor, type MealSide, type MealType, type RecipeRef } from "@solving-food/core";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useNotify } from "@/components/notifications-context";
@@ -205,7 +205,7 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className={cn("text-[1.0625rem] leading-tight font-extrabold", on && "line-through decoration-2")}>{r.title}</span>
                       <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
-                        {formatDuration((r.prepMin + r.cookMin) * 60_000)} total · {r.prepMin} active
+                        {formatMinutes(r.prepMin + r.cookMin)} total · {formatMinutes(r.prepMin)} active
                       </span>
                     </span>
                     <span className="flex flex-none flex-col gap-1">

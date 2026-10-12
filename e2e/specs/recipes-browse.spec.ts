@@ -210,7 +210,7 @@ test.describe("favourites and cards", () => {
     const r = new RecipesPage(page);
     await r.goto("?cuisine=greek");
     const tzatziki = r.card("Tzatziki Sauce");
-    await expect(tzatziki).toContainText(/5 MIN · GREEK · 26 G PROTEIN/i); // uppercased by CSS
+    await expect(tzatziki).toContainText(/5m · GREEK · 26 G PROTEIN/i); // uppercased by CSS, except the duration
     // Never cooked: no stats line at all (M7 review), not "never cooked" or "0×".
     await expect(tzatziki).not.toContainText(/NEVER COOKED|MADE|0×/i);
     await expect(tzatziki.getByRole("img", { name: "Tzatziki Sauce" })).toBeVisible();

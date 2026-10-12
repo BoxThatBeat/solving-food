@@ -4,7 +4,7 @@
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Star, X } from "lucide-react";
-import { formatPortion, formatProtein, MEAL_RECIPES_MAX, taxonomyLabel, type MealSide, type RecipeRef } from "@solving-food/core";
+import { formatMinutes, formatPortion, formatProtein, MEAL_RECIPES_MAX, taxonomyLabel, type MealSide, type RecipeRef } from "@solving-food/core";
 import { EmptyState, PageBody } from "@/components/AppShell";
 import { useNotify } from "@/components/notifications-context";
 import { useCreateMeal } from "@/components/plan/plan-sheet-context";
@@ -145,7 +145,7 @@ function MealPage() {
                   </span>
                   {rec ? (
                     <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
-                      {rec.prepMin + rec.cookMin} min total · {rec.prepMin} active · {taxonomyLabel(rec.cuisine)} · {formatProtein(rec.proteinPerServingG, rec.proteinApproximate)}
+                      {formatMinutes(rec.prepMin + rec.cookMin)} total · {formatMinutes(rec.prepMin)} active · {taxonomyLabel(rec.cuisine)} · {formatProtein(rec.proteinPerServingG, rec.proteinApproximate)}
                     </span>
                   ) : null}
                 </span>

@@ -3,7 +3,7 @@
 // version of the existing recipe, then is discarded), or Keep both.
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
-import { describeMatch, findDuplicates, formatProtein, taxonomyLabel, type RecipeDoc } from "@solving-food/core";
+import { describeMatch, findDuplicates, formatMinutes, formatProtein, taxonomyLabel, type RecipeDoc } from "@solving-food/core";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/chip";
@@ -23,7 +23,7 @@ function Side({ label, r }: { label: string; r: RecipeDoc | null | undefined }) 
         <>
           <span className="text-[0.9375rem] leading-tight font-extrabold">{r.title}</span>
           <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
-            {r.prepMin + r.cookMin} min · serves {r.servings} · {taxonomyLabel(r.cuisine)} · {formatProtein(r.proteinPerServingG, r.proteinApproximate)} protein
+            {formatMinutes(r.prepMin + r.cookMin)} · serves {r.servings} · {taxonomyLabel(r.cuisine)} · {formatProtein(r.proteinPerServingG, r.proteinApproximate)} protein
           </span>
           <ul className="m-0 list-disc pl-4 text-xs leading-snug font-semibold">
             {r.ingredients.map((l) => (

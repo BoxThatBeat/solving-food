@@ -86,7 +86,7 @@ test("a meal of several recipes: choose the order, each shows its total time; ch
   const list = page.getByRole("list", { name: "Recipes in cooking order" });
   await expect(list.getByTestId("cook-recipe")).toHaveCount(2);
   await expect(list.getByTestId("cook-recipe").first()).toContainText(a.title);
-  await expect(list.getByTestId("cook-recipe").first()).toContainText("30 min total");
+  await expect(list.getByTestId("cook-recipe").first()).toContainText("30m total");
   await list.getByRole("button", { name: `Move ${b.title} earlier` }).click();
   await expect(list.getByTestId("cook-recipe").first()).toContainText(b.title);
   // Cook the first through to its last step: it's checked off and we're back at the list.
