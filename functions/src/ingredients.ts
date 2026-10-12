@@ -104,8 +104,10 @@ export async function mergeIngredient(uid: string, data: unknown): Promise<Merge
   };
   const writer = dryRun ? null : db.bulkWriter();
 
+  // Both queries run before any write, so a missing index (or any read failure) changes nothing.
   // 1. Recipes (every status: trashed and pending ones are restorable).
   const recipes = await db.collection("recipes").where("ingredientIds", "array-contains", fromId).get();
+  const versions = await db.collectionGroup("versions").where("ingredientIds", "array-contains", fromId).get();
   report.recipes = recipes.size;
   if (writer && recipes.size) {
     for (const d of recipes.docs) {
@@ -123,7 +125,6 @@ export async function mergeIngredient(uid: string, data: unknown): Promise<Merge
   }
 
   // 2. Version snapshots (collection-group query; firestore.indexes.json declares the array-contains index).
-  const versions = await db.collectionGroup("versions").where("ingredientIds", "array-contains", fromId).get();
   report.versions = versions.size;
   if (writer) {
     for (const v of versions.docs) {
