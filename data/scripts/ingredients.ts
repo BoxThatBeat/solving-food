@@ -12,6 +12,7 @@ import {
   normalizeName,
   resolveIngredientName,
   reviewReasons,
+  variantKey,
   type IngredientDoc,
 } from "../../packages/core/src/index";
 
@@ -39,6 +40,7 @@ export function loadIngredients(): { items: SeedIngredient[]; files: Record<stri
 export function validateIngredients(items: SeedIngredient[]): string[] {
   const problems: string[] = [];
   const names = new Map<string, string>();
+  const variants = new Map<string, string>();
   const ids = new Set<string>();
   for (const i of items) {
     const where = `${i.category}/${i.id}`;
@@ -54,6 +56,11 @@ export function validateIngredients(items: SeedIngredient[]): string[] {
       const other = names.get(k);
       if (other && other !== id) problems.push(`${where}: "${n}" also names ${other}`);
       names.set(k, id);
+      // Spelling variants fold together when matching (M8): "chilli powder" and "chili powder" must be one ingredient.
+      const v = variantKey(k);
+      const vOther = variants.get(v);
+      if (vOther && vOther !== id) problems.push(`${where}: "${n}" is a spelling variant of a name of ${vOther}`);
+      variants.set(v, id);
     }
     const reasons = reviewReasons(i);
     if (reasons.length) problems.push(`${where}: incomplete (${reasons.join(", ")})`);

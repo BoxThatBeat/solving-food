@@ -97,6 +97,9 @@ export const ingredientSchema = z.object({
   needsReview: z.boolean(),
   /** Set when the ingredient is a side (R5.9): eaten as is, `portion` per person in canonical units (R5.10). */
   side: z.object({ portion: z.number().positive() }).optional(),
+  /** (M8) A duplicate merged into another ingredient by the `mergeIngredient` function: hidden from pickers; its names
+   * resolve to the target. Written only by that function. */
+  mergedInto: z.string().optional(),
   // Set when a person creates or edits an ingredient in the app (absent on seed data).
   createdBy: z.string().optional(),
   updatedBy: z.string().optional(),

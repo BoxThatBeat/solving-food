@@ -2,10 +2,47 @@
 
 # Ingredient names the app already knows
 
-480 ingredients. Use one of these names (or an alias in brackets) for the `@ingredient` token whenever it
-means the same thing; the importer matches names and aliases, ignoring case and plurals. A name that matches nothing
-creates a new ingredient flagged for review, which is fine for genuinely new items but should be rare. Put
-preparation and descriptors outside the token: `@garlic{2%cloves}, minced`, not `@minced garlic{2%cloves}`.
+480 ingredients. **Every `@ingredient{}` token must be one of these names or an alias in brackets**
+whenever one means the same thing (SKILL.md step 6 checks this before delivery). The importer matches names and aliases
+ignoring case, accents, punctuation and plurals, folds the spelling variants below, and drops preparation words, but
+write the catalogue name anyway: the token is what the recipe shows and what the next person searches for.
+
+A name that matches nothing creates a **new ingredient flagged for review**: its lines don't reduce the household's
+Supply and its grocery lines don't merge until someone merges it into the right ingredient in the app. Use a new name
+only when nothing here means the same thing, and list it in the delivery message with a one-line reason.
+
+## Preparation words go outside the token
+
+These describe what the cook does, not what is bought. Write them after the token, never inside it:
+`@chicken thigh{2%lb}, boneless, diced`, `@butter{2%tbsp}, softened`, `@cilantro{}, chopped, for serving`.
+
+`fresh`, `freshly`, `large`, `small`, `medium`, `chopped`, `minced`, `diced`, `sliced`, `organic`, `whole`, `raw`, `boneless`, `skinless`, `shredded`, `grated`, `crushed`, `crumbled`, `ripe`, `packed`, `thawed`, `peeled`, `seeded`, `pitted`, `halved`, `quartered`, `cubed`, `julienned`, `trimmed`, `softened`, `melted`, `divided`, `plus`, `optional`, `extra`, `finely`, `roughly`, `thinly`, `coarsely`, `lightly`, `about`, `mild`, `room temperature`, `at room temperature`, `to taste`, `for serving`, `for garnish`, `for topping`, `or more`, `cut into pieces`, `cut into chunks`, `cut into strips`
+
+These change what is bought, so keep them in the token only when the catalogue has that form (`@frozen peas{}`,
+`@ground cumin{}`, `@dried oregano{}`, `@canned black beans{}`); otherwise use the plain name and put the word
+outside: `ground`, `dry`, `dried`, `canned`, `tinned`, `frozen`, `uncooked`.
+
+## Spelling variants
+
+The importer treats these as the same; write the first spelling (or whichever the list below uses):
+
+- green chile (green chili, green chilli, green chilies, green chillies)
+- m&ms (m&m's, m and ms, mms)
+- yogurt (yoghurt)
+- eggplant (aubergine)
+- zucchini (courgette)
+- cilantro (coriander leaves)
+- fresh cilantro (fresh coriander)
+- green onion (scallion, spring onion)
+- red bell pepper (red capsicum)
+- chickpeas (garbanzo beans, garbanzos)
+- caster sugar (superfine sugar)
+- icing sugar (powdered sugar, confectioners' sugar)
+- cornstarch (cornflour)
+- arugula (rocket)
+- shrimp (prawns)
+- ground beef (beef mince, minced beef, mince)
+- ground pork (pork mince, minced pork)
 
 ## produce
 
@@ -42,7 +79,7 @@ preparation and descriptors outside the token: `@garlic{2%cloves}, minced`, not 
 - firm tofu (tofu, extra firm tofu, medium firm tofu)
 - fresh basil (basil, sweet basil, basil leaf, fresh basil leaf)
 - fresh chives (chives, chopped chives)
-- fresh cilantro (cilantro, coriander leaf, fresh coriander, cilantro leaf)
+- fresh cilantro (cilantro, coriander leaf, fresh coriander, cilantro leaf, fresh coriander leaves)
 - fresh dill (dill, fresh dill weed)
 - fresh ginger (ginger root, gingerroot, ginger, grated ginger, grated fresh ginger, minced ginger, minced fresh ginger)
 - fresh herbs (mixed fresh herbs, fresh herb mix, chopped fresh herbs, soft herbs)
@@ -57,7 +94,7 @@ preparation and descriptors outside the token: `@garlic{2%cloves}, minced`, not 
 - grape tomato
 - grapefruit (pink grapefruit, red grapefruit)
 - green beans (string bean, fresh green bean, french bean)
-- green bell pepper (green pepper, green sweet pepper, sweet green pepper)
+- green bell pepper (green pepper, green sweet pepper, sweet green pepper, green capsicum)
 - green leaf lettuce (leaf lettuce, red leaf lettuce, butter lettuce, boston lettuce, bibb lettuce)
 - green onion (scallion, spring onion, sliced green onion)
 - honeydew melon (honeydew)
@@ -80,7 +117,7 @@ preparation and descriptors outside the token: `@garlic{2%cloves}, minced`, not 
 - nectarine
 - onion (yellow onion, cooking onion, brown onion, white onion, diced onion, chopped onion)
 - orange (navel orange)
-- orange bell pepper (orange pepper, orange sweet pepper)
+- orange bell pepper (orange pepper, orange sweet pepper, orange capsicum)
 - parsnip
 - peach
 - pear (bartlett pear, bosc pear, anjou pear)
@@ -90,7 +127,7 @@ preparation and descriptors outside the token: `@garlic{2%cloves}, minced`, not 
 - potato (russet potato, baking potato, white potato)
 - radish (red radish, sliced radish)
 - raspberry (fresh raspberry)
-- red bell pepper (red pepper, red sweet pepper, sweet red pepper)
+- red bell pepper (red pepper, red sweet pepper, sweet red pepper, red capsicum)
 - red cabbage (purple cabbage)
 - red onion (purple onion)
 - red potato
@@ -109,7 +146,7 @@ preparation and descriptors outside the token: `@garlic{2%cloves}, minced`, not 
 - sweet potato (yam)
 - tomato (field tomato, vine tomato, tomato on the vine, beefsteak tomato, fresh tomato, vine ripened tomato)
 - watermelon (seedless watermelon)
-- yellow bell pepper (yellow pepper, yellow sweet pepper)
+- yellow bell pepper (yellow pepper, yellow sweet pepper, yellow capsicum)
 - yellow potato (yukon gold potato, gold potato)
 - yellow squash (summer squash, yellow zucchini, yellow summer squash)
 - zucchini (green zucchini, courgette)
@@ -129,13 +166,13 @@ preparation and descriptors outside the token: `@garlic{2%cloves}, minced`, not 
 - deli turkey (sliced turkey, sliced turkey breast, deli turkey breast, smoked turkey breast)
 - extra lean ground beef (ground sirloin)
 - flank steak (flank)
-- ground chicken (lean ground chicken, extra lean ground chicken)
-- ground lamb
-- ground pork (lean ground pork, minced pork)
-- ground turkey (lean ground turkey, extra lean ground turkey)
+- ground chicken (lean ground chicken, extra lean ground chicken, chicken mince, minced chicken)
+- ground lamb (lamb mince, minced lamb)
+- ground pork (lean ground pork, minced pork, pork mince)
+- ground turkey (lean ground turkey, extra lean ground turkey, turkey mince, minced turkey)
 - hot dog (wiener, hot dog wiener, frank, frankfurter)
 - italian sausage (mild italian sausage, hot italian sausage, sweet italian sausage)
-- lean ground beef (ground beef, ground chuck)
+- lean ground beef (ground beef, ground chuck, beef mince, minced beef, mince)
 - medium ground beef (regular ground beef)
 - peameal bacon (back bacon, canadian bacon)
 - pepperoni (sliced pepperoni, pepperoni slice)
@@ -160,7 +197,7 @@ preparation and descriptors outside the token: `@garlic{2%cloves}, minced`, not 
 - cooked shrimp (shrimp ring, cooked peeled shrimp)
 - haddock fillet (haddock)
 - halibut fillet (halibut)
-- large shrimp (shrimp, raw shrimp, jumbo shrimp, extra large shrimp, prawn, raw large shrimp, peeled shrimp, frozen shrimp, peeled and deveined shrimp)
+- large shrimp (shrimp, raw shrimp, jumbo shrimp, extra large shrimp, prawn, raw large shrimp, peeled shrimp, frozen shrimp, peeled and deveined shrimp, king prawns)
 - mussel (pei mussel, fresh mussel)
 - rainbow trout fillet (trout, trout fillet, rainbow trout, steelhead trout)
 - salmon fillet (salmon, atlantic salmon, atlantic salmon fillet, skin-on salmon fillet, salmon portion, fresh salmon)
@@ -338,7 +375,7 @@ preparation and descriptors outside the token: `@garlic{2%cloves}, minced`, not 
 - cocoa powder (unsweetened cocoa powder, cocoa, unsweetened cocoa, dutch process cocoa powder, dutch processed cocoa, baking cocoa)
 - corn syrup (light corn syrup, white corn syrup, golden corn syrup)
 - cornmeal (yellow cornmeal, corn meal, polenta, fine cornmeal)
-- cornstarch (corn starch)
+- cornstarch (corn starch, cornflour)
 - cream of tartar
 - dark chocolate chips (bittersweet chocolate chips, dark chocolate morsels, dark chocolate chunks)
 - evaporated milk (canned evaporated milk, evaporated 2% milk)

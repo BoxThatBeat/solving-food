@@ -1,7 +1,8 @@
 // Ingredients (TECHNICAL_SPECS §4.1, §5): review flags, defaults for new ingredients, and name matching.
 
 import { ingredientSchema, type IngredientDoc } from "./types";
-import { ingredientSlug, normalizeName } from "./names";
+import { normalizeName } from "./names";
+import { cleanIngredientName, newIngredientId } from "./ingredientMatch";
 import type { Measure, StorageLocation } from "./taxonomy";
 
 export { ingredientSchema, type IngredientDoc };
@@ -91,19 +92,23 @@ export function guessCategory(name: string): IngredientCategory {
 }
 
 /**
- * A new ingredient from just a name (and optionally a category): defaults inferred from the category, no
+ * A new ingredient from just a name (cleaned of preparation words by `cleanIngredientName`, its ID from the spelling-
+ * variant key, so "diced green chilies", "mild green chiles" and "green chili" all create `green-chile`) (and optionally a category): defaults inferred from the category, no
  * conversions or protein, so it is flagged `needsReview` (§5, §9 "Unknown ingredients").
  */
 export function newIngredient(
   name: string,
   opts: { category?: string; allowedMeasures?: Measure[] } = {},
 ): { id: string; doc: IngredientDoc } {
-  const category = opts.category ?? guessCategory(name);
+  const clean = cleanIngredientName(name);
+  const category = opts.category ?? guessCategory(clean);
   const d = categoryDefaults(category);
   const allowedMeasures = opts.allowedMeasures?.length ? opts.allowedMeasures : d.allowedMeasures;
+  const wording = name.trim().toLowerCase();
   const base = {
-    name: name.trim().toLowerCase(),
-    aliases: [],
+    name: clean,
+    // The recipe's own wording stays findable when the name was cleaned ("diced green chilies" → "green chilies").
+    aliases: normalizeName(wording) !== normalizeName(clean) ? [wording] : [],
     category,
     defaultLocation: d.defaultLocation,
     allowedMeasures,
@@ -113,34 +118,24 @@ export function newIngredient(
     isStaple: false,
     freeUse: false,
   };
-  return { id: ingredientSlug(name), doc: { ...base, needsReview: needsReview(base) } };
+  return { id: newIngredientId(clean), doc: { ...base, needsReview: needsReview(base) } };
 }
 
-/** Lookup from every normalised name and alias to an ingredient ID. */
-export type IngredientIndex = Map<string, string>;
-
-export function buildIngredientIndex(list: Iterable<{ id: string; name: string; aliases: readonly string[] }>): IngredientIndex {
-  const idx: IngredientIndex = new Map();
-  for (const i of list) {
-    for (const n of [i.name, ...i.aliases]) {
-      const k = normalizeName(n);
-      if (k && !idx.has(k)) idx.set(k, i.id);
-    }
-  }
-  return idx;
-}
-
-/** Strips words that describe preparation or freshness, for a second matching attempt ("fresh basil" → "basil"). */
-const SOFT_WORDS = new Set(["fresh", "large", "small", "medium", "chopped", "minced", "diced", "sliced", "organic", "whole", "raw"]);
-
-/** Resolves a recipe's wording to an ingredient ID: exact normalised match, then without soft words. */
-export function resolveIngredientName(name: string, index: IngredientIndex): string | null {
-  const n = normalizeName(name);
-  const exact = index.get(n);
-  if (exact) return exact;
-  const soft = n
-    .split(" ")
-    .filter((w) => !SOFT_WORDS.has(w))
-    .join(" ");
-  return (soft && index.get(soft)) || null;
-}
+export {
+  buildIngredientIndex,
+  cleanIngredientName,
+  matchIngredient,
+  newIngredientId,
+  resolveIngredientName,
+  suggestIngredients,
+  variantKey,
+  INGREDIENT_VARIANTS,
+  SPELLING_VARIANTS,
+  PREP_WORDS,
+  STATE_WORDS,
+  type IngredientIndex,
+  type IndexEntry,
+  type IngredientMatch,
+  type IngredientSuggestion,
+  type MatchConfidence,
+} from "./ingredientMatch";

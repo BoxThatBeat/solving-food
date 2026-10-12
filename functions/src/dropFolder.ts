@@ -50,7 +50,13 @@ async function ingredientData(): Promise<NonNullable<typeof cache>> {
   if (cache && Date.now() - cache.at < CACHE_MS) return cache;
   const snap = await db.collection("ingredients").get();
   const byId = new Map(snap.docs.map((d) => [d.id, d.data() as IngredientDoc]));
-  cache = { at: Date.now(), byId, index: buildIngredientIndex([...byId].map(([id, d]) => ({ id, name: d.name, aliases: d.aliases ?? [] }))) };
+  cache = {
+    at: Date.now(),
+    byId,
+    index: buildIngredientIndex(
+      [...byId].map(([id, d]) => ({ id, name: d.name, aliases: d.aliases ?? [], mergedInto: d.mergedInto ?? null, needsReview: d.needsReview, category: d.category })),
+    ),
+  };
   return cache;
 }
 

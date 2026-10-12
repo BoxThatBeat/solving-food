@@ -257,7 +257,7 @@
   {
     "id": "cornstarch",
     "name": "cornstarch",
-    "aliases": ["corn starch"],
+    "aliases": ["corn starch", "cornflour"],
     "category": "baking",
     "defaultLocation": "pantry",
     "allowedMeasures": ["weight", "volume"],

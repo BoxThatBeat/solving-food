@@ -1,4 +1,5 @@
 // NFR6: every page works from a 360 px phone to 4K: the right navigation per breakpoint and no horizontal scroll.
+import type { Locator } from "@playwright/test";
 import { expect, test } from "../fixtures/test";
 
 const PAGES = ["/plan", "/recipes", "/meals", "/supply", "/grocery", "/history", "/settings", "/settings/theme"];
@@ -67,7 +68,7 @@ test("the Plan page: one column on phones, two at lg, three at xl (plan · sugge
   const width = page.viewportSize()!.width;
   await page.goto("/plan");
   await expect(page.getByTestId("coverage-strip")).toBeVisible({ timeout: 20_000 });
-  const box = async (l: import("@playwright/test").Locator) => (await l.first().boundingBox())!;
+  const box = async (l: Locator) => (await l.first().boundingBox())!;
   const strip = await box(page.getByTestId("coverage-strip"));
   const suggested = await box(page.getByRole("heading", { name: "Suggested" }));
   const protein = await box(page.getByRole("region", { name: "Protein per serving" }));

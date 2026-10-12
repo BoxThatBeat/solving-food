@@ -1675,7 +1675,7 @@
   {
     "id": "red-bell-pepper",
     "name": "red bell pepper",
-    "aliases": ["red pepper", "red sweet pepper", "sweet red pepper"],
+    "aliases": ["red pepper", "red sweet pepper", "sweet red pepper", "red capsicum"],
     "category": "produce",
     "defaultLocation": "fridge",
     "allowedMeasures": ["weight", "volume", "count"],
@@ -1697,7 +1697,7 @@
   {
     "id": "green-bell-pepper",
     "name": "green bell pepper",
-    "aliases": ["green pepper", "green sweet pepper", "sweet green pepper"],
+    "aliases": ["green pepper", "green sweet pepper", "sweet green pepper", "green capsicum"],
     "category": "produce",
     "defaultLocation": "fridge",
     "allowedMeasures": ["weight", "volume", "count"],
@@ -1719,7 +1719,7 @@
   {
     "id": "yellow-bell-pepper",
     "name": "yellow bell pepper",
-    "aliases": ["yellow pepper", "yellow sweet pepper"],
+    "aliases": ["yellow pepper", "yellow sweet pepper", "yellow capsicum"],
     "category": "produce",
     "defaultLocation": "fridge",
     "allowedMeasures": ["weight", "volume", "count"],
@@ -1741,7 +1741,7 @@
   {
     "id": "orange-bell-pepper",
     "name": "orange bell pepper",
-    "aliases": ["orange pepper", "orange sweet pepper"],
+    "aliases": ["orange pepper", "orange sweet pepper", "orange capsicum"],
     "category": "produce",
     "defaultLocation": "fridge",
     "allowedMeasures": ["weight", "volume", "count"],
@@ -2053,7 +2053,7 @@
   {
     "id": "fresh-cilantro",
     "name": "fresh cilantro",
-    "aliases": ["cilantro", "coriander leaf", "fresh coriander", "cilantro leaf"],
+    "aliases": ["cilantro", "coriander leaf", "fresh coriander", "cilantro leaf", "fresh coriander leaves"],
     "category": "produce",
     "defaultLocation": "fridge",
     "allowedMeasures": ["weight", "volume"],

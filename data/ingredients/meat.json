@@ -168,7 +168,7 @@
   {
     "id": "ground-chicken",
     "name": "ground chicken",
-    "aliases": ["lean ground chicken", "extra lean ground chicken"],
+    "aliases": ["lean ground chicken", "extra lean ground chicken", "chicken mince", "minced chicken"],
     "category": "meat",
     "defaultLocation": "fridge",
     "allowedMeasures": ["weight"],
@@ -188,7 +188,7 @@
   {
     "id": "ground-turkey",
     "name": "ground turkey",
-    "aliases": ["lean ground turkey", "extra lean ground turkey"],
+    "aliases": ["lean ground turkey", "extra lean ground turkey", "turkey mince", "minced turkey"],
     "category": "meat",
     "defaultLocation": "fridge",
     "allowedMeasures": ["weight"],
@@ -208,7 +208,7 @@
   {
     "id": "lean-ground-beef",
     "name": "lean ground beef",
-    "aliases": ["ground beef", "ground chuck"],
+    "aliases": ["ground beef", "ground chuck", "beef mince", "minced beef", "mince"],
     "category": "meat",
     "defaultLocation": "fridge",
     "allowedMeasures": ["weight"],
@@ -268,7 +268,7 @@
   {
     "id": "ground-pork",
     "name": "ground pork",
-    "aliases": ["lean ground pork", "minced pork"],
+    "aliases": ["lean ground pork", "minced pork", "pork mince"],
     "category": "meat",
     "defaultLocation": "fridge",
     "allowedMeasures": ["weight"],
@@ -288,7 +288,7 @@
   {
     "id": "ground-lamb",
     "name": "ground lamb",
-    "aliases": [],
+    "aliases": ["lamb mince", "minced lamb"],
     "category": "meat",
     "defaultLocation": "fridge",
     "allowedMeasures": ["weight"],
