@@ -104,6 +104,8 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Household import (`importHousehold` command, M4) | in the 20,000 writes / day | one delete per existing household document plus one write per imported document: a year-old household is ~5,000 + ~5,000 writes, a quarter of a day's free writes. Rare (manual, Settings → Data). An import of a household with more than ~9,000 documents should be split over two days (logged as `importHousehold` with `writes` / `deletes`) | ~2× at the worst |
 | Household download (M4) | in the 50,000 reads / day | one read per document (the page shows the estimate first, from count queries: one read per 1,000 entries); a year-old household is ~5,000 reads. Rare | 10× |
 | Commands function memory (M4) | Cloud Run 360k GiB-s / month | raised to 512 MiB / 300 s for imports; other commands still finish in ~1 s: ~60 / day × 0.5 GiB-s ≈ 1,000 GiB-s / month | 300× |
+| Ingredient merge callable (`mergeIngredient`, M8) | counted in the 2M above | one per **Merge into…** (plus one dry run when the confirm opens): rare, < 100 / month after the one-off cleanup. Each reads the recipes and version snapshots that use the duplicate (array-contains queries), the saved meals, and per household ~6 small reads (supply rows, planned items, open grocery lists, keyed docs); writes one per changed doc plus the copied Supply history: < 200 reads and < 100 writes per merge at the design scale. 256 MiB, ≤ 300 s | — |
+| Needs-review listener (M8) | in the 50,000 reads / day | `ingredients where needsReview == true` (Settings count, Recipes banner, More sheet, Drop page): one read per flagged ingredient per session, ~60 now and falling as they're reviewed; the full ingredient list is read only on the Ingredients page and in pickers, as before | — |
 | Timer callables (`scheduleTimer`, `cancelTimer`, M3) | counted in the 2M above | one per timer start, pause, adjust, cancel: < 3,000 / month | — |
 | Cloud Tasks (queue `timers`, created by the `timers` task function's deploy, M3) | 1M operations / month | < 2,000 (cooking timers: enqueue + delete) | 500× |
 | Cloud Messaging (web push) | free | < 2,000 pushes / month | — |
@@ -179,6 +181,11 @@ ingredients/{ingredientId}
   side?: { portion }                              // (M6) a side (R5.9): eaten as is; portion per person, canonical
                                                   // (g, or count for count-canonical items). Seeded or set in the
                                                   // ingredient editor; never on a freeUse ingredient
+  mergedInto?                                     // (M8) a duplicate merged by the mergeIngredient function (§6
+                                                  // "Merging ingredients"): a tombstone, needsReview false, hidden
+                                                  // from pickers and the Ingredients list; its names resolve to the
+                                                  // target. Clients can't write it (rules: not in validIngredient)
+  // aliases[] also learn: a merge adds the duplicate's name and aliases to the target's (≤ 40, the rule's cap)
 
 recipes/{recipeId}                                // source of truth (structured)
   title, slug, servings, prepMin, cookMin, cuisine, mainProtein, tags[], tools[],   // cuisine/mainProtein from fixed lists
@@ -214,7 +221,9 @@ pcxSession/state                                  // function-only (M5): token c
 pcxRate/{uid}                                     // function-only (M5): PC Express searches this hour
 
 users/{uid}/notifications/{id}                    // bottom-banner notifications (§12)
-  kind: "info"|"success"|"error", message, link?, createdAt, dismissedAt?
+  kind: "info"|"success"|"error", message, link?, createdAt, dismissedAt?,
+  link2?: { to, label }                           // (M8) a second link: an import that created ingredients
+                                                  // also links to "Review ingredients" (/ingredients?view=review)
 users/{uid}/devices/{fcmToken}                    // web-push targets for timers
   platform, createdAt, lastSeenAt
 users/{uid}/timers/{timerId}                      // function-written: the running timer's push (M3)
@@ -299,8 +308,11 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
     lots: [{ lotId, amount, location, acquiredAt, expiresFresh?, expiresFrozen?, frozenAt?,
              expiryExtendedTo? }],                                        // set by "Still good" (R8.15)
     nextExpiry?, shortAt?, cookEventId?, leftoverMealType?, updatedAt     // shortAt: "check the amount" (§6)
+    mergedInto?                                                           // (M8) row of a merged ingredient: amount 0,
+                                                                          // no lots, kept for its history, not shown
   supply/{supplyId}/transactions/{txId}
-    delta, kind: purchase|cook|correction|discard|freeze|thaw|leftover|eaten|extendExpiry,
+    delta, kind: purchase|cook|correction|discard|freeze|thaw|leftover|eaten|extendExpiry|merge,
+    mergedFrom?                                                           // (M8) copied from a merged ingredient's row
     lotId, ref?: { type, id }, uid, note?, commandId, createdAt
 
   commands/{cmdId}               type, payload, uid, createdAt, status: pending|running|applied|failed, error?, result?, appliedAt?
@@ -418,6 +430,47 @@ Firestore writes queue up offline, but callable functions don't. So every action
 - `markEaten`: leftover → one portion out of its lot; cooked meal → status only; a planned snack → its recipe amounts come out of supply (kind `eaten`); a planned non-snack meal is refused ("cook it first").
 - `receiveGroceries`: lines not mentioned arrived as listed (R7.8); missing lines have amount 0. Each bought tracked ingredient gets a lot `<commandId>-<itemId>` in its default location (frozen from the start when that is the freezer), plus the freeze split. The list gets `receivedAt`, `receivedBy`, `receivedCents` (estimated cost of what arrived, pro rata) and per-line `receivedAmount`. Cadence keeps `purchaseCount` alongside the EMA; `avgIntervalDays` is null until the second purchase.
 - Thawing gives the lot a fresh expiry of 2 days from thawing (the original fresh date has usually passed); the frozen expiry stays on the lot.
+
+### Merging ingredients (M8, R4.27, R8.16)
+
+Ingredient IDs are referenced from recipes, their version snapshots, saved meals and every household's Supply, plan,
+grocery lists and settings, and Supply is function-only, so **Merge into…** is a callable, `mergeIngredient({ fromId,
+intoId, dryRun? })` (`functions/src/ingredients.ts`; the pure decisions are `packages/core/src/ingredientMerge.ts`).
+Verified, allowlisted callers only (the gate for editing an ingredient). `dryRun` reads and counts only; the confirm
+sheet shows its counts ("1 recipe, 1 Supply row") before the real call.
+
+1. **Refusals** (`mergeRefusal`): itself, unknown IDs, a target that was itself merged ("merge into that one"), a
+   duplicate already merged elsewhere, a shipped catalogue ingredient (no `createdBy`) into one that isn't, and a
+   counted ingredient into a weighed one (or the reverse) when neither has a weight per piece. Gram ↔ count merges
+   convert amounts with the unit weight (`mergeFactor`).
+2. **Recipes** using it (`ingredientIds array-contains`, every status): lines repointed, then the derived fields
+   recomputed with the target's conversions (`derivedUpdate`), **without a version bump**: the content didn't change,
+   only which ingredient a line points at. The `recipeIndex` trigger refreshes the search index.
+3. **Version snapshots** (collection-group query on `versions.ingredientIds`, an index declared in
+   `firestore.indexes.json`): lines and `ingredientIds` repointed, version numbers untouched, so restoring an old
+   version can't bring the duplicate back.
+4. **Saved meals' sides** (the whole small collection is scanned: no query can look inside side objects).
+5. **Per household:** in one transaction, the duplicate's lots are appended to the target's row (`moveLots`: a clashing
+   lot ID gets `-m<n>`; the target row is created if the household had none), its transactions are copied onto the
+   target's history (doc ID `m_<fromId>_<txId>`, `mergedFrom`, deltas converted) plus one `merge` transaction for
+   whatever the copies don't explain (0 when the ledger was consistent), so **Σ transactions == amount** holds on the
+   target; the duplicate's row keeps its history, gets one `merge` (−) transaction per lot, amount 0, no lots and
+   `mergedInto`. Rows are never deleted. (Histories over 400 transactions aren't copied, to stay under the 500-write
+   transaction limit; the target then gets one `merge` transaction for the whole amount.) Then, in a batch: planned
+   (not cooked) plan items' sides, draft and ordered grocery lists (`mergeGroceryItems`: the duplicate's plan line joins
+   the target's line at the same store, amounts, packs and estimate added), the brand mapping, the sourcing rule
+   `ing_<id>`, cadence, likes/dislikes entries `ingredient:<id>` and `settings.sides` move to the target's ID when the
+   target has none (otherwise the target's wins and the duplicate's is removed). Received lists, cook events and ratings
+   are history and keep the old ID; the tombstone still names it.
+6. **Last, the ingredient docs** (`mergedTarget`): the target learns the duplicate's name and aliases as aliases
+   (alias learning; capped at 40) and takes any density, unit weight or protein it lacks (`needsReview` recomputed); the
+   duplicate gets `mergedInto` and `needsReview: false`. Writing these last means a failure part-way leaves the
+   duplicate visible, and running the same merge again finishes it: every step is a no-op the second time
+   (`alreadyMerged` in the report).
+
+Clients follow `mergedInto` too: `useAllIngredients().list` and the pickers leave tombstones out, `buildIngredientIndex`
+maps their names to the target, the Supply page hides rows with `mergedInto`, and a command that names a merged
+ingredient (queued offline before the merge) is applied to the target.
 
 ---
 
@@ -633,7 +686,29 @@ flowchart TD
 - **Getting files in:**
   1. An in-app **"Drop recipes"** area (drag and drop or file picker, several files at once) uploads to `recipe-drop/{uid}/`. This works for anyone signed in.
   2. The project owner can run `gcloud storage cp *.cook gs://<bucket>/recipe-drop/<uid>/` from a terminal, which lets Claude Code drop files directly.
-- **Unknown ingredients** found in a dropped file are created with `needsReview: true` and defaults inferred from the category.
+- **Matching ingredient names (M8)** (`packages/core/src/ingredientMatch.ts`, `matchIngredient` →
+  `{ id, confidence }`; `resolveIngredientName` returns its `id`). Tiers, the weakest one used is the confidence:
+  **exact** (normalised wording, `normalizeName`: lower-case, accents, punctuation, every word singular, is a name or
+  alias) → **variant** (spelling and regional variants folded on both sides, `variantKey`: chile/chili/chilli, m&m's/
+  m&ms, yoghurt, aubergine, courgette, coriander leaf, scallion/spring onion, capsicum, garbanzo, caster/superfine and
+  icing/powdered/confectioners' sugar, cornflour, rocket, prawn, beef/pork/lamb/chicken/turkey mince and minced …) →
+  **soft** (qualifiers after a comma or in brackets dropped, then `PREP_WORDS` anywhere: fresh, large, chopped,
+  minced, diced, sliced, boneless, skinless, shredded, grated, crushed, crumbled, ripe, packed, thawed, peeled, seeded,
+  pitted, halved, quartered, cubed, julienned, trimmed, softened, melted, divided, plus, optional, extra, finely,
+  roughly, thinly, coarsely, lightly, about, mild, room temperature, to taste, for serving, for garnish…; then
+  `STATE_WORDS` (ground, dry, dried, canned, tinned, frozen, uncooked) when the rest names an ingredient). A state word
+  is never dropped onto an ingredient whose name says fresh or raw ("dried mint" ≠ fresh mint), and "ground" never
+  onto meat or fish. "Cooked" is not a state word ("cooked rice" ≠ rice). Matching never strips words from catalogue
+  names, only from the recipe's wording. When two ingredients claim a name, a reviewed one beats one that needs
+  review; merged ones resolve to their target.
+- **Unknown ingredients** found in a dropped file are created with `needsReview: true` and defaults inferred from the
+  category. The new ingredient's name drops pure preparation words (`cleanIngredientName`: "diced green chilies" →
+  "green chilies", the wording kept as an alias) and its ID is the variant key (`newIngredientId`), so spelling variants
+  of one new name create one ingredient (`green-chile`). The import's notification links to the review page as well as
+  the recipe (`link2`).
+- **Review** (R4.27): `suggestIngredients(name, index, max)` ranks candidates for the review page: the matcher's hit,
+  then shared words (Jaccard ≥ 0.3 on normalised, preparation-free words; the same words reordered score 0.9) and
+  prefixes. **Merge into…** is the `mergeIngredient` function (§6 "Merging ingredients").
 - **Images** referenced in front matter are always **downloaded into Storage** (never hot-linked) and resized to the three standard sizes. If the download fails, the recipe is still imported without an image, and the notification says so.
 - **Results** are reported through the notification system (§12): a success or error banner appears at the bottom of **whatever page the uploader is on**, linking to the new recipe or describing the error.
 
@@ -651,6 +726,11 @@ Firebase supports a drop folder (Storage + a trigger), so **no REST API is built
   spoons as written, converts imperial weights to metric only, and converts everything to grams for Supply), ingredient names the app knows (a generated list of the seed's names and aliases ships with the
   skill), salt and pepper as separate tokens, preparation words outside the token, and how to describe count-based
   ingredients.
+- **Strict ingredient names (M8):** SKILL.md step 6 is a mandatory validation before delivery: every `@ingredient{}`
+  token must be a catalogue name or alias from `references/ingredients.md` after stripping the preparation words
+  (listed there, generated from `PREP_WORDS`, with the state words and the spelling-variant table from core); a new
+  name is allowed only when nothing listed means the same thing, and the delivery message lists each new ingredient
+  with a one-line reason. SKILL.md has a wrong → right table.
 - How to deliver files: write the `.cook` files and upload them with `gcloud storage cp`, or save them locally for the user to drag into the app.
 - The lists and ingredient names are generated by `pnpm gen:skill`; a unit test fails when they're stale and imports every example in the skill.
 - Worked examples, including converting a recipe web page and a photographed recipe.
@@ -829,6 +909,10 @@ match /prices/{id}       { allow read: if allowed(); }       // write: functions
 
 **Verified email (M0 decision):** `allowed()` also requires `email_verified`. The Email/Password provider must be enabled for email-link sign-in, which would otherwise let anyone register an allowlisted address they don't own with a password. Email-link sign-in always verifies the address, so real users are unaffected. The collection-group `members` rule checks the duplicated `uid` *field* rather than the document ID, because Firestore can only prove a query safe from the fields it filters on. A collection-group single-field index on `members.uid` is declared in `firestore.indexes.json`.
 
+**Merged ingredients (M8):** `mergedInto` is not among `validIngredient`'s keys, so clients can neither set it nor edit
+a merged ingredient (which carries it); only the `mergeIngredient` function writes tombstones. Supply stays
+function-only, so the merge's Supply moves happen in the function.
+
 **Sides (M6):** `validIngredient` accepts `side` only as `{ portion: number > 0 }`; `validMeal` and `validPlanItem` accept `sides` as a list of at most 12, and a plan item may carry `sides` only when `kind == 'meal'`; the `finishCooking` payload may carry `sides`. Entry shapes are checked by the client's zod schemas and again by the function (§6), which ignores malformed entries.
 
 Share links work for both recipes and meals: `allow get: if true` on both, and a meal page reads its recipes the same way. Public `get` on single documents can't be enumerated, so the exposure is limited to someone who already has a link.
@@ -868,6 +952,8 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 /settings/{household,members,brands,stores,sides,tools,preferences,weights,theme,data}
 /welcome/household  (first run: join by invite or create; signed in: create another household, M4)
 /drop            (upload .cook files, see import results)
+/ingredients     (M8: the catalogue; opens on the review list while anything needs review, ?view=review|all)
+/ingredients/:id (the ingredient editor; for one that needs review a "Merge into…" panel, for a merged one a notice)
 /not-invited     (signed in with an address that isn't on the allowlist)
 ```
 
@@ -898,7 +984,16 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 - **`<TrashList>`**: `/recipes/trash`, trashed recipes with days remaining and a Restore button (R4.26).
 - **`<LeaveHouseholdDialog>`**: the leave confirmation, with the extra "this deletes the household and all its data" warning when the user is the last member (R2.13).
 - **`<LedgerList>`**: paginated transaction history.
-- **`<IngredientPicker>`**: typeahead with allowed-measurement selector.
+- **`<IngredientPicker>`**: typeahead with allowed-measurement selector. M8: matches spelling variants
+  (`variantKey`), never offers merged ingredients, and takes `allowCreate={false}` and `exclude` for Merge into….
+- **Ingredients page** (M8, R4.27): toggle *Needs review (n)* / *All* plus search. A review card shows the name,
+  category and missing conversions, the recipes that use it (from the recipe index, no extra reads), "Looks like:" (the
+  top three `suggestIngredients`, each opening the merge sheet with it picked), **Merge into…** and **Keep as new** (the
+  editor). **`<MergeSheet>`**: suggestion chips, an `<IngredientPicker>` without create, a dry-run preview ("Moves 1
+  recipe, 1 Supply row to strawberry jam. Adds “x” to its names."), then *Merge into X* → success banner. Needs a
+  connection. Reached from Settings (Ingredients entry with a live count badge), the phone's More sheet, the Recipes
+  page's **review banner** (`<IngredientReviewBanner>`, dashed like the duplicate banner; × hides it for the session via
+  sessionStorage), the Drop page, and the import notification's second link.
 - **`<NotificationBanners>`**: the app-wide notification system. Banners stack at the bottom of every page, above the bottom tab bar on phones. Fed by a live listener on `users/{uid}/notifications` (undismissed) plus local, client-only messages. Success and info banners auto-dismiss after ~6 s; errors stay until dismissed. Each can link to the related page. At most three show at once, with a "+N more · Dismiss all" row for the rest (a bulk drop reports one per file). The stack is always mounted as an `aria-live` region above sheets, so banners stay visible and announced while a sheet is open.
 - **`<PcxProductSearch>`** / **`<PcxStorePicker>`**: PC Express search on the brand mapping and stores pages.
 - **`<DataTransfer>`**: Settings → Data, with the Download and Import household data buttons (§13).
@@ -1013,7 +1108,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 - **Unit (Vitest, `packages/core`):** unit conversion and display formatting (recipe pages one unit system per amount and Fahrenheit only; metric only elsewhere), Cooklang → recipe and recipe → Cooklang round-trip, FEFO ledger math, free-use exclusion, scoring, optimiser (threshold, diversity, exhaustion), coverage counting, grocery rounding, budget math, period rollover, export schema.
 - **Property tests (fast-check):** Σ transactions == `canonicalAmount`; FEFO never takes a lot below zero; export → import round-trip keeps the recipe the same.
 - **Security rules:** allowlist gate (a non-allowlisted signed-in user can read and create nothing); household isolation; the 3-household limit; creator's member doc in the creation batch; invite/accept by uid and by email; collection-group reads of `members` and `invites` limited to one's own; clients can't write the function-only collections (supply, stats, cookEvents, ratings, cadence), the index, or prices; version bump enforced; recipe hard-delete allowed only for `pendingDuplicateReview`.
-- **Functions (emulator):** every command handler including `submitReview` corrections, `extendExpiry`, and `importHousehold`; the drop-folder pipeline (good file, bad file, duplicate, image download and resize, non-drop path ignored); index maintenance including trashed recipes leaving and re-entering; weekly maintenance (price refresh against the stub, 30-day trash purge); recipe-purge cleanup across households; empty-household cleanup and counter decrement; timer scheduling and cancellation.
+- **Functions (emulator):** `mergeIngredient` (dry run, Supply moved with Σ transactions == amount on both rows, recipes and versions repointed, grocery lines joined, keyed docs, aliases learned, idempotent re-run, refusals, the next import resolves to the target); every command handler including `submitReview` corrections, `extendExpiry`, and `importHousehold`; the drop-folder pipeline (good file, bad file, duplicate, image download and resize, non-drop path ignored); index maintenance including trashed recipes leaving and re-entering; weekly maintenance (price refresh against the stub, 30-day trash purge); recipe-purge cleanup across households; empty-household cleanup and counter decrement; timer scheduling and cancellation.
 - **E2E (Playwright):** a full suite covering every user-facing requirement in the PRD (§14.1).
 
 ### 14.1 End-to-End Suite (Playwright)
@@ -1056,7 +1151,8 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | `cooking.spec.ts` | Mise en place; step mode navigation (swipe, tap, keys); inline amounts; portrait/landscape and tablet layouts; wake lock requested (R4.10–R4.12, R4.24) |
 | `timers.spec.ts` | Start, pause, cancel, and adjust timers; foreground alarm; push scheduled and cancelled (task stub); install prompt on iOS; offline warning banner (R4.23) |
 | `recipe-edit.spec.ts` | Manual create and edit with fixed cuisine/protein lists; version history and restore; concurrent-edit warning; offline draft saved when online; delete with all-users warning moves to Trash and hides from search and plans; restore from Trash; purge after 30 days (clock) cleans up plans, meals, and favourites (R4.15, R4.19, R4.25–R4.26) |
-| `drop-folder.spec.ts` | Upload `.cook` files → recipes appear with downloaded images; invalid file shows an error banner on whatever page is open; file deleted after processing; duplicate goes to the review list; keep existing / keep new / keep both (R4.16–R4.17, R4.20) |
+| `drop-folder.spec.ts` | Upload `.cook` files → recipes appear with downloaded images; invalid file shows an error banner on whatever page is open; file deleted after processing; duplicate goes to the review list; keep existing / keep new / keep both; wording with preparation words, qualifiers and spelling variants resolves to the catalogue with no new ingredient (M8) (R4.16–R4.17, R4.20) |
+| `ingredients.spec.ts` | (M8) An import with a new name: notification with Open recipe + Review ingredients, Recipes banner (session dismiss), Settings count, review card with its recipe, Merge into… preview and confirm repoint the recipe and move a seeded Supply lot with Σ transactions == amount, alias learned, merged page notice; More sheet link on phones (R4.27, R8.16) |
 | `notifications.spec.ts` | Banners appear at the bottom of any page, stack, auto-dismiss (success) or persist (error), link to their target, and stay dismissed across devices (R12.1) |
 | `sharing.spec.ts` | Copy link; signed-out visitor sees the recipe/meal page without household data; no `.cook` download on the recipe page (R4.21; R4.22 withdrawn in M7) |
 | `meals.spec.ts` | Saved meals list: edit, favourite, share; "Save as meal" from Create meal and from the review flow; saved meal picked in Create meal; choose recipe order with durations shown; meal and recipe ratings (R5.1–R5.4, R5.6, R5.8) |
@@ -1110,6 +1206,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | M5 | Smarts | Suggestions & weights, expiry badges and alerts, optimiser, staples cadence, PC Express module (auth, store and product search, weekly maintenance job) |
 | M6 | Sides | Sides on meals (ingredients eaten as-is, per-person portion snapshotted on the meal), seed sides, Settings → Sides, sides in the grocery builder, budget, Supply deduction at Done cooking, plan rows and History |
 | M7 | Review fixes | Owner review after M6: units display v3 (one unit system on recipe pages), version history hardening, recipe page actions (no .cook download), Recipes skeletons, Restart period (R3.1), kitchen tool names lower-case and matched by `toolKey`, Plan page layout |
+| M8 | Ingredient matching | A much better deterministic matcher (spelling variants, preparation and state words, qualifiers, suggestions), the `mergeIngredient` callable with alias learning that moves Supply in every household, a strict Claude skill, ingredient review reachable from Settings, More, the Recipes banner, the Drop page and the import notification; the live cleanup of the 62 needs-review ingredients |
 
 Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix. The detailed, task-level plan for each milestone lives in `Planning/`.
 

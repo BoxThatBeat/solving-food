@@ -14,6 +14,7 @@ import { useNotify } from "@/components/notifications-context";
 import { storage } from "@/firebase/app";
 import { useReadySession } from "@/session/useSession";
 import { useOnline } from "@/hooks/useOnline";
+import { useNeedsReview } from "@/data/ingredients";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/drop")({
@@ -82,6 +83,7 @@ function DropPage() {
   const notify = useNotify();
   const online = useOnline();
   const [rows, setRows] = React.useState<Row[]>([]);
+  const toReview = useNeedsReview()?.length ?? 0;
   const [over, setOver] = React.useState(false);
   const input = React.useRef<HTMLInputElement>(null);
 
@@ -199,6 +201,23 @@ function DropPage() {
         </Card>
       ) : null}
 
+      {toReview ? (
+        <Link
+          to="/ingredients"
+          search={{ view: "review" }}
+          data-testid="drop-review-link"
+          className="flex items-center gap-2.5 rounded-ui border-2 border-dashed border-line bg-base px-3 py-[0.5625rem] text-[0.8125rem] font-bold text-ink no-underline"
+        >
+          <span className="rounded border-2 border-line bg-yellow px-1.5 py-0.5 font-mono text-[0.625rem] font-extrabold text-onc">{toReview}</span>
+          <span className="flex-1">
+            {toReview === 1 ? "1 ingredient" : `${toReview} ingredients`} from imports {toReview === 1 ? "needs" : "need"} review: merge each into the ingredient it means, or keep it as new.
+          </span>
+          <span aria-hidden className="font-extrabold">
+            →
+          </span>
+        </Link>
+      ) : null}
+
       <Card>
         <SectionLabel hint={`${Object.keys(SKILL_FILES).length} files`}>Let AI add for me</SectionLabel>
         <p className="m-0 text-sm leading-normal font-semibold">
@@ -240,7 +259,8 @@ function DropPage() {
           </li>
         </ol>
         <p className="m-0 text-xs font-semibold text-sub">
-          Each import shows a notification: success with a link to the recipe, a duplicate waiting for review on the Recipes page, or the reason it failed.
+          Each import shows a notification: success with a link to the recipe (and to the ingredient review when it added new ingredients), a duplicate
+          waiting for review on the Recipes page, or the reason it failed.
         </p>
       </Card>
     </PageBody>

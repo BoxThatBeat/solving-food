@@ -222,6 +222,8 @@ export const notificationSchema = z.object({
   kind: z.enum(["info", "success", "error"]),
   message: z.string().min(1),
   link: z.string().optional(),
+  /** (M8) A second in-app link, e.g. an import's "Review ingredients" next to "Open recipe". */
+  link2: z.object({ to: z.string(), label: z.string() }).optional(),
   createdAt: timestamp,
   /** null until dismissed; written explicitly so `where("dismissedAt", "==", null)` matches. */
   dismissedAt: timestamp.nullable().optional(),

@@ -161,7 +161,7 @@ export async function prepareCookRecipe(uid: string, text: string) {
 
   const content = result.content;
   const derived = deriveRecipe(content, lookupOf(lookupMap));
-  return { content, derived, warnings, frontMatter: result.frontMatter };
+  return { content, derived, warnings, frontMatter: result.frontMatter, newIngredients: result.newIngredients.length };
 }
 
 /**
@@ -243,14 +243,17 @@ async function importCook(uid: string, fileName: string, text: string, opts: Dro
   await batch.commit();
 
   const extra = warnings.length ? ` Note: ${warnings.join("; ")}.` : "";
+  // New ingredients split Supply and grocery lines until someone merges or completes them (M8, R4.27).
+  const review = prepared.newIngredients ? { link2: { to: "/ingredients?view=review", label: "Review ingredients" } } : {};
   if (duplicate) {
     await notify(uid, {
       kind: "info",
       message: `"${content.title}" looks like a duplicate of "${duplicate.title}". It's waiting for review on the Recipes page.${extra}`,
       link: "/recipes?review=1",
+      ...review,
     });
   } else {
-    await notify(uid, { kind: "success", message: `Imported "${content.title}" from ${fileName}.${extra}`, link: `/recipes/${id}` });
+    await notify(uid, { kind: "success", message: `Imported "${content.title}" from ${fileName}.${extra}`, link: `/recipes/${id}`, ...review });
   }
   return { status: duplicate ? "pendingDuplicateReview" : "imported", recipeId: id, warnings };
 }

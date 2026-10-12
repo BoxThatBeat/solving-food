@@ -102,6 +102,9 @@ URLs are blocked in the CLI; serve things over HTTP. Screenshots never go into t
   shared by the web app and functions. Keep it free of Firebase imports.
 - Supply is never written by the client. Every supply change is a command document applied by a function
   (spec §6). Don't shortcut this, even for "simple" cases.
+- Ingredient name matching lives in `packages/core/src/ingredientMatch.ts` (`matchIngredient`, `suggestIngredients`).
+  Duplicates are merged only by the `mergeIngredient` callable, which moves Supply and repoints every reference;
+  never rewrite ingredient IDs from the client or a script that bypasses it.
 - Say **Supply**, never "inventory", in UI text.
 - Sides (M6) are ingredients with a per-person `portion` (canonical), snapshotted onto meals and plan items when
   created; everything downstream (builder, functions, History) reads the meal's copy, never Settings.

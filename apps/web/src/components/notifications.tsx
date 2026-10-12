@@ -89,6 +89,7 @@ export function NotificationFeed({ uid }: { uid: string }) {
         kind: d.data.kind,
         message: d.data.message,
         ...(d.data.link ? { link: { to: d.data.link, label: linkLabel(d.data.link) } } : {}),
+        ...(d.data.link2 ? { link2: d.data.link2 } : {}),
         onDismiss: () => void updateDoc(ref, { dismissedAt: serverTimestamp() }).catch(() => {}),
       });
     }
@@ -151,16 +152,19 @@ export function NotificationBanners({ className }: { className?: string }) {
           )}
         >
           <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{b.message}</span>
-          {b.link ? (
-            <Link
-              to={b.link.to.split("?")[0]}
-              search={Object.fromEntries(new URLSearchParams(b.link.to.split("?")[1] ?? "")) as never}
-              className="flex-none text-inherit underline"
-              onClick={() => ctx.dismiss(b.id)}
-            >
-              {b.link.label}
-            </Link>
-          ) : null}
+          {[b.link, b.link2].map((l, k) =>
+            l ? (
+              <Link
+                key={k}
+                to={l.to.split("?")[0]}
+                search={Object.fromEntries(new URLSearchParams(l.to.split("?")[1] ?? "")) as never}
+                className="flex-none text-inherit underline"
+                onClick={() => ctx.dismiss(b.id)}
+              >
+                {l.label}
+              </Link>
+            ) : null,
+          )}
           {b.action ? (
             <button
               type="button"

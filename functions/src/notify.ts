@@ -11,6 +11,8 @@ export interface Notice {
   message: string;
   /** An in-app path, e.g. `/recipes/abc`. */
   link?: string;
+  /** A second link with its label (M8: an import that created ingredients links to their review too). */
+  link2?: { to: string; label: string };
 }
 
 const MAX_MESSAGE = 500;
@@ -24,6 +26,7 @@ export async function notify(uid: string, n: Notice): Promise<string> {
     dismissedAt: null,
   };
   if (n.link) data.link = n.link;
+  if (n.link2) data.link2 = n.link2;
   await ref.set(data);
   return ref.id;
 }

@@ -64,6 +64,8 @@ interface StoredSupply {
   cookEventId?: string;
   leftoverMealType?: string;
   shortAt?: unknown;
+  /** (M8) The row of an ingredient merged into another: empty, kept for its history, not shown. */
+  mergedInto?: string;
 }
 
 export function useSupplyDocs(hid: string | null) {
@@ -112,6 +114,7 @@ export function useSupply(hid: string | null, tz: string) {
   const items = useMemo(() => {
     const base = new Map<string, ProjectedDoc & { extra: Pick<SupplyItem, "cookEventId" | "leftoverMealType" | "shortAtMs"> }>();
     for (const d of docs.docs ?? []) {
+      if (d.data.mergedInto) continue;
       base.set(d.id, {
         ingredientId: d.data.ingredientId,
         label: d.data.label,

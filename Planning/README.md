@@ -13,6 +13,7 @@ ordered, checkable tasks with the files they touch, the tests that prove them, a
 | [M5-smarts.md](M5-smarts.md) | Smarts | M3 (M4 optional) | Suggestions, weights, protein goals, optimiser, expiry alerts, staples cadence, PC Express module |
 | [M6-sides.md](M6-sides.md) | Sides | M5 | Sides on meals with per-person portions, seed sides, Settings → Sides, sides on the grocery list, in the budget, deducted from Supply at Done cooking |
 | [M7-review-fixes.md](M7-review-fixes.md) | Review fixes | M6 | Owner review: units v3, version history, recipe page actions, Recipes skeletons, restart period, kitchen tool names, Plan page layout |
+| [M8-ingredient-matching.md](M8-ingredient-matching.md) | Ingredient matching | M7 | Matcher (variants, preparation words, suggestions), Merge into… (moves Supply, learns aliases), strict skill, discoverable review, live cleanup |
 
 ## How to use these plans
 
@@ -32,7 +33,8 @@ ordered, checkable tasks with the files they touch, the tests that prove them, a
 ## Cross-cutting rules (apply to every milestone)
 
 - Business logic goes in `packages/core` with unit tests; the web app and functions only call it.
-- Clients never write function-only collections (supply, stats, cookEvents, ratings, cadence).
+- Clients never write function-only collections (supply, stats, cookEvents, ratings, cadence). Merging ingredients
+  (M8) is the `mergeIngredient` function for the same reason: it moves Supply.
 - Free tier: before adding any Firebase/GCP feature, update the §2 quota table in the spec.
 - Units (R8.13 v3, changed in M7): recipe pages show one unit system per amount (`formatRecipeAmount()`: imperial
   weights to metric only, cups/spoons as written) and Fahrenheit only (`fahrenheitOnly()`); everything else metric

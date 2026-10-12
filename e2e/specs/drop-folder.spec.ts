@@ -117,6 +117,44 @@ test.describe("duplicates wait for review", () => {
   });
 });
 
+test("recipe wording with preparation words, qualifiers and spelling variants resolves to the catalogue: no new ingredients (M8)", { tag: ["@R4.16", "@R4.17"] }, async ({ page, household: _ }) => {
+  const title = uniqueTitle("Matcher Skillet");
+  const cook = [
+    "---",
+    `title: ${title}`,
+    "servings: 4",
+    "cuisine: other",
+    "main_protein: chicken",
+    "prep_time: 10 minutes",
+    "cook_time: 25 minutes",
+    "tags: [dinner]",
+    "---",
+    "Brown @chopped chicken thighs, boneless{2%lb} in @butter (softened){2%tbsp}.",
+    "",
+    "Add @Diced Yellow Onions{1}, @courgettes{2} and @chilli powder{1%tsp}.",
+    "",
+    `Finish with @salt, to taste{} and @water{${1000 + 100 * Math.floor(Math.random() * 400)}%ml}.`,
+    "",
+  ].join("\n");
+  await dropFiles(page, [{ name: "matcher.cook", body: cook, mimeType: "text/plain" }]);
+  const ok = banner(page, `Imported "${title}"`);
+  await expect(ok).toBeVisible({ timeout: 45_000 });
+  await expect(ok).not.toContainText("new ingredient");
+  await expect(ok.getByRole("link", { name: "Review ingredients" })).toHaveCount(0);
+  const snap = await adminDb.collection("recipes").where("title", "==", title).get();
+  expect(snap.size).toBe(1);
+  const lines = (snap.docs[0]!.data().ingredients as Array<{ ingredientId: string; displayText: string }>).map((l) => [l.displayText, l.ingredientId]);
+  expect(lines).toEqual([
+    ["chopped chicken thighs, boneless", "chicken-thigh"],
+    ["butter (softened)", "butter"],
+    ["Diced Yellow Onions", "onion"],
+    ["courgettes", "zucchini"],
+    ["chilli powder", "chili-powder"],
+    ["salt, to taste", "salt"],
+    ["water", "water"],
+  ]);
+});
+
 test("the Claude skill embeds the same fixed lists as the app, and its examples import", { tag: ["@R4.17", "@R4.25"] }, async ({ page, household: _ }) => {
   const taxonomy = readFileSync(join(SKILL_DIR, "references/taxonomy.md"), "utf8");
   const section = (h: string) => [...taxonomy.split(`## ${h}`)[1]!.split("\n## ")[0]!.matchAll(/^- `([^`]+)`$/gm)].map((m) => m[1]);

@@ -2,30 +2,52 @@
 // offline); recipe pages, which also render signed out, read the ingredients they need one by one (public `get`).
 
 import { useEffect, useMemo, useState } from "react";
-import { collection, deleteField, doc, onSnapshot, serverTimestamp, setDoc, type Unsubscribe } from "firebase/firestore";
+import { collection, deleteField, doc, onSnapshot, query, serverTimestamp, setDoc, where, type Unsubscribe } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 import {
   buildIngredientIndex,
   needsReview,
   normalizeName,
+  variantKey,
   type IngredientDoc,
   type IngredientIndex,
+  type MergeReport,
   type RecipeIngredientInfo,
 } from "@solving-food/core";
-import { db } from "@/firebase/app";
+import { db, functions } from "@/firebase/app";
 import { useLiveQuery } from "./live";
 
 export interface IngredientEntry extends IngredientDoc {
   id: string;
 }
 
-/** Every ingredient, live. Only for signed-in, allowlisted users (rules: `list` needs the allowlist). */
+/**
+ * Every ingredient, live. Only for signed-in, allowlisted users (rules: `list` needs the allowlist). `list` leaves out
+ * merged duplicates (M8: pickers never offer them); `byId` keeps them so old references still show a name, and the
+ * index resolves their names to the ingredient they were merged into.
+ */
 export function useAllIngredients(enabled = true): { list: IngredientEntry[] | undefined; byId: Map<string, IngredientEntry>; index: IngredientIndex } {
   const q = useLiveQuery<IngredientDoc>(enabled ? collection(db, "ingredients") : null, enabled ? "ingredients" : null);
   return useMemo(() => {
-    const list = q.docs?.map((d) => ({ id: d.id, ...d.data }));
-    const byId = new Map((list ?? []).map((i) => [i.id, i]));
-    return { list, byId, index: buildIngredientIndex(list ?? []) };
+    const all = q.docs?.map((d) => ({ id: d.id, ...d.data }));
+    const byId = new Map((all ?? []).map((i) => [i.id, i]));
+    return { list: all?.filter((i) => !i.mergedInto), byId, index: buildIngredientIndex(all ?? []) };
   }, [q.docs]);
+}
+
+/**
+ * Ingredients that need review (imports' new names, missing conversions), live. A query on the flag reads only those
+ * documents, so the count badges and the Recipes banner don't pull the whole collection. Merged ones are never flagged.
+ */
+export function useNeedsReview(enabled = true): IngredientEntry[] | undefined {
+  const q = useLiveQuery<IngredientDoc>(enabled ? query(collection(db, "ingredients"), where("needsReview", "==", true)) : null, enabled ? "ingredients?needsReview" : null);
+  return useMemo(() => q.docs?.map((d) => ({ id: d.id, ...d.data })).filter((i) => !i.mergedInto), [q.docs]);
+}
+
+/** "Merge into…" (M8, R4.27): the mergeIngredient function; `dryRun` returns what would move. Needs a connection. */
+export async function mergeIngredient(fromId: string, intoId: string, dryRun = false): Promise<MergeReport> {
+  const fn = httpsCallable<{ fromId: string; intoId: string; dryRun: boolean }, MergeReport>(functions, "mergeIngredient");
+  return (await fn({ fromId, intoId, dryRun })).data;
 }
 
 /** Specific ingredients by ID, each its own live document (works signed out). */
@@ -82,13 +104,15 @@ export const OPTIONAL_INGREDIENT_KEYS = ["densityGPerMl", "unitWeightG", "protei
 
 /** Ranks ingredients for a query: exact name/alias, then prefix, then word prefix, then substring (the picker). */
 export function searchIngredients(list: readonly IngredientEntry[], query: string, max = 8): IngredientEntry[] {
-  const q = normalizeName(query);
+  // Spelling variants fold on both sides (M8): "chilli" finds chili powder, "courgette" zucchini.
+  const q = variantKey(normalizeName(query));
   if (!q) return [];
   const scored: Array<[number, IngredientEntry]> = [];
   for (const i of list) {
+    if (i.mergedInto) continue;
     let best = 0;
     for (const n of [i.name, ...i.aliases]) {
-      const k = normalizeName(n);
+      const k = variantKey(normalizeName(n));
       const isName = n === i.name ? 0.5 : 0;
       if (k === q) best = Math.max(best, 100 + isName);
       else if (k.startsWith(q)) best = Math.max(best, 60 + isName - k.length / 100);

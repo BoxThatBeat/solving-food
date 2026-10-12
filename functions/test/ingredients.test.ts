@@ -81,7 +81,7 @@ describe("mergeIngredient", () => {
     b.set(db.doc("recipes/plain"), recipe("Ketchup only", [["ketchup", 10]]));
     b.set(db.doc("meals/m1"), { name: "Tot night", recipes: [{ recipeId: "plain", servingsMultiplier: 1 }], sides: [{ ingredientId: "frozen-tater-tot", portion: 150 }], createdBy: "x", updatedBy: "x" });
     // Household 1 has both rows, a plan side, a draft list with both lines, a brand mapping, cadence and a side setting.
-    b.set(db.doc("households/h1"), { name: "One", settings: { sides: { "frozen-tater-tot": { portion: 120 } } } });
+    b.set(db.doc("households/h1"), { name: "One", settings: { sides: { "frozen-tater-tot": { portion: 120 } }, preferences: { likes: ["ingredient:frozen-tater-tot", "pizza"], dislikes: [], diets: [] } } });
     b.set(db.doc("households/h1/planItems/p1"), { periodId: "x", kind: "meal", status: "planned", recipes: [], sides: [{ ingredientId: "frozen-tater-tot", portion: 150 }] });
     b.set(db.doc("households/h1/planItems/p2"), { periodId: "x", kind: "meal", status: "cooked", recipes: [], sides: [{ ingredientId: "frozen-tater-tot", portion: 150 }] });
     const line = (ingredientId: string, amount: number) => ({ ingredientId, amount, measure: "g", need: amount, packs: 1, productName: ingredientId, storeId: "pc-express", estPriceCents: 400, source: "plan", checked: false });
@@ -117,7 +117,7 @@ describe("mergeIngredient", () => {
 
   it("a dry run counts what moves and changes nothing", async () => {
     const r = await mergeIngredient(UID, { fromId: "frozen-tater-tot", intoId: "tater-tot", dryRun: true });
-    expect(r).toMatchObject({ dryRun: true, recipes: 2, versions: 2, meals: 1, households: 2, supplyRows: 2, planItems: 1, groceryLists: 1, householdDocs: 3, aliasesAdded: ["frozen tater tots", "tot bites"] });
+    expect(r).toMatchObject({ dryRun: true, recipes: 2, versions: 2, meals: 1, households: 2, supplyRows: 2, planItems: 1, groceryLists: 1, householdDocs: 4, aliasesAdded: ["frozen tater tots", "tot bites"] });
     expect((await read("ingredients/frozen-tater-tot"))!.mergedInto).toBeUndefined();
     expect((await ledger("h1", "frozen-tater-tot")).doc.canonicalAmount).toBe(650);
     expect((await read("recipes/tots"))!.ingredientIds).toContain("frozen-tater-tot");
@@ -168,6 +168,7 @@ describe("mergeIngredient", () => {
     expect(await read("households/h1/brandMappings/frozen-tater-tot")).toBeUndefined();
     expect(await read("households/h1/cadence/tater-tot")).toMatchObject({ purchaseCount: 1 });
     expect((await read("households/h1"))!.settings.sides).toEqual({ "tater-tot": { portion: 120 } });
+    expect((await read("households/h1"))!.settings.preferences.likes).toEqual(["ingredient:tater-tot", "pizza"]);
 
     // Ingredients: aliases learned, tombstone.
     expect((await read("ingredients/tater-tot"))!).toMatchObject({ aliases: ["potato tots", "frozen tater tots", "tot bites"], needsReview: false, updatedBy: UID });

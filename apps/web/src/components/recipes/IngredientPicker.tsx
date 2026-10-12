@@ -30,6 +30,9 @@ export function IngredientPicker({
   uid,
   label,
   autoFocus,
+  allowCreate = true,
+  exclude,
+  placeholder = "Ingredient (e.g. chicken)",
 }: {
   ingredients: readonly IngredientEntry[];
   /** The selected ingredient, if any (shown as the input's text). */
@@ -38,6 +41,11 @@ export function IngredientPicker({
   uid: string;
   label: string;
   autoFocus?: boolean;
+  /** Offer "Create …" when nothing matches (off for "Merge into…", which only picks existing ingredients). */
+  allowCreate?: boolean;
+  /** IDs never offered (the ingredient being merged). */
+  exclude?: readonly string[];
+  placeholder?: string;
 }) {
   const [text, setText] = React.useState(value?.name ?? "");
   const [open, setOpen] = React.useState(false);
@@ -52,11 +60,11 @@ export function IngredientPicker({
     closeTimer.current = null;
   };
   React.useEffect(() => cancelClose, []);
-  const results = React.useMemo(() => searchIngredients(ingredients, text), [ingredients, text]);
+  const results = React.useMemo(() => searchIngredients(exclude?.length ? ingredients.filter((i) => !exclude.includes(i.id)) : ingredients, text), [ingredients, text, exclude]);
   const exact = results.some((r) => normalizeName(r.name) === normalizeName(text) || r.aliases.some((a) => normalizeName(a) === normalizeName(text)));
   const options: Array<{ kind: "pick"; i: IngredientEntry } | { kind: "create" }> = [
     ...results.map((i) => ({ kind: "pick" as const, i })),
-    ...(text.trim() && !exact ? [{ kind: "create" as const }] : []),
+    ...(allowCreate && text.trim() && !exact ? [{ kind: "create" as const }] : []),
   ];
 
   const valueName = value?.name ?? "";
@@ -94,7 +102,7 @@ export function IngredientPicker({
         aria-label={label}
         autoComplete="off"
         autoFocus={autoFocus}
-        placeholder="Ingredient (e.g. chicken)"
+        placeholder={placeholder}
         value={text}
         onChange={(e) => {
           cancelClose();

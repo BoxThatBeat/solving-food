@@ -7,6 +7,7 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { useActiveHousehold, useMyInvites } from "@/data/households";
 import { InviteList } from "@/components/households/Invites";
 import { useReadySession } from "@/session/useSession";
+import { useNeedsReview } from "@/data/ingredients";
 
 export const Route = createFileRoute("/_app/settings/")({
   component: SettingsPage,
@@ -18,6 +19,7 @@ const SECTIONS = [
   { to: "/settings/brands", label: "Brands", sub: "Preferred products per ingredient" },
   { to: "/settings/stores", label: "Stores", sub: "PC Express store, Costco, sourcing rules" },
   { to: "/settings/sides", label: "Sides", sub: "Fries, rice, buns, chips… portion per person" },
+  { to: "/ingredients", label: "Ingredients", sub: "Catalogue, aliases, new names from imports to review" },
   { to: "/settings/tools", label: "Kitchen tools", sub: "Equipment the household owns" },
   { to: "/settings/preferences", label: "Preferences", sub: "Likes, dislikes, dietary restrictions, protein goals" },
   { to: "/settings/weights", label: "Suggestion weights", sub: "What raises or lowers a suggestion" },
@@ -31,6 +33,7 @@ function SettingsPage() {
   const navigate = useNavigate();
   const name = hh.data?.name ?? "";
   const invites = useMyInvites(s.user.uid, s.user.email, s.householdIds);
+  const toReview = useNeedsReview()?.length ?? 0;
   return (
     <PageBody>
       <PageHeader title="Settings" kicker={`Household · ${name} · theme is per user`} />
@@ -44,8 +47,15 @@ function SettingsPage() {
             >
               <span className="flex flex-col gap-0.5">
                 <span className="text-[1rem] font-extrabold">{sec.label}</span>
-                <span className="text-xs font-semibold text-sub">{sec.sub}</span>
+                <span className="text-xs font-semibold text-sub">
+                  {sec.to === "/ingredients" ? `Catalogue, aliases${toReview ? `, ${toReview} need${toReview === 1 ? "s" : ""} review` : ""}` : sec.sub}
+                </span>
               </span>
+              {sec.to === "/ingredients" && toReview ? (
+                <span className="ml-auto rounded border-2 border-line bg-yellow px-1.5 py-0.5 font-mono text-[0.625rem] font-extrabold text-onc" data-testid="review-count">
+                  {toReview}
+                </span>
+              ) : null}
               <span aria-hidden className="text-lg font-extrabold">
                 →
               </span>

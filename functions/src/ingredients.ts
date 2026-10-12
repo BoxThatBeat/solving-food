@@ -13,8 +13,8 @@
 //      converted when one is counted and the other weighed), its transactions are copied onto the target's history
 //      (plus a `merge` transaction for anything they don't explain), and the duplicate's row keeps its history, gets a
 //      `merge` (−) per lot, amount 0 and `mergedInto` (rows are never deleted); then planned meals' sides, draft and
-//      ordered grocery lines (joined with the target's line), brand mapping, sourcing rule, cadence and the
-//      household's side setting move to the target's ID when the target has none (else the target's wins);
+//      ordered grocery lines (joined with the target's line), brand mapping, sourcing rule, cadence, likes/dislikes and
+//      the household's side setting move to the target's ID when the target has none (else the target's wins);
 //   5. last, the ingredient docs: the target learns the duplicate's name and aliases (so the next import matches them)
 //      and takes any conversion or protein it lacked; the duplicate becomes a tombstone (`mergedInto`, not needing
 //      review), hidden from pickers, its names resolving to the target.
@@ -289,6 +289,16 @@ async function mergeHousehold(
     touched.push(() =>
       intoId in sides ? batch.update(h, fromPath, FieldValue.delete()) : batch.update(h, fromPath, FieldValue.delete(), intoPath, sides[fromId]),
     );
+  }
+
+  // Likes and dislikes can name an ingredient ("ingredient:<id>", Settings → Preferences).
+  const prefs = (hs.data()?.settings?.preferences ?? null) as { likes?: string[]; dislikes?: string[] } | null;
+  for (const kind of ["likes", "dislikes"] as const) {
+    const list = prefs?.[kind];
+    if (!Array.isArray(list) || !list.includes(`ingredient:${fromId}`)) continue;
+    report.householdDocs++;
+    const next = [...new Set(list.map((e) => (e === `ingredient:${fromId}` ? `ingredient:${intoId}` : e)))];
+    touched.push(() => batch.update(h, new FieldPath("settings", "preferences", kind), next));
   }
 
   if (!dryRun && touched.length) {
