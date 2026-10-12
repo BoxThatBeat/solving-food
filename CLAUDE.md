@@ -70,7 +70,8 @@ URLs are blocked in the CLI; serve things over HTTP. Screenshots never go into t
 ## Git
 
 - **Commit automatically** after each coherent unit of work, without asking. Small, descriptive commits.
-- Branch is `master`. Push is not automatic; the owner pushes.
+- Branch is `master`. **Push when the whole task is done** (`git push`), not after every commit: a task may
+  span several commits; push once at the end, after the last one lands and everything passes.
 - Never commit secrets. The Firebase web config is public by design and is fine to commit.
 
 ## Machine and tooling
