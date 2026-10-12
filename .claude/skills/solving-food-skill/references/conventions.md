@@ -36,9 +36,24 @@ every file imports the same way.
 
 ## Ingredient names
 
+Every `@ingredient{}` token must be a name or alias from `ingredients.md` whenever one means the same thing
+(SKILL.md step 6 is the mandatory check). A name the app doesn't know becomes a new ingredient that someone has to
+review and merge before the recipe reduces Supply or merges grocery lines, so:
+
+- Strip preparation words before looking a name up, and write them after the token. The full list is in
+  `ingredients.md` ("Preparation words go outside the token"): fresh, freshly, large, small, medium, chopped,
+  minced, diced, sliced, boneless, skinless, shredded, grated, crushed, crumbled, ripe, packed, thawed, peeled,
+  seeded, pitted, halved, quartered, cubed, julienned, trimmed, softened, melted, divided, finely, roughly, thinly,
+  coarsely, lightly, room temperature, to taste, for serving, for garnish. `@chicken thigh{2%lb}, boneless, diced`.
+- Anything after a comma or in parentheses is a qualifier: it goes after the token, never inside it.
+- Fold spelling and regional variants to the listed spelling (`ingredients.md` "Spelling variants"): chile/chili/
+  chilli, yoghurt, aubergine, courgette, scallion and spring onion, capsicum, garbanzo, caster and icing sugar,
+  cornflour, rocket, prawns, mince.
+- State words (ground, dried, canned, frozen) stay only when the list has that form (`@ground cumin`, `@dried
+  oregano`, `@frozen peas`); otherwise use the plain listed name.
+- Only when nothing listed means the same thing, use the plain grocery name, singular or plural as written, and list
+  it with a one-line reason in the delivery message. Never a made-up compound ("@spicy chicken mix").
 - Use the plain grocery name, singular or plural as written: `@cherry tomatoes{2%pints}`, `@egg{2}`.
-- Prefer a name from `ingredients.md`. "Boneless skinless chicken breasts" and "chicken breast" both resolve; a
-  made-up compound ("@spicy chicken mix") does not.
 - Descriptors that change the product stay in the name: `@smoked paprika`, `@unsalted butter`, `@greek yogurt`,
   `@extra virgin olive oil`. Preparation does not: `@onion{1}, finely chopped`.
 - Salt and pepper on one line are **two tokens**: `@salt{}` and `@black pepper{}`.

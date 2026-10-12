@@ -24,7 +24,8 @@ outside: `ground`, `dry`, `dried`, `canned`, `tinned`, `frozen`, `uncooked`.
 
 ## Spelling variants
 
-The importer treats these as the same; write the first spelling (or whichever the list below uses):
+The importer treats each line's spellings as the same word. These are spellings, not catalogue entries: the
+ingredient itself must still be in the list below (green chiles and m&ms aren't, yet). Write the spelling the list uses:
 
 - green chile (green chili, green chilli, green chilies, green chillies)
 - m&ms (m&m's, m and ms, mms)
