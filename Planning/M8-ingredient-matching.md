@@ -43,18 +43,53 @@ R4.27 (new: ingredient review and merge), R8.16 (new: a merge moves Supply), R4.
       from core), `pnpm ingredients:validate`, `data/recipes/check-cooklang.mjs`: pass.
 
 ### 2. "Merge into…" with alias learning (function + UI)
-- [ ] Callable `mergeIngredient({ fromId, intoId, dryRun? })` in `functions/src/ingredients.ts`.
-- [ ] UI on the Ingredients page and `$id.tsx`.
+- [x] Core `ingredientMerge.ts` (pure, unit + property tested): `mergeRefusal`, `mergeFactor` (g ↔ count by unit
+      weight), `moveLots`, `copiedHistory` (Σ transactions == amount on both rows), `repointLines`/`repointSides`,
+      `mergeGroceryItems`, `mergedTarget` (alias learning, capped at 40; fills missing conversions), `MergeReport`.
+- [x] Callable `mergeIngredient({ fromId, intoId, dryRun? })` in `functions/src/ingredients.ts`: verified + allowlisted
+      callers; recipes (all statuses) repointed and re-derived without a version bump; version snapshots repointed
+      (collection-group index on `versions.ingredientIds`); saved meals' sides; per household one transaction moving
+      lots and copying history onto the target row (source row kept: amount 0, `merge` − transactions, `mergedInto`);
+      planned sides, draft/ordered grocery lines, brand mapping, sourcing rule, cadence, likes/dislikes, `settings.sides`;
+      ingredient docs last (target aliases, duplicate tombstone `mergedInto`, `needsReview: false`). Idempotent.
+- [x] Decision: a shipped catalogue ingredient (no `createdBy`) is never merged into one that isn't (refused); version
+      snapshots are repointed in place without a new version; tombstones instead of deletes; Supply rows never deleted.
+- [x] Commands treat a merged ingredient as its target (an offline `addSupply` queued before the merge).
+- [x] Functions test `functions/test/ingredients.test.ts` (6 tests); rules test: clients can't set `mergedInto` or edit
+      a tombstone (rules unchanged: `mergedInto` isn't in `validIngredient`).
+- [x] UI: Ingredients page review cards (recipes using it, "Looks like:", Merge into…, Keep as new), `<MergeSheet>`
+      (suggestion chips, picker without create, dry-run preview "Moves 1 recipe, 1 Supply row to …", confirm, success
+      banner), `$id.tsx` merge panel and merged notice. Pickers skip tombstones and fold spelling variants; the Supply
+      page hides merged rows.
+- [x] Spec §2 quota rows (callable, needs-review listener).
 
 ### 3. A strict skill
-- [ ] SKILL.md validation step, conventions.md, wrong → right table.
+- [x] SKILL.md step 6: mandatory token validation (strip preparation words, look up, fold variants, "means the same
+      thing", else a new name listed with a one-line reason in the delivery message); wrong → right table; checklist.
+- [x] conventions.md "Ingredient names" rewritten; references/ingredients.md (generated) lists preparation words,
+      state words and spelling variants from core. `skill.test.ts` (examples import with no new ingredient) passes.
 
 ### 4. Review is discoverable
-- [ ] Settings entry with a live count, More sheet, Recipes banner, Drop page link, notification's second link.
-- [ ] PRD, spec, tagged e2e tests.
+- [x] Settings → Ingredients ("Catalogue, aliases, N need review" + count badge), phone More sheet link (the desktop
+      side nav has no secondary list, so Settings covers it there), Recipes banner (session-dismissable), Drop page
+      link, import notification's second link `link2` "Review ingredients".
+- [x] Ingredients page opens on the review list while anything needs review (`?view=review|all`).
+- [x] PRD R4.27 (review and merge), R8.16 (a merge moves Supply), R4.16 matching sentence, §12 Settings row and the
+      Ingredients note; spec §4.1/§4.2, §6 "Merging ingredients", §9 matcher/review/strict skill, §10, §12, §14.1, §15;
+      CLAUDE.md; Planning/README.md.
+- [x] E2E: `drop-folder.spec.ts` matcher test (@R4.16 @R4.17: "chopped chicken thighs, boneless", "butter (softened)",
+      "Diced Yellow Onions", "courgettes", "chilli powder", "salt, to taste" → catalogue, no new ingredient, no review
+      link); `ingredients.spec.ts` (@R4.27 @R8.16 @R4.16: new name → notification with Review ingredients → Recipes
+      banner → Settings count → Merge into… repoints the recipe and moves a seeded Supply lot, Σ transactions == amount,
+      alias learned, merged notice; More sheet link on phones). Skill example still imports clean (existing @R4.17).
+- [x] `visual.spec.ts` hides the ingredient banner like the duplicate banner (it depends on the run's data).
 
 ### 5. Live cleanup
-- [ ] `scripts/review-ingredients.ts` dry run; auto-merge only exact / variant pairs.
+- [x] `scripts/review-ingredients.ts` (`pnpm review:ingredients`, dry run by default, `--merge`, `--emulator`): table of
+      every needs-review ingredient with suggestion, confidence, other suggestions and recipes; `--merge` merges only
+      exact/variant matches via `functions/src/ingredients.ts` (the callable's code), pairs of two new spellings into
+      the one more recipes use. Tested on the emulator.
+- [ ] Live run after deploy (results below).
 
 ## Verification
 

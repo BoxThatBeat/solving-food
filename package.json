@@ -30,7 +30,8 @@
     "repair:versions": "tsx scripts/repair-versions.ts",
     "dev:seed": "tsx scripts/dev-seed.ts",
     "prices:check": "tsx data/scripts/prices.ts",
-    "free-use:write": "tsx data/scripts/free-use.ts"
+    "free-use:write": "tsx data/scripts/free-use.ts",
+    "review:ingredients": "tsx --tsconfig scripts/tsconfig.review.json scripts/review-ingredients.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
