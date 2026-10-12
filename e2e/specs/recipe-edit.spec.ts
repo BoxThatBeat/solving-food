@@ -143,7 +143,7 @@ test("anyone can edit; every save is a version and an old version can be restore
   await form.getByRole("button", { name: "Save recipe" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Saved as v2 for everyone" })).toBeVisible();
   await expect(detail(page).locator("#recipe-title")).toHaveText(`${title} (garlicky)`);
-  await expect(detail(page).getByText(/SHARED LIBRARY · V2/)).toBeVisible();
+  await expect(detail(page).getByText(/^V2\b/)).toBeVisible();
   expect((await adminDb.doc(`recipes/${id}/versions/2`).get()).data()).toMatchObject({ title: `${title} (garlicky)`, servings: 6 });
 
   await detail(page).getByRole("button", { name: "Version history" }).click();
@@ -152,7 +152,7 @@ test("anyone can edit; every save is a version and an old version can be restore
   await expect(page.getByRole("status").filter({ hasText: "Restored v1 as v3 for everyone" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(detail(page).locator("#recipe-title")).toHaveText(title);
-  await expect(detail(page).getByText(/SHARED LIBRARY · V3/)).toBeVisible();
+  await expect(detail(page).getByText(/^V3\b/)).toBeVisible();
   expect((await adminDb.doc(`recipes/${id}`).get()).data()).toMatchObject({ version: 3, title, servings: 2 });
 });
 

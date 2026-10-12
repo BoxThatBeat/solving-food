@@ -52,7 +52,8 @@ R8.13, R4.19, R4.21, R4.2 (agent 1); R3.1, R11.1, R4.14, R6.1, R6.2, R6.11, R6.1
 
 ### 4. Recipes page: no "never cooked" text; skeleton while re-sorting (R4.5, R4.2)
 - [x] Cards show no stats line for a never-cooked recipe (`madeLine()` returns ""); cooked ones keep "MADE n× · LAST
-      …". PRD R4.5 says so. The recipe page's "Never cooked in this household" stat stays (not a card).
+      …". PRD R4.5 says so. The recipe page's "Never cooked in this household" stat stays (not a card). *(Superseded 2026-10-12, item 9: the
+      recipe page shows no stats row either.)*
 - [x] `useSettling()` + `<SettlingGrid>` on Recipes and Meals: skeleton cards (same size, no text, `aria-busy`) while
       a score sort waits for its first scores (capped at 4 s) and for ≥ 150 ms after any re-order (sort, filters, new
       scores re-ranking); typing a search re-orders without a skeleton. Keyboard focus on a card goes to the list
@@ -116,6 +117,24 @@ R8.13, R4.19, R4.21, R4.2 (agent 1); R3.1, R11.1, R4.14, R6.1, R6.2, R6.11, R6.1
       header button is gone (+ Create meal takes its place, same style); the prototype puts protein in the right column
       under the expiry card (xl) and near the top (phone), the app puts it above the optimiser; "See more →" is new;
       the "not a schedule" hint was ours, not the prototype's.
+
+### 9. Recipe page tweaks (owner follow-up, 2026-10-12; R4.5, R4.13, R4.14, R4.21, R4.8)
+- [x] Never cooked: the recipe page shows no stats row at all (no "Never cooked in this household", no "0×"); it shows
+      only when the household has cooked the recipe. PRD R4.5 updated.
+- [x] "Your kitchen has everything this needs." removed (the ✓ tool chips say it). The red missing-tools alert and the
+      "No kitchen tools configured …" note stay.
+- [x] Servings control moved directly above the ingredients it scales (was under the meta tiles). Same label, buttons
+      and 40×44 px targets. PRD R4.13 notes the placement.
+- [x] Recipe durations read `45m`, `1h 20m`, `2h` (was `45′` on the recipe page, `45 min` / `45 MIN` elsewhere):
+      new `formatMinutes()` in `packages/core/src/timers.ts`, used by the recipe page tiles, recipe cards, plan items,
+      Create meal, Suggested, meal cards and the meal page, the cooking order list, and duplicate review. In CSS-uppercase
+      meta lines the duration is wrapped in `normal-case` so it doesn't read `45M`. Step timers (`⏱ 10 MIN`, "Start
+      10 min timer") are timers, not recipe durations, and are unchanged.
+- [x] Copy link moved from the crowded header row to the footer text links (Copy link · Version history · Edit ·
+      Delete), same style and 24 px targets as its neighbours; same toast. Signed-out visitors still get it (R4.21).
+- [x] "SHARED LIBRARY" label removed from the footer line; it now reads `V2 · EDITED BY … · 12 Oct`.
+- [x] Spec §12 recipe page actions, layout and duration format; e2e recipe-detail, recipe-edit, cooking,
+      recipes-browse updated (old `′`, `min`, `SHARED LIBRARY`, "has everything" expectations).
 
 ## Verification (items 1–4)
 

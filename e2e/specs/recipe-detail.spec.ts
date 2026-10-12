@@ -13,9 +13,9 @@ test("shows image, servings, times, ingredients, steps, tools, source, notes, an
   await expect(d.getByRole("img", { name: "Garlic Rice and Chicken" })).toBeVisible();
   // The stored photo, served in three sizes from our own bucket.
   await expect(d.getByRole("img", { name: "Garlic Rice and Chicken" })).toHaveAttribute("srcset", /480\.webp.*960\.webp.*1920\.webp/);
-  await expect(d.getByTestId("meta-total")).toHaveText("40′");
-  await expect(d.getByTestId("meta-active")).toHaveText("15′");
-  await expect(d.getByTestId("meta-cook")).toHaveText("25′");
+  await expect(d.getByTestId("meta-total")).toHaveText("40m");
+  await expect(d.getByTestId("meta-active")).toHaveText("15m");
+  await expect(d.getByTestId("meta-cook")).toHaveText("25m");
   await expect(d.getByTestId("meta-protein")).toHaveText("60 g");
   await expect(d.getByLabel("Servings", { exact: true })).toHaveText("2");
 
@@ -34,7 +34,15 @@ test("shows image, servings, times, ingredients, steps, tools, source, notes, an
   await expect(d.getByText("Before you start")).toBeVisible();
   await expect(d.getByText("Our thoughts: really juicy chicken")).toBeVisible();
   await expect(d.getByLabel("HOUSEHOLD NOTES")).toBeVisible();
-  await expect(d.getByText(/SHARED LIBRARY · V1/)).toBeVisible();
+  // Footer: version line without a "Shared library" label, and Copy link at the bottom (M7 review).
+  await expect(d.getByText(/^V1\b/)).toBeVisible();
+  await expect(d.getByText(/shared library/i)).toHaveCount(0);
+  await expect(d.getByRole("button", { name: "Copy link" })).toBeVisible();
+  // Never cooked here: no stats row at all, not a "never cooked" placeholder.
+  await expect(d.getByText(/Never cooked|You've made this/)).toHaveCount(0);
+  // The servings control sits directly above the ingredients it scales.
+  const servingsRightAboveIngredients = await d.evaluate((root) => root.querySelector('[aria-labelledby="servings-label"]')!.parentElement!.nextElementSibling === root.querySelector("section[aria-labelledby=ing-h]"));
+  expect(servingsRightAboveIngredients).toBe(true);
 
   // Source link (a recipe that has one).
   const withSource = await makeRecipe(uniqueTitle("Sourced Salad"), { content: { sourceUrl: "https://example.com/recipes/sourced-salad?utm_source=x" } });
@@ -108,7 +116,10 @@ test("tools: says when the household has none configured, and flags missing tool
   await expect(detail(page).getByRole("alert")).toHaveText(/Needs air fryer\. It's not in your kitchen tools\./);
 
   await adminDb.doc(`households/${household.hid}`).update({ "settings.tools": ["oven", "air fryer"] });
-  await expect(detail(page).getByText("Your kitchen has everything this needs.")).toBeVisible();
+  // Everything on hand: the tool chips are ticked, no alert, and no "has everything" sentence (M7 review).
+  await expect(detail(page).getByRole("alert")).toHaveCount(0);
+  await expect(detail(page).getByText("✓ air fryer")).toBeVisible();
+  await expect(detail(page).getByText(/has everything/)).toHaveCount(0);
 });
 
 test("beside every ingredient: how much is in supply, staple for free-use, expired lots not counted (R4.9)", { tag: ["@R4.9", "@R8.15"] }, async ({ page, household }) => {

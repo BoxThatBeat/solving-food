@@ -16,6 +16,7 @@ import {
   type HouseholdDoc,
   type RecipeVersionDoc,
   fahrenheitOnly,
+  formatMinutes,
   missingTools,
   toolLabel,
 } from "@solving-food/core";
@@ -177,9 +178,6 @@ export function RecipeDetail({
               {facts.favourite ? "★ Saved" : "☆ Save"}
             </button>
           ) : null}
-          <button type="button" onClick={copyLink} className="cursor-pointer rounded-ui border-2 border-line bg-base px-2.5 py-2 text-[0.8125rem] font-extrabold text-ink shadow-[3px_3px_0_var(--line)]">
-            Copy link
-          </button>
           {ctx && openCreateMeal && recipe.status === "active" ? (
             <button
               type="button"
@@ -255,9 +253,9 @@ export function RecipeDetail({
 
         <dl className="m-0 grid grid-cols-4 gap-2">
           {[
-            ["Total", `${total}′`],
-            ["Active", `${recipe.prepMin}′`],
-            ["Cook", `${recipe.cookMin}′`],
+            ["Total", formatMinutes(total)],
+            ["Active", formatMinutes(recipe.prepMin)],
+            ["Cook", formatMinutes(recipe.cookMin)],
             ["Protein", formatProtein(recipe.proteinPerServingG, recipe.proteinApproximate)],
           ].map(([k, v]) => (
             <div key={k} className="flex flex-col-reverse gap-[0.1875rem] rounded-ui border-2 border-line bg-base px-1 pt-[0.5625rem] pb-[0.4375rem] text-center">
@@ -272,6 +270,45 @@ export function RecipeDetail({
           <p className="-mt-2 m-0 font-mono text-[0.625rem] font-semibold text-sub">~ Some ingredients have no protein data yet, so this is approximate.</p>
         ) : null}
 
+        {/* Only real history shows (M7 review): a never-cooked recipe has no stats row at all. */}
+        {ctx && facts.timesCooked ? (
+          <div className="flex items-center gap-3 rounded-ui border-2 border-dashed border-line bg-base px-3 py-2.5">
+            <span className="font-display text-[1.875rem] leading-none text-acc [-webkit-text-stroke:1px_var(--line)]">{facts.timesCooked}×</span>
+            <span className="flex flex-col gap-[0.1875rem]">
+              <span className="text-sm leading-snug font-bold">
+                You&apos;ve made this {facts.timesCooked} time{facts.timesCooked === 1 ? "" : "s"}
+                {facts.lastCookedAtMs ? ` · last ${DATE.format(new Date(facts.lastCookedAtMs))}` : ""}
+              </span>
+              <span className="font-mono text-[0.65625rem] font-semibold text-sub">{facts.rating ? `HOUSEHOLD ${facts.rating.toFixed(1)}` : "NO RATINGS YET"}</span>
+            </span>
+          </div>
+        ) : null}
+
+        {recipe.tools.length ? (
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">TOOLS</span>
+              {recipe.tools.map((t) => {
+                const lacks = missing.includes(t);
+                return (
+                  <span key={t} className={cn("rounded-ui border-2 border-line px-2 py-1 text-xs font-extrabold", lacks ? "bg-red text-onc" : "bg-base text-ink")}>
+                    {toolsConfigured ? (lacks ? "✕ " : "✓ ") : ""}
+                    {toolLabel(t)}
+                  </span>
+                );
+              })}
+            </div>
+            {missing.length ? (
+              <div role="alert" className="rounded-ui border-bw bg-red px-3.5 py-3 text-sm leading-snug font-extrabold text-onc">
+                Needs {missing.map(toolLabel).join(" and ")}. {missing.length === 1 ? "It's" : "They're"} not in your kitchen tools.
+              </div>
+            ) : ctx && !toolsConfigured ? (
+              <p className="m-0 font-mono text-[0.625rem] font-semibold text-sub">No kitchen tools configured for this household yet, so missing tools can&apos;t be flagged.</p>
+            ) : null}
+          </div>
+        ) : null}
+
+        {/* Servings sits right above the ingredients it scales (M7 review). */}
         <div className="flex items-center gap-2.5 rounded-ui border-2 border-line bg-base px-2.5 py-2">
           <span className="flex flex-1 flex-col gap-0.5">
             <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]" id="servings-label">
@@ -298,46 +335,6 @@ export function RecipeDetail({
             </button>
           </div>
         </div>
-
-        {ctx ? (
-          <div className="flex items-center gap-3 rounded-ui border-2 border-dashed border-line bg-base px-3 py-2.5">
-            <span className="font-display text-[1.875rem] leading-none text-acc [-webkit-text-stroke:1px_var(--line)]">{facts.timesCooked}×</span>
-            <span className="flex flex-col gap-[0.1875rem]">
-              <span className="text-sm leading-snug font-bold">
-                {facts.timesCooked
-                  ? `You've made this ${facts.timesCooked} time${facts.timesCooked === 1 ? "" : "s"}${facts.lastCookedAtMs ? ` · last ${DATE.format(new Date(facts.lastCookedAtMs))}` : ""}`
-                  : "Never cooked in this household"}
-              </span>
-              <span className="font-mono text-[0.65625rem] font-semibold text-sub">{facts.rating ? `HOUSEHOLD ${facts.rating.toFixed(1)}` : "NO RATINGS YET"}</span>
-            </span>
-          </div>
-        ) : null}
-
-        {recipe.tools.length ? (
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">TOOLS</span>
-              {recipe.tools.map((t) => {
-                const lacks = missing.includes(t);
-                return (
-                  <span key={t} className={cn("rounded-ui border-2 border-line px-2 py-1 text-xs font-extrabold", lacks ? "bg-red text-onc" : "bg-base text-ink")}>
-                    {toolsConfigured ? (lacks ? "✕ " : "✓ ") : ""}
-                    {toolLabel(t)}
-                  </span>
-                );
-              })}
-            </div>
-            {missing.length ? (
-              <div role="alert" className="rounded-ui border-bw bg-red px-3.5 py-3 text-sm leading-snug font-extrabold text-onc">
-                Needs {missing.map(toolLabel).join(" and ")}. {missing.length === 1 ? "It's" : "They're"} not in your kitchen tools.
-              </div>
-            ) : ctx ? (
-              <p className="m-0 font-mono text-[0.625rem] font-semibold text-sub">
-                {toolsConfigured ? "Your kitchen has everything this needs." : "No kitchen tools configured for this household yet, so missing tools can't be flagged."}
-              </p>
-            ) : null}
-          </div>
-        ) : null}
 
         <IngredientsTable recipe={recipe} ingredients={ingredients} factor={factor} servings={servings} signedIn={!!ctx} have={have} />
 
@@ -421,27 +418,31 @@ export function RecipeDetail({
             </span>
           ) : null}
           <span className="uppercase">
-            SHARED LIBRARY · V{recipe.version}
+            V{recipe.version}
             {editor ? ` · EDITED BY ${editor}` : ""}
             {updated ? ` · ${DATE.format(new Date(updated))}` : ""}
           </span>
-          {ctx ? (
-            <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          {/* Copy link lives down here with the other text actions (M7 review; the top bar was crowded). Signed-out visitors get it too. */}
+          <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <button type="button" onClick={copyLink} className={FOOTER_ACTION}>
+              Copy link
+            </button>
+            {ctx ? (
               <button type="button" onClick={() => setHistoryOpen(true)} className={FOOTER_ACTION}>
                 Version history
               </button>
-              {recipe.status !== "trashed" ? (
-                <>
-                  <Link to="/recipes/$id/edit" params={{ id }} className={FOOTER_ACTION}>
-                    Edit
-                  </Link>
-                  <button type="button" onClick={() => setConfirmDelete(true)} className={FOOTER_ACTION}>
-                    Delete
-                  </button>
-                </>
-              ) : null}
-            </span>
-          ) : null}
+            ) : null}
+            {ctx && recipe.status !== "trashed" ? (
+              <>
+                <Link to="/recipes/$id/edit" params={{ id }} className={FOOTER_ACTION}>
+                  Edit
+                </Link>
+                <button type="button" onClick={() => setConfirmDelete(true)} className={FOOTER_ACTION}>
+                  Delete
+                </button>
+              </>
+            ) : null}
+          </span>
           {!ctx ? (
             <span className="normal-case">
               Shared from Solving Food. <Link to="/sign-in" className="font-extrabold text-ink">Sign in</Link> to save it, add notes, or plan it.

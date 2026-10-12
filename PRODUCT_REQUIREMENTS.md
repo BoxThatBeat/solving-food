@@ -94,7 +94,7 @@ flowchart LR
 - **R4.2** Users can filter and sort by cuisine, main protein, protein per serving, total and active time, rating, whether the household has cooked it before, cost per serving, tags, favourites, and **"can make with current supply"**.
 - **R4.3** Recipes the household can make with current supply, after subtracting what planned meals will use, are visibly marked.
 - **R4.4** A special filter, **"Use what's left"**, shows only recipes that the remaining supply covers fully, or nearly fully.
-- **R4.5** Recipe cards show stats such as *"You've made this 14 times"*, the last time it was cooked, and the household's average rating. A recipe the household has never cooked shows no stats line on its card (no "never cooked" or "0×").
+- **R4.5** Recipe cards show stats such as *"You've made this 14 times"*, the last time it was cooked, and the household's average rating. A recipe the household has never cooked shows no stats line on its card or on its recipe page (no "never cooked" or "0×").
 - **R4.6** Users can **favourite** recipes and meals. Favourites belong to the household. They're also how a household keeps track of its own recipes (e.g. family recipes), since there are no private recipes.
 - **R4.7** The same filter and sort component is used everywhere a list of recipes or meals appears: Recipes, Plan, Meals, and History.
 
@@ -105,7 +105,7 @@ flowchart LR
 - **R4.10** **Step mode** shows one step at a time in large text, full screen, with that step's ingredients and any timers. The screen stays awake while it's open.
 - **R4.11** Step instructions always show ingredient **amounts inline** where each ingredient is mentioned (e.g. "Add the butter (30 g)").
 - **R4.12** A **mise en place** screen lists all prep tasks up front (chop, measure, preheat) before step mode starts.
-- **R4.13** Users can scale servings, and quantities update to match.
+- **R4.13** Users can scale servings, and quantities update to match. On the recipe page the servings control sits directly above the ingredients it scales.
 - **R4.14** If the household is missing a tool the recipe needs (from the kitchen tools setting), the view says so.
 
 ### 4.3 Adding & Editing Recipes
