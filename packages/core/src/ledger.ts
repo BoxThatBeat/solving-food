@@ -26,7 +26,7 @@ export interface LedgerLot {
   expiryExtendedToMs?: number | null;
 }
 
-export type TxKind = "purchase" | "cook" | "correction" | "discard" | "freeze" | "thaw" | "leftover" | "eaten" | "extendExpiry";
+export type TxKind = "purchase" | "cook" | "correction" | "discard" | "freeze" | "thaw" | "leftover" | "eaten" | "extendExpiry" | "merge";
 
 export interface LedgerTx {
   delta: number;

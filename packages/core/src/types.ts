@@ -507,6 +507,8 @@ export const TRANSACTION_KINDS = [
   "leftover",
   "eaten",
   "extendExpiry",
+  // (M8) Supply moved by "Merge into…": − on the merged duplicate's row, + (or its copied history) on the target's.
+  "merge",
 ] as const;
 
 export const transactionSchema = z.object({

@@ -17,6 +17,7 @@ import { cleanupIfEmpty } from "./households";
 import { cancelTimer as cancelTimerLogic, fireTimer, scheduleTimer as scheduleTimerLogic, type TimerTask } from "./timers";
 import { defineSecret, defineString } from "firebase-functions/params";
 import { CallError, pcxStatus as pcxStatusLogic, searchProducts, searchStores } from "./pcx";
+import { MergeError, mergeIngredient as mergeIngredientLogic, requireAllowed } from "./ingredients";
 
 // Keep every function small and cheap: free tier is a hard requirement (PRD NFR2).
 setGlobalOptions({ region: REGION, maxInstances: 2, memory: "256MiB" });
@@ -90,6 +91,22 @@ export const pcxSearchStores = onCall({ cors: true, secrets: PCX_SECRETS }, (req
 export const pcxSearchProducts = onCall({ cors: true, secrets: PCX_SECRETS }, (req) => pcxCall(() => searchProducts(memberUid(req.auth), req.data)));
 /** Whether PC Express is connected (Settings). */
 export const pcxStatus = onCall({ cors: true, secrets: PCX_SECRETS }, (req) => pcxCall(() => pcxStatusLogic(memberUid(req.auth), req.data)));
+
+/**
+ * "Merge into…" (§6 "Merging ingredients", R4.27, R8.16): moves a duplicate ingredient's recipes, meals, Supply, plan
+ * and grocery lines onto the ingredient it means. Allowlisted callers; rare (the review page), so 5 minutes is plenty.
+ */
+export const mergeIngredient = onCall({ cors: true, timeoutSeconds: 300 }, async (req) => {
+  try {
+    const uid = await requireAllowed(req.auth);
+    const report = await mergeIngredientLogic(uid, req.data);
+    if (!report.dryRun) logger.info("ingredient merged", report);
+    return report;
+  } catch (e) {
+    if (e instanceof MergeError) throw new HttpsError(e.code, e.message);
+    throw e;
+  }
+});
 
 /**
  * Supply commands (§6): every supply change, cook event, rating, and stat goes through here. 512 MiB and 5 minutes

@@ -271,6 +271,14 @@ describe("ingredients (§5, R8.3)", () => {
     await assertSucceeds(setDoc(doc(dbAs(ALICE), "ingredients", "fries"), ing(ALICE.uid, { side: { portion: 150 } })));
     await assertFails(setDoc(doc(dbAs(ALICE), "ingredients", "fries2"), ing(ALICE.uid, { side: { portion: 0 } })));
     await assertFails(setDoc(doc(dbAs(ALICE), "ingredients", "fries3"), ing(ALICE.uid, { side: { portion: 150, extra: 1 } })));
+    // M8: only the mergeIngredient function marks a merged duplicate; clients can't set or keep `mergedInto`.
+    await assertFails(setDoc(doc(dbAs(ALICE), "ingredients", "dup"), ing(ALICE.uid, { mergedInto: "garlic" })));
+    await assertFails(updateDoc(doc(dbAs(BOB), "ingredients", "garlic"), { mergedInto: "onion", updatedBy: BOB.uid, updatedAt: serverTimestamp() }));
+    await seed(async (db) => {
+      const { createdBy: _c, updatedBy: _u, updatedAt: _a, ...plain } = ing("x");
+      await setDoc(doc(db, "ingredients", "merged"), { ...plain, name: "merged", mergedInto: "garlic" });
+    });
+    await assertFails(updateDoc(doc(dbAs(ALICE), "ingredients", "merged"), { name: "revived", updatedBy: ALICE.uid, updatedAt: serverTimestamp() }));
   });
 });
 

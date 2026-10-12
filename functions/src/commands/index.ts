@@ -76,7 +76,19 @@ export async function applyCommand(hid: string, cmdId: string, nowMs = Date.now(
   const loadIngredient = (id: string) => {
     let p = ingredients.get(id);
     if (!p) {
-      p = db.doc(`ingredients/${id}`).get().then((s) => (s.exists ? { ...(s.data() as IngredientDoc), id } : undefined));
+      // A merged duplicate (M8) stands for the ingredient it was merged into, so a command queued offline before the
+      // merge adds to the right Supply row.
+      p = db
+        .doc(`ingredients/${id}`)
+        .get()
+        .then(async (s) => {
+          const d = s.exists ? (s.data() as IngredientDoc) : undefined;
+          if (d?.mergedInto && d.mergedInto !== id) {
+            const t = await db.doc(`ingredients/${d.mergedInto}`).get();
+            if (t.exists) return { ...(t.data() as IngredientDoc), id: t.id };
+          }
+          return d ? { ...d, id } : undefined;
+        });
       ingredients.set(id, p);
     }
     return p;

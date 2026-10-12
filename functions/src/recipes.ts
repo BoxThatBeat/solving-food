@@ -43,6 +43,18 @@ export function contentOf(r: RecipeDoc | DocumentData): RecipeContent {
 
 const DERIVED_KEYS = ["ingredients", "ingredientIds", "fingerprint", "proteinPerServingG", "proteinApproximate", "slug", "sourceUrlCanonical"] as const;
 
+/** The derived-field update for a recipe whose content (or an ingredient's conversions) changed; empty when nothing did. */
+export function derivedUpdate(r: RecipeDoc | DocumentData, content: RecipeContent, lookup: ReturnType<typeof lookupOf>): Record<string, unknown> {
+  const derived = deriveRecipe(content, lookup) as unknown as Record<string, unknown>;
+  const update: Record<string, unknown> = {};
+  for (const k of DERIVED_KEYS) {
+    const next = derived[k] ?? null;
+    const cur = (r as Record<string, unknown>)[k] ?? null;
+    if (JSON.stringify(next) !== JSON.stringify(cur)) update[k] = derived[k] === undefined ? FieldValue.delete() : next;
+  }
+  return update;
+}
+
 /**
  * Recomputes canonical amounts, protein, and fingerprint for every recipe that uses an ingredient whose conversions or
  * protein changed. Writes only the derived fields, without a version bump (the content didn't change).
@@ -53,13 +65,7 @@ export async function recomputeRecipesUsing(ingredientId: string): Promise<numbe
   for (const d of snap.docs) {
     const r = d.data() as RecipeDoc;
     const lookup = lookupOf(await loadIngredients(r.ingredientIds));
-    const derived = deriveRecipe(contentOf(r), lookup) as unknown as Record<string, unknown>;
-    const update: Record<string, unknown> = {};
-    for (const k of DERIVED_KEYS) {
-      const next = derived[k] ?? null;
-      const cur = (r as unknown as Record<string, unknown>)[k] ?? null;
-      if (JSON.stringify(next) !== JSON.stringify(cur)) update[k] = derived[k] === undefined ? FieldValue.delete() : next;
-    }
+    const update = derivedUpdate(r, contentOf(r), lookup);
     if (Object.keys(update).length) {
       await d.ref.update(update);
       changed++;

@@ -8,6 +8,7 @@ export * from "./landing";
 export * from "./names";
 export * from "./units";
 export * from "./ingredient";
+export * from "./ingredientMerge";
 export * from "./recipe";
 export * from "./dedupe";
 export * from "./cooklang";

@@ -239,6 +239,7 @@ const KIND_LABEL: Record<string, string> = {
   leftover: "Leftovers made",
   eaten: "Eaten",
   extendExpiry: "Still good",
+  merge: "Merged",
 };
 
 /** <LedgerList> (R8.7): every change with its date and who did it; loads more as you scroll (25 per page). */
