@@ -1,6 +1,6 @@
 # M8 — Ingredient matching
 
-Status: in progress
+Status: done (owner reviews the remaining 59 in Settings → Ingredients)
 
 ## Goal
 
@@ -89,9 +89,40 @@ R4.27 (new: ingredient review and merge), R8.16 (new: a merge moves Supply), R4.
       every needs-review ingredient with suggestion, confidence, other suggestions and recipes; `--merge` merges only
       exact/variant matches via `functions/src/ingredients.ts` (the callable's code), pairs of two new spellings into
       the one more recipes use. Tested on the emulator.
-- [ ] Live run after deploy (results below).
+- [x] Live run after deploy (results below): 3 merged, 59 left for review.
 
 ## Verification
+
+- Lint, typecheck: clean. Core unit 575/575 (ingredient.test.ts 131 + ingredientMerge.test.ts 7 new), web unit 7/7.
+- Rules 96/96 (+3 assertions: `mergedInto` can't be written by clients). Functions 10 files / 60 tests (+6 merge).
+- `pnpm ingredients:validate`, `data/recipes/check-cooklang.mjs` (28/28), `pnpm gen:skill` up to date.
+- Playwright, `--workers=1`, one project at a time: desktop-1080p ingredients + drop-folder 9 passed, 1 skipped (phones
+  only); supply, recipe-edit, settings, notifications, recipes-browse, a11y, responsive, visual 49 passed + 1 skipped
+  after hiding the new banner in the visual Recipes baseline (it failed 2/4 before: run-dependent banner).
+  phone-ios ingredients + drop-folder 10/10; the same eight specs 47 passed, 5 skipped.
+- `pnpm e2e:coverage`: all done milestones ok; M8 4/4 tagged (R4.16, R4.17, R4.27, R8.16).
+- Design-compare (Latte; phone 390–430 and desktop 1920×1080, emulator data): the prototype has no Ingredients page;
+  the review cards use its card pattern (3 px border, hard shadow, mono uppercase meta, accent primary + base secondary
+  buttons) and the Recipes banner reuses the prototype's dashed duplicate-review banner (yellow count badge, →), with a
+  38 px × dismiss added. Settings entry matches the other section links with the yellow count badge. No fixes needed.
+- Deploy: `pnpm run deploy` (hosting, functions incl. the new `mergeIngredient`, rules, indexes):
+  https://solvingfood.web.app 200, healthcheck `{"ok":true}`, an unauthenticated call to `mergeIngredient` gets
+  PERMISSION_DENIED. Redeployed `mergeIngredient` alone after moving both queries before any write (the first live
+  merge hit the still-building `versions.ingredientIds` index; nothing had been written).
+- `pnpm ingredients:upload` (no `--force`): 12 written (the new aliases), 468 unchanged, 0 in-app-edited kept.
+
+### Live cleanup (2026-10-12)
+
+Dry run before: 542 ingredients, 62 need review. Auto-merged (exact / variant only, owner's ADC, same code as the
+callable):
+
+| Merged | Into | Confidence | Moved |
+|---|---|---|---|
+| diced green chilies | diced green chiles | variant | 1 recipe (Creamy White Chicken Chili), 1 version; alias "diced green chilies" |
+| frozen tater tots | tater tots (catalogue) | exact | 1 recipe (Tater Tot Breakfast Casserole), 1 version; alias already there |
+| m&m's | m&ms | variant | 1 recipe (Christmas Kitchen Sink Cookies), 1 version; alias "m&m's" |
+
+No household had Supply, plan sides or grocery lines for them. After: 59 need review, 0 more exact/variant matches.
 
 ## Deviations and assumptions
 
@@ -103,3 +134,11 @@ R4.27 (new: ingredient review and merge), R8.16 (new: a merge moves Supply), R4.
   words from catalogue names (only from the recipe's wording), so "whole chicken" can't swallow "chicken".
 
 ## Owner checks
+
+- Settings → Ingredients (or More → Ingredients on the phone): 59 left. Likely merges the matcher deliberately didn't
+  auto-merge: mild green chiles → diced green chiles; colby jack cheese → monterey jack / marble cheese; lettuce →
+  romaine / green leaf; cranberries → dried cranberries (if the pie uses dried); graham cracker → graham cracker crumbs
+  (if crushed); shredded cheese → tex mex or cheddar; pasta → a specific shape. Everything else (egg yolk, dark/milk/white
+  chocolate, ghee, sumac, tzatziki, pretzels, kalamata olives…) is probably genuinely new: Keep as new and fill in
+  density and protein.
+- Drop a recipe with "chopped chicken thighs" or "courgettes": it should import with no new ingredient.
