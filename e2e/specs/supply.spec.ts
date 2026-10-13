@@ -173,3 +173,30 @@ test("another member sees supply change without a reload (NFR5)", { tag: ["@NFR5
   await row.getByRole("button", { name: "Apply" }).click();
   await expect(theirs.row("Jasmine rice").getByTestId("supply-current")).toHaveText("1.5 kg", { timeout: 20_000 });
 });
+
+test("search filters Supply by name and alias, with the other filters (R8.17)", { tag: ["@R8.17"] }, async ({ page, household }) => {
+  await seedSupply(household.hid, "chicken-thigh", [{ amount: 900, expiresInDays: 4 }], { label: "chicken thigh" });
+  await seedSupply(household.hid, "baby-spinach", [{ amount: 50, expiresInDays: 1 }], { label: "baby spinach" });
+  await seedSupply(household.hid, "jasmine-rice", [{ amount: 5000, location: "pantry", expiresInDays: 300 }], { label: "jasmine rice" });
+  const supply = new SupplyPage(page);
+  await supply.goto();
+  const rows = () => page.getByTestId("supply-row");
+  await expect(rows()).toHaveCount(3);
+  const box = page.getByRole("searchbox", { name: "Search Supply" });
+  await box.fill("SPIN");
+  await expect(rows()).toHaveCount(1);
+  await expect(supply.row("Baby spinach")).toBeVisible();
+  await expect(page).toHaveURL(/q=SPIN/);
+  // Combined with a filter: nothing in the freezer matches.
+  await page.getByRole("group", { name: "Location" }).getByRole("button", { name: "Freezer" }).click();
+  await expect(rows()).toHaveCount(0);
+  await page.getByRole("group", { name: "Location" }).getByRole("button", { name: "All" }).click();
+  await box.fill("thai"); // an alias of jasmine rice
+  await expect(rows()).toHaveCount(1);
+  await expect(supply.row("Jasmine rice")).toBeVisible();
+  await box.fill("zzz");
+  await expect(page.getByText("No Supply matches “zzz”.")).toBeVisible();
+  await page.getByRole("button", { name: "Clear search" }).click();
+  await expect(box).toHaveValue("");
+  await expect(rows()).toHaveCount(3);
+});

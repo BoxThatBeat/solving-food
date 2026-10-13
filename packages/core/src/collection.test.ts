@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activeFilterCount, applyCollection, collectionSearchSchema, NO_FACTS, optionCount, passes, tagCounts, taxonomyLabel, toSearchParams, type HouseholdFacts } from "./collection";
+import { activeFilterCount, applyCollection, collectionSearchSchema, isSideOnly, mealTypesOf, NO_FACTS, optionCount, passes, tagCounts, taxonomyLabel, toSearchParams, type HouseholdFacts } from "./collection";
 import type { RecipeSummary } from "./recipe";
 
 function r(id: string, over: Partial<RecipeSummary> = {}): RecipeSummary {
@@ -123,5 +123,22 @@ describe("supply filters (R4.3, R4.4)", () => {
     expect(passes({ ...r }, use, { ...base, canMake: false, supplyFraction: 0.5 })).toBe(false);
     expect(activeFilterCount(use)).toBe(1);
     expect(collectionSearchSchema.parse({ supply: "bogus" }).supply).toBeUndefined();
+  });
+});
+
+describe("meal type (course) tags, side recipes (M9: R4.2, R4.28)", () => {
+  const withSide = [...all, r("Delta", { tags: ["side", "rice"] }), r("Echo", { tags: ["lunch", "side"] })];
+  const ids2 = (s: object) => applyCollection(withSide, collectionSearchSchema.parse(s), factsOf, null).items.map((x) => x.id);
+  it("side is a meal type option, not a tag", () => {
+    expect(ids2({ meal: "side" })).toEqual(["Delta", "Echo"]);
+    expect(collectionSearchSchema.parse({ meal: "side,brunch" }).meal).toEqual(["side"]);
+    expect(tagCounts(withSide).map(([t]) => t)).not.toContain("side");
+    expect(mealTypesOf({ tags: ["Side", "rice"] })).toEqual(["side"]);
+  });
+  it("side-only means tagged side and nothing else", () => {
+    expect(isSideOnly({ tags: ["side", "rice"] })).toBe(true);
+    expect(isSideOnly({ tags: ["lunch", "side"] })).toBe(false);
+    expect(isSideOnly({ tags: ["dinner"] })).toBe(false);
+    expect(isSideOnly({ tags: [] })).toBe(false);
   });
 });

@@ -7,7 +7,7 @@
 // recipe `blocked`: the Suggested row and the optimiser leave it out, and the Suggested sort lists it last.
 
 import { formatCents } from "../pricing";
-import { taxonomyLabel } from "../collection";
+import { isSideOnly, taxonomyLabel } from "../collection";
 import { toolLabel } from "../tools";
 import { activeExpiry, isExpired, type LedgerLot } from "../ledger";
 import { daysLeft as daysLeftOf } from "../expiry";
@@ -53,8 +53,10 @@ export interface ScoreResult {
   /** Ranking key: Σ w·f (raising) − Σ w·f (lowering). */
   raw: number;
   factors: Partial<Record<FactorKey, number>>;
-  /** Why it's excluded from suggestions (missing tool, dislike, diet), or null. */
+  /** Why it's excluded from suggestions (missing tool, dislike, diet, a side dish), or null. */
   blocked: string | null;
+  /** A side dish only (R4.28): blocked as a meal of its own, but fine inside a meal (combinedSuggestion ignores it). */
+  side?: boolean;
   /** The top two raising factors and the strongest lowering one ("why" chips). */
   reasons: Reason[];
   /** Marginal cost at the household's servings (cents), null when unknown. */
@@ -102,7 +104,10 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
   }
 
   const tools = missingToolsOf(r, ctx);
-  const blocked = tools.length ? `Needs ${tools.map(toolLabel).join(", ")}` : preferenceBlock(r, ctx.preferences, ctx.ingredient, (id) => ctx.ingredient(id)?.name);
+  const side = isSideOnly(r);
+  const blocked = tools.length
+    ? `Needs ${tools.map(toolLabel).join(", ")}`
+    : (preferenceBlock(r, ctx.preferences, ctx.ingredient, (id) => ctx.ingredient(id)?.name) ?? (side ? "Side dish" : null));
   const uses = expiringUses(needs, ctx);
   const exp = uses[0] ?? null;
 
@@ -158,6 +163,7 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
     raw,
     factors: f,
     blocked,
+    ...(side ? { side } : {}),
     reasons,
     costCents: cost,
     expiring: exp,
@@ -261,7 +267,8 @@ export function emptyScoreContext(overrides: Partial<ScoreContext> = {}): ScoreC
   };
 }
 
-/** The suggestion of a saved meal or plan item: the mean of its recipes' scores; blocked if any recipe is (M5). */
+/** The suggestion of a saved meal or plan item: the mean of its recipes' scores; blocked if any recipe is (M5), side dishes
+ * excepted (M9). */
 export function combinedSuggestion(recipeIds: readonly string[], byId: ReadonlyMap<string, ScoreResult>): { raw: number; score: number; blocked: boolean; expiryDays: number | null } | null {
   const rs = recipeIds.map((id) => byId.get(id)).filter((x): x is ScoreResult => !!x);
   if (!rs.length) return null;
@@ -269,7 +276,8 @@ export function combinedSuggestion(recipeIds: readonly string[], byId: ReadonlyM
   return {
     raw: rs.reduce((t, r) => t + r.raw, 0) / rs.length,
     score: Math.round(rs.reduce((t, r) => t + r.score, 0) / rs.length),
-    blocked: rs.some((r) => !!r.blocked),
+    // A side recipe in a meal with a main is fine (R4.28); a meal of nothing but sides is not a meal.
+    blocked: rs.some((r) => !!r.blocked && !r.side) || rs.every((r) => !!r.side),
     expiryDays: days.length ? Math.min(...days) : null,
   };
 }

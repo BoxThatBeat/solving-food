@@ -8,7 +8,7 @@ import {
   COST_STEPS,
   CUISINES,
   MAIN_PROTEINS,
-  MEAL_TYPES,
+  RECIPE_COURSES,
   PROTEIN_STEPS,
   RATING_STEPS,
   SORT_LABELS,
@@ -40,6 +40,8 @@ export interface CollectionViewProps {
   header?: React.ReactNode;
   /** The search bar sticks to the top on phones; off inside sheets. */
   sticky?: boolean;
+  /** Meal type options: recipes also have "side" (R4.28); plan items only the plan's meal types. */
+  courses?: readonly string[];
   /** Filter groups that make no sense for this list (e.g. "cooked" on plan items). */
   hide?: Array<"show" | "tools" | "cost" | "supply">;
 }
@@ -55,7 +57,7 @@ function toggleIn<T extends string>(list: readonly T[] | undefined, v: T): T[] |
 /** Chips for the applied filters, each removable. */
 function appliedChips(s: CollectionSearch): Array<{ key: string; label: string; remove: (s: CollectionSearch) => CollectionSearch }> {
   const out: Array<{ key: string; label: string; remove: (s: CollectionSearch) => CollectionSearch }> = [];
-  for (const k of ["cuisine", "protein", "meal", "tags"] as const) {
+  for (const k of ["meal", "cuisine", "protein", "tags"] as const) {
     for (const v of s[k] ?? []) out.push({ key: `${k}:${v}`, label: taxonomyLabel(v), remove: (x) => ({ ...x, [k]: toggleIn(x[k] as string[] | undefined, v) }) });
   }
   if (s.fav) out.push({ key: "fav", label: "★ Favourites", remove: (x) => ({ ...x, fav: undefined }) });
@@ -113,6 +115,7 @@ export function CollectionView(p: CollectionViewProps) {
   };
   const count = (key: FilterKey, value: unknown) => p.optionCount?.(key, value);
   const sort = draft.sort ?? "suggested";
+  const courses = (p.courses ?? RECIPE_COURSES) as readonly (typeof RECIPE_COURSES)[number][];
 
   return (
     <div className="flex flex-col gap-3.5">
@@ -188,6 +191,15 @@ export function CollectionView(p: CollectionViewProps) {
             </button>
           }
         >
+          {/* M9 (owner review): meal type is the first filter. */}
+          <Group title="Meal type" hint={draft.meal?.length ? `${draft.meal.length} on` : "Any"}>
+            {courses.map((m) => (
+              <ToggleChip key={m} pressed={!!draft.meal?.includes(m)} onClick={() => setDraft((d) => ({ ...d, meal: toggleIn(d.meal, m) }))} count={count("meal", m)}>
+                {taxonomyLabel(m)}
+              </ToggleChip>
+            ))}
+          </Group>
+
           <fieldset className="m-0 flex flex-col gap-2.5 border-0 p-0">
             <legend className="mb-2.5 p-0">
               <SectionLabel>Sort by</SectionLabel>
@@ -305,14 +317,6 @@ export function CollectionView(p: CollectionViewProps) {
                 </ToggleChip>
               );
             })}
-          </Group>
-
-          <Group title="Meal type" hint={draft.meal?.length ? `${draft.meal.length} on` : "Any"}>
-            {MEAL_TYPES.map((m) => (
-              <ToggleChip key={m} pressed={!!draft.meal?.includes(m)} onClick={() => setDraft((d) => ({ ...d, meal: toggleIn(d.meal, m) }))} count={count("meal", m)}>
-                {taxonomyLabel(m)}
-              </ToggleChip>
-            ))}
           </Group>
 
           {p.tags?.length ? (

@@ -70,7 +70,7 @@ export function mealRow(id: string, meal: Pick<MealDoc, "name" | "recipes" | "up
 export function planItemRow(id: string, item: Pick<PlanItemDoc, "name" | "recipes" | "mealType" | "addedAt" | "sides">, byId: (id: string) => RecipeSummary | undefined, title: string, sideName?: (ingredientId: string) => string | undefined): MealRow {
   const row = combineSummaries(id, title, item.recipes, byId, millis(item.addedAt), [], { sides: item.sides, sideName });
   // The slot it fills, not the recipes' own course tags.
-  row.tags = [item.mealType, ...row.tags.filter((t) => !["breakfast", "lunch", "dinner", "snack"].includes(t.toLowerCase()))];
+  row.tags = [item.mealType, ...row.tags.filter((t) => !["breakfast", "lunch", "dinner", "snack", "side"].includes(t.toLowerCase()))];
   return row;
 }
 

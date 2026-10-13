@@ -13,7 +13,7 @@ every file imports the same way.
 | `main_protein` | yes | One of the proteins in `taxonomy.md` |
 | `prep_time` | yes | `"N minutes"` (or `"1 hour 10 minutes"`). Hands-on time, including marinating if the recipe counts it |
 | `cook_time` | yes | `"N minutes"`. Time on the heat or in the oven. `"0 minutes"` for no-cook recipes |
-| `tags` | yes | List: course in lowercase (`breakfast`, `lunch`, `dinner`, `snack`, `side`, `dessert`, `appetizer`) first, then a few descriptive tags. Never `recipe` |
+| `tags` | yes | List: course in lowercase (`breakfast`, `lunch`, `dinner`, `snack`, `side`, `dessert`, `appetizer`) first, then a few descriptive tags. Never `recipe`. `side` = eaten next to a main; a recipe tagged only `side` is never suggested as a meal |
 | `source` | no | The page URL, without tracking parameters (`?utm_…`, affiliate codes) |
 | `image` | no | A direct image URL (`https://…/photo.jpg`), or a path to a photo uploaded with the file (see `delivery.md`). Not a page URL |
 | `leftover_portions` | no | Portions expected to be left for later meals: big pots, batch cooking, meal prep. Omit for normal dinners |

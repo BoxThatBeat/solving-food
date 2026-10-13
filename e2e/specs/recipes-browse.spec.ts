@@ -284,3 +284,39 @@ test.describe("supply-based browsing (M3)", () => {
     await expect(page.getByTestId("recipe-card")).toHaveCount(0);
   });
 });
+
+test.describe("meal type and side recipes (M9)", () => {
+  test("meal type is the first filter; Side is one of its options", { tag: ["@R4.2", "@R4.28"] }, async ({ page, household: _ }) => {
+    const { makePlanRecipe } = await import("../pages/plan");
+    const side = await makePlanRecipe("Barley pilaf side", { lines: "Simmer @pearl barley{200%g} with @onion{1}.", tags: ["side"] });
+    const r = new RecipesPage(page);
+    await r.goto();
+    const sheet = await r.openFilters();
+    // The first group in the sheet, above the sort.
+    await expect(sheet.getByRole("group").first()).toHaveAccessibleName("Meal type");
+    await expect(r.chip(sheet, "Meal type", "Side")).toBeVisible();
+    await r.chip(sheet, "Meal type", "Side").click();
+    await r.apply(sheet);
+    await expect(page).toHaveURL(/meal=side/);
+    await expect(r.card(side.title)).toBeVisible();
+    expect(await r.titles()).not.toContain("Easy Pork Ribs");
+    await expect(page.getByRole("button", { name: "Remove filter Side" })).toBeVisible();
+  });
+
+  test("a side-only recipe is never suggested as a meal, even when it uses expiring supply", { tag: ["@R4.28"] }, async ({ page, household }) => {
+    const { makePlanRecipe, PlanPage, seedPeriod } = await import("../pages/plan");
+    const { seedSupply } = await import("../pages/supply");
+    const side = await makePlanRecipe("Barley side only", { lines: "Simmer @pearl barley{300%g} in @water{4%cup}.", tags: ["side"] });
+    const main = await makePlanRecipe("Barley main", { lines: "Simmer @pearl barley{300%g} with @chicken thigh{600%g}.", tags: ["dinner"] });
+    await seedPeriod(household.hid);
+    await seedSupply(household.hid, "pearl-barley", [{ amount: 300, expiresInDays: 1 }], { label: "pearl barley" });
+    const plan = new PlanPage(page);
+    await plan.goto();
+    const using = page.getByTestId("expiry-alerts").getByRole("list", { name: "Recipes that use pearl barley" });
+    await expect(using).toContainText(main.title);
+    await expect(using).not.toContainText(side.title);
+    await expect(page.getByTestId("suggestion").first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("suggestion").filter({ hasText: main.title })).toHaveCount(1);
+    await expect(page.getByTestId("suggestion").filter({ hasText: side.title })).toHaveCount(0);
+  });
+});

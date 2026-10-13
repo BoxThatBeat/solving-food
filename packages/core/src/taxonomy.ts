@@ -44,6 +44,13 @@ export type MainProtein = (typeof MAIN_PROTEINS)[number];
 export const MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"] as const;
 export type MealType = (typeof MEAL_TYPES)[number];
 
+/**
+ * The meal-type tags a recipe can carry (its course): the plan's meal types plus "side" (M9, R4.28), a dish eaten next
+ * to a main (rice pilaf, coleslaw). A side isn't a plan slot: side-only recipes are never suggested as a meal.
+ */
+export const RECIPE_COURSES = [...MEAL_TYPES, "side"] as const;
+export type RecipeCourse = (typeof RECIPE_COURSES)[number];
+
 /** Meal types a household can choose to plan (R11.13). Snacks are always available and never planned in the strip. */
 export const PLANNABLE_MEAL_TYPES = ["breakfast", "lunch", "dinner"] as const;
 export type PlannableMealType = (typeof PLANNABLE_MEAL_TYPES)[number];

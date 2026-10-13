@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import {
+  combinedSuggestion,
   costFactor,
   DEFAULT_WEIGHTS,
   emptyScoreContext,
@@ -350,5 +351,24 @@ describe("context helpers", () => {
     expect(t.total).toBe(2);
     expect(t.cuisines.get("thai")).toBe(2);
     expect(t.proteins.get("fish")).toBe(1);
+  });
+});
+
+describe("side recipes are never suggested as a meal (M9, R4.28)", () => {
+  const main = recipe("main", { tags: ["dinner"] });
+  const side = recipe("pilaf", { tags: ["side", "rice"] });
+  const both = recipe("salad", { tags: ["lunch", "side"] });
+  it("a side-only recipe is blocked as a side dish and left out of Suggested; one that's also a meal isn't", () => {
+    const c = ctx();
+    expect(score(side, c, DEFAULT_WEIGHTS)).toMatchObject({ blocked: "Side dish", side: true });
+    expect(score(both, c, DEFAULT_WEIGHTS).blocked).toBeNull();
+    expect(suggest([main, side, both], c, DEFAULT_WEIGHTS).map((x) => x.id).sort()).toEqual(["main", "salad"]);
+    expect(rank([side, main], c, DEFAULT_WEIGHTS).map((x) => x.id)).toEqual(["main", "pilaf"]);
+  });
+  it("inside a meal with a main, a side doesn't block the meal; a meal of only sides is blocked", () => {
+    const c = ctx();
+    const byId = new Map([main, side].map((r) => [r.id, score(r, c, DEFAULT_WEIGHTS)]));
+    expect(combinedSuggestion(["main", "pilaf"], byId)!.blocked).toBe(false);
+    expect(combinedSuggestion(["pilaf"], byId)!.blocked).toBe(true);
   });
 });

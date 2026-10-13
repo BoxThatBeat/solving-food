@@ -2,7 +2,8 @@
 // `current (projected)` in metric, where projected = unexpired − what the period's uncooked meals use;
 // location tabs and category / expiring soon / low stock filters; expired lots prompt Still good / Threw it out;
 // leftovers as prepared portions; free-use staples with when they were last bought. Tapping a row opens its purchases,
-// correction, and history inline (the full history is /supply/:id).
+// correction, and history inline (the full history is /supply/:id). M9 (R8.17): a search box filters rows (and
+// leftovers) by name and aliases, together with the other filters.
 import * as React from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
@@ -17,6 +18,7 @@ import {
   type StorageLocation,
 } from "@solving-food/core";
 import { EmptyState, PageBody } from "@/components/AppShell";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/chip";
 import { useNotify } from "@/components/notifications-context";
@@ -34,6 +36,7 @@ import { useReadySession } from "@/session/useSession";
 import { cn } from "@/lib/utils";
 
 const searchSchema = z.object({
+  q: z.string().max(80).catch("").optional(),
   loc: z.enum(["all", ...STORAGE_LOCATIONS]).catch("all").optional(),
   cat: z.string().max(40).catch("").optional(),
   exp: z.coerce.boolean().catch(false).optional(),
@@ -73,6 +76,16 @@ function SupplyPage() {
   const [open, setOpen] = React.useState<string | null>(null);
   const [adding, setAdding] = React.useState(false);
   const set = (patch: Partial<SupplySearch>) => void navigate({ to: "/supply", search: { ...search, ...patch } as never, replace: true });
+  // Search (R8.17): typing is local and instant; the URL follows (replace) so Back and reloads keep it.
+  const [q, setQ] = React.useState(search.q ?? "");
+  React.useEffect(() => {
+    if ((search.q ?? "") === q) return;
+    const t = setTimeout(() => set({ q: q || undefined }), 200);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
+  const needle = normalise(q);
+  const matchesQ = (names: ReadonlyArray<string | undefined>) => !needle || names.some((n) => n && normalise(n).includes(needle));
 
   const ingredients = m.supply.ingredients;
   const rows: Row[] = React.useMemo(() => {
@@ -100,10 +113,11 @@ function SupplyPage() {
     return out.sort((a, b) => SEVERITY[a.exp.flag] - SEVERITY[b.exp.flag] || (a.exp.expiresMs ?? Infinity) - (b.exp.expiresMs ?? Infinity) || a.item.label.localeCompare(b.item.label));
   }, [m.supply.items, ingredients, m.projected, now, tz]);
 
-  const leftovers = [...m.supply.items.values()].filter((i) => !i.ingredientId && recomputeAmount(i.lots) > 1e-6);
+  const leftovers = [...m.supply.items.values()].filter((i) => !i.ingredientId && recomputeAmount(i.lots) > 1e-6 && matchesQ([i.label]));
   const inStock = rows.filter((r) => r.current > 1e-6);
   const shown = rows.filter((r) => {
     if (!search.low && r.current <= 1e-6) return false;
+    if (!matchesQ([r.item.label, r.ing?.name, ...(r.ing?.aliases ?? [])])) return false;
     const loc = search.loc ?? "all";
     if (loc !== "all" && !r.locations.has(loc)) return false;
     if (search.cat && r.category !== search.cat) return false;
@@ -148,6 +162,8 @@ function SupplyPage() {
         <Button onClick={() => setAdding(true)}>+ Add</Button>
       </div>
       <span className="font-mono text-[0.65625rem] leading-snug font-semibold uppercase">Now (after planned meals) · bought − cooked ± corrections · tap for detail</span>
+
+      <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search Supply…" aria-label="Search Supply" className="max-w-[60rem]" />
 
       <div role="group" aria-label="Location" className="grid grid-cols-5 overflow-hidden rounded-ui border-2 border-line bg-base">
         {(["all", ...STORAGE_LOCATIONS] as const).map((l, i) => {
@@ -210,7 +226,20 @@ function SupplyPage() {
           ))}
         </ul>
       ) : (
-        <EmptyState>{rows.length || leftovers.length ? "Nothing matches these filters." : "Supply starts empty. Add what you already have, or confirm a grocery order when it arrives."}</EmptyState>
+        <EmptyState>
+          {needle && rows.length ? (
+            <>
+              No Supply matches “{q.trim()}”.{" "}
+              <button type="button" onClick={() => setQ("")} className="cursor-pointer bg-transparent p-0 font-extrabold text-ink underline">
+                Clear search
+              </button>
+            </>
+          ) : rows.length || leftovers.length ? (
+            "Nothing matches these filters."
+          ) : (
+            "Supply starts empty. Add what you already have, or confirm a grocery order when it arrives."
+          )}
+        </EmptyState>
       )}
 
       {staples.length ? (
@@ -289,3 +318,7 @@ function SupplyRow({ r, first, open, onToggle, tz, now, children }: { r: Row; fi
   );
 }
 
+/** Lower case, no accents, single spaces: "Crème fraîche" matches "creme". */
+function normalise(v: string): string {
+  return v.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+}

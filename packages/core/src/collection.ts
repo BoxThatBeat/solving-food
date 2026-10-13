@@ -3,7 +3,7 @@
 // text search matched; this decides what shows and in which order. Filter state round-trips through the URL.
 
 import { z } from "zod";
-import { CUISINES, MAIN_PROTEINS, MEAL_TYPES } from "./taxonomy";
+import { CUISINES, MAIN_PROTEINS, RECIPE_COURSES } from "./taxonomy";
 import type { RecipeSummary } from "./recipe";
 
 export const SORTS = ["suggested", "expiry", "newest", "name", "quickest", "protein", "cheapest", "rating", "made", "recent"] as const;
@@ -47,7 +47,8 @@ export const collectionSearchSchema = z.object({
   sort: z.enum(SORTS).catch(undefined as never).optional(),
   cuisine: csv(CUISINES).catch(undefined).optional(),
   protein: csv(MAIN_PROTEINS).catch(undefined).optional(),
-  meal: csv(MEAL_TYPES).catch(undefined).optional(),
+  /** Meal type (course) tags, "side" included (R4.28). */
+  meal: csv(RECIPE_COURSES).catch(undefined).optional(),
   tags: csv().catch(undefined).optional(),
   minProtein: num,
   maxTotal: num,
@@ -108,11 +109,20 @@ export type FilterKey = "cuisine" | "protein" | "meal" | "tags" | "minProtein" |
 /** "Use what's left" (R4.4): covered fully or nearly fully by what's left after the plan. */
 export const USE_WHATS_LEFT = 0.85;
 
-const MEAL_SET = new Set<string>(MEAL_TYPES);
+const MEAL_SET = new Set<string>(RECIPE_COURSES);
 
-/** Meal types a recipe is tagged with (tags carry the course: breakfast, lunch, dinner, snack). */
+/** Meal types a recipe is tagged with (tags carry the course: breakfast, lunch, dinner, snack, side). */
 export function mealTypesOf(r: { tags: readonly string[] }): string[] {
   return r.tags.map((t) => t.toLowerCase()).filter((t) => MEAL_SET.has(t));
+}
+
+/**
+ * A side dish only (R4.28): tagged "side" and with no other meal type. Never suggested as a meal (Suggested, the
+ * optimiser, expiry and use-it-up proposals) and last in a Suggested sort; still pickable next to a main in Create meal.
+ */
+export function isSideOnly(r: { tags: readonly string[] }): boolean {
+  const types = mealTypesOf(r);
+  return types.includes("side") && types.length === 1;
 }
 
 /** Does a recipe pass every filter except `skip` (used for the per-option counts in the filter sheet)? */

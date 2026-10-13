@@ -101,7 +101,9 @@ Add @salmon fillet{600%g} and @lemon{1}, sliced. Roast ~{12%minutes} more.
 - **`prep_time` + `cook_time` = the recipe's total time**, written like `"20 minutes"` or `"1 hour 15 minutes"`.
   Put marinating or chilling time in `prep_time` when the recipe counts it.
 - **`tags`**: the course in lowercase (`breakfast`, `lunch`, `dinner`, `snack`, `side`, `dessert`, `appetizer`) plus
-  a few useful words (main ingredients, `muffins`, `one-pan`). Never `recipe`.
+  a few useful words (main ingredients, `muffins`, `one-pan`). Never `recipe`. `side` is a dish eaten next to a
+  main (rice pilaf, coleslaw, garlic bread): the app never suggests a recipe tagged only `side` as a meal, so give a
+  dish that's also a meal on its own its meal type too (`[lunch, side]`).
 - **One recipe per file.** Sub-recipes the dish needs (a sauce) can be a `= Section` in the same file; a
   separately useful recipe (a tzatziki you'd also make alone) gets its own file.
 - **File name**: kebab-case of the title, `.cook` extension, e.g. `garlic-rice-and-chicken.cook`.

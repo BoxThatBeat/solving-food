@@ -32,7 +32,7 @@ describe("meal rows for <CollectionView> (R4.7)", () => {
   });
   it("plan item rows are tagged with their slot", () => {
     const row = planItemRow("p1", { recipes: [{ recipeId: "pico", servingsMultiplier: 1 }], mealType: "lunch" }, byId, "Pico");
-    expect(row.tags).toEqual(["lunch", "side"]);
+    expect(row.tags).toEqual(["lunch"]); // M9: "side" is a course tag (R4.28), replaced by the slot like the others
   });
   it("sides make a meal findable by side name, without changing protein or times (R5.9)", () => {
     const row = mealRow("m2", { name: "Fish", recipes: [{ recipeId: "pico", servingsMultiplier: 1 }], sides: [{ ingredientId: "fries", portion: 150 }], updatedAt: new Date(5) }, byId, (id) => (id === "fries" ? "frozen french fries" : undefined));
