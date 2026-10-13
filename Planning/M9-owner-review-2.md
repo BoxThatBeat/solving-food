@@ -175,13 +175,16 @@ meal eaten), R6.23 (new: eating out), R6.24 (new: expiring meals first), R6.25 (
 
 ## After the push (2026-10-13)
 
-- CI failed on desktop-1080p and phone-android: from about the 300th recipe write of the run, the `recipeIndex`
-  function's transaction (read and rewrite one chunk of up to 500 summaries) took 2–7 s, then one hung for 60 s and
-  the Firestore emulator stopped answering every test for a minute (the Supply picker showed no catalogue, sign-in
-  never redirected). Not an M9 bug as such: the suite got a few recipes longer. Fix in `functions/src/recipeIndex.ts`:
-  chunks hold 100 summaries, a chunk with room is found by one query instead of reading every chunk inside the
-  transaction, and a recipe write that can't change the index (stats, timestamps, the `indexChunk` echo) is skipped
-  without a transaction. Spec §9 and the data model updated; `recipeIndex.test.ts` covers the skip and the capacity.
+- CI failed on desktop-1080p and phone-android (then phone-ios too): from about the 300th recipe write of a run, the
+  `recipeIndex` function took 2–13 s per write, one hung for 60 s, and the Firestore emulator stopped answering every
+  test for a minute (the Supply picker showed no catalogue, sign-in never redirected). Cause: one transaction per
+  recipe write read and rewrote the chunk document, so every recipe write of two workers (plus the trigger echoes)
+  queued on one document's lock, and the emulator's basic locking (its docs: slow when several writes target one
+  document, locks held up to 30 s) stalled. Smaller chunks alone (first attempt, 100 summaries) didn't help: the
+  contention is per document, not per byte. Fix in `functions/src/recipeIndex.ts`: no transaction on chunks (merge
+  sets per summary, increments for the count, one transaction on the recipe doc to claim its chunk), a chunk with room
+  found by one query, and recipe writes that can't change the index skipped without a read. Spec §9 and the data model
+  updated; `recipeIndex.test.ts` covers the skip and the capacity.
 
 ## Owner checks
 

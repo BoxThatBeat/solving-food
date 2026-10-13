@@ -65,6 +65,8 @@ describe("recipe index function", () => {
     await poll(async () => (await db.doc("recipes/idx-p").get()).data()?.indexChunk === 0, 20_000, "chunk for pending");
     expect((await chunk(0))!.recipes["idx-p"]).toBeUndefined();
     expect((await chunk(0))!.count).toBe(2);
+    // The chunk's other summaries survive a non-indexed newcomer (a merge set of `recipes: {}` would wipe them).
+    expect((await chunk(0))!.recipes["idx-a"]).toMatchObject({ title: "Lemon Chicken Piccata" });
   });
 
   it("a write that can't change the index (stats, timestamps, the indexChunk echo) leaves the chunk alone", async () => {

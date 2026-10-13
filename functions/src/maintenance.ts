@@ -6,7 +6,7 @@ import { Timestamp } from "firebase-admin/firestore";
 import { bucket, db } from "./admin";
 import { isIndexed, recipeSummary, type RecipeDoc } from "@solving-food/core";
 import { DROP_PREFIX } from "./dropFolder";
-import type { IndexChunk } from "./recipeIndex";
+import { sameSummary, type IndexChunk } from "./recipeIndex";
 import { refreshPrices, type RefreshReport } from "./pcx";
 
 export const TRASH_DAYS = 30;
@@ -35,7 +35,7 @@ export async function refreshSummaries(): Promise<number> {
     if (typeof doc.indexChunk !== "number" || !isIndexed(doc.status)) continue;
     const want = recipeSummary(r.id, doc);
     const have = byChunk.get(doc.indexChunk)?.recipes?.[r.id];
-    if (JSON.stringify(have) === JSON.stringify(want)) continue;
+    if (sameSummary(have, want)) continue;
     if (!updates.has(doc.indexChunk)) updates.set(doc.indexChunk, {});
     updates.get(doc.indexChunk)![`recipes.${r.id}`] = want;
   }
