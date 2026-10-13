@@ -1,4 +1,5 @@
-// toHaveScreenshot baselines for the sign-in page and the Recipes library in Latte and Mocha at phone, 1080p, and 4K (TECHNICAL_SPECS §14.1).
+// toHaveScreenshot baselines for the sign-in page and the Recipes library in Latte at phone, 1080p, and 4K (TECHNICAL_SPECS
+// §14.1). Latte is the only flavour since M9 (the Mocha baselines were removed).
 // Chromium projects only, so baselines come from one engine; generated in the Nix dev shell, which CI also uses.
 import { allowlist, seedHousehold, seedProfile, uidFor } from "../fixtures/admin";
 import { expect, signInWithEmailLink, test } from "../fixtures/test";
@@ -7,15 +8,12 @@ test.beforeEach(({ browserName }) => {
   test.skip(browserName !== "chromium", "visual baselines are Chromium-only");
 });
 
-for (const flavour of ["latte", "mocha"] as const) {
+for (const flavour of ["latte"] as const) {
   test(`sign-in page · ${flavour}`, async ({ page }) => {
     await page.goto("/sign-in");
     // The localStorage mirror the app writes (src/theme/apply.ts); index.html paints it before boot.
     await page.evaluate(async (f) => {
-      const vars: Record<string, string> =
-        f === "mocha"
-          ? { ink: "#cdd6f4", sub: "#a6adc8", base: "#1e1e2e", mantle: "#181825", pg: "#11111b", s0: "#313244", onc: "#11111b", desk: "#0a0a11", scrim: "rgba(0,0,0,.65)", line: "#cdd6f4", acc: "#a6da95" }
-          : { ink: "#4c4f69", sub: "#6c6f85", base: "#eff1f5", mantle: "#e6e9ef", pg: "#dce0e8", s0: "#ccd0da", onc: "#4c4f69", desk: "#bcc0cc", scrim: "rgba(76,79,105,.55)", line: "#4c4f69", acc: "#a6da95" };
+      const vars: Record<string, string> = { ink: "#4c4f69", sub: "#6c6f85", base: "#eff1f5", mantle: "#e6e9ef", pg: "#dce0e8", s0: "#ccd0da", onc: "#4c4f69", desk: "#bcc0cc", scrim: "rgba(76,79,105,.55)", line: "#4c4f69", acc: "#a6da95" };
       localStorage.setItem("sf.theme", JSON.stringify({ theme: { flavour: f, accent: "green" }, vars }));
     }, flavour);
     await page.reload();

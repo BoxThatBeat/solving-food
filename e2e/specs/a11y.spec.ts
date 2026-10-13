@@ -40,14 +40,10 @@ test("sign-in, not-invited, and first-run pages", async ({ page, uniqueEmail }) 
   await expectNoSeriousViolations(page, "/welcome/household");
 });
 
-test("shell pages in Latte and Mocha", async ({ page, household }) => {
-  test.slow(); // 10 full-page scans
+test("shell pages", async ({ page, household }) => {
+  test.slow(); // 5 full-page scans (Latte is the only flavour since M9)
   void household;
-  for (const flavour of ["latte", "mocha"] as const) {
-    if (flavour === "mocha") {
-      await page.goto("/settings/theme");
-      await page.getByRole("button", { name: "Mocha" }).click();
-    }
+  for (const flavour of ["latte"] as const) {
     for (const path of ["/recipes", "/plan", "/settings", "/settings/theme", "/settings/household"]) {
       await page.goto(path);
       await expect(page.locator("h1")).toBeVisible();
@@ -86,8 +82,8 @@ test("keyboard alone reaches and follows the primary navigation", async ({ page,
   await expect(page.getByRole("heading", { level: 1, name: "Supply" })).toBeVisible();
 });
 
-test("recipe pages and sheets (M1) in Latte and Mocha", async ({ page, household, browser }) => {
-  test.slow(); // 17 full-page scans
+test("recipe pages and sheets (M1)", async ({ page, household, browser }) => {
+  test.slow(); // 10 full-page scans
   void household;
   const { makeRecipe, seedRecipeId, uniqueTitle } = await import("../fixtures/recipes");
   const id = await seedRecipeId("Garlic Rice and Chicken");
@@ -97,11 +93,7 @@ test("recipe pages and sheets (M1) in Latte and Mocha", async ({ page, household
   await makeRecipe(uniqueTitle("A11y Family"), { content: { tags: ["dinner", "family recipe"] } });
   const { adminDb } = await import("../fixtures/admin");
   await adminDb.doc(`households/${household.hid}/favourites/recipe_${id}`).set({ type: "recipe", targetId: id });
-  for (const flavour of ["latte", "mocha"] as const) {
-    if (flavour === "mocha") {
-      await page.goto("/settings/theme");
-      await page.getByRole("button", { name: "Mocha" }).click();
-    }
+  for (const flavour of ["latte"] as const) {
     for (const path of ["/recipes", `/recipes/${id}`, `/recipes/${id}/edit`, "/recipes/new", "/recipes/trash", "/drop", "/meals"]) {
       await page.goto(path);
       await expect(page.locator("h1").first()).toBeVisible();
@@ -147,7 +139,7 @@ test("M2 pages and sheets: plan with a meal, Create meal, meals, grocery, househ
   await expectNoSeriousViolations(page, "Add to plan sheet");
 });
 
-test("M3 pages and sheets in Latte and Mocha: supply with every flag, add supply, item history, cooking phases, review, history, confirm groceries", async ({ page, household }) => {
+test("M3 pages and sheets: supply with every flag, add supply, item history, cooking phases, review, history, confirm groceries", async ({ page, household }) => {
   test.slow();
   const { seedPeriod, seedPlanItem } = await import("../pages/plan");
   const { seedSupply, makeCookRecipe, seedOrderedList, groceryLine } = await import("../pages/supply");
@@ -158,11 +150,7 @@ test("M3 pages and sheets in Latte and Mocha: supply with every flag, add supply
   await seedSupply(household.hid, "milk", [{ amount: 1000, expiresInDays: -1 }]);
   await seedSupply(household.hid, "jasmine-rice", [{ amount: 5000, location: "pantry", expiresInDays: 300 }]);
   await seedOrderedList(household.hid, pid, { "baby-spinach": groceryLine({ ingredientId: "baby-spinach", amount: 312, packAmount: 312, packLabel: "312 g", productName: "Baby spinach", storeId: "costco", estPriceCents: 499 }) });
-  for (const flavour of ["latte", "mocha"] as const) {
-    if (flavour === "mocha") {
-      await page.goto("/settings/theme");
-      await page.getByRole("button", { name: "Mocha" }).click();
-    }
+  for (const flavour of ["latte"] as const) {
     await page.goto("/supply");
     await expect(page.getByTestId("expired-prompts")).toBeVisible();
     await page.getByTestId("supply-row").filter({ hasText: /Chicken thigh/i }).getByRole("button").first().click();
@@ -188,7 +176,7 @@ test("M3 pages and sheets in Latte and Mocha: supply with every flag, add supply
     await expect(page.getByRole("dialog", { name: "Confirm groceries" })).toBeVisible();
     await expectNoSeriousViolations(page, `confirm groceries (${flavour})`);
   }
-  // Review and history (Latte is the reference; Mocha shares the tokens checked above).
+  // Review and history.
   await page.goto(`/plan/${itemId}/cook`);
   await page.getByRole("button", { name: "Done cooking", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Rate it" })).toBeVisible();
@@ -204,7 +192,7 @@ test("M3 pages and sheets in Latte and Mocha: supply with every flag, add supply
   await expectNoSeriousViolations(page, "/history");
 });
 
-test("M4 pages and dialogs in Latte and Mocha: members with invites, the invite banner, data, the leave warning, another household", async ({ page, household }) => {
+test("M4 pages and dialogs: members with invites, the invite banner, data, the leave warning, another household", async ({ page, household }) => {
   test.slow();
   const { adminDb, addMember } = await import("../fixtures/admin");
   const { FieldValue } = await import("firebase-admin/firestore");
@@ -213,11 +201,7 @@ test("M4 pages and dialogs in Latte and Mocha: members with invites, the invite 
   const other = adminDb.collection("households").doc();
   await other.set({ name: "Cottage", createdBy: "someone", periodDays: 7, budgetCents: 0, currency: "CAD", timezone: "America/Toronto", defaultServings: 2, plannedMealTypes: ["dinner"], pcxStoreId: "x", currentPeriodId: null, settings: {} });
   await adminDb.doc(`households/${other.id}/invites/${household.uid}`).set({ inviteeUid: household.uid, householdName: "Cottage", invitedBy: "someone", invitedByName: "Kim", createdAt: FieldValue.serverTimestamp() });
-  for (const flavour of ["latte", "mocha"] as const) {
-    if (flavour === "mocha") {
-      await page.goto("/settings/theme");
-      await page.getByRole("button", { name: "Mocha" }).click();
-    }
+  for (const flavour of ["latte"] as const) {
     await page.goto("/settings/members");
     await expect(page.getByRole("region", { name: "Invites" })).toBeVisible();
     await expect(page.getByRole("list", { name: "Pending invites" })).toContainText("pat@example.com");

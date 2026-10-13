@@ -17,8 +17,8 @@ describe("buildProfile", () => {
   });
 
   it("keeps a chosen theme and rejects blank or very long names", () => {
-    expect(buildProfile({ email: "a@b.co", displayName: "A", theme: { flavour: "mocha", accent: "mauve" } }).user.theme)
-      .toEqual({ flavour: "mocha", accent: "mauve" });
+    expect(buildProfile({ email: "a@b.co", displayName: "A", theme: { flavour: "mocha", accent: "mauve" } }).user.theme) // M9: Latte only
+      .toEqual({ flavour: "latte", accent: "mauve" });
     expect(() => buildProfile({ email: "a@b.co", displayName: "   " })).toThrow();
     expect(() => buildProfile({ email: "a@b.co", displayName: "x".repeat(41) })).toThrow();
   });

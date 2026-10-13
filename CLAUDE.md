@@ -42,9 +42,9 @@ near line 815 switches them).
   mantle `#e6e9ef`, pg `#dce0e8`, s0 `#ccd0da`, onc `#4c4f69`, desk `#bcc0cc`, scrim `rgba(76,79,105,.55)`.
   (M0 exception: the app uses sub `#5c5f77`, Catppuccin Latte Subtext 1, because `#6c6f85` fails WCAG AA for
   small text on Latte backgrounds.)
-  Accents come from the prototype's `ACCENTS` list (green `#a6da95` is the default). The other three flavours
-  stay selectable per PRD R11.9 using the same table; build Latte first and verify it pixel-close before
-  touching the others.
+  Accents come from the prototype's `ACCENTS` list (green `#a6da95` is the default). Since M9 (owner review 2)
+  Latte is the **only** flavour (PRD R11.9): Settings offers the accent alone and a stored non-Latte flavour reads as
+  Latte. Keep the `FLAV` token structure so a flavour could come back, but don't build or test other flavours.
 - **Styling is Tailwind CSS (v4) + shadcn/ui.** Theme tokens are exposed as CSS variables and mapped into
   Tailwind's theme so utilities like `bg-base text-ink border-line` exist. No other CSS framework, no
   CSS-in-JS. Hand-written CSS only for things Tailwind can't express (fluid root font size, step-mode

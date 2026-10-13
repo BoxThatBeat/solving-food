@@ -61,7 +61,7 @@ prototype's page (Plan, Recipes, …) is UI state: navigate with the bottom nav 
 
 ## Rules
 
-- Latte is the reference flavour. Check Latte first, then spot-check Mocha for contrast.
+- Latte is the only flavour the app ships (M9); compare in Latte only.
 - Never copy the prototype's mock data or state model; only its appearance.
 - Behaviour follows the PRD and spec when they disagree with the prototype; appearance follows the prototype.
 - Screenshots are temporary: write them under the session scratchpad or `.playwright-cli/`, never into the repo.

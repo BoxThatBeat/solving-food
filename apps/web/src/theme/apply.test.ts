@@ -23,10 +23,9 @@ describe("themeVars", () => {
     });
   });
 
-  it("uses the flavour's ink as the line colour and the chosen accent", () => {
-    const v = themeVars({ flavour: "mocha", accent: "peach" });
-    expect(v.line).toBe("#cdd6f4");
+  it("uses Latte's ink as the line colour and the chosen accent", () => {
+    const v = themeVars({ flavour: "latte", accent: "peach" });
+    expect(v.line).toBe("#4c4f69");
     expect(v.acc).toBe("#f5a97f");
-    expect(v.onc).toBe("#11111b");
   });
 });

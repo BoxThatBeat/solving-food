@@ -23,7 +23,7 @@ const SECTIONS = [
   { to: "/settings/tools", label: "Kitchen tools", sub: "Equipment the household owns" },
   { to: "/settings/preferences", label: "Preferences", sub: "Likes, dislikes, dietary restrictions, protein goals" },
   { to: "/settings/weights", label: "Suggestion weights", sub: "What raises or lowers a suggestion" },
-  { to: "/settings/theme", label: "Theme", sub: "Flavour and accent · just you" },
+  { to: "/settings/theme", label: "Theme", sub: "Accent colour · just you" },
   { to: "/settings/data", label: "Data", sub: "Download or import household data" },
 ] as const;
 

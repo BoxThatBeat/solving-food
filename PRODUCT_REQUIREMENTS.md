@@ -1,6 +1,6 @@
 # Solving Food — Product Requirements
 
-> Status: Draft v0.5 · Source: `THOUGHTS.md` + answered open questions · Last updated: 2026-10-09
+> Status: Draft v0.6 · Source: `THOUGHTS.md` + answered open questions + owner reviews · Last updated: 2026-10-12
 
 ---
 
@@ -282,7 +282,7 @@ Everything here belongs to the household except the theme, which is per user.
 - **R11.6** **Budget** for planned meals per period.
 - **R11.7** **Brand mappings** and **stores** (dedicated page, §7).
 - **R11.8** **Household members**: invite by email or by name (R2.4), remove members, leave the household (with the last-member warning, R2.13).
-- **R11.9** **Theme (per user).** Catppuccin flavour (Latte/Frappé/Macchiato/Mocha) and accent colour.
+- **R11.9** **Theme (per user).** The accent colour. The app uses Catppuccin **Latte** only (changed in M9, owner's review: the flavour picker is gone and the flavour isn't shown; a flavour chosen before is read as Latte).
 - **R11.10** **Download & import household data.** A **Download household data** button saves a file with all of the household's data (supply and its history, plans, grocery lists, cook history, ratings, favourites, notes, and settings) plus the recipes and meals it uses. An **Import household data** button loads such a file into the current household, after a warning that it **replaces** the household's existing data. Members aren't changed by an import.
 - **R11.11** **Timezone.** Set when the household is created (default *America/Toronto*). Period boundaries and expiry days are worked out in it.
 - **R11.12** **Default servings.** The number of servings a recipe is planned for unless the user changes it (asked when the household is created, e.g. 4). Recipes added to the plan are scaled to it.
@@ -311,7 +311,7 @@ Everything here belongs to the household except the theme, which is per user.
 ### Visual design
 
 - **Brutalist** style: thick borders, hard shadows, monospace or grotesk type, visible structure, no gradients.
-- **Catppuccin** palette, with a user-selectable accent.
+- **Catppuccin Latte** palette, with a user-selectable accent.
 - **Mobile-first.** Designed for phones first and fully usable one-handed in the kitchen.
 - **Scales up properly to large screens**, including 1920×1080 desktops and 4K displays. Big screens use the extra space for more useful content, not stretched or tiny UI:
   - **Phone:** one column, bottom navigation.

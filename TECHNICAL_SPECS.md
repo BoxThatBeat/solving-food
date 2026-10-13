@@ -159,7 +159,8 @@ Household data is nested under `households/{hid}`, so a single membership check 
 ```
 users/{uid}                                       // private to the user
   email, activeHouseholdId, householdsCreated,    // ≤ 3; decremented by the function that deletes an emptied household
-  theme: { flavour, accent }
+  theme: { flavour, accent }                      // M9: flavour is always "latte" when written; older values are
+                                                  // tolerated (rules) and read as Latte (normalizeTheme)
   // No list of household IDs here: membership is read with a collection-group query on members (§10),
   // so a member removed by someone else never sees a stale list.
 
@@ -1060,7 +1061,7 @@ on the first timer (permission, then `getToken` with the VAPID key on the app's 
 
 ### Theming
 
-Colours come from the design prototype's `FLAV` and `ACCENTS` tables (not `@catppuccin/palette`), as CSS variables named as in the prototype (`--base --mantle --pg --desk --ink --sub --acc --onc --line --s0 --scrim`, plus the look tokens `--bw --sh --r --tt --tilt`), mapped onto Tailwind colours (`bg-base`, `text-ink`, `border-line`) and the shadcn token names. Latte with the green accent is the default. The theme (`{ flavour, accent }`, accent by name) is stored on `users/{uid}.theme`, with a localStorage cache of the computed variables applied by an inline script before first paint. Brutalist styling uses the prototype's Classic look: 3 px borders in `--line`, hard 4 px offset shadows, 6 px radius, all expressed in rem so they scale with the fluid root size. Type: Archivo (500–900), Archivo Black for display, JetBrains Mono for numbers, self-hosted.
+Colours come from the design prototype's `FLAV` and `ACCENTS` tables (not `@catppuccin/palette`), as CSS variables named as in the prototype (`--base --mantle --pg --desk --ink --sub --acc --onc --line --s0 --scrim`, plus the look tokens `--bw --sh --r --tt --tilt`), mapped onto Tailwind colours (`bg-base`, `text-ink`, `border-line`) and the shadcn token names. Latte with the green accent is the default and, since M9 (owner review 2), Latte is the only flavour: Settings → Theme offers the accent only, `normalizeTheme()` reads any stored frappé / macchiato / mocha as Latte, and the first-paint script ignores a cached non-Latte theme. `FLAV` keeps all four flavours so one could come back. The theme (`{ flavour, accent }`, accent by name) is stored on `users/{uid}.theme`, with a localStorage cache of the computed variables applied by an inline script before first paint. Brutalist styling uses the prototype's Classic look: 3 px borders in `--line`, hard 4 px offset shadows, 6 px radius, all expressed in rem so they scale with the fluid root size. Type: Archivo (500–900), Archivo Black for display, JetBrains Mono for numbers, self-hosted.
 
 ### Offline
 
@@ -1182,13 +1183,13 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | `review.spec.ts` | Done cooking deducts recipe defaults and adds estimated leftovers immediately; review opens when all recipes are checked off and on early "Done cooking"; per-user ratings; adjusting used ingredients posts corrections for the difference; pending reviews completed later by another member (R9.1–R9.4) |
 | `history.spec.ts` | Cooked list, filters, stats (R10.1–R10.3) |
 | `sides.spec.ts` | (M6) Sides from the Create meal search dropdown, plan row title and budget impact, plan item sheet edits; grocery line = portion × servings rounded to packs, covered by supply; Done cooking deducts the portions and the review corrects them; saved meals keep sides; Settings → Sides portion override for later meals, flagging an ingredient, free-use refused; History lists sides (R5.9, R5.10, R7.11, R11.14) |
-| `settings.spec.ts` | Tools, preferences, weights, protein goals, plan period, budget, timezone, default servings, planned meal types, brand mappings, stores and sourcing rules; theme flavour and accent persist per user only (R11.1–R11.9, R11.11–R11.13) |
+| `settings.spec.ts` | Tools, preferences, weights, protein goals, plan period, budget, timezone, default servings, planned meal types, brand mappings, stores and sourcing rules; theme accent persists per user only (Latte only, M9) (R11.1–R11.9, R11.11–R11.13) |
 | `data-transfer.spec.ts` | Download produces a valid zip; import into another household after the replace warning reproduces supply, plan, history, and favourites; members unchanged; invalid file rejected with an error banner (R11.10) |
 | `live-sync.spec.ts` | Two browser contexts as two members: plan, supply, and grocery ticks appear on the other device without reload; simultaneous grocery ticks both survive (NFR5) |
 | `offline.spec.ts` | `context.setOffline(true)`: finish a meal, adjust supply, tick groceries; go back online and the changes apply and sync (§12 Offline) |
 | `pwa.spec.ts` | Manifest valid; service worker registers; app shell loads offline after first visit |
 | `responsive.spec.ts` | Expected layout per breakpoint (bottom bar vs. side nav, pane counts, Plan page columns); no horizontal scroll; text line length capped; correct image size chosen from `srcset` (NFR6) |
-| `visual.spec.ts` | `toHaveScreenshot()` baselines for every page in Latte and Mocha at phone, 1080p, and 4K |
+| `visual.spec.ts` | `toHaveScreenshot()` baselines in Latte at phone, 1080p, and 4K (the Mocha baselines were removed in M9) |
 | `a11y.spec.ts` | `@axe-core/playwright` scan of every page with no serious or critical violations; keyboard-only navigation of the core loop |
 | `core-loop.spec.ts` | Full journey: plan → optimiser accept → grocery list → confirm with freeze prompt → cook → review later → supply, stats, and history updated (`@smoke`) |
 
