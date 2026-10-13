@@ -389,3 +389,12 @@ describe("fibre goal (M9, R6.26)", () => {
     expect(meetsGoals(hi, ctx({ fibreGoals: { dinner: 8 }, proteinGoals: { dinner: 50 } }))).toBe(false);
   });
 });
+
+describe("weights saved before the fibre factor (M9)", () => {
+  it("keep their preset: the missing fibreGoal comes from the preset the rest matches", () => {
+    const { fibreGoal: _f, ...cheap } = PRESETS["Cheap week"];
+    void _f;
+    expect(presetOf(resolveWeights(cheap))).toBe("Cheap week");
+    expect(resolveWeights({ ...cheap, variety: 4 }).fibreGoal).toBe(DEFAULT_WEIGHTS.fibreGoal);
+  });
+});

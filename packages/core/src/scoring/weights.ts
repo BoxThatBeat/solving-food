@@ -73,6 +73,12 @@ export function resolveWeights(stored: Readonly<Record<string, unknown>> | undef
     const v = clampWeight(stored?.[k]);
     if (v !== null) out[k] = v;
   }
+  // Weights saved before M9 have no fibreGoal: take it from the preset the rest matches, so a stored "Cheap week" stays
+  // Cheap week instead of turning Custom.
+  if (stored && clampWeight(stored.fibreGoal) === null) {
+    const match = PRESET_NAMES.find((n) => FACTOR_KEYS.every((k) => k === "fibreGoal" || PRESETS[n][k] === out[k]));
+    if (match) out.fibreGoal = PRESETS[match].fibreGoal;
+  }
   return out;
 }
 

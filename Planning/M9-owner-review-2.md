@@ -117,6 +117,39 @@ meal eaten), R6.23 (new: eating out), R6.24 (new: expiring meals first), R6.25 (
 
 ## Decisions
 
+- **Latte only (item 2):** the token structure (`FLAV`, `FLAVOURS`, `--base` … variables) stays; `normalizeTheme()` reads any
+  stored flavour other than Latte as Latte, so old user docs and caches need no migration. Firestore rules still accept
+  the four values (an old doc must stay writable). The visual baselines keep their `-latte-` file names.
+- **Side recipes (item 5):** "side" is a meal-type (course) tag like breakfast…snack (`RECIPE_COURSES`), not a new
+  field, so the editor, the skill and existing data need no migration. A recipe tagged *only* side is "blocked"
+  (`Side dish`) in scoring, which keeps it out of Suggested, the optimiser, the expiry alert and use-it-up proposals and
+  puts it last in a Suggested sort; inside a meal with a main it doesn't block the meal. A recipe tagged e.g.
+  `[lunch, side]` is still a meal.
+- **Meal type first (item 6):** the Meal type group sits at the very top of the filter sheet, above Sort by.
+- **Cook history (item 9):** `?mode=mise|steps` history entries. Finishing a recipe of a multi-recipe meal pops back
+  (history.go) so Back from the order list leaves the cook view. Back from the review lands on the cook page of a meal
+  that's already cooked, which now says so instead of starting a new session.
+- **Review marks eaten (item 12):** done in `submitReview` when it confirms amounts (status only; Supply unchanged). The
+  Plan card's Mark eaten stays for a cooked meal whose review is already done (data from before M9), and for leftovers
+  and snacks.
+- **Eating out (item 1):** a plan item **kind** (`out`), not a flag: every path that reads recipes (builder, budget,
+  scoring, cooking) skips it for free, and the rules can require `recipes: []`. Status stays `planned`; the strip draws
+  it hatched after cooked cells and counts it covered; it never carries over (`carriesOver()`); a snack eating out fills
+  no cell. The note is stored in `name`; the title reads "Eating out · <note>".
+- **Expiring first (item 8):** the Plan list's default sort, using each planned meal's own soonest-expiring Supply lot at
+  any horizon (the badge keeps its period/3-day horizon and is the "why"); cooked, eaten and eating-out items have no
+  expiry and follow by the suggestion score.
+- **Use it up (item 11):** the order is the grocery builder's generated plan lines (what Copy would order), expiry is
+  estimated from today in the ingredient's default location (not the delivery day), and only the spare the order adds is
+  counted. Dismiss reuses the period's `dismissedLots` with `order:<ingredientId>` keys, so no new field or rule.
+- **Nutrition (items 3, 4):** one switch for protein and fibre (`settings.nutrition`, absent = on). Fibre defaults when
+  a goal is switched on: breakfast 6, lunch 8, dinner 8, snack 3 g. A missing `fibrePer100g` makes the figure "~" but is
+  not a review reason (it would have flagged every in-app ingredient made before M9). New scoring factor `fibreGoal`
+  (Balanced 2, others 1). All 480 seed ingredients got USDA fibre values (a few estimates for blends and prepared foods:
+  yeast 26.9, fresh rosemary 14.1, spice blends 6–38, breakfast cereal 9.4).
+- **Search echo fix:** while testing, a fast typist (Playwright) could lose typing in any collection search because
+  the debounced URL update echoed back over newer text; `<CollectionView>` now ignores its own echo.
+
 ## Verification
 
 ## Owner checks
