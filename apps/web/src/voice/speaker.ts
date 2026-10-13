@@ -14,7 +14,7 @@
 // - A device without voices (Linux Chromium without speech-dispatcher) or a refused `speak()` (Safari without a tap)
 //   is silent without an error: a watchdog on the first sentence of each batch reports the speaker unavailable when it
 //   neither starts nor fails within 4 s.
-import { sentences, speakable } from "@solving-food/core";
+import { sentences, speakable, speechDurationMs } from "@solving-food/core";
 
 const ECHO_MS = 8000;
 const VOICES_WAIT_MS = 1000;
@@ -118,8 +118,15 @@ export class Speaker {
     const batch = ++this.batch;
     const lines = texts.flatMap((t) => sentences(speakable(t)));
     if (!lines.length || this.unavailable) return;
-    // Recorded now (not when spoken) so the echo filter knows what's coming.
-    const entries = lines.map((text) => ({ text, until: Number.POSITIVE_INFINITY }));
+    // Recorded now (not when spoken) so the echo filter knows what's coming. Each entry lasts until its estimated end
+    // (the sentences before it, then its own reading time) plus the echo window, and is refreshed by `onstart` and
+    // `onend`: an `onend` that never comes (iOS, Chrome) can't keep the app's words in the filter for good (M13).
+    const now = Date.now();
+    let at = now + VOICES_WAIT_MS;
+    const entries = lines.map((text) => {
+      at += speechDurationMs(text);
+      return { text, until: at + ECHO_MS };
+    });
     this.said.push(...entries);
     this.busy = true;
     this.cb.onSpeaking(true);
@@ -154,6 +161,7 @@ export class Speaker {
       };
       u.onstart = () => {
         started = true;
+        entries[i]!.until = Math.max(entries[i]!.until, Date.now() + speechDurationMs(text) + ECHO_MS);
         if (i === 0) this.clearWatchdog();
       };
       u.onend = () => {
@@ -199,9 +207,9 @@ export class Speaker {
   cancel() {
     this.batch++;
     this.clearWatchdog();
-    const now = Date.now();
-    // What was queued may have been partly heard: keep it for the echo filter a little longer.
-    for (const s of this.said) if (s.until === Number.POSITIVE_INFINITY) s.until = now + ECHO_MS;
+    // What was queued may have been partly heard: keep it for the echo filter a little longer, but no longer than that.
+    const until = Date.now() + ECHO_MS;
+    for (const s of this.said) s.until = Math.min(s.until, until);
     if (this.live.length) {
       this.live = [];
       this.synth.cancel();

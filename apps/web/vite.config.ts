@@ -61,8 +61,8 @@ export default defineConfig({
         // App shell: everything the build emits, so the shell loads offline after the first visit.
         globPatterns: ["**/*.{js,css,html,woff2,png,svg,webmanifest}"],
         // The speech recognition worker (M11, ~550 kB with ONNX Runtime) is downloaded only by those who switch
-        // hands-free on, then cached at runtime below.
-        globIgnores: ["**/stt.worker-*.js"],
+        // hands-free on, then cached at runtime below. The hidden voice diagnostics (M13) are for the owner only.
+        globIgnores: ["**/stt.worker-*.js", "**/VoiceDiagnostics-*.js"],
         navigateFallback: "/index.html",
         // Firebase reserved paths (auth handler) must reach the network.
         navigateFallbackDenylist: [/^\/__\//],

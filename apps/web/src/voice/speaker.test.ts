@@ -1,6 +1,7 @@
 // Speaker (M12): the speech-synthesis quirks that kept hands-free silent on the owner's devices, against a fake
 // `speechSynthesis` that behaves like the browsers do.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { speechDurationMs } from "@solving-food/core";
 import { pickVoice, Speaker, WATCHDOG_MS } from "./speaker";
 
 type Mode = "normal" | "silent" | "not-allowed";
@@ -267,6 +268,37 @@ describe("Speaker", () => {
     await vi.advanceTimersByTimeAsync(0);
     synth.finish();
     await vi.advanceTimersByTimeAsync(9000);
+    expect(speaker.recent()).toEqual([]);
+  });
+
+  it("a sentence whose onend never comes leaves the echo filter after its estimated reading time (M13)", async () => {
+    const { synth, speaker } = setup();
+    const text = "Next, add the spinach and stir.";
+    speaker.say([text]);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(synth.queue).toHaveLength(1); // started (onstart fired), and never ends
+    await vi.advanceTimersByTimeAsync(speechDurationMs(text));
+    expect(speaker.recent()).toEqual([text]); // still plausibly being read
+    await vi.advanceTimersByTimeAsync(9000 + 1000);
+    expect(speaker.recent()).toEqual([]);
+  });
+
+  it("a whole queued batch that never plays is bounded too, and a cancel shortens it to the echo window (M13)", async () => {
+    const { synth, speaker } = setup();
+    synth.mode = "silent"; // nothing starts or ends; the watchdog would report it, but the filter must not wait for that
+    const steps = Array.from({ length: 20 }, (_, i) => `Step ${i + 1}. Next, do the next thing with the onions.`);
+    speaker.say(steps);
+    const total = steps.flatMap((t) => [t.slice(0, 8), t.slice(8)]).reduce((n, t) => n + speechDurationMs(t.trim()), 0);
+    await vi.advanceTimersByTimeAsync(total + 1000 + 9000);
+    expect(speaker.recent()).toEqual([]);
+
+    synth.mode = "normal";
+    speaker.reset(); // the watchdog reported it unavailable meanwhile
+    speaker.say(steps);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(speaker.recent().length).toBeGreaterThan(0);
+    speaker.cancel();
+    await vi.advanceTimersByTimeAsync(8001);
     expect(speaker.recent()).toEqual([]);
   });
 });

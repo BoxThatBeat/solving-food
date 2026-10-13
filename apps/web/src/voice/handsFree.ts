@@ -36,6 +36,8 @@ export interface HandsFreeState {
   status: HandsFreeStatus;
   muted: boolean;
   speaking: boolean;
+  /** A command was heard and is being worked out (M13): the toggle's "heard" look, so the user doesn't repeat it. */
+  heard: boolean;
   problem: HandsFreeProblem;
   /** The last failure, for the toggle to announce once (`id` changes per failure). */
   error: { id: number; message: string } | null;
@@ -94,7 +96,7 @@ function unlockSpeech() {
 }
 
 class HandsFree {
-  private state: HandsFreeState = { enabled: false, status: "off", muted: false, speaking: false, problem: null, error: null };
+  private state: HandsFreeState = { enabled: false, status: "off", muted: false, speaking: false, heard: false, problem: null, error: null };
   private listeners = new Set<() => void>();
   private hosts = 0;
   private graceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -180,7 +182,7 @@ class HandsFree {
   private async start() {
     this.running = true;
     const gen = ++this.generation;
-    this.set({ status: "loading", speaking: false });
+    this.set({ status: "loading", speaking: false, heard: false });
     storage((s) => s.setItem(STARTING_KEY, "1"));
     try {
       if (!this.engine) {
@@ -189,6 +191,7 @@ class HandsFree {
         this.engine = await createEngine({
           onCommand: (c) => this.command(c),
           onSpeaking: (speaking) => this.set({ speaking }),
+          onHeard: (heard) => this.set({ heard }),
           onError: (e) => this.failure(e),
           onSpeechUnavailable: (reason) => this.speechUnavailable(reason),
         });
@@ -215,7 +218,7 @@ class HandsFree {
     this.generation++;
     storage((s) => s.removeItem(STARTING_KEY));
     this.engine?.stop();
-    this.set({ status: "off", speaking: false });
+    this.set({ status: "off", speaking: false, heard: false });
     this.reconcile();
   }
 

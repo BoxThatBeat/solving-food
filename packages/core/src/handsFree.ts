@@ -55,15 +55,27 @@ export function parseVoiceCommand(transcript: string): VoiceCommand | "none" {
  * Removes what is probably the app hearing itself (R4.32 talking over the voice). When a transcript of three or more
  * words is mostly (≥ 60 %) words the app spoke recently, those words are dropped and only the rest is kept, so a
  * keyword read out in a step ("Next, add the onions") doesn't act as a command, while one the user says over the voice
- * still does. Short transcripts ("next", "stop talking") are always kept as heard.
+ * still does. Short transcripts ("next", "stop talking") are always kept as heard, and so is one made only of command
+ * words ("Next. Next. Next.", M13: the owner repeating a command after a step that said "next").
  */
 export function stripEcho(transcript: string, recentlySpoken: readonly string[]): string {
   const words = voiceWords(transcript);
   if (words.length < 3 || !recentlySpoken.length) return words.join(" ");
+  if (words.every((w, i) => KEYWORDS[w] || (w === "shut" && words[i + 1] === "up") || (w === "up" && words[i - 1] === "shut"))) return words.join(" ");
   const spoken = new Set(recentlySpoken.flatMap(voiceWords));
   const echoed = words.filter((w) => spoken.has(w)).length;
   if (echoed / words.length < 0.6) return words.join(" ");
   return words.filter((w) => !spoken.has(w)).join(" ");
+}
+
+/**
+ * A generous estimate of how long a speech synthesiser takes to read `text` aloud (M13): 1 s plus 90 ms a character
+ * (about 130 words a minute, slower than any default voice), at most 30 s. The echo filter keeps a sentence this long
+ * after it was queued or started when its `onend` never comes (seen on iOS and Chrome), so a lost event can't hide the
+ * app's words from commands forever.
+ */
+export function speechDurationMs(text: string): number {
+  return Math.min(30_000, 1000 + 90 * text.length);
 }
 
 // ---------- audio
@@ -89,9 +101,22 @@ export function downsample(input: Float32Array, fromRate: number, toRate = STT_S
   return out;
 }
 
+/**
+ * Silence that ends an utterance (R4.34). The owner first asked for 1.5 s (M11), then for the wait to be cut as much as
+ * possible (M13): 0.7 s still keeps the short pauses inside a sentence ("go back… no, next") in one segment, and a
+ * split there only costs the earlier half (the last keyword wins either way).
+ */
+export const SILENCE_MS = 700;
+/** A segment is cut and sent at this length even while speech goes on (commands are short). */
+export const MAX_SEGMENT_MS = 10_000;
+/** Less voiced audio than this is a click, a cough or a clatter, not speech: dropped. */
+export const MIN_SPEECH_MS = 250;
+/** Quiet audio kept on each side of the speech when a segment is trimmed, so no syllable is clipped. */
+const PAD_MS = 150;
+
 export interface SegmenterOptions {
   sampleRate?: number;
-  /** Silence that ends a segment (R4.34: 1.5 s). */
+  /** Silence that ends a segment (`SILENCE_MS`). */
   silenceMs?: number;
   /** A segment is cut and sent at this length even while speech goes on. */
   maxMs?: number;
@@ -103,14 +128,28 @@ export interface SegmenterOptions {
   minThreshold?: number;
 }
 
+/** A finished utterance and what the diagnostics show about it (M13). */
+export interface SpeechSegment {
+  /** 16 kHz mono PCM, trimmed to the speech plus `PAD_MS` each side. */
+  pcm: Float32Array;
+  /** Length of `pcm`. */
+  ms: number;
+  /** Frames counted as speech. */
+  voicedMs: number;
+  /** Mean level of the voiced frames (RMS). */
+  rms: number;
+  /** From the last voiced frame to the segment being emitted: the silence wait actually spent. */
+  waitedMs: number;
+}
+
 const FRAME_MS = 30;
 
 /**
  * An energy-based voice activity detector. Feed it 16 kHz mono PCM in any chunk size; it returns the speech segments
- * that completed: speech followed by `silenceMs` of quiet (1.5 s), or `maxMs` of speech. The threshold follows the
- * room's noise floor (3.5× the quietest frame of the last 3 s, at least `minThreshold`), so a steady hum (a range hood)
- * stops counting as speech after a few seconds, while the gaps between words keep the floor low during speech.
- * Trailing silence beyond 300 ms is trimmed off the segment.
+ * that completed: speech followed by `silenceMs` of quiet (`SILENCE_MS`, 0.7 s), or `maxMs` of speech. The threshold
+ * follows the room's noise floor (3.5× the quietest frame of the last 3 s, at least `minThreshold`), so a steady hum (a
+ * range hood) stops counting as speech after a few seconds, while the gaps between words keep the floor low during
+ * speech. Leading and trailing silence beyond 150 ms is trimmed off the segment (M13).
  */
 export class SpeechSegmenter {
   private readonly frame: number;
@@ -118,6 +157,7 @@ export class SpeechSegmenter {
   private readonly maxFrames: number;
   private readonly minVoiced: number;
   private readonly prerollFrames: number;
+  private readonly padFrames: number;
   private readonly minThreshold: number;
   private pending: number[] = [];
   private preroll: Float32Array[] = [];
@@ -126,16 +166,21 @@ export class SpeechSegmenter {
   private onset = 0;
   private voiced = 0;
   private silent = 0;
+  private voicedRms = 0;
+  /** Index in `frames` of the first and last frame counted as speech. */
+  private firstLoud = 0;
+  private lastLoud = 0;
   /** Recent frame levels (3 s): the noise floor is their minimum, so it follows the room even while someone talks. */
   private levels: number[] = Array.from({ length: 100 }, () => 0.002);
 
   constructor(opts: SegmenterOptions = {}) {
     const rate = opts.sampleRate ?? STT_SAMPLE_RATE;
     this.frame = Math.round((rate * FRAME_MS) / 1000);
-    this.silenceFrames = Math.ceil((opts.silenceMs ?? 1500) / FRAME_MS);
-    this.maxFrames = Math.ceil((opts.maxMs ?? 15_000) / FRAME_MS);
-    this.minVoiced = Math.ceil((opts.minSpeechMs ?? 200) / FRAME_MS);
+    this.silenceFrames = Math.ceil((opts.silenceMs ?? SILENCE_MS) / FRAME_MS);
+    this.maxFrames = Math.ceil((opts.maxMs ?? MAX_SEGMENT_MS) / FRAME_MS);
+    this.minVoiced = Math.ceil((opts.minSpeechMs ?? MIN_SPEECH_MS) / FRAME_MS);
     this.prerollFrames = Math.ceil((opts.prerollMs ?? 300) / FRAME_MS);
+    this.padFrames = Math.ceil(PAD_MS / FRAME_MS);
     this.minThreshold = opts.minThreshold ?? 0.01;
   }
 
@@ -144,8 +189,14 @@ export class SpeechSegmenter {
     return this.speaking;
   }
 
+  /** The finished segments' audio. */
   push(chunk: Float32Array): Float32Array[] {
-    const out: Float32Array[] = [];
+    return this.pushSegments(chunk).map((s) => s.pcm);
+  }
+
+  /** The finished segments with their measurements (for the diagnostics). */
+  pushSegments(chunk: Float32Array): SpeechSegment[] {
+    const out: SpeechSegment[] = [];
     for (let i = 0; i < chunk.length; i++) {
       this.pending.push(chunk[i]!);
       if (this.pending.length === this.frame) {
@@ -158,16 +209,16 @@ export class SpeechSegmenter {
     return out;
   }
 
-  /** Forgets everything collected (the mic stopped). */
+  /** Forgets everything collected (the mic stopped, or its frames are being ignored). */
   reset(): void {
     this.pending = [];
     this.preroll = [];
     this.frames = [];
     this.speaking = false;
-    this.onset = this.voiced = this.silent = 0;
+    this.onset = this.voiced = this.silent = this.voicedRms = 0;
   }
 
-  private onFrame(f: Float32Array): Float32Array | null {
+  private onFrame(f: Float32Array): SpeechSegment | null {
     let sum = 0;
     for (let i = 0; i < f.length; i++) sum += f[i]! * f[i]!;
     const rms = Math.sqrt(sum / f.length);
@@ -178,11 +229,14 @@ export class SpeechSegmenter {
       this.preroll.push(f);
       if (this.preroll.length > this.prerollFrames + 3) this.preroll.shift();
       this.onset = loud ? this.onset + 1 : 0;
+      this.voicedRms = loud ? this.voicedRms + rms : 0;
       if (this.onset >= 3) {
         this.speaking = true;
         this.frames = [...this.preroll];
         this.preroll = [];
         this.voiced = this.onset;
+        this.firstLoud = this.frames.length - this.onset;
+        this.lastLoud = this.frames.length - 1;
         this.silent = 0;
       }
       return null;
@@ -190,14 +244,18 @@ export class SpeechSegmenter {
     this.frames.push(f);
     if (loud) {
       this.voiced++;
+      this.voicedRms += rms;
       this.silent = 0;
+      this.lastLoud = this.frames.length - 1;
     } else this.silent++;
     if (this.silent >= this.silenceFrames || this.frames.length >= this.maxFrames) {
-      const keep = this.frames.length - Math.max(0, this.silent - 10);
-      const seg = this.voiced >= this.minVoiced ? concat(this.frames.slice(0, keep)) : null;
+      const from = Math.max(0, this.firstLoud - this.padFrames);
+      const to = Math.min(this.frames.length, this.lastLoud + 1 + this.padFrames);
+      const pcm = this.voiced >= this.minVoiced ? concat(this.frames.slice(from, to)) : null;
+      const seg = pcm && { pcm, ms: (to - from) * FRAME_MS, voicedMs: this.voiced * FRAME_MS, rms: this.voicedRms / this.voiced, waitedMs: this.silent * FRAME_MS };
       this.speaking = false;
       this.frames = [];
-      this.onset = this.voiced = this.silent = 0;
+      this.onset = this.voiced = this.silent = this.voicedRms = 0;
       return seg;
     }
     return null;
