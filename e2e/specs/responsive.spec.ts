@@ -71,7 +71,7 @@ test("the Plan page: one column on phones, two at lg, three at xl (plan · sugge
   const box = async (l: Locator) => (await l.first().boundingBox())!;
   const strip = await box(page.getByTestId("coverage-strip"));
   const suggested = await box(page.getByRole("heading", { name: "Suggested" }));
-  const protein = await box(page.getByRole("region", { name: "Protein per serving" }));
+  const protein = await box(page.getByRole("region", { name: "Protein and fibre per serving" }));
   const optimiser = await box(page.getByTestId("optimiser"));
   // Every width: protein is in the optimiser's column, directly above it, and below Suggested.
   expect(Math.abs(protein.x - optimiser.x)).toBeLessThan(2);

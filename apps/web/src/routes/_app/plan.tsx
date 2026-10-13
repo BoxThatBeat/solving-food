@@ -355,7 +355,8 @@ function ProteinCard({
       {types.map((t) => (
         <div key={t} className="flex flex-col gap-1.5">
           {bar(`protein-${t}`, `${MEAL_LABEL[t]} · protein`, protein[t], goals[t])}
-          {bar(`fibre-${t}`, `${MEAL_LABEL[t]} · fibre`, fibre[t], fibreGoals[t])}
+          {/* A fibre row only says something with planned meals or a goal (design pass: no empty rows twice). */}
+          {fibre[t] || fibreGoals[t] !== undefined ? bar(`fibre-${t}`, `${MEAL_LABEL[t]} · fibre`, fibre[t], fibreGoals[t]) : null}
         </div>
       ))}
       <Link to="/settings/preferences" className="text-[0.75rem] font-bold text-ink underline">
