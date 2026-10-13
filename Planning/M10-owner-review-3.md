@@ -1,6 +1,6 @@
 # M10 — Owner review 3
 
-Status: in progress
+Status: done (owner checks below; deploy and `pnpm ingredients:upload` are the owner's)
 
 ## Goal
 
@@ -42,7 +42,8 @@ wording: the panel isn't tracking).
       rows and the chosen recipes), saved meals (Meals page cards), History rows, Use it up and expiry-alert proposals,
       the optimiser's set, pending reviews, duplicate review, the cook order list, a saved meal's page (its recipe rows and
       the add-a-recipe search). The Meals page cards already had a two-image header (kept).
-- [ ] Phone (360 px) and 4K checked; visual baselines updated (Chromium projects).
+- [x] Phone (360–412 px) and 4K checked; visual baselines: none changed (the two baselined pages, sign-in and the
+      Recipes library, show no recipe rows), confirmed with `--update-snapshots=changed` on the four Chromium projects.
 - [x] e2e `plan.spec.ts` @R4.29 (plan card and Create meal show the thumbnail; a recipe without a photo shows the
       placeholder).
 
@@ -124,4 +125,44 @@ wording: the panel isn't tracking).
 
 ## Verification
 
+- `pnpm lint`, `pnpm typecheck`: clean. `pnpm test`: core 608/608 (+ M10: nutrition per serving and the Canadian
+  label rows, staple lines), web 11/11. `pnpm test:rules` 98/98 (+ nutrients on ingredients and recipes, dismissed
+  staples). `pnpm test:functions` 61/61 (+ an ingredient's new nutrients recompute a recipe's nutrition without a
+  version bump). `pnpm ingredients:validate` (480, all with nutrients and a source), `pnpm nutrition:write -- --check`
+  up to date, `pnpm gen:skill -- --check` up to date, `pnpm prices:check` complete. `pnpm e2e:coverage`: every
+  milestone ok; M10 9/9 tagged.
+- Playwright, `--workers=1`, one project and a few specs per emulator session:
+  - desktop-1080p: recipe-detail, sharing, ingredients 9/9; plan, suggestions, history, meals, optimiser, review 39/39;
+    cadence, grocery, receive, core-loop, prices, sides, suggestions 25/26, the one failure being grocery's Copy text,
+    which now (correctly) includes the olive-oil staple line: expectation updated, re-run 1/1; then every `@smoke` test
+    plus everything tagged R4.10/R4.29/R4.30/R7.12: 26 passed, 1 skipped (a project-specific skip).
+  - phone-android: cooking, plan, cadence, grocery, recipe-detail, a11y, responsive: 55 passed, 1 skipped (the
+    tablet-rail test, tablet only). The axe checks pass with the arrow, thumbnails and the panel.
+  - phone-ios: cooking, plan, cadence, grocery, recipe-detail, sharing: 44/44.
+  - desktop-firefox runs only its own subset of specs ("No tests found" for these tags), so it wasn't used.
+  - visual.spec.ts on phone-android, desktop-1080p, desktop-4k, desktop-4k-2x: 8/8, no baseline changed.
+- Design pass (Latte; dev emulator data; phone 412×915 and 360×640, desktop 1920×1080, 4K 3840×2160; screenshots in the
+  session scratchpad): Plan cards (single and multi-recipe rows), Create meal (picker, selected rows, confirm step),
+  Use it or lose it rows, Suggested, the Grocery page's Staples group, the recipe page's Nutrition facts (closed and
+  open) on phone and desktop, a long step with the arrow at 360×640 (and none on desktop, where the step fits), the
+  Plan page at 4K. The prototype has no thumbnails on plan rows, no staples group and no nutrition panel; they reuse
+  its card, kicker, mono-label and border patterns. Fix from the pass: water (free-use, not a staple) was being listed
+  as a staple; only `isStaple` ingredients are now.
+
 ## Owner checks
+
+- Deploy, then run `pnpm ingredients:upload` (no `--force`): it writes `nutrients` + `nutrientSource` to the 480 seed
+  ingredients; ingredients edited in the app keep their edits and get the seed's nutrients only if they have none.
+  The ingredient trigger then recomputes every recipe, so every recipe (old ones included) gets its Nutrition facts.
+  Until then the panel says there's no data yet. An ingredient created in the app (not in the seed) has no nutrients
+  until someone fills the new fields in Ingredients → edit; recipes using it show "~" values.
+- Open a few recipes → Nutrition facts and sanity-check them against a label you know. Judgement calls are listed in
+  `data/README.md` (2 % milk, fat-free Greek yogurt, brewed tea, dry-grounds coffee estimates, label estimates for the
+  salted spice blends).
+- Grocery: with meals planned, look at the **Staples** group (free-use staples your meals use that you've never bought
+  through the app, and staples the cadence thinks are low). Remove what you have; each stays off for its usual
+  interval. Tell me if you'd rather see more (every staple) or fewer (cadence only); the "Are you out of milk?" card is
+  gone.
+- Cook a recipe with a long step on your phone and check the down arrow; ask Claude for a recipe with long steps and
+  check the `.cook` file splits them (re-download the skill from the Drop page first).
+- Plan page and Create meal: every recipe row has its picture; recipes without a photo show the cuisine stripes.

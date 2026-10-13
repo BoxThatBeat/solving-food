@@ -15,6 +15,7 @@ ordered, checkable tasks with the files they touch, the tests that prove them, a
 | [M7-review-fixes.md](M7-review-fixes.md) | Review fixes | M6 | Owner review: units v3, version history, recipe page actions, Recipes skeletons, restart period, kitchen tool names, Plan page layout |
 | [M8-ingredient-matching.md](M8-ingredient-matching.md) | Ingredient matching | M7 | Matcher (variants, preparation words, suggestions), Merge into… (moves Supply, learns aliases), strict skill, discoverable review, live cleanup |
 | [M9-owner-review-2.md](M9-owner-review-2.md) | Owner review 2 | M8 | Latte only, side recipes, meal type first, Supply search, cooking back/scroll, review marks eaten, eating out, expiring meals first, use it up before ordering, fibre, nutrition switch |
+| [M10-owner-review-3.md](M10-owner-review-3.md) | Owner review 3 | M9 | Skill splits long steps, more-text arrow in step mode, recipe thumbnails everywhere, staples on the grocery list, Nutrition Facts panel (Canadian Nutrient File) |
 
 ## How to use these plans
 
