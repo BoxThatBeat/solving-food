@@ -100,7 +100,7 @@ export async function saveIngredient(id: string, data: Omit<IngredientDoc, "need
 }
 
 /** Optional fields; omitting one in an edit clears it (the editor always sends `side` when the ingredient is one). */
-export const OPTIONAL_INGREDIENT_KEYS = ["densityGPerMl", "unitWeightG", "proteinPer100g", "fibrePer100g", "defaultPackAmount", "defaultPackMeasure", "defaultCadenceDays", "side"];
+export const OPTIONAL_INGREDIENT_KEYS = ["densityGPerMl", "unitWeightG", "proteinPer100g", "fibrePer100g", "nutrients", "nutrientSource", "defaultPackAmount", "defaultPackMeasure", "defaultCadenceDays", "side"];
 
 /** Ranks ingredients for a query: exact name/alias, then prefix, then word prefix, then substring (the picker). */
 export function searchIngredients(list: readonly IngredientEntry[], query: string, max = 8): IngredientEntry[] {

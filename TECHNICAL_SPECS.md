@@ -106,6 +106,7 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Commands function memory (M4) | Cloud Run 360k GiB-s / month | raised to 512 MiB / 300 s for imports; other commands still finish in ~1 s: ~60 / day × 0.5 GiB-s ≈ 1,000 GiB-s / month | 300× |
 | Ingredient merge callable (`mergeIngredient`, M8) | counted in the 2M above | one per **Merge into…** (plus one dry run when the confirm opens): rare, < 100 / month after the one-off cleanup. Each reads the recipes and version snapshots that use the duplicate (array-contains queries), the saved meals, and per household ~6 small reads (supply rows, planned items, open grocery lists, keyed docs); writes one per changed doc plus the copied Supply history: < 200 reads and < 100 writes per merge at the design scale. 256 MiB, ≤ 300 s | — |
 | Needs-review listener (M8) | in the 50,000 reads / day | `ingredients where needsReview == true` (Settings count, Recipes banner, More sheet, Drop page): one read per flagged ingredient per session, ~60 now and falling as they're reviewed; the full ingredient list is read only on the Ingredients page and in pickers, as before | — |
+| Nutrition facts (M10, R4.30) | in the 1 GiB storage, 20,000 writes and 50,000 reads / day | ingredients gain `nutrients` (~250 bytes × 480) and recipes `nutrition` (~250 bytes each); the recipe index summaries are unchanged (the panel isn't on cards). The one-off `pnpm ingredients:upload` after deploy writes ≤ 480 ingredients; each fires `ingredientRecipes`, which re-derives the recipes using it (one query + one ingredient `getAll` per recipe): about recipes × ingredients-per-recipe × 11 reads, < 10,000 reads and one write per recipe at today's library (~50 recipes), done once | 5× on that day |
 | Timer callables (`scheduleTimer`, `cancelTimer`, M3) | counted in the 2M above | one per timer start, pause, adjust, cancel: < 3,000 / month | — |
 | Cloud Tasks (queue `timers`, created by the `timers` task function's deploy, M3) | 1M operations / month | < 2,000 (cooking timers: enqueue + delete) | 500× |
 | Cloud Messaging (web push) | free | < 2,000 pushes / month | — |
@@ -174,7 +175,9 @@ ingredients/{ingredientId}
   name, aliases[], category, defaultLocation,     // pantry|cupboard|fridge|freezer
   allowedMeasures: ("weight"|"volume"|"count")[],
   canonicalUnit: "g"|"count",
-  densityGPerMl?, unitWeightG?, proteinPer100g?,
+  densityGPerMl?, unitWeightG?, proteinPer100g?, fibrePer100g?,
+  nutrients?: { kcal?, fatG?, satFatG?, transFatG?, carbG?, sugarsG?, sodiumMg?, cholesterolMg?, potassiumMg?,
+               calciumMg?, ironMg? }, nutrientSource?,   // (M10) per 100 g, Canadian Nutrient File (§5)
   shelfLifeDays: { pantry?, cupboard?, fridge?, freezer? },   // all null → never expires
   defaultPackAmount?, defaultPackMeasure?,        // pack rounding when there's no brand mapping (§8)
   defaultCadenceDays?,                            // staples cadence before the household has bought it twice (§8)
@@ -196,6 +199,8 @@ recipes/{recipeId}                                // source of truth (structured
   prepTasks: [{ text, ingredientRefs[] }],               // mise en place (R4.12)
   defaultLeftoverPortions, leftoverMealType?,          // e.g. 4 portions → lunch
   proteinPerServingG?,                                 // derived on save (§5)
+  fibrePerServingG?, fibreApproximate?,                // (M9) derived like protein
+  nutrition?, nutritionApproximate?,                   // (M10) per serving, same keys as ingredient nutrients (§5)
   sourceUrl?, sourceUrlCanonical?, fingerprint, ingredientIds[],
   imagePaths[], indexChunk,                            // which recipeIndex chunk holds its summary (§9)
   status: "active"|"pendingDuplicateReview"|"trashed", possibleDuplicateOf?,
@@ -390,6 +395,23 @@ Each ingredient declares the **measurements it allows** (R8.3) and one **canonic
 - **Seed data:** about 500 common ingredients with densities, unit weights, **protein per 100 g**, and shelf lives, prepared once from USDA FoodData Central (portion weights and nutrients) and the USDA FoodKeeper dataset, and shipped in `data/`.
 - **Protein per serving** = Σ (canonical grams × `proteinPer100g` / 100) ÷ servings, recomputed whenever a recipe or one of its ingredients changes. Ingredients stored by count use `unitWeightG`. If any non-optional ingredient has no protein value, the recipe shows the protein as approximate ("~32 g"), and the missing ingredient is flagged `needsReview`.
 - **Fibre per serving** (M9, R6.26) is derived the same way from `fibrePer100g` (total dietary fibre, USDA FoodData Central, on all 480 seed ingredients) by `nutrientPerServing()` into `fibrePerServingG` / `fibreApproximate`, and recomputed with protein (`conversionChanged` includes `fibrePer100g`). A missing fibre value only makes the figure approximate; it is not a review reason (in-app ingredients created before M9 would otherwise all need review). Fibre comes from the ingredient list, so the `.cook` format and the Claude skill need nothing new. After deploy, `pnpm ingredients:upload` writes the seed's fibre values (in-app-edited ingredients are kept) and the ingredient trigger recomputes every recipe's fibre.
+- **Nutrition facts** (M10, R4.30): ingredients carry `nutrients` per 100 g (`kcal`, `fatG`, `satFatG`, `transFatG`,
+  `carbG`, `sugarsG`, `sodiumMg`, `cholesterolMg`, `potassiumMg`, `calciumMg`, `ironMg`; `NUTRITION_KEYS` in
+  `packages/core/src/nutrition.ts`) and `nutrientSource`. Seed values come from Health Canada's **Canadian Nutrient
+  File** (CNF food codes per ingredient in `data/nutrition-sources.json`, `pnpm nutrition:write`; reference values
+  where CNF has nothing fitting, see `data/README.md`). `deriveRecipe()` stores `nutrition` per serving (every key
+  through the generalised `nutrientPerServing(recipe, lookup, nutrient)`, which also serves protein and fibre) and
+  `nutritionApproximate` (the keys a non-optional ingredient lacked: shown "~"); a key no ingredient has is left out,
+  and a recipe whose ingredients have no nutrients has no `nutrition` (the panel says so). Recomputed with protein
+  (`conversionChanged` includes `nutrients`), so after deploy `pnpm ingredients:upload` writes the seed's nutrients
+  (an ingredient edited in the app keeps its edits and gets the seed's nutrients only if it has none) and the ingredient
+  trigger gives every existing recipe its panel. `nutritionFacts()` turns a recipe into the rows of a Canadian Nutrition
+  Facts table: Health Canada rounding (calories to 1/5/10, fats to 0.1/0.5/1 g, carbohydrate, fibre, sugars and protein
+  to 1 g, sodium and potassium to 1/5/10 mg, cholesterol to 5 mg, calcium to 5/10 mg, iron to 0.1 mg) and % daily values
+  (fat 75 g, saturated + trans 20 g, fibre 28 g, sugars 100 g, sodium 2,300 mg, potassium 3,400 mg, calcium 1,300 mg, iron
+  18 mg; none for carbohydrate, protein or cholesterol). The panel is display only: nothing but protein and fibre is
+  tracked (goals, filters, scoring), and the recipe index summary doesn't carry it. The ingredient editor and the
+  new-ingredient form have optional per-100 g fields (an edited value sets `nutrientSource` to "Entered in the app").
 - **Display (R8.13, rule v3).** Recipe pages show one unit system per amount via `formatRecipeAmount()`: imperial weights convert to metric only ("2 lb" → "900 g", "8 oz" → "225 g"; 250 g–1 kg rounded to 25 g, otherwise `formatGrams()` rounding, so "4 lb" → "1.8 kg"); fl oz / pints / quarts / gallons convert to ml or L only (`formatMl()`: "2 pints" → "950 ml"); cups, tbsp and tsp read as written with no conversion ("1 cup", "2 tbsp"); counts, metric and vague amounts as written. `fahrenheitOnly()` rewrites step, prep and note text so temperatures are Fahrenheit only: "220°C" → "430°F" (rounded to 5), "350°F (175°C)" → "350°F", "180°C (350°F)" → "350°F". Everything else (supply, grocery, receive, History, notifications, cook review, the Copy text) is metric only via `formatGrams()` / `formatMl()` / `formatAmount()` / `formatCanonical()`: "Rice 2.0 kg (1.2 kg)", "3 (640 g)". Imperial units, cups and spoons remain valid input (Cooklang files, pack sizes, the supply pickers' oz/lb/cup) and are stored canonically through `toCanonical()`, so Supply deduction and the grocery builder still convert them. All formatting lives in `packages/core`.
 
 ### Free-use ingredients

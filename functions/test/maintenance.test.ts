@@ -163,5 +163,13 @@ describe("ingredient edits recompute recipe protein (§5)", () => {
     }, 30_000, "recompute");
     expect(r.proteinPerServingG).toBe(10);
     expect(r.version).toBe(1);
+    // M10 (R4.30): new nutrition facts on an ingredient (pnpm ingredients:upload) give recipes their panel.
+    await db.doc("ingredients/mystery-paste").update({ nutrients: { kcal: 300, fatG: 10, sodiumMg: 400 }, nutrientSource: "test", updatedAt: FieldValue.serverTimestamp() });
+    const n = await poll(async () => {
+      const d = (await db.doc("recipes/paste").get()).data()!;
+      return d.nutrition ? d : null;
+    }, 30_000, "nutrition");
+    expect(n.nutrition).toEqual({ kcal: 150, fatG: 5, sodiumMg: 200 });
+    expect(n.version).toBe(1);
   });
 });

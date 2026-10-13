@@ -74,6 +74,8 @@ const OPTIONAL_KEYS = [
   "proteinApproximate",
   "fibrePerServingG",
   "fibreApproximate",
+  "nutrition",
+  "nutritionApproximate",
   "notes",
   "sourceUrl",
   "sourceUrlCanonical",

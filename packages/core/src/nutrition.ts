@@ -8,6 +8,20 @@ import { z } from "zod";
 /** The nutrients beyond protein and fibre, per 100 g on ingredients and per serving on recipes. */
 export const NUTRITION_KEYS = ["kcal", "fatG", "satFatG", "transFatG", "carbG", "sugarsG", "sodiumMg", "cholesterolMg", "potassiumMg", "calciumMg", "ironMg"] as const;
 export type NutritionKey = (typeof NUTRITION_KEYS)[number];
+/** Field labels for the ingredient forms (per 100 g). */
+export const NUTRITION_LABELS: Readonly<Record<NutritionKey, string>> = {
+  kcal: "Calories",
+  fatG: "Fat g",
+  satFatG: "Saturated fat g",
+  transFatG: "Trans fat g",
+  carbG: "Carbohydrate g",
+  sugarsG: "Sugars g",
+  sodiumMg: "Sodium mg",
+  cholesterolMg: "Cholesterol mg",
+  potassiumMg: "Potassium mg",
+  calciumMg: "Calcium mg",
+  ironMg: "Iron mg",
+};
 /** Every seed ingredient has these (`ingredients:validate`); the rest are shown only when known. */
 export const CORE_NUTRITION_KEYS = ["kcal", "fatG", "satFatG", "carbG", "sugarsG", "sodiumMg"] as const satisfies readonly NutritionKey[];
 

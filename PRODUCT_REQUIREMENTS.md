@@ -22,7 +22,7 @@ The name **Solving Food** is final.
 
 - Placing grocery orders directly. The app hands off a list; an external LLM agent places the order.
 - Reconciling the order confirmation or a receipt against the list automatically.
-- Full nutrition tracking or calorie counting. **Protein and fibre are the only nutrients the app tracks** (§6.4), and a household can turn even that off (R6.27).
+- Full nutrition tracking or calorie counting. **Protein and fibre are the only nutrients the app tracks** (goals, filters, suggestions; §6.4), and a household can turn even that off (R6.27). Every recipe *displays* a Nutrition Facts panel (R4.30), but nothing else is tracked, totalled, or set as a goal.
 - Non-food household items (cleaning supplies, toilet paper) on the grocery list.
 - Weighing ingredients with scales or sensors. Supply is inferred, not measured.
 - Importing recipes from URLs or photos inside the app. An external LLM does this and drops the result into the app (§4.3).
@@ -107,6 +107,7 @@ flowchart LR
 - **R4.12** A **mise en place** screen lists all prep tasks up front (chop, measure, preheat) before step mode starts. The browser or phone **back button** in step mode returns to mise en place (and, in a meal of several recipes, from mise en place to the list of recipes) instead of leaving the cooking view (M9).
 - **R4.13** Users can scale servings, and quantities update to match. On the recipe page the servings control sits directly above the ingredients it scales.
 - **R4.14** If the household is missing a tool the recipe needs (from the kitchen tools setting), the view says so.
+- **R4.30** **Nutrition facts.** Every recipe page, including the shared page and recipes added before this feature, has a **Nutrition facts** section that is **closed by default** and opens to a Canadian-style Nutrition Facts table **per serving**: calories; fat, saturated and trans fat; carbohydrate, fibre and sugars; protein; cholesterol; sodium; and, when known, potassium, calcium and iron, with % daily values. The numbers are worked out from the ingredient list using a nutrition database, preferably Canadian (Health Canada's **Canadian Nutrient File**), and a value is marked approximate ("~") when an ingredient has no data for it. Ingredients can be given or corrected nutrition values in the ingredient editor (M10).
 
 ### 4.3 Adding & Editing Recipes
 
@@ -201,7 +202,7 @@ flowchart LR
 - **R6.16** Suggestions favour recipes that meet the goal (weighted like the other factors), and the optimiser can be told to only propose recipes that meet it.
 - **R6.17** The Plan page shows the **average protein per serving** for each meal type in the current plan, next to the goal, at the bottom of the page directly above the budget optimiser.
 - **R6.26** **Fibre.** Fibre works the same way as protein (M9): recipes show **fibre per serving** (from the ingredients' fibre per 100 g, approximate "~" when an ingredient has no value) on cards and the recipe page; the household sets a **fibre goal per serving** for each meal type, each of which can be turned off; suggestions favour recipes that meet it; the optimiser's goal filter includes it; the Plan page shows the average fibre per serving next to the goal; and lists can be filtered by fibre per serving and sorted by most fibre.
-- **R6.27** **Nutrition tracking switch.** One household setting, **Track protein and fibre**, turns every protein and fibre feature on or off: numbers on recipes, meals and plan rows; the goals and the Plan page's summary; the protein and fibre filters and sorts; the optimiser's goal filter; and the goals' effect on suggestions. Turning it off only hides them: the goals and recipe data are kept, and turning it back on restores everything as it was.
+- **R6.27** **Nutrition tracking switch.** One household setting, **Track protein and fibre**, turns every protein and fibre feature on or off: numbers on recipes, meals and plan rows; the goals and the Plan page's summary; the protein and fibre filters and sorts; the optimiser's goal filter; and the goals' effect on suggestions. Turning it off only hides them: the goals and recipe data are kept, and turning it back on restores everything as it was. The recipe page's Nutrition facts panel (R4.30) is a fact sheet, not tracking, so it stays visible either way (M10).
 
 ### 6.5 Budget Optimiser
 

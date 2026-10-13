@@ -1,6 +1,8 @@
 // <IngredientPicker> (TECHNICAL_SPECS §5 "Ingredient picker", PRD R8.3): a typeahead over ingredient names and aliases
 // ("chicken" → chicken breast, chicken thigh, whole chicken…), with a "create new" path that asks for a category, the
 // allowed measurements, and the conversions they need. Anything incomplete is saved flagged needsReview.
+import { NutrientInputs } from "@/components/ingredients/NutrientInputs";
+import { nutrientsFrom, useNutrientStrings } from "@/components/ingredients/nutrients";
 import * as React from "react";
 import {
   categoryDefaults,
@@ -211,6 +213,7 @@ export function NewIngredientForm({
   const [unitWeight, setUnitWeight] = React.useState("");
   const [protein, setProtein] = React.useState("");
   const [fibre, setFibre] = React.useState("");
+  const [nutrients, setNutrients] = useNutrientStrings(undefined);
   const [busy, setBusy] = React.useState(false);
   const id = ingredientSlug(name);
   const taken = existing.some((i) => i.id === id);
@@ -230,6 +233,8 @@ export function NewIngredientForm({
       unitWeightG: measures.includes("count") ? num(unitWeight) : undefined,
       proteinPer100g: protein.trim() === "" ? undefined : Math.max(0, Number(protein)),
       fibrePer100g: fibre.trim() === "" || !Number.isFinite(Number(fibre)) ? undefined : Math.max(0, Number(fibre)),
+      nutrients: nutrientsFrom(nutrients),
+      nutrientSource: nutrientsFrom(nutrients) ? "Entered in the app" : undefined,
       shelfLifeDays: d.shelfLifeDays,
       freezable: d.freezable,
       isStaple: false,
@@ -297,6 +302,12 @@ export function NewIngredientForm({
           <Input id="new-ing-fibre" inputMode="decimal" value={fibre} onChange={(e) => setFibre(e.target.value)} placeholder="e.g. 2.5" className="py-2.5 shadow-hard-sm" />
         </div>
       </div>
+      <details className="rounded-ui border-2 border-line bg-base px-2.5 py-1.5">
+        <summary className="cursor-pointer text-[0.8125rem] font-extrabold">Nutrition facts per 100 g (optional)</summary>
+        <div className="pt-2">
+          <NutrientInputs value={nutrients} onChange={setNutrients} idPrefix="new-ing-nf" />
+        </div>
+      </details>
       <p className="m-0 text-xs font-semibold text-sub">Leave a conversion blank if you don't know it; the ingredient is flagged for review and amounts in it won't convert yet.</p>
       <div className="flex gap-2">
         <Button size="sm" variant="secondary" onClick={onCancel}>

@@ -142,3 +142,41 @@ test("beside every ingredient: how much is in supply, staple for free-use, expir
   await d.getByRole("button", { name: "Fewer servings" }).click();
   await expect(d.getByLabel(/chicken thigh: 250 g in supply$/i)).toHaveText("have 250 g");
 });
+
+test("a Nutrition facts panel, closed by default, shows the Canadian label per serving; it stays with tracking off and on the share page (R4.30)", { tag: ["@R4.30", "@R6.27"] }, async ({ page, household, browser }) => {
+  const id = await seedRecipeId("Garlic Rice and Chicken");
+  // Nutrition tracking off (R6.27) hides protein and fibre tiles, not the facts panel.
+  await adminDb.doc(`households/${household.hid}`).set({ settings: { nutrition: false } }, { merge: true });
+  await page.goto(`/recipes/${id}`);
+  const d = detail(page);
+  await expect(d.locator("#recipe-title")).toHaveText("Garlic Rice and Chicken");
+  await expect(d.getByTestId("meta-protein")).toHaveCount(0);
+  const panel = d.getByTestId("nutrition-facts");
+  await expect(panel).toBeVisible();
+  await expect(panel).not.toHaveAttribute("open", "");
+  await expect(panel.getByTestId("nf-fatG")).toBeHidden();
+  await expect(panel.locator("summary")).toContainText(/Nutrition facts/i);
+  await expect(panel.locator("summary")).toContainText(/~?\d+ calories · per serving/i);
+  await panel.locator("summary").click();
+  await expect(panel).toHaveAttribute("open", "");
+  await expect(panel.getByText("Per serving (1 of 2)")).toBeVisible();
+  await expect(panel.getByText(/^Calories ~?\d+$/)).toBeVisible();
+  for (const k of ["fatG", "satFatG", "carbG", "fibre", "sugarsG", "protein", "sodiumMg"]) await expect(panel.getByTestId(`nf-${k}`)).toBeVisible();
+  await expect(panel.getByTestId("nf-fatG")).toContainText(/Fat ~?\d+(\.5)? g\s*\d+ %/);
+  await expect(panel.getByTestId("nf-sodiumMg")).toContainText(/Sodium ~?\d+ mg/);
+  await expect(panel.getByTestId("nf-protein")).toContainText(/Protein ~?\d+ g/);
+  await expect(panel).toContainText("Canadian Nutrient File");
+  // Keyboard: the summary toggles it closed again.
+  await panel.locator("summary").focus();
+  await page.keyboard.press("Enter");
+  await expect(panel).not.toHaveAttribute("open", "");
+
+  // Signed out, on the shared page, the panel is there too.
+  const visitor = await browser.newContext();
+  const v = await visitor.newPage();
+  await v.goto(`/recipes/${id}`);
+  const vp = detail(v).getByTestId("nutrition-facts");
+  await vp.locator("summary").click();
+  await expect(vp.getByTestId("nf-carbG")).toContainText(/Carbohydrate ~?\d+ g/);
+  await visitor.close();
+});

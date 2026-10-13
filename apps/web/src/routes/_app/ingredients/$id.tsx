@@ -1,6 +1,8 @@
 // Ingredient editor (Planning/M1 §1, PRD R8.3, R8.14; spec §5): allowed measurements and the conversions they need,
 // protein, shelf lives, pack size, cadence, and the free-use / staple flags. Saving recomputes `needsReview`; recipes
 // that use the ingredient pick up new conversions through the ingredientRecipes function.
+import { NutrientInputs } from "@/components/ingredients/NutrientInputs";
+import { nutrientSourceFor, nutrientsFrom, useNutrientStrings } from "@/components/ingredients/nutrients";
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
@@ -147,6 +149,7 @@ function IngredientForm({ id, initial }: { id: string; initial: IngredientDoc })
   const [unitWeight, setUnitWeight] = React.useState(numStr(initial.unitWeightG));
   const [protein, setProtein] = React.useState(numStr(initial.proteinPer100g));
   const [fibre, setFibre] = React.useState(numStr(initial.fibrePer100g));
+  const [nutrients, setNutrients] = useNutrientStrings(initial.nutrients);
   const [shelf, setShelf] = React.useState<Record<StorageLocation, string>>({
     pantry: numStr(initial.shelfLifeDays.pantry),
     cupboard: numStr(initial.shelfLifeDays.cupboard),
@@ -191,6 +194,8 @@ function IngredientForm({ id, initial }: { id: string; initial: IngredientDoc })
           freezable,
           isStaple: isStaple || freeUse,
           freeUse,
+          nutrients: nutrientsFrom(nutrients),
+          nutrientSource: nutrientSourceFor(initial.nutrients, initial.nutrientSource, nutrientsFrom(nutrients)),
           // A side (R5.9) for every household; free-use ingredients aren't tracked, so they can't be sides.
           side: !freeUse && toNum(sidePortion) ? { portion: toNum(sidePortion)! } : undefined,
         },
@@ -254,6 +259,11 @@ function IngredientForm({ id, initial }: { id: string; initial: IngredientDoc })
           <F label="Protein g/100 g" value={protein} onChange={setProtein} numeric />
           <F label="Fibre g/100 g" value={fibre} onChange={setFibre} numeric />
         </div>
+      </Card>
+      <Card>
+        <SectionLabel hint="R4.30 · per 100 g · optional">Nutrition facts</SectionLabel>
+        <NutrientInputs value={nutrients} onChange={setNutrients} idPrefix="ing-nf" />
+        {initial.nutrientSource ? <p className="m-0 font-mono text-[0.625rem] font-semibold text-sub">Source: {initial.nutrientSource}</p> : null}
       </Card>
       <Card>
         <SectionLabel hint="Days; blank = not kept there">Shelf life</SectionLabel>

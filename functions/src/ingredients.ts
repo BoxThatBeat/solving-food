@@ -163,6 +163,8 @@ export async function mergeIngredient(uid: string, data: unknown): Promise<Merge
     if (t.unitWeightG !== undefined) intoUpdate.unitWeightG = t.unitWeightG;
     if (t.proteinPer100g !== undefined) intoUpdate.proteinPer100g = t.proteinPer100g;
     if (t.fibrePer100g !== undefined) intoUpdate.fibrePer100g = t.fibrePer100g;
+    if (t.nutrients !== undefined) intoUpdate.nutrients = t.nutrients;
+    if (t.nutrientSource !== undefined) intoUpdate.nutrientSource = t.nutrientSource;
     batch.update(intoSnap!.ref, intoUpdate);
     batch.update(fromSnap!.ref, { mergedInto: intoId, needsReview: false, updatedBy: uid, updatedAt: FieldValue.serverTimestamp() });
     await batch.commit();

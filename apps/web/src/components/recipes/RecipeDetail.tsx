@@ -28,6 +28,7 @@ import { lookupFromMap, useIngredientsById, type IngredientEntry } from "@/data/
 import { saveNote, setFavourite, useHouseholdFacts, useNote } from "@/data/householdRecipes";
 import { useNotify } from "@/components/notifications-context";
 import { Badge, SectionLabel, Textarea } from "@/components/ui/chip";
+import { NutritionFactsPanel } from "./NutritionFacts";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -348,6 +349,9 @@ export function RecipeDetail({
         </div>
 
         <IngredientsTable recipe={recipe} ingredients={ingredients} factor={factor} servings={servings} signedIn={!!ctx} have={have} />
+
+        {/* M10 (R4.30): closed by default; a fact sheet, so it shows even with nutrition tracking off (R6.27). */}
+        <NutritionFactsPanel recipe={recipe} servings={recipe.servings} />
 
         {recipe.prepTasks.length ? (
           <section aria-labelledby="prep-h" className="flex flex-col gap-2">

@@ -62,19 +62,19 @@ wording: the panel isn't tracking).
 ### 5. Nutrition facts on every recipe (item 5, R4.30, R6.27)
 > "In every recipe including ones already added, add a nutrition facts drop down that is closed by default. nutrition
 > pulled from a database (e.g. USDA FoodData Central) preferably Canadian."
-- [ ] Data: `data/nutrition-sources.json` maps every seed ingredient to a Canadian Nutrient File food code (or a
+- [x] Data: `data/nutrition-sources.json` maps every seed ingredient to a Canadian Nutrient File food code (or a
       noted reference); `pnpm nutrition:write` (`data/scripts/nutrition.ts`) fetches CNF per-100 g values (cached in
       `data/.cnf-cache/`, gitignored) and writes `nutrients` + `nutrientSource` into `data/ingredients/*.json`;
       `ingredients:validate` requires them. `data/README.md`.
-- [ ] Core: `NUTRITION_KEYS`, ingredient `nutrients` (per 100 g: kcal, fat, saturated, trans, carbohydrate, sugars,
+- [x] Core: `NUTRITION_KEYS`, ingredient `nutrients` (per 100 g: kcal, fat, saturated, trans, carbohydrate, sugars,
       sodium, cholesterol, potassium, calcium, iron) and recipe `nutrition` (per serving) + `nutritionApproximate`
       (the keys an ingredient lacked), derived in `deriveRecipe()` by the generalised `nutrientPerServing()`;
       `nutritionFacts()` (Canadian label rounding and % daily values). Unit tests.
-- [ ] Functions: derived keys, `conversionChanged` includes `nutrients`, so `pnpm ingredients:upload` recomputes every
+- [x] Functions: derived keys, `conversionChanged` includes `nutrients`, so `pnpm ingredients:upload` recomputes every
       recipe; merge copies nutrients. Rules allow the new fields. Functions/rules tests.
-- [ ] Web: a "Nutrition facts" disclosure on the recipe page and the share page, closed by default, Canadian-label
+- [x] Web: a "Nutrition facts" disclosure on the recipe page and the share page, closed by default, Canadian-label
       look; "~" and a note when approximate. Ingredient editor and new-ingredient form get optional fields.
-- [ ] PRD non-goals line, R4.30, R6.27; spec §4.1, §5, §2 quota note. e2e `recipe-detail.spec.ts` @R4.30 (and the
+- [x] PRD non-goals line, R4.30, R6.27; spec §4.1, §5, §2 quota note. e2e `recipe-detail.spec.ts` @R4.30 (and the
       share page).
 
 ## Decisions

@@ -176,6 +176,10 @@ export function mergedTarget(into: IngredientDoc, from: IngredientDoc): { doc: I
   if (doc.unitWeightG === undefined && from.unitWeightG !== undefined && doc.allowedMeasures.includes("count")) doc.unitWeightG = from.unitWeightG;
   if (doc.proteinPer100g === undefined && from.proteinPer100g !== undefined) doc.proteinPer100g = from.proteinPer100g;
   if (doc.fibrePer100g === undefined && from.fibrePer100g !== undefined) doc.fibrePer100g = from.fibrePer100g;
+  if (doc.nutrients === undefined && from.nutrients !== undefined) {
+    doc.nutrients = from.nutrients;
+    if (from.nutrientSource !== undefined) doc.nutrientSource = from.nutrientSource;
+  }
   doc.needsReview = needsReview(doc);
   return { doc, aliasesAdded };
 }

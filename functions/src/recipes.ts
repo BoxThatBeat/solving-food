@@ -41,7 +41,7 @@ export function contentOf(r: RecipeDoc | DocumentData): RecipeContent {
   return c;
 }
 
-const DERIVED_KEYS = ["ingredients", "ingredientIds", "fingerprint", "proteinPerServingG", "proteinApproximate", "fibrePerServingG", "fibreApproximate", "slug", "sourceUrlCanonical"] as const;
+const DERIVED_KEYS = ["ingredients", "ingredientIds", "fingerprint", "proteinPerServingG", "proteinApproximate", "fibrePerServingG", "fibreApproximate", "nutrition", "nutritionApproximate", "slug", "sourceUrlCanonical"] as const;
 
 /** The derived-field update for a recipe whose content (or an ingredient's conversions) changed; empty when nothing did. */
 export function derivedUpdate(r: RecipeDoc | DocumentData, content: RecipeContent, lookup: ReturnType<typeof lookupOf>): Record<string, unknown> {
@@ -76,7 +76,7 @@ export async function recomputeRecipesUsing(ingredientId: string): Promise<numbe
 
 /** Fields of an ingredient that change recipe numbers. */
 export function conversionChanged(before: DocumentData | undefined, after: DocumentData | undefined): boolean {
-  const keys = ["densityGPerMl", "unitWeightG", "proteinPer100g", "fibrePer100g", "canonicalUnit", "allowedMeasures"];
+  const keys = ["densityGPerMl", "unitWeightG", "proteinPer100g", "fibrePer100g", "nutrients", "canonicalUnit", "allowedMeasures"];
   if (!before || !after) return !!after !== !!before;
   return keys.some((k) => JSON.stringify(before[k] ?? null) !== JSON.stringify(after[k] ?? null));
 }
