@@ -113,7 +113,7 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   After adding seed ingredients run `pnpm prices:check` (and `-- --write` to refresh `centsPerUnit`).
 - **Firestore emulator heap:** a single local run of phone-ios + desktop-1080p together (~190 tests on one emulator)
   ran the Firestore emulator out of Java heap once specs created a fresh recipe per test. The specs now reuse their
-  recipes per worker; locally, run big project sets one at a time (CI runs one browser project per job, each with its own Emulator Suite). Raising the heap with
+  recipes per worker; locally, run big project sets one at a time (CI runs one browser project per job, two shards of ~100 tests each with its own Emulator Suite since M9: at ~190 tests one emulator session stalls, see `checks.yml`). Raising the heap with
   `JAVA_TOOL_OPTIONS` is not an option: the Storage rules runtime treats the JVM's "Picked up …" line as an error.
 
 ## M3 operations (2026-10-10)

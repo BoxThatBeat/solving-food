@@ -185,6 +185,12 @@ meal eaten), R6.23 (new: eating out), R6.24 (new: expiring meals first), R6.25 (
   sets per summary, increments for the count, one transaction on the recipe doc to claim its chunk), a chunk with room
   found by one query, and recipe writes that can't change the index skipped without a read. Spec §9 and the data model
   updated; `recipeIndex.test.ts` covers the skip and the capacity.
+- The index rewrite alone didn't end the stall. The emulator logs CI uploads show why: ~10 minutes into every run
+  the Firestore emulator starts aborting a listen channel with 10,001 pending messages, thousands of times a minute
+  (a page closed with a backlog, as far as the log shows). The last green run (before M9) had the same 28,000 lines
+  and kept serving; the M9 runs stopped answering anyone for a minute, always around the 160th test. The suite
+  simply crossed the size one emulator session survives, as it did once before (`checks.yml` comment). Fix: each
+  browser project runs as two shards of ~100 tests, each with its own Emulator Suite.
 
 ## Owner checks
 
