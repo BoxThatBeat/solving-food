@@ -5,6 +5,8 @@
 // ordering step. The screen stays awake while cooking (Screen Wake Lock).
 // M9 (owner review): each phase is a browser history entry (`?mode=mise|steps`, pushed going forward), so the back
 // button goes from step mode to mise en place, and from a meal's mise en place to its order list.
+import { RecipeThumb } from "@/components/recipes/RecipeThumb";
+import { thumbOf } from "@/components/recipes/helpers";
 import * as React from "react";
 import { useLocation, useNavigate, useRouter } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
@@ -246,6 +248,7 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
                     <button type="button" role="checkbox" aria-checked={on} aria-label={`${r.title} done`} onClick={() => checkOff(id)} className={cn("grid size-10 flex-none cursor-pointer place-items-center rounded-ui border-bw", on ? "bg-acc text-onc" : "bg-base")}>
                       {on ? <Check aria-hidden className="size-5" strokeWidth={4} /> : null}
                     </button>
+                    <RecipeThumb base={thumbOf(r)} cuisine={r.cuisine} />
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className={cn("text-[1.0625rem] leading-tight font-extrabold", on && "line-through decoration-2")}>{r.title}</span>
                       <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">

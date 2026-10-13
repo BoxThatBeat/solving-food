@@ -37,12 +37,13 @@ wording: the panel isn't tracking).
 ### 3. A recipe image next to every recipe name (item 3, R4.29)
 > "show image of recipe in the plan cards and when creating a meal. Recipe names should always have an image
 > associated with it. It should be the same small image the suggested recipes on plan page have"
-- [ ] One `<RecipeThumb>` (the Suggested card's 4 rem framed image, cuisine stripes when there's no photo), used by
+- [x] One `<RecipeThumb>` (the Suggested card's 4 rem framed image, cuisine stripes when there's no photo), used by
       Suggested and everywhere a recipe name is a row: Plan cards (single and multi-recipe rows), Create meal (picker
       rows and the chosen recipes), saved meals (Meals page cards), History rows, Use it up and expiry-alert proposals,
-      the optimiser's set, pending reviews, duplicate review, the cook order list.
+      the optimiser's set, pending reviews, duplicate review, the cook order list, a saved meal's page (its recipe rows and
+      the add-a-recipe search). The Meals page cards already had a two-image header (kept).
 - [ ] Phone (360 px) and 4K checked; visual baselines updated (Chromium projects).
-- [ ] e2e `plan.spec.ts` @R4.29 (plan card and Create meal show the thumbnail; a recipe without a photo shows the
+- [x] e2e `plan.spec.ts` @R4.29 (plan card and Create meal show the thumbnail; a recipe without a photo shows the
       placeholder).
 
 ### 4. Staples appear on the grocery list (item 4, R7.12, R7.7, R8.14, R6.4)

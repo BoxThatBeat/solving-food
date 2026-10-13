@@ -1,6 +1,7 @@
 // Expiry alerts on the Plan page (PRD R6.13; TECHNICAL_SPECS §7 "Expiry badges & alerts"): supply expiring within the
 // period that no planned meal uses, with how much isn't covered and the recipes that use the most of it (each one tap
 // from Create meal). Dismiss hides an alert for the rest of the period (its lots go on the period document).
+import { RecipeThumb } from "@/components/recipes/RecipeThumb";
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import { expiresPhrase, expiryAlerts, formatCanonical, recipesUsing, type ExpiringSpare, type RecipeSummary, type ScoreResult } from "@solving-food/core";
@@ -75,9 +76,10 @@ export function ExpiryAlerts({
                     <Link
                       to="/recipes/$id"
                       params={{ id: recipe.id }}
-                      className="flex min-w-0 flex-1 justify-between gap-2 rounded-ui border-2 border-line bg-base px-2.5 py-2 text-[0.8125rem] font-bold text-ink no-underline"
+                      className="flex min-w-0 flex-1 items-center gap-2.5 rounded-ui border-2 border-line bg-base py-1.5 pr-2.5 pl-1.5 text-[0.8125rem] font-bold text-ink no-underline"
                     >
-                      <span className="min-w-0">{recipe.title}</span>
+                      <RecipeThumb base={summaries.find((x) => x.id === recipe.id)?.thumb} cuisine={recipe.cuisine} className="min-h-10" />
+                        <span className="min-w-0 flex-1">{recipe.title}</span>
                       <span className="flex-none font-mono text-[0.65625rem] font-bold">uses {amount(uses)}</span>
                     </Link>
                     <button type="button" onClick={() => onAdd(recipe.id)} aria-label={`Add ${recipe.title} to plan`} className="w-11 flex-none cursor-pointer rounded-ui border-2 border-line bg-base text-[1rem] font-extrabold text-ink">

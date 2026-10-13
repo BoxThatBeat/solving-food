@@ -5,6 +5,7 @@
 // as it will be when the order arrives; it disappears once the list is ordered (the arriving lots are then that alert's).
 // Not in the prototype: built in the expiry card's language (accent kicker strip instead of peach, as it's advice, not
 // a warning about food already in the kitchen).
+import { RecipeThumb } from "@/components/recipes/RecipeThumb";
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import { formatCanonical, recipesUsing, orderDismissKey, type OrderSpare, type RecipeSummary, type ScoreResult } from "@solving-food/core";
@@ -84,9 +85,10 @@ export function UseItUp({
                       <Link
                         to="/recipes/$id"
                         params={{ id: recipe.id }}
-                        className="flex min-w-0 flex-1 justify-between gap-2 rounded-ui border-2 border-line bg-base px-2.5 py-2 text-[0.8125rem] font-bold text-ink no-underline"
+                        className="flex min-w-0 flex-1 items-center gap-2.5 rounded-ui border-2 border-line bg-base py-1.5 pr-2.5 pl-1.5 text-[0.8125rem] font-bold text-ink no-underline"
                       >
-                        <span className="min-w-0">{recipe.title}</span>
+                        <RecipeThumb base={summaries.find((x) => x.id === recipe.id)?.thumb} cuisine={recipe.cuisine} className="min-h-10" />
+                        <span className="min-w-0 flex-1">{recipe.title}</span>
                         <span className="flex-none font-mono text-[0.65625rem] font-bold">uses {amount(uses)}</span>
                       </Link>
                       <button type="button" onClick={() => onAdd(recipe.id)} aria-label={`Add ${recipe.title} to plan`} className="w-11 flex-none cursor-pointer rounded-ui border-2 border-line bg-acc text-[1rem] font-extrabold text-onc">

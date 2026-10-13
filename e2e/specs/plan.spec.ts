@@ -368,3 +368,35 @@ test.describe("expiring first (M9)", () => {
     await expect(titles).toHaveText([chicken.title, rice.title, spinach.title]);
   });
 });
+
+test.describe("Recipe images next to recipe names (R4.29)", () => {
+  test("plan cards, Create meal's picker, selected and confirm rows show the Suggested thumbnail; no photo shows the placeholder", { tag: ["@R4.29"] }, async ({ page, household }) => {
+    const photoId = await seedRecipeId("Garlic Rice and Chicken");
+    const plain = await makePlanRecipe("Thumbless skillet"); // made without an image
+    const pid = await seedPeriod(household.hid);
+    await seedPlanItem(household.hid, pid, [photoId]);
+    await seedPlanItem(household.hid, pid, [plain.id], { mealType: "lunch", coverage: { lunch: 1 } });
+    const plan = new PlanPage(page);
+    await plan.goto();
+    const withPhoto = plan.item("Garlic Rice and Chicken").getByTestId("recipe-thumb");
+    await expect(withPhoto).toHaveAttribute("data-photo", "true");
+    await expect(withPhoto.locator("img")).toHaveAttribute("src", /960\.webp/);
+    const placeholder = plan.item(plain.title).getByTestId("recipe-thumb");
+    await expect(placeholder).toHaveAttribute("data-photo", "false");
+    await expect(placeholder).toBeVisible();
+    // The same thumbnail as Suggested: 4 rem wide, framed.
+    const box = (await withPhoto.boundingBox())!;
+    const rem = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
+    expect(Math.round(box.width)).toBe(Math.round(4 * rem));
+
+    const sheet = await plan.openCreateMeal();
+    await sheet.getByRole("searchbox", { name: "Search recipes to add…" }).fill("Garlic Rice and Chicken");
+    const pick = sheet.getByRole("checkbox", { name: /^Garlic Rice and Chicken/ });
+    await expect(pick.getByTestId("recipe-thumb")).toHaveAttribute("data-photo", "true");
+    await pick.click();
+    await expect(sheet.getByRole("region", { name: "Selected recipes" }).getByTestId("recipe-thumb")).toHaveAttribute("data-photo", "true");
+    await sheet.getByRole("button", { name: /^Next/ }).click();
+    const confirm = page.getByRole("dialog", { name: "Add to plan" });
+    await expect(confirm.getByTestId("recipe-thumb").first()).toHaveAttribute("data-photo", "true");
+  });
+});

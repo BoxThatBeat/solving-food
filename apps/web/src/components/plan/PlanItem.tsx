@@ -35,6 +35,8 @@ import type { StoredRecipe } from "@/data/recipes";
 import { cn } from "@/lib/utils";
 import { MEAL_LABEL } from "./plan-sheet-context";
 import { useNutrition } from "@/data/nutrition";
+import { RecipeThumb } from "@/components/recipes/RecipeThumb";
+import { thumbOf } from "@/components/recipes/helpers";
 
 export interface PlanItemView {
   id: string;
@@ -109,7 +111,10 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
   };
   return (
     <article className="flex flex-col overflow-hidden rounded-ui border-bw bg-base text-ink shadow-hard" data-testid="plan-item" aria-label={v.title}>
-      <div className="flex flex-col gap-1.5 px-3.5 pt-3 pb-2.5">
+      <div className="flex items-start gap-3 px-3.5 pt-3 pb-2.5">
+      {/* M10 (R4.29): the recipe's thumbnail next to its name; a meal of several recipes shows each on its row below. */}
+      {!out && !multi && it.recipes[0] ? <RecipeThumb base={thumbOf(recipes.get(it.recipes[0].recipeId))} cuisine={recipes.get(it.recipes[0].recipeId)?.cuisine} className="h-16 self-start" /> : null}
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex items-start justify-between gap-2">
           <button type="button" onClick={onOpen} className="cursor-pointer bg-transparent p-0 text-left text-[1.0625rem] leading-tight font-extrabold text-ink hover:underline">
             {v.title}
@@ -148,14 +153,16 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
           {v.leftover?.expired && status === "planned" ? <Badge className="bg-red-soft text-onc uppercase">Past its use-by</Badge> : v.leftover && status === "planned" ? <Badge className="bg-peach-soft text-onc uppercase">Eat soon</Badge> : null}
         </div>
       </div>
+      </div>
       {multi ? (
         <ul className="m-0 list-none p-0">
           {it.recipes.map((r) => {
             const rec = recipes.get(r.recipeId);
             return (
               <li key={r.recipeId} className="border-t-2 border-line">
-                <Link to="/recipes/$id" params={{ id: r.recipeId }} className="flex items-center justify-between gap-2 px-3.5 py-2 text-ink no-underline">
-                  <span className="flex flex-col gap-0.5">
+                <Link to="/recipes/$id" params={{ id: r.recipeId }} className="flex items-center justify-between gap-2.5 px-3.5 py-2 text-ink no-underline">
+                  <RecipeThumb base={thumbOf(rec)} cuisine={rec?.cuisine} />
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="text-[0.875rem] font-bold">
                       {rec?.title ?? "Recipe"}
                       {r.servingsMultiplier !== 1 ? ` ×${r.servingsMultiplier}` : ""}

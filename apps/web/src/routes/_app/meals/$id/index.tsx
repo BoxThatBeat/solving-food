@@ -1,6 +1,8 @@
 // A saved meal (PRD R5.2, R4.21; spec §12 `/meals/:id`): its recipes with servings multipliers and times, favourite,
 // copy link, Add to plan (opens Create meal with this meal selected), rename, change recipes, delete. Renders for
 // signed-out visitors too (share link): then only the meal and its recipes show.
+import { RecipeThumb } from "@/components/recipes/RecipeThumb";
+import { thumbOf } from "@/components/recipes/helpers";
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Star, X } from "lucide-react";
@@ -8,7 +10,6 @@ import { formatMinutes, formatPortion, MEAL_RECIPES_MAX, taxonomyLabel, type Mea
 import { EmptyState, PageBody } from "@/components/AppShell";
 import { useNotify } from "@/components/notifications-context";
 import { useCreateMeal } from "@/components/plan/plan-sheet-context";
-import { RecipeImage } from "@/components/recipes/RecipeImage";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -136,9 +137,7 @@ function MealPage() {
           return (
             <div key={r.recipeId} className="flex flex-wrap items-center gap-3 rounded-ui border-bw bg-base p-2.5 shadow-hard">
               <Link to="/recipes/$id" params={{ id: r.recipeId }} className="flex min-w-0 flex-1 items-center gap-3 text-ink no-underline">
-                <span className="relative block size-14 flex-none overflow-hidden rounded-[calc(var(--r)*0.67)] border-2 border-line">
-                  <RecipeImage base={rec?.imagePaths[0]} cuisine={rec?.cuisine ?? "other"} alt="" sizes="3.5rem" className="absolute inset-0" />
-                </span>
+                <RecipeThumb base={thumbOf(rec)} cuisine={rec?.cuisine} className="h-14" />
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className="text-[0.9375rem] font-extrabold">
                     {rec?.title ?? "Loading…"}
@@ -250,8 +249,9 @@ function AddRecipe({ exclude, onPick, onCancel }: { exclude: string[]; onPick: (
       <ul className="m-0 flex list-none flex-col gap-1 p-0" aria-label="Recipes to add">
         {list.map((r) => (
           <li key={r.id}>
-            <button type="button" onClick={() => onPick(r.id)} className="w-full cursor-pointer rounded-ui border-2 border-line bg-base px-3 py-2 text-left text-sm font-bold text-ink">
-              {r.title}
+            <button type="button" onClick={() => onPick(r.id)} className="flex w-full cursor-pointer items-center gap-2.5 rounded-ui border-2 border-line bg-base py-1.5 pr-3 pl-1.5 text-left text-sm font-bold text-ink">
+              <RecipeThumb base={r.thumb} cuisine={r.cuisine} className="min-h-10" />
+              <span className="min-w-0 flex-1">{r.title}</span>
             </button>
           </li>
         ))}

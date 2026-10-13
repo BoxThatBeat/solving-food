@@ -4,6 +4,7 @@
 // every recipe in the set as its own planned meal in one batch. When the good sets run out it says "No more good
 // combinations" and offers to relax the budget, the caps, or the protein filter. Shown as a card, as the prototype
 // draws it, rather than a sheet.
+import { RecipeThumb } from "@/components/recipes/RecipeThumb";
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import { defaultCap, formatCents, formatProtein, MEAL_TYPES, taxonomyLabel, type MealType, type OptimiserSet, type RecipeSummary } from "@solving-food/core";
@@ -213,7 +214,9 @@ export function OptimiserCard({
                 const c = current.costs[id];
                 return (
                   <li key={id} className={cn("bg-base", i && "border-t-2 border-line")}>
-                    <Link to="/recipes/$id" params={{ id }} className="flex flex-col gap-0.5 px-2.5 py-2 text-ink no-underline">
+                    <Link to="/recipes/$id" params={{ id }} className="flex items-center gap-2.5 px-2.5 py-2 text-ink no-underline">
+                      <RecipeThumb base={r?.thumb} cuisine={r?.cuisine} className="min-h-10" />
+                      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="text-[0.875rem] font-extrabold">{r?.title ?? "Recipe"}</span>
                       {r ? (
                         <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
@@ -221,6 +224,7 @@ export function OptimiserCard({
                           {c !== null && c !== undefined ? ` · +${formatCents(c)}` : ""}
                         </span>
                       ) : null}
+                      </span>
                     </Link>
                   </li>
                 );

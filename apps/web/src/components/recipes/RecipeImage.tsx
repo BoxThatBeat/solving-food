@@ -21,6 +21,8 @@ export function RecipeImage({
   eager?: boolean;
 }) {
   if (!base) {
+    // Decorative (alt ""): the placeholder stripes say nothing to a screen reader.
+    if (!alt) return <div aria-hidden className={cn("size-full", className)} style={{ background: stripes(cuisine) }} />;
     return <div role="img" aria-label={`${alt} (no photo)`} className={cn("size-full", className)} style={{ background: stripes(cuisine) }} />;
   }
   return (

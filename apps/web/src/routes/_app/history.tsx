@@ -2,6 +2,7 @@
 // the date, meal and recipes (deleted titles marked), who cooked it, everyone's ratings, deviations from the recipe,
 // and notes, through the shared <CollectionView>; stat tiles for most-cooked recipes, average rating by cuisine, and
 // spend per period (the estimated cost of grocery lists confirmed as received in each period).
+import { MealThumb } from "@/components/recipes/RecipeThumb";
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { collection } from "firebase/firestore";
@@ -26,6 +27,7 @@ import {
   type CollectionSearch,
   type HouseholdFacts,
   type PeriodDoc,
+  type RecipeSummary,
 } from "@solving-food/core";
 import { db } from "@/firebase/app";
 import { EmptyState, PageBody } from "@/components/AppShell";
@@ -176,7 +178,7 @@ function HistoryPage() {
           <ol className="m-0 flex list-none flex-col gap-3 p-0" aria-label="Cooked">
             {result.items.map((r) => {
               const x = viewById.get(r.id)!;
-              return <HistoryRow key={r.id} id={r.id} e={x.e} at={x.at} fmt={fmt} uid={s.user.uid} members={members} ratings={ratingsBy.get(r.id) ?? []} statusOf={statusOf} sides={sidesLine(x.e.sides, sideName)} ingredientName={(id) => devIngredients.get(id)?.name ?? sideIngredients.get(id)?.name ?? id.replace(/-/g, " ")} unitOf={(id) => ({ u: devIngredients.get(id)?.canonicalUnit ?? "g", w: devIngredients.get(id)?.unitWeightG })} />;
+              return <HistoryRow key={r.id} id={r.id} e={x.e} at={x.at} fmt={fmt} uid={s.user.uid} members={members} ratings={ratingsBy.get(r.id) ?? []} statusOf={statusOf} summary={(id) => byId.get(id)} sides={sidesLine(x.e.sides, sideName)} ingredientName={(id) => devIngredients.get(id)?.name ?? sideIngredients.get(id)?.name ?? id.replace(/-/g, " ")} unitOf={(id) => ({ u: devIngredients.get(id)?.canonicalUnit ?? "g", w: devIngredients.get(id)?.unitWeightG })} />;
             })}
           </ol>
         )}
@@ -235,7 +237,10 @@ function HistoryRow({
   ingredientName,
   unitOf,
   sides,
+  summary,
 }: {
+  /** The recipe's index summary, for the thumbnail (M10, R4.29); undefined for deleted recipes. */
+  summary: (id: string) => RecipeSummary | undefined;
   /** "french fries, frozen peas" (R5.9). */
   sides: string;
   id: string;
@@ -261,6 +266,7 @@ function HistoryRow({
       <span className={cn("grid size-[3.25rem] flex-none place-items-center rounded-ui border-2 border-line font-mono text-[1.125rem] font-extrabold", avg === null ? "bg-mantle" : avg >= 9 ? "bg-acc text-onc" : "bg-[#8bd5ca] text-onc")} aria-label={avg === null ? "Not rated" : `Average rating ${avg.toFixed(1)}`}>
         {avg === null ? "–" : avg.toFixed(1)}
       </span>
+      <MealThumb ids={e.recipeIds} summary={summary} className="h-[3.25rem] self-start" />
       <span className="flex min-w-0 flex-1 flex-col gap-1.5">
         <span className="font-mono text-[0.625rem] font-bold uppercase">{fmt.format(at)}</span>
         <span className="text-[1rem] leading-tight font-extrabold">{e.title ?? e.titles.join(" + ")}</span>

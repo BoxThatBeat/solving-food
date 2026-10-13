@@ -46,3 +46,8 @@ export function madeLine(f: HouseholdFacts): string {
   return `MADE ${f.timesCooked}×${last}`;
 }
 
+
+/** The thumbnail base path of a stored recipe (its first image), for <RecipeThumb> (M10, R4.29). */
+export function thumbOf(r: { imagePaths?: readonly string[] | undefined } | null | undefined): string | null {
+  return r?.imagePaths?.[0] ?? null;
+}

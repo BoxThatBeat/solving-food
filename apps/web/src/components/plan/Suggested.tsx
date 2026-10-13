@@ -5,7 +5,7 @@
 import { Link } from "@tanstack/react-router";
 import { formatCents, formatMinutes, presetOf, resolveWeights, type Reason, type RecipeSummary, type ScoreResult } from "@solving-food/core";
 import { EmptyState } from "@/components/AppShell";
-import { RecipeImage } from "@/components/recipes/RecipeImage";
+import { RecipeThumb } from "@/components/recipes/RecipeThumb";
 import { cn } from "@/lib/utils";
 import { NutritionText } from "@/components/NutritionText";
 
@@ -62,12 +62,11 @@ export function SuggestedSection({
         return (
           <div key={x.id} data-testid="suggestion" className="flex items-stretch gap-2.5 rounded-ui border-bw bg-base p-2 shadow-hard">
             <Link to="/recipes/$id" params={{ id: r.id }} className="flex min-w-0 flex-1 items-stretch gap-2.5 text-ink no-underline">
-              <span className="relative block w-16 flex-none overflow-hidden rounded-[calc(var(--r)*0.6)] border-2 border-line">
-                <RecipeImage base={r.thumb} cuisine={r.cuisine} alt="" sizes="4rem" className="absolute inset-0" />
+              <RecipeThumb base={r.thumb} cuisine={r.cuisine}>
                 <span className="absolute bottom-[0.1875rem] left-[0.1875rem] rounded-[0.1875rem] bg-ink px-1 py-px font-mono text-[0.625rem] font-extrabold text-base" aria-label={`Score ${x.score}`}>
                   {x.score}
                 </span>
-              </span>
+              </RecipeThumb>
               <span className="flex min-w-0 flex-col gap-[0.3125rem] py-0.5">
                 <span className="text-[0.90625rem] leading-tight font-extrabold">{r.title}</span>
                 <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">

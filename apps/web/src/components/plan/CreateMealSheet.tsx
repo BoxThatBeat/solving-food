@@ -43,6 +43,7 @@ import { useSuggestions } from "@/data/suggestions";
 import { useRecipeIndex, useRecipeSearch } from "@/search/useRecipeSearch";
 import { useReadySession } from "@/session/useSession";
 import { cn } from "@/lib/utils";
+import { MealThumb, RecipeThumb } from "@/components/recipes/RecipeThumb";
 import { MEAL_LABEL, type CreateMealRequest } from "./plan-sheet-context";
 import { NutritionText } from "@/components/NutritionText";
 import { useNutritionSearch } from "@/data/nutrition";
@@ -257,7 +258,8 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
                     const sum = byId.get(r.recipeId);
                     const title = sum?.title ?? "Recipe";
                     return (
-                      <li key={r.recipeId} className="flex items-center gap-2 rounded-ui border-2 border-line bg-acc px-2.5 py-1.5 text-onc">
+                      <li key={r.recipeId} className="flex items-center gap-2 rounded-ui border-2 border-line bg-acc px-2 py-1.5 text-onc">
+                        <RecipeThumb base={sum?.thumb} cuisine={sum?.cuisine} className="min-h-10" />
                         <span className="min-w-0 flex-1 text-sm leading-tight font-extrabold">{title}</span>
                         <Stepper
                           label={`Multiplier for ${title}`}
@@ -307,6 +309,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
                         <span aria-hidden className={cn("grid size-6 flex-none place-items-center rounded-[calc(var(--r)*0.5)] border-2 border-line", on ? "bg-ink text-base" : "bg-base")}>
                           {on ? <Check className="size-3.5" strokeWidth={4} /> : null}
                         </span>
+                        <RecipeThumb base={r.thumb} cuisine={r.cuisine} />
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                           <span className="text-sm leading-tight font-extrabold">{r.title}</span>
                           <span className="font-mono text-[0.625rem] font-semibold uppercase opacity-80">
@@ -358,7 +361,8 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
             ) : null}
             {mealRows.map((m) => (
               <li key={m.id}>
-                <button type="button" onClick={() => pickMeal(m.id)} className="flex w-full cursor-pointer items-center gap-3 rounded-ui border-bw bg-base px-3 py-2.5 text-left text-ink shadow-hard">
+                <button type="button" onClick={() => pickMeal(m.id)} className="flex w-full cursor-pointer items-center gap-3 rounded-ui border-bw bg-base px-2.5 py-2 text-left text-ink shadow-hard">
+                  <MealThumb ids={m.recipeIds} summary={(id) => byId.get(id)} />
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="text-[0.9375rem] font-extrabold">{m.title}</span>
                     <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
@@ -396,7 +400,9 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
         </div>
       }
     >
-      <div className="flex flex-col gap-1.5">
+      <div className="flex items-stretch gap-2.5">
+      <MealThumb ids={selected.map((r) => r.recipeId)} summary={(id) => byId.get(id) ?? model.recipes.get(id)} className="min-h-14" />
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <span className="text-[1.0625rem] leading-tight font-extrabold" data-testid="create-meal-title">
           {fromMeal ? fromMeal.title : defaultMealName(titles, sideNames) || "No recipes picked"}
         </span>
@@ -409,6 +415,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
         <button type="button" onClick={() => setStep("pick")} className="cursor-pointer self-start bg-transparent p-0 text-[0.8125rem] font-extrabold text-ink underline">
           Change recipes
         </button>
+      </div>
       </div>
 
       <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">

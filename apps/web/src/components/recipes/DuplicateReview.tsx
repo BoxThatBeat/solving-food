@@ -1,6 +1,8 @@
 // Duplicate review (TECHNICAL_SPECS §9 "Deduplication", PRD R4.20): drop imports that look like an existing recipe
 // wait here. Side-by-side compare, then Keep existing (discard the import), Keep new (the import becomes the next
 // version of the existing recipe, then is discarded), or Keep both.
+import { RecipeThumb } from "./RecipeThumb";
+import { thumbOf } from "./helpers";
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import { describeMatch, findDuplicates, formatMinutes, taxonomyLabel, type RecipeDoc } from "@solving-food/core";
@@ -22,7 +24,10 @@ function Side({ label, r }: { label: string; r: RecipeDoc | null | undefined }) 
       <span className="font-mono text-[0.625rem] font-bold tracking-[0.06rem] uppercase">{label}</span>
       {r ? (
         <>
-          <span className="text-[0.9375rem] leading-tight font-extrabold">{r.title}</span>
+          <span className="flex items-center gap-2">
+            <RecipeThumb base={thumbOf(r)} cuisine={r.cuisine} className="min-h-12" />
+            <span className="min-w-0 text-[0.9375rem] leading-tight font-extrabold">{r.title}</span>
+          </span>
           <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
             {formatMinutes(r.prepMin + r.cookMin)} · serves {r.servings} · {taxonomyLabel(r.cuisine)}
             <NutritionText r={r} />
