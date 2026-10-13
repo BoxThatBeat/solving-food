@@ -2,7 +2,8 @@
 // Step 1 picks one or more recipes with the shared <CollectionView> in multi-select mode (Suggested first, selected
 // recipes pinned on top with a servings multiplier), or a saved meal. Step 2 sets the meal type, servings (default
 // R11.12), sides (R5.9, picked from a search dropdown with the household's portion per person snapshotted), and
-// optionally a name + "Save as meal", shows the budget impact, and adds the plan item.
+// optionally a name + "Save as meal", shows the budget impact, and adds the plan item. M9 (R6.23): a third tab,
+// Eating out, adds a plan item with no recipes for a meal type and an optional note.
 import * as React from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
@@ -12,6 +13,7 @@ import {
   collectionSearchSchema,
   createMealInputSchema,
   defaultMealName,
+  EATING_OUT_NOTE_MAX,
   formatCents,
   formatMinutes,
   formatProtein,
@@ -34,7 +36,7 @@ import { SectionLabel } from "@/components/ui/chip";
 import { Button } from "@/components/ui/button";
 import { useNotify } from "@/components/notifications-context";
 import { useHouseholdFacts, useNotes } from "@/data/householdRecipes";
-import { createMeal, useMeals } from "@/data/plan";
+import { addEatingOut, createMeal, useMeals } from "@/data/plan";
 import { usePlanModel } from "@/data/planModel";
 import { useSides } from "@/data/sides";
 import { SidePicker } from "./SidePicker";
@@ -45,7 +47,7 @@ import { cn } from "@/lib/utils";
 import { MEAL_LABEL, type CreateMealRequest } from "./plan-sheet-context";
 
 type Step = "pick" | "details";
-type Tab = "recipes" | "meals";
+type Tab = "recipes" | "meals" | "out";
 
 const MULTIPLIERS_STEP = 0.5;
 
@@ -89,6 +91,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
   const [saveAsMeal, setSaveAsMeal] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [outNote, setOutNote] = React.useState("");
 
   // A preselected saved meal arrives with the meals listener.
   const [appliedMeal, setAppliedMeal] = React.useState<string | null>(null);
@@ -183,6 +186,25 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
     }
   };
 
+  const submitOut = async () => {
+    setError(null);
+    if (!model.periodId) {
+      setError("The plan period is still being set up. Try again in a moment.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const write = addEatingOut(model.hid, model.periodId, { mealType: effectiveType, ...(outNote.trim() ? { note: outNote.trim() } : {}) }, s.user.uid);
+      if (navigator.onLine) await write;
+      else void write.catch(() => notify({ kind: "error", message: "Couldn't add it to the plan" }));
+      notify({ kind: "success", message: `Eating out · ${MEAL_LABEL[effectiveType].toLowerCase()} added to the plan`, ...(pathname !== "/plan" ? { link: { to: "/plan", label: "Plan" } } : {}) });
+      close();
+    } catch (e) {
+      setError(`Couldn't add it: ${(e as Error).message}`);
+      setBusy(false);
+    }
+  };
+
   if (step === "pick") {
     return (
       <SheetContent
@@ -194,20 +216,31 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
             <Button className="w-full" size="lg" disabled={!selected.length} onClick={() => setStep("details")}>
               {selected.length ? `Next · ${selected.length} recipe${selected.length === 1 ? "" : "s"}` : "Pick at least one recipe"}
             </Button>
+          ) : tab === "out" ? (
+            <div className="flex flex-col gap-2">
+              {error ? (
+                <p role="alert" className="m-0 text-sm font-extrabold text-ink">
+                  {error}
+                </p>
+              ) : null}
+              <Button className="w-full" size="lg" disabled={busy} onClick={submitOut}>
+                {busy ? "Adding…" : `Add eating out · ${MEAL_LABEL[effectiveType]}`}
+              </Button>
+            </div>
           ) : undefined
         }
       >
-        <div role="tablist" aria-label="Pick from" className="grid flex-none grid-cols-2 overflow-hidden rounded-ui border-2 border-line bg-base">
-          {(["recipes", "meals"] as const).map((t) => (
+        <div role="tablist" aria-label="Pick from" className="grid flex-none grid-cols-3 overflow-hidden rounded-ui border-2 border-line bg-base">
+          {(["recipes", "meals", "out"] as const).map((t, i) => (
             <button
               key={t}
               type="button"
               role="tab"
               aria-selected={tab === t}
               onClick={() => setTab(t)}
-              className={cn("cursor-pointer py-2.5 text-center text-[0.8125rem] font-extrabold", tab === t ? "bg-acc text-onc" : "bg-transparent text-ink")}
+              className={cn("cursor-pointer px-1 py-2.5 text-center text-[0.8125rem] font-extrabold", i && "border-l-2 border-line", tab === t ? "bg-acc text-onc" : "bg-transparent text-ink")}
             >
-              {t === "recipes" ? "Recipes" : `Saved meals${mealRows.length ? ` · ${mealRows.length}` : ""}`}
+              {t === "recipes" ? "Recipes" : t === "out" ? "Eating out" : `Saved meals${mealRows.length ? ` · ${mealRows.length}` : ""}`}
             </button>
           ))}
         </div>
@@ -286,6 +319,32 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
               </ul>
             </CollectionView>
           </>
+        ) : tab === "out" ? (
+          <section aria-label="Eating out" className="flex flex-col gap-3">
+            <p className="m-0 text-[0.875rem] font-semibold">A meal you&apos;ll eat out: it fills a slot in the plan with nothing to buy, cook, or take from Supply.</p>
+            <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
+              <legend className="mb-2 p-0">
+                <SectionLabel>Meal type</SectionLabel>
+              </legend>
+              <div className="grid grid-cols-2 gap-2">
+                {mealTypes.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    aria-pressed={effectiveType === t}
+                    onClick={() => setMealType(t)}
+                    className={cn("cursor-pointer rounded-ui border-2 border-line px-2 py-3 text-[0.9375rem] font-extrabold", effectiveType === t ? "bg-acc text-onc" : "bg-base text-ink shadow-hard")}
+                  >
+                    {MEAL_LABEL[t]}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <label className="flex flex-col gap-1.5">
+              <SectionLabel hint="Optional">Note</SectionLabel>
+              <Input value={outNote} maxLength={EATING_OUT_NOTE_MAX} onChange={(e) => setOutNote(e.target.value)} placeholder="Pizza night, dinner at Mom's…" aria-label="Note" />
+            </label>
+          </section>
         ) : (
           <ul aria-label="Saved meals" className="m-0 flex list-none flex-col gap-2 p-0">
             {meals.docs === undefined ? <li className="text-sm font-bold">Loading meals…</li> : null}

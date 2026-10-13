@@ -24,7 +24,10 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import {
+  buildEatingOut,
   buildPlanItem,
+  carriesOver,
+  type EatingOutInput,
   carriedItemId,
   cleanSides,
   mergeDraft,
@@ -162,7 +165,8 @@ async function readCarry(tx: Transaction, hid: string, fromPeriodId: string, can
   for (const id of candidates) {
     const s = await tx.get(doc(db, "households", hid, "planItems", id));
     const item = s.data() as StoredPlanItem | undefined;
-    if (!item || item.status !== "planned" || item.periodId !== fromPeriodId) continue;
+    // Eating out (M9) belongs to its period: never carried.
+    if (!item || !carriesOver(item) || item.periodId !== fromPeriodId) continue;
     if (item.kind === "leftover" && item.leftoverSupplyId) {
       const lo = (await tx.get(doc(db, "households", hid, "supply", item.leftoverSupplyId))).data() as { lots?: StoredLotLike[] } | undefined;
       const lots = (lo?.lots ?? []).map((l) => lotFromDoc(l, millis));
@@ -287,6 +291,13 @@ export async function restartPeriod(hid: string, day: RestartDay, now = Date.now
 }
 
 // ---------- Create meal (R5.7, R5.8)
+
+/** Eating out (M9, R6.23): a plan item with no recipes that covers one slot of its meal type. */
+export async function addEatingOut(hid: string, periodId: string, input: EatingOutInput, uid: string): Promise<string> {
+  const ref = doc(collection(db, "households", hid, "planItems"));
+  await setDoc(ref, { ...buildEatingOut(input, { periodId, uid }), addedAt: serverTimestamp() });
+  return ref.id;
+}
 
 export async function createMeal(
   hid: string,

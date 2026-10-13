@@ -357,10 +357,11 @@ service cloud.firestore {
                                'addedAt'])
         && d.keys().hasAll(['periodId', 'kind', 'mealType', 'servings', 'recipes', 'coverage', 'status', 'addedBy'])
         && str(d.periodId, 1, 200)
-        && d.kind in ['meal', 'leftover']
+        && d.kind in ['meal', 'leftover', 'out']
         && d.mealType in ['breakfast', 'lunch', 'dinner', 'snack']
         && d.servings is number && d.servings > 0 && d.servings <= 100
-        && d.recipes is list && d.recipes.size() <= 12 && (d.kind == 'leftover' || d.recipes.size() >= 1)
+        && d.recipes is list && d.recipes.size() <= 12 && (d.kind != 'meal' || d.recipes.size() >= 1)
+        && (d.kind != 'out' || d.recipes.size() == 0)                 // eating out (M9): no recipes
         && validSides(d) && (d.kind == 'meal' || !('sides' in d))
         && d.coverage is map && d.coverage.keys().hasOnly(['breakfast', 'lunch', 'dinner'])
         && d.status in ['planned', 'cooked', 'skipped', 'eaten']

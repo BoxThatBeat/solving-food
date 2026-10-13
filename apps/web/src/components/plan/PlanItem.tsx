@@ -61,6 +61,7 @@ function recipeMeta(r: StoredRecipe | undefined): React.ReactNode {
 }
 
 function costLine(v: PlanItemView): string {
+  if (v.item.kind === "out") return "EATING OUT · NOTHING TO BUY OR COOK";
   if (v.status === "cooked") return v.review ? "COOKED · REVIEW TO FINISH" : "COOKED";
   if (v.status === "eaten") return "EATEN";
   if (v.status !== "planned") return v.status.toUpperCase();
@@ -76,10 +77,11 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
   const it = v.item;
   const status = v.status;
   const leftover = it.kind === "leftover";
+  const out = it.kind === "out";
   const canCook = status === "planned" && !leftover && it.recipes.length > 0;
   // A cooked meal is finished by its review (M9); Mark eaten stays only for one whose review is already done (older data).
   const canReview = status === "cooked" && !!v.review;
-  const canEat = (status === "cooked" && !v.review) || (status === "planned" && (leftover || it.mealType === "snack"));
+  const canEat = !out && ((status === "cooked" && !v.review) || (status === "planned" && (leftover || it.mealType === "snack")));
   const eat = () => {
     sendCommand(hid, uid, "markEaten", { planItemId: v.id });
     notify({ kind: "success", message: leftover ? `Ate a portion of ${v.title}` : `${v.title} marked eaten` });
@@ -108,7 +110,7 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
             {v.title}
           </button>
           <Badge className={cn("flex-none rounded-[calc(var(--r)*0.5)] px-1.5 py-1 text-[0.5625rem] uppercase", status === "planned" ? "bg-base" : "bg-acc text-onc")} data-testid="plan-item-status">
-            {status === "planned" ? (leftover ? "Leftover" : "To cook") : status}
+            {out ? "Eating out" : status === "planned" ? (leftover ? "Leftover" : "To cook") : status}
           </Badge>
         </div>
         {sides ? (
@@ -118,11 +120,13 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
         ) : null}
         {leftover ? (
           <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">Leftovers · 1 portion{v.leftover?.useBy ? ` · use by ${v.leftover.useBy}` : ""}</span>
+        ) : out ? (
+          <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">{MEAL_LABEL[it.mealType]} · covered, nothing to buy</span>
         ) : !multi ? (
           <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">{recipeMeta(recipes.get(it.recipes[0]?.recipeId ?? ""))}</span>
         ) : null}
         <div className="flex flex-wrap gap-1">
-          {leftover ? null : <Badge className="bg-s0 uppercase">{it.servings} serving{it.servings === 1 ? "" : "s"}</Badge>}
+          {leftover || out ? null : <Badge className="bg-s0 uppercase">{it.servings} serving{it.servings === 1 ? "" : "s"}</Badge>}
           {it.carriedFromId ? <Badge className="bg-peach-soft text-onc uppercase">Carried over</Badge> : null}
           {it.savedMealId ? <Badge className="bg-[color-mix(in_srgb,var(--blue)_55%,white)] text-[#4c4f69] uppercase">Saved meal</Badge> : null}
           {leftovers.map((t) => (
@@ -189,7 +193,7 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
             {leftover ? "Ate one" : status === "cooked" ? "Mark eaten" : "Ate it"}
           </Button>
         ) : null}
-        {!canCook && !canEat && status === "planned" ? (
+        {!canCook && !canEat && status === "planned" && !out ? (
           <Button size="sm" variant="secondary" onClick={onOpen} aria-label={`Edit ${v.title}`} className="shadow-hard-sm">
             Edit
           </Button>
@@ -256,6 +260,7 @@ function PlanItemBody({
   const [busy, setBusy] = React.useState(false);
   const types: MealType[] = [...PLANNABLE_MEAL_TYPES.filter((t) => plannedMealTypes.includes(t) || t === it.mealType), "snack"];
   const editable = it.status === "planned";
+  const out = it.kind === "out";
 
   const save = async () => {
     setBusy(true);
@@ -303,6 +308,7 @@ function PlanItemBody({
         </div>
       }
     >
+      {out ? <p className="m-0 text-[0.875rem] font-semibold">Eating out: nothing to buy, cook, or take from Supply. It fills one {MEAL_LABEL[it.mealType].toLowerCase()} slot.</p> : null}
       <ul className="m-0 flex list-none flex-col gap-1.5 p-0" aria-label="Recipes in this meal">
         {it.recipes.map((r, i) => (
           <li key={r.recipeId}>
@@ -328,12 +334,14 @@ function PlanItemBody({
           ))}
         </div>
       </fieldset>
+      {out ? null : (
       <div className="flex items-center justify-between gap-3 rounded-ui border-2 border-line bg-base px-3 py-2">
         <span id="pi-servings" className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">
           SERVINGS
         </span>
         <Stepper label="Servings" decLabel="Fewer servings" incLabel="More servings" labelledBy="pi-servings" value={servings} min={1} max={SERVINGS_MAX} onChange={setServings} />
       </div>
+      )}
       {it.kind === "meal" && (editable || sides.length) ? (
         <section aria-label="Sides" className="flex flex-col gap-2">
           <SectionLabel hint="Per person">Sides</SectionLabel>
@@ -344,7 +352,7 @@ function PlanItemBody({
           )}
         </section>
       ) : null}
-      {it.savedMealId ? (
+      {out ? null : it.savedMealId ? (
         <p className="m-0 text-[0.8125rem] font-semibold">
           Planned from a saved meal.{" "}
           <Link to="/meals/$id" params={{ id: it.savedMealId }} className="font-extrabold text-ink">

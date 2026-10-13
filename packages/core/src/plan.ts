@@ -32,7 +32,7 @@ export const isPlannable = (t: string): t is PlannableMealType => PLANNABLE.has(
  * count when the batch is cooked).
  */
 export function coverageFor(
-  item: { kind?: "meal" | "leftover"; mealType: MealType; recipes: readonly RecipeRef[] },
+  item: { kind?: "meal" | "leftover" | "out"; mealType: MealType; recipes: readonly RecipeRef[] },
   recipes: (id: string) => CoverageRecipe | undefined,
 ): Coverage {
   const c: Coverage = {};
@@ -40,7 +40,7 @@ export function coverageFor(
     if (n > 0 && isPlannable(t)) c[t] = (c[t] ?? 0) + n;
   };
   add(item.mealType, 1);
-  if (item.kind === "leftover") return c;
+  if (item.kind === "leftover" || item.kind === "out") return c;
   for (const r of item.recipes) {
     const rec = recipes(r.recipeId);
     if (!rec) continue;
@@ -49,14 +49,17 @@ export function coverageFor(
   return c;
 }
 
-export type CellState = "cooked" | "planned" | "open";
+/** "out": a slot the household eats out (M9, R6.23): covered, drawn hatched. */
+export type CellState = "cooked" | "out" | "planned" | "open";
 
 export interface StripRow {
   mealType: PlannableMealType;
   cells: CellState[];
-  /** Slots filled (cooked + planned), may exceed the number of days. */
+  /** Slots filled (cooked + eating out + planned), may exceed the number of days. */
   filled: number;
   cooked: number;
+  /** Slots marked eating out (M9). */
+  out: number;
   days: number;
   /** filled − days when positive ("8/7, +1"). */
   overflow: number;
@@ -64,24 +67,28 @@ export interface StripRow {
 
 /**
  * `stripModel(items, days, plannedMealTypes)`: one row per planned meal type (R11.13), one cell per day. Cooked and
- * eaten items fill solid cells first, then planned ones outlined, left to right (R6.2). Skipped items don't count.
+ * eaten items fill solid cells first, then eating-out slots (M9, hatched), then planned ones outlined, left to right
+ * (R6.2). Skipped items don't count.
  */
 export function stripModel(
-  items: ReadonlyArray<Pick<PlanItemDoc, "coverage" | "status">>,
+  items: ReadonlyArray<Pick<PlanItemDoc, "coverage" | "status"> & { kind?: PlanItemDoc["kind"] }>,
   days: number,
   plannedMealTypes: readonly PlannableMealType[],
 ): StripRow[] {
   return PLANNABLE_MEAL_TYPES.filter((t) => plannedMealTypes.includes(t)).map((mealType) => {
     let cooked = 0;
+    let out = 0;
     let planned = 0;
     for (const it of items) {
       const n = it.coverage?.[mealType] ?? 0;
-      if (it.status === "cooked" || it.status === "eaten") cooked += n;
+      if (it.status === "skipped") continue;
+      if (it.kind === "out") out += n;
+      else if (it.status === "cooked" || it.status === "eaten") cooked += n;
       else if (it.status === "planned") planned += n;
     }
-    const filled = cooked + planned;
-    const cells: CellState[] = Array.from({ length: days }, (_, i) => (i < cooked ? "cooked" : i < filled ? "planned" : "open"));
-    return { mealType, cells, filled, cooked, days, overflow: Math.max(0, filled - days) };
+    const filled = cooked + out + planned;
+    const cells: CellState[] = Array.from({ length: days }, (_, i) => (i < cooked ? "cooked" : i < cooked + out ? "out" : i < filled ? "planned" : "open"));
+    return { mealType, cells, filled, cooked, out, days, overflow: Math.max(0, filled - days) };
   });
 }
 
@@ -130,6 +137,39 @@ export function buildPlanItem(
   return item;
 }
 
+export const EATING_OUT_NOTE_MAX = 80;
+/** "Eating out" input (M9, R6.23): a meal type and an optional note ("Pizza night at Mom's"). */
+export const eatingOutInputSchema = z.object({
+  mealType: z.enum(MEAL_TYPES),
+  note: z.string().trim().max(EATING_OUT_NOTE_MAX).optional(),
+});
+export type EatingOutInput = z.infer<typeof eatingOutInputSchema>;
+
+/**
+ * The plan item for a meal eaten out (M9, R6.23): no recipes or sides (nothing to buy, cook, or take from Supply),
+ * servings 1, one slot of its meal type (none for a snack), status planned. Never carried over at rollover.
+ */
+export function buildEatingOut(input: EatingOutInput, ctx: { periodId: string; uid: string }): Omit<PlanItemDoc, "addedAt"> {
+  const v = eatingOutInputSchema.parse(input);
+  const item: Omit<PlanItemDoc, "addedAt"> = {
+    periodId: ctx.periodId,
+    kind: "out",
+    mealType: v.mealType,
+    servings: 1,
+    recipes: [],
+    coverage: coverageFor({ kind: "out", mealType: v.mealType, recipes: [] }, () => undefined),
+    status: "planned",
+    addedBy: ctx.uid,
+  };
+  if (v.note) item.name = v.note;
+  return item;
+}
+
+/** Plan items that carry into the next period at rollover or restart: planned meals and leftovers, never eating out. */
+export function carriesOver(item: Pick<PlanItemDoc, "status" | "kind">): boolean {
+  return item.status === "planned" && item.kind !== "out";
+}
+
 /** Sides as stored: one entry per ingredient (first wins), positive portions only, at most MEAL_SIDES_MAX. */
 export function cleanSides(sides: ReadonlyArray<{ ingredientId: string; portion: number }> | undefined): MealSide[] {
   const seen = new Set<string>();
@@ -155,10 +195,11 @@ export function defaultMealName(titles: readonly string[], sideNames: readonly s
 
 /** The title a plan item shows: its name, else its recipe titles, then its sides ("Salmon + fries, peas"). */
 export function planItemTitle(
-  item: Pick<PlanItemDoc, "name" | "recipes"> & { sides?: PlanItemDoc["sides"] },
+  item: Pick<PlanItemDoc, "name" | "recipes"> & { sides?: PlanItemDoc["sides"]; kind?: PlanItemDoc["kind"] },
   titleOf: (id: string) => string | undefined,
   sideNameOf?: (ingredientId: string) => string | undefined,
 ): string {
+  if (item.kind === "out") return item.name ? `Eating out · ${item.name}` : "Eating out";
   if (item.name) return item.name;
   const titles = item.recipes.map((r) => titleOf(r.recipeId) ?? "Recipe");
   const base = titles.join(" + ") || "Meal";

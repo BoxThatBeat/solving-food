@@ -271,7 +271,7 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
                                  dismissedLots?                            // (M5) lot IDs whose expiry alert was dismissed
                                                                            // made in Settings during the period. ID = local
                                                                            // start date ("2026-10-05"), so rollovers are idempotent
-  planItems/{itemId}             periodId, kind: "meal"|"leftover", mealType, servings,
+  planItems/{itemId}             periodId, kind: "meal"|"leftover"|"out", mealType, servings,
                                  recipes: [{ recipeId, servingsMultiplier }],   // kind=meal: the meal itself (R5.1), 1..n recipes
                                  sides?: [{ ingredientId, portion }],        // (M6) kind=meal only, ≤ 12; portion snapshotted
                                                                              // at creation, so Settings changes don't move it
@@ -279,6 +279,11 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
                                  leftoverSupplyId?, sourcePlanItemId?,       // kind=leftover → the batch they came from
                                  coverage: { breakfast?, lunch?, dinner? },   // slots it fills (R6.2)
                                  status: planned|cooked|skipped|eaten, carriedFromId?, addedBy, addedAt
+                                 // kind=out (M9, R6.23): eating out. recipes [] (rules: none allowed), no sides, servings 1,
+                                 // coverage { <mealType>: 1 } (none for a snack), optional note in `name`, status stays
+                                 // planned. A kind rather than a flag, so every recipe-reading path (builder, budget,
+                                 // cooking, scoring) already skips it; the strip draws it hatched and counts it covered;
+                                 // `carriesOver()` leaves it behind at rollover and restart
                                  // carried copies have ID <newPeriodId>_<fromItemId>; the original stays in its period
 
   cookEvents/{eventId}           planItemId?, recipeIds[], titles[], cookedBy, cookedAt,   // titles survive recipe deletion
@@ -969,12 +974,12 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 - **Recipe page actions** (M7, revised 2026-10-12): the header row holds ☆ Save, + Plan and Cook →; the text links at the bottom of the page hold Copy link · Version history · Edit · Delete (signed-out visitors see Copy link only). The footer line above them reads `V{version} · EDITED BY … · date` (no "Shared library" label). There is no `.cook` download (R4.22 withdrawn).
 - **Recipe page layout** (2026-10-12): meta tiles (Total / Active / Cook / Protein), the household stats row only when the household has cooked it (R4.5), tools (a red alert for missing tools, a note when the household has none configured, nothing when everything is on hand), then the servings control directly above the ingredients (R4.13), prep, steps, notes, footer.
 - **Recipe durations** show as `45m`, `1h 20m`, `2h` everywhere a recipe's time appears (recipe page tiles, cards, plan items, Create meal, meals, cooking order, duplicate review), formatted by `formatMinutes()` in `packages/core/src/timers.ts`. In uppercase meta lines the duration stays lower case. Step timers keep their own labels (`10 MIN`, "Start 10 min timer").
-- **`<CreateMealSheet>`**: the Plan page's primary action (R5.7). Tabs *Recipes* (multi-select `<CollectionView>`, Suggested sort first, selected recipes pinned at the top with per-recipe multiplier) and *Saved meals*; then meal type, servings, sides (M6, `<SidePicker>`), optional name + "Save as meal" (R5.8); Add to plan.
+- **`<CreateMealSheet>`**: the Plan page's primary action (R5.7). Tabs *Recipes* (multi-select `<CollectionView>`, Suggested sort first, selected recipes pinned at the top with per-recipe multiplier), *Saved meals*, and *Eating out* (M9, R6.23: meal type + optional note, `addEatingOut()` → `buildEatingOut()`); then meal type, servings, sides (M6, `<SidePicker>`), optional name + "Save as meal" (R5.8); Add to plan.
 - **`<SidePicker>`** (M6, R5.9): a combobox over the household's effective sides (`useSides()`: `ingredient.side` ∪ `settings.sides`, ranked by `searchIngredients`), options show the portion per person in metric (`formatPortion`: "150 g", "1 (55 g)"), picked sides are chips with "Remove X" buttons and the meal total (× servings). Used by Create meal, the plan item sheet, and the saved meal page. Picking snapshots the current portion onto the meal.
 - **Settings → Sides** (M6, R11.14): the effective side list (name, portion, Shipped / Changed / Household badge) with Change (grams, or pieces for ingredients with a unit weight), Reset for a changed shipped side, Remove for a household-flagged one; "Flag an ingredient" uses `<IngredientPicker>` (its create-new path covers new ingredients) then a portion. Free-use ingredients are refused with an explanation. Writes `settings.sides` whole.
 - **`<BudgetMeter>`**: sticky on the Plan page (a compact bar on phones, a card in the desktop's right column); turns red below zero; shows "n prices unknown".
 - **`<SupplyBadge>`**: the "have / need" chip next to recipe ingredients. As built (M3): "have 250 g", "have 250 g ⚠" (not enough at the shown servings), "none", or "staple"; unexpired supply only. Recipe cards show CAN MAKE when projected supply covers every tracked ingredient and ALMOST at ≥ 85 % of the tracked grams ("Use what's left", R4.4, uses the same threshold).
-- **`<CoverageStrip>`**: the period coverage view (R6.2). One row per meal type, one cell per day, filled left to right from plan items' `coverage`. Cooked or eaten cells are solid, planned cells are outlined, and overflow shows as "+n". Cells aren't interactive.
+- **`<CoverageStrip>`**: the period coverage view (R6.2). One row per meal type, one cell per day, filled left to right from plan items' `coverage`. Cooked or eaten cells are solid, eating-out cells (M9) hatched, planned cells are outlined, and overflow shows as "+n". Cells aren't interactive.
 - **`<ExpiryBadge>`**: on planned meals (R6.7).
 - **`<ProteinSummary>`**: average protein per serving vs. goal for each meal type, on the Plan page. M7: at the bottom, directly above the optimiser card, in the optimiser's column at every width (phone: after Suggested; lg: right column under Suggested; xl: middle column).
 - **Plan page header and Suggested** (M7, owner review): the header holds the period kicker, the title and **+ Create meal** only (no Grocery list button; the Grocery tab remains). `<CoverageStrip>` has no "not a schedule · cook in any order" hint. Under the Suggested rows a small **See more →** link (accessible name "See more suggested recipes") opens `/recipes?sort=suggested`.

@@ -363,10 +363,15 @@ export const coverageSchema = z.object({
 });
 
 export const PLAN_ITEM_STATUSES = ["planned", "cooked", "skipped", "eaten"] as const;
-/** A plan item (§4.2, R5.1): `kind: "meal"` is 1..n recipes eaten together; `leftover` portions come from M3. */
+/** Plan item kinds: a meal of recipes, leftover portions (M3), or a slot the household eats out (M9, R6.23). */
+export const PLAN_ITEM_KINDS = ["meal", "leftover", "out"] as const;
+/**
+ * A plan item (§4.2, R5.1): `kind: "meal"` is 1..n recipes eaten together; `leftover` portions come from M3; `out` (M9) is
+ * a meal eaten out: no recipes, no sides, servings 1, one slot of its meal type, an optional note as `name`.
+ */
 export const planItemSchema = z.object({
   periodId: id,
-  kind: z.enum(["meal", "leftover"]),
+  kind: z.enum(PLAN_ITEM_KINDS),
   mealType: z.enum(MEAL_TYPES),
   servings: z.number().positive(),
   recipes: z.array(mealRecipeSchema).max(MEAL_RECIPES_MAX),

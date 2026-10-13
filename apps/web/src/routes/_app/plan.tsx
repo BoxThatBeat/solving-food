@@ -119,7 +119,7 @@ function PlanPage() {
     [m.items, titleOf, sideNameOf, m.costs, m.ready, optimistic, reviewOf, m.ctx, m.lotsByIngredient, m.ingredients, m.supply.items, supplyNow, endMs, tz],
   );
   const rows = React.useMemo(
-    () => stripModel(views.map((v) => ({ coverage: v.item.coverage, status: v.status })), cells.length, m.household?.plannedMealTypes ?? []),
+    () => stripModel(views.map((v) => ({ coverage: v.item.coverage, status: v.status, kind: v.item.kind })), cells.length, m.household?.plannedMealTypes ?? []),
     [views, cells.length, m.household?.plannedMealTypes],
   );
   const listRows = React.useMemo(() => views.map((v) => planItemRow(v.id, v.item, (id) => byId.get(id), v.title, sideNameOf)), [views, byId, sideNameOf]);

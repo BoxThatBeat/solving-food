@@ -91,15 +91,21 @@ export function CollectionView(p: CollectionViewProps) {
   const [open, setOpen] = React.useState(false);
   const [draft, setDraft] = React.useState<Draft>(search);
 
+  // What this box last sent to the URL: its echo must not overwrite newer typing (a fast typist, or a test, can type
+  // again in the same tick the debounced update lands).
+  const [sentQ, setSentQ] = React.useState<string | null>(null);
   // The URL changed elsewhere (Back, a cleared filter): follow it.
   if (urlQ !== seenUrlQ) {
     setSeenUrlQ(urlQ);
-    setQ(urlQ);
+    if (urlQ !== (sentQ ?? "")) setQ(urlQ);
   }
   // Typing updates the URL after a short pause (replace, so Back isn't flooded).
   React.useEffect(() => {
     if (q === urlQ) return;
-    const t = setTimeout(() => onSearchChange({ ...search, q: q || undefined }, { replace: true }), 200);
+    const t = setTimeout(() => {
+      setSentQ(q);
+      onSearchChange({ ...search, q: q || undefined }, { replace: true });
+    }, 200);
     return () => clearTimeout(t);
   }, [q, urlQ, search, onSearchChange]);
 

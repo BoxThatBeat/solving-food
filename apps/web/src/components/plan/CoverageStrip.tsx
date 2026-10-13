@@ -1,19 +1,19 @@
 // <CoverageStrip> (PRD R6.2; TECHNICAL_SPECS §12): one row per planned meal type, one cell per day labelled with its
-// weekday and date. Cells fill left to right from the plan items' coverage: solid = cooked or eaten, outlined =
-// planned, overflow as "+n". Not a schedule: the cells aren't interactive (M7: the "not a schedule · cook in any order" hint
+// weekday and date. Cells fill left to right from the plan items' coverage: solid = cooked or eaten, hatched = eating out
+// (M9, R6.23), outlined = planned, overflow as "+n". Not a schedule: the cells aren't interactive (M7: the "not a schedule · cook in any order" hint
 // was removed at the owner's request). Not in the prototype; built in its language.
 import { stripCount, type DayCell, type StripRow } from "@solving-food/core";
 import { cn } from "@/lib/utils";
 import { MEAL_LABEL } from "./plan-sheet-context";
 
-const STATE_TEXT = { cooked: "cooked", planned: "planned", open: "open" } as const;
+const STATE_TEXT = { cooked: "cooked", out: "eating out", planned: "planned", open: "open" } as const;
 
 export function CoverageStrip({ rows, cells, todayIndex }: { rows: StripRow[]; cells: DayCell[]; todayIndex: number }) {
   return (
     <section aria-label="Period coverage" className="flex flex-col gap-2.5 rounded-ui border-bw bg-base p-3.5 shadow-hard" data-testid="coverage-strip">
       <span className="font-mono text-[0.6875rem] font-bold tracking-[0.09rem] uppercase">Coverage</span>
       <table className="w-full table-fixed border-separate border-spacing-[0.1875rem]">
-        <caption className="sr-only">Meals planned this period by meal type. Solid cells are cooked, outlined cells are planned.</caption>
+        <caption className="sr-only">Meals planned this period by meal type. Solid cells are cooked, hatched cells are eating out, outlined cells are planned.</caption>
         <thead>
           <tr>
             <th scope="col" className="w-[4.25rem] p-0 text-left">
@@ -46,6 +46,7 @@ export function CoverageStrip({ rows, cells, todayIndex }: { rows: StripRow[]; c
                     className={cn(
                       "block h-6 rounded-[calc(var(--r)*0.5)]",
                       state === "cooked" && "border-2 border-line bg-acc",
+                      state === "out" && "border-2 border-line bg-[repeating-linear-gradient(135deg,var(--ink)_0_2px,var(--base)_2px_6px)]",
                       state === "planned" && "border-2 border-line bg-base",
                       state === "open" && "border-2 border-dashed border-sub/70 bg-transparent",
                     )}

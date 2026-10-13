@@ -286,3 +286,58 @@ test.describe("M3 on the Plan page", () => {
     await expect(prompts).toHaveCount(0);
   });
 });
+
+test.describe("eating out (M9)", () => {
+  test("Eating out adds a covered slot: hatched cell, its own card, nothing to buy or cook; removable; not carried over", { tag: ["@R6.23"] }, async ({ page, household }) => {
+    const r = await makePlanRecipe("Out budget chicken");
+    const pid = await seedPeriod(household.hid, { budgetCents: 10000 });
+    await seedPlanItem(household.hid, pid, [r.id], { status: "cooked" });
+    const plan = new PlanPage(page);
+    await plan.goto();
+    await expect(plan.budgetLeft()).toHaveText("$100.00");
+    const sheet = await plan.openCreateMeal();
+    await sheet.getByRole("tab", { name: "Eating out" }).click();
+    await sheet.getByRole("button", { name: "Dinner", exact: true }).click();
+    await sheet.getByLabel("Note").fill("Pizza at Mom's");
+    await sheet.getByRole("button", { name: "Add eating out · Dinner" }).click();
+    await expect(sheet).toBeHidden();
+
+    const card = plan.item("Eating out · Pizza at Mom's");
+    await expect(card).toBeVisible();
+    await expect(card.getByTestId("plan-item-status")).toHaveText(/eating out/i);
+    await expect(card.getByTestId("plan-item-cost")).toHaveText("EATING OUT · NOTHING TO BUY OR COOK");
+    await expect(card.getByRole("button", { name: /^Cook / })).toHaveCount(0);
+    await expect(card.getByRole("button", { name: /eaten$/ })).toHaveCount(0);
+    // Covered: the cooked meal, then the hatched eating-out cell; 2/7.
+    const row = page.getByTestId("strip-dinner");
+    await expect(row.locator("td").nth(0)).toHaveAttribute("data-state", "cooked");
+    await expect(row.locator("td").nth(1)).toHaveAttribute("data-state", "out");
+    await expect(row.locator("td").nth(2)).toHaveAttribute("data-state", "open");
+    await expect(plan.stripCount("dinner")).toHaveText("2/7");
+    // Nothing to buy: the budget is untouched.
+    await expect(plan.budgetLeft()).toHaveText("$100.00");
+    const items = await planItems(household.hid);
+    expect(items.find((i) => i.kind === "out")).toMatchObject({ kind: "out", mealType: "dinner", recipes: [], servings: 1, coverage: { dinner: 1 }, status: "planned", name: "Pizza at Mom's" });
+    await page.goto("/grocery");
+    await expect(page.getByText("Building the list…")).toHaveCount(0);
+    await expect(page.getByText(/Pizza/)).toHaveCount(0);
+
+    // Removable like any planned meal.
+    await plan.goto();
+    await card.getByRole("button", { name: "Remove Eating out · Pizza at Mom's from the plan" }).click();
+    await expect(card).toHaveCount(0);
+    await expect(plan.stripCount("dinner")).toHaveText("1/7");
+  });
+
+  test("an eating-out slot stays in its period when the period rolls over", { tag: ["@R6.23"] }, async ({ page, household }) => {
+    const { addDays, localDate } = await import("../../packages/core/src/index");
+    const oldId = await seedPeriod(household.hid, { startDate: addDays(localDate(Date.now(), "America/Toronto"), -9), days: 7 });
+    await seedPlanItem(household.hid, oldId, [], { kind: "out", servings: 1, name: "Old dinner out" });
+    const plan = new PlanPage(page);
+    await plan.goto();
+    await expect.poll(async () => (await adminDb.doc(`households/${household.hid}`).get()).data()!.currentPeriodId).not.toBe(oldId);
+    await expect(plan.item("Eating out · Old dinner out")).toHaveCount(0);
+    const items = await planItems(household.hid);
+    expect(items.filter((i) => i.kind === "out").map((i) => i.periodId)).toEqual([oldId]);
+  });
+});

@@ -156,6 +156,14 @@ describe("household collections are member-only (R2.8)", () => {
     await assertSucceeds(updateDoc(doc(db, "households/h-alice"), { "settings.sides": { fries: { portion: 200 } } }));
   });
 
+  it("eating out (M9, R6.23): no recipes, no sides", async () => {
+    const db = dbAs(ALICE);
+    await assertSucceeds(setDoc(doc(db, "households/h-alice/planItems/o1"), planItem({ kind: "out", recipes: [], servings: 1, name: "Pizza night" })));
+    await assertFails(setDoc(doc(db, "households/h-alice/planItems/o2"), planItem({ kind: "out" })));
+    await assertFails(setDoc(doc(db, "households/h-alice/planItems/o3"), planItem({ kind: "out", recipes: [], sides: [{ ingredientId: "fries", portion: 150 }] })));
+    await assertFails(setDoc(doc(db, "households/h-alice/planItems/o4"), planItem({ kind: "takeaway", recipes: [] })));
+  });
+
   it("stores, sourcing rules, brand mappings", async () => {
     const db = dbAs(ALICE);
     await assertSucceeds(setDoc(doc(db, "households/h-alice/stores/farm"), { name: "Farmers' market", kind: "inStore", bulk: false }));

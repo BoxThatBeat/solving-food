@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPlanItem, carriedItemId, carryOver, cleanSides, coverageFor, createMealInputSchema, defaultMealName, planItemTitle, proteinSummary, sidesLine, stripCount, stripModel } from "./plan";
+import { buildEatingOut, buildPlanItem, carriedItemId, carriesOver, carryOver, cleanSides, coverageFor, createMealInputSchema, defaultMealName, planItemTitle, proteinSummary, sidesLine, stripCount, stripModel } from "./plan";
 import type { PlanItemDoc } from "./types";
 
 const recipes: Record<string, { defaultLeftoverPortions: number; leftoverMealType?: "breakfast" | "lunch" | "dinner" | "snack" }> = {
@@ -142,5 +142,32 @@ describe("proteinSummary", () => {
       (id) => p[id],
     );
     expect(s).toEqual({ dinner: { avg: 35, items: 2 } });
+  });
+});
+
+describe("eating out (M9, R6.23)", () => {
+  it("builds a plan item with no recipes that covers one slot of its type (none for a snack)", () => {
+    const it = buildEatingOut({ mealType: "dinner", note: " Pizza at Mom's " }, { periodId: "p", uid: "u" });
+    expect(it).toEqual({ periodId: "p", kind: "out", mealType: "dinner", servings: 1, recipes: [], coverage: { dinner: 1 }, status: "planned", addedBy: "u", name: "Pizza at Mom's" });
+    expect(buildEatingOut({ mealType: "snack" }, { periodId: "p", uid: "u" }).coverage).toEqual({});
+    expect("name" in buildEatingOut({ mealType: "lunch", note: "  " }, { periodId: "p", uid: "u" })).toBe(false);
+    expect(planItemTitle({ kind: "out", name: "Pizza", recipes: [] }, () => undefined)).toBe("Eating out · Pizza");
+    expect(planItemTitle({ kind: "out", recipes: [] }, () => undefined)).toBe("Eating out");
+  });
+  it("fills hatched cells after cooked ones, counts as covered, and never carries over", () => {
+    const rows = stripModel(
+      [
+        { coverage: { dinner: 1 }, status: "planned" },
+        { coverage: { dinner: 1 }, status: "planned", kind: "out" },
+        { coverage: { dinner: 1 }, status: "cooked" },
+      ],
+      4,
+      ["dinner"],
+    );
+    expect(rows[0]!.cells).toEqual(["cooked", "out", "planned", "open"]);
+    expect([rows[0]!.filled, rows[0]!.out, rows[0]!.cooked]).toEqual([3, 1, 1]);
+    expect(carriesOver({ status: "planned", kind: "out" })).toBe(false);
+    expect(carriesOver({ status: "planned", kind: "meal" })).toBe(true);
+    expect(carriesOver({ status: "cooked", kind: "meal" })).toBe(false);
   });
 });
