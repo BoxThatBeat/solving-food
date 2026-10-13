@@ -169,3 +169,26 @@ test("a very long step scrolls inside the card; Back and Next stay visible and u
   await expect(page.getByText("the end of the step is here", { exact: false })).toBeInViewport();
   void household;
 });
+
+test("a long step shows a down arrow while there's more text; it goes at the end and a short step never has it (R4.10)", { tag: ["@R4.10"] }, async ({ page, household }) => {
+  const words = Array.from({ length: 160 }, (_, i) => `word${i}`).join(" ");
+  const r = await makeCookRecipe("Arrow step", { lines: `Sear @chicken thigh{600%g} in @olive oil{2%tbsp}, then ${words}, until golden.\n\nServe it.` });
+  await page.setViewportSize({ width: 360, height: 640 });
+  await page.goto(`/recipes/${r.id}/cook?step=0`);
+  const scroller = page.getByTestId("step-scroll");
+  const arrow = page.getByTestId("step-more");
+  await expect(arrow).toBeVisible();
+  await expect(arrow).toHaveAttribute("aria-hidden", "true");
+  // Tapping the arrow scrolls down; at the end it's gone, scrolling back up brings it back.
+  await arrow.locator("span").click();
+  await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  await scroller.evaluate((el) => (el.scrollTop = el.scrollHeight));
+  await expect(arrow).toHaveCount(0);
+  await scroller.evaluate((el) => (el.scrollTop = 0));
+  await expect(arrow).toBeVisible();
+  // The next step is short: no arrow.
+  await page.getByRole("button", { name: "Next step →" }).click();
+  await expect(page.getByTestId("step-text")).toContainText("Serve it");
+  await expect(arrow).toHaveCount(0);
+  void household;
+});

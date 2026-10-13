@@ -27,11 +27,11 @@ wording: the panel isn't tracking).
 
 ### 2. Step mode: an arrow says there's more text (item 2, R4.10)
 > "Need to have an arrow indicating there is more text in a step"
-- [ ] The step text scroll area (M9) shows a downward chevron pinned to its bottom edge (on a fade of the card colour)
+- [x] The step text scroll area (M9) shows a downward chevron pinned to its bottom edge (on a fade of the card colour)
       while the text overflows and isn't scrolled to the end; it disappears at the end and comes back when scrolled up.
       It is decoration (`aria-hidden`); the scroll region is already focusable and labelled. Tapping it scrolls down
       a screenful (a convenience, not the only way).
-- [ ] e2e `cooking.spec.ts` @R4.10: a long step at 360×640 shows the arrow; scrolled to the end it's gone; a short step
+- [x] e2e `cooking.spec.ts` @R4.10: a long step at 360×640 shows the arrow; scrolled to the end it's gone; a short step
       never shows it.
 
 ### 3. A recipe image next to every recipe name (item 3, R4.29)

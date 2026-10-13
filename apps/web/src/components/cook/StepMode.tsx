@@ -5,7 +5,7 @@
 // tablet portrait (step, next step, all ingredients), and landscape tablet/desktop (ingredient checklist | step |
 // timers and next step).
 import * as React from "react";
-import { Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import {
   formatClock,
   formatDuration,
@@ -163,7 +163,8 @@ export function StepMode({
         {s.section ? ` · ${s.section}` : ""}
       </span>
       {/* M9 (owner review): a long step scrolls inside the card; the controls below never move under it. */}
-      <div className="min-h-[4.5rem] flex-1 overflow-y-auto overscroll-contain" data-testid="step-scroll" tabIndex={0} aria-label="Step text">
+      {/* M10 (owner review 3): an arrow at the bottom while there's more text below (StepScroll). */}
+      <StepScroll resetKey={i}>
       <p className="step-text m-0 font-extrabold text-pretty" data-testid="step-text">
         {renderStep(s.text, recipe.ingredients, lookup, factor).map((seg, k) =>
           seg.kind === "text" ? (
@@ -176,7 +177,7 @@ export function StepMode({
           ),
         )}
       </p>
-      </div>
+      </StepScroll>
       {layout !== "wide" && layout !== "phone-landscape" ? <StepIngredients lines={lines} lookup={lookup} factor={factor} big={layout === "tablet-portrait"} /> : null}
       {layout === "phone" || layout === "tablet-portrait" ? (
         <div className="flex flex-none flex-col gap-3">
@@ -378,5 +379,47 @@ function OtherTimers({ timers, except }: { timers: Timers; except: string }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/**
+ * The step text's own scroll area (M9, R4.10) with a "more below" arrow (M10): a chevron on a fade pinned to the bottom
+ * edge while the text overflows and isn't scrolled to the end. The arrow is decoration (the region itself is focusable
+ * and labelled, and scrolls by touch, wheel and keys); tapping it scrolls most of a screenful.
+ */
+function StepScroll({ resetKey, children }: { resetKey: unknown; children: React.ReactNode }) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const [more, setMore] = React.useState(false);
+  const measure = React.useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    setMore(el.scrollHeight - el.clientHeight - el.scrollTop > 4);
+  }, []);
+  React.useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.scrollTop = 0;
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    return () => ro.disconnect();
+  }, [resetKey, measure]);
+  return (
+    <div className="relative flex min-h-[4.5rem] flex-1 flex-col">
+      <div ref={ref} onScroll={measure} className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-testid="step-scroll" data-more={more ? "true" : "false"} tabIndex={0} aria-label="Step text">
+        {children}
+      </div>
+      {more ? (
+        <div aria-hidden data-testid="step-more" className="pointer-events-none absolute inset-x-0 bottom-0 flex h-14 items-end justify-center bg-linear-to-t from-base from-35% to-transparent">
+          <span
+            onClick={() => ref.current?.scrollBy({ top: ref.current.clientHeight * 0.8, behavior: "smooth" })}
+            className="pointer-events-auto grid size-10 cursor-pointer place-items-center rounded-full border-2 border-line bg-ink text-base shadow-hard-sm"
+          >
+            <ChevronDown className="size-6" strokeWidth={3} />
+          </span>
+        </div>
+      ) : null}
+    </div>
   );
 }

@@ -1079,6 +1079,8 @@ Techniques:
 
 Swiping, tapping the screen edges, and arrow keys all change step. Layouts are chosen by orientation and container size, so a tablet propped up in the kitchen gets the multi-pane view.
 
+
+**More-text arrow (M10, R4.10):** the step text's scroll area (`StepScroll` in `StepMode.tsx`) measures `scrollHeight − clientHeight − scrollTop` on scroll and through a `ResizeObserver`; while more than 4 px remain it shows a chevron on a fade of the card colour pinned to the bottom edge (`data-testid="step-more"`, `aria-hidden`: the region itself is focusable and labelled "Step text"). Tapping the chevron scrolls 80 % of the area. Each new step starts scrolled to the top.
 ### Cooking timers
 
 Timers must keep running and **alert even when the phone is locked** or the app is in the background.
