@@ -1,6 +1,6 @@
 # M12 — Hands-free fixes
 
-Status: in progress
+Status: done (owner checks below: iPhone and Linux speech; deploy is the owner's)
 
 ## Goal
 
@@ -38,23 +38,23 @@ R4.31 (changed: no start without a tap; reading-unavailable state), R4.33 (uncha
 ## Items (in build order)
 
 ### 1. No engine start without a tap (R4.31)
-- [ ] The engine (imports, microphone, model) starts only from a tap on the toggle. A fresh page load shows the toggle
+- [x] The engine (imports, microphone, model) starts only from a tap on the toggle. A fresh page load shows the toggle
       off; within the same page session the choice carries across cooking pages (mise en place → steps → review →
       the next cook).
-- [ ] PRD R4.31 and spec updated.
+- [x] PRD R4.31 and spec updated.
 
 ### 2. Crash-loop guard (R4.31)
-- [ ] `sf.handsFree.starting` (localStorage) is set when the engine starts loading and cleared when it's ready, on a
+- [x] `sf.handsFree.starting` (localStorage) is set when the engine starts loading and cleared when it's ready, on a
       clean stop or failure, and on `pagehide`. A page that loads with it set treats the last start as a crash: the flag
       is cleared, the toggle shows its error state, the error toast says hands-free couldn't start on this device, and
       nothing starts.
 
 ### 3. Safari unlock (R4.31, R4.33)
-- [ ] In the toggle's click (synchronously, before any `await`, in the main bundle) speak a single-space utterance,
+- [x] In the toggle's click (synchronously, before any `await`, in the main bundle) speak a single-space utterance,
       kept referenced until it ends; `speechSynthesis.resume()` when it's paused.
 
 ### 4. Speaker robustness (R4.33)
-- [ ] `speaker.ts`: cancel only when its own utterances are pending; after a cancel the first `speak()` of the next batch
+- [x] `speaker.ts`: cancel only when its own utterances are pending; after a cancel the first `speak()` of the next batch
       waits a macrotask; every utterance kept in an array until `onend`/`onerror`; one wait for `voiceschanged` (1 s
       timeout) before the first read; voice choice as before; `onstart` + a 4 s watchdog on the first utterance of a
       batch; `e.error` mapped (`interrupted`/`canceled` normal; `not-allowed`, `synthesis-unavailable`,
@@ -62,30 +62,30 @@ R4.31 (changed: no start without a tap; reading-unavailable state), R4.33 (uncha
       kept.
 
 ### 5. Surface failures (R4.31)
-- [ ] Speech unavailable (no API, watchdog with no voices, a failure error): the toggle shows its error state, a toast
+- [x] Speech unavailable (no API, watchdog with no voices, a failure error): the toggle shows its error state, a toast
       says this device can't read aloud, `console.warn("[hands-free] …")`; listening and commands keep working and the
       setting stays on. Mic/model failures switch it off as before. A TTS failure never calls `fail()`.
 
 ### 6. Model path on Safari (R4.34)
-- [ ] `stt.worker.ts`: the page tells the worker whether to try WebGPU: never on Safari/iOS (WebKit: WASM q8), never
+- [x] `stt.worker.ts`: the page tells the worker whether to try WebGPU: never on Safari/iOS (WebKit: WASM q8), never
       when this device already reported no adapter (`sf.handsFree.gpu = "0"`, written when `requestAdapter()` returns
       null). The worker posts `error` when `pipeline()` throws; the page treats a worker `error`/`messageerror` as a
       model failure, also after the model is ready.
 
 ### 7. Runtime caching through the service worker
-- [ ] Workbox `runtimeCaching`: CacheFirst for `cdn.jsdelivr.net/npm/onnxruntime-web@…/dist/` (few entries, long
+- [x] Workbox `runtimeCaching`: CacheFirst for `cdn.jsdelivr.net/npm/onnxruntime-web@…/dist/` (few entries, long
       expiry). Hugging Face model files: checked whether `transformers-cache` keeps them; spec §2/§12 notes.
 
 ### 8. Tests
-- [ ] Unit tests (`apps/web/src/voice/speaker.test.ts`) against a fake `speechSynthesis`: cancel-then-speak ordering
+- [x] Unit tests (`apps/web/src/voice/speaker.test.ts`) against a fake `speechSynthesis`: cancel-then-speak ordering
       (the fake drops a speak in the same tick as a cancel, like Chrome), utterances kept until end, empty voice list →
       unavailable, `not-allowed` → unavailable, `interrupted` normal, watchdog.
-- [ ] e2e `hands-free.spec.ts`: no auto-start on load; crash-loop guard; speech unavailable while commands still work;
+- [x] e2e `hands-free.spec.ts`: no auto-start on load; crash-loop guard; speech unavailable while commands still work;
       the existing tests with the new timing. Tags R4.31–R4.34; `pnpm e2e:coverage`.
-- [ ] Design pass of the toggle's error state (phone, desktop).
+- [x] Design pass of the toggle's error state (phone, desktop).
 
 ### 9. Documents
-- [ ] PRD R4.31–R4.34, spec hands-free section, §2 row, §14.1 row, SETUP.md, `Planning/README.md`, this plan.
+- [x] PRD R4.31–R4.34, spec hands-free section, §2 row, §14.1 row, SETUP.md, `Planning/README.md`, this plan.
 
 ## Decisions
 
@@ -137,4 +137,57 @@ R4.31 (changed: no start without a tap; reading-unavailable state), R4.33 (uncha
 
 ## Verification
 
+- `pnpm lint`, `pnpm -r typecheck`: clean. `pnpm test`: core 656/656, web 24/24 (+13: `voice/speaker.test.ts` with a
+  fake `speechSynthesis` that drops a `speak()` in a `cancel()`'s task like Chrome: reading order and en-CA voice,
+  no cancel when idle + next batch a task after a cancel, utterances kept until end, repeated `voiceschanged` re-pick,
+  one retry for a late voice list, the 1 s voices wait, no voices → unavailable after the watchdog (and no repeat until
+  `reset()`), a refused speak → watchdog, a long started read doesn't trip it, `not-allowed` → unavailable,
+  `interrupted`/`canceled` normal, the echo memory; `pickVoice` ranking over a 2,000-variant espeak-style list). The
+  ordering test was checked to fail with the M11-style same-task speak.
+- `pnpm e2e:coverage`: M12 3/3 tagged (R4.31, R4.33, R4.34; R4.32 also tagged by the new speech test).
+- Playwright (`scripts/e2e.sh`, one project per emulator session, 2 workers), `hands-free.spec.ts` now 8 tests (+3: no
+  start on load with M11's remembered setting, the crash-loop guard, a device that can't read aloud keeps taking
+  commands; the M11 tests now tap to start, check the unlock utterance and the starting flag, and a reload starts off):
+  - desktop-1080p: hands-free, cooking, timers, review, a11y, leftovers: 31 passed, 1 skipped (touch-only swipe);
+    every `@smoke` test: 19/19. (A first run, under load, failed once in `a11y.spec.ts` "M4 pages" on
+    `/settings/members` waiting for the Invites region; it passed on the re-run and touches nothing in M12.)
+  - phone-android: hands-free, cooking, timers, review, a11y: 29/29.
+  - phone-ios (WebKit): hands-free, cooking, timers, review: 21/21.
+- **Real model** (headless nixpkgs Chromium, the emulator build served by `vite preview`, the app's service worker
+  controlling the page, the built `stt.worker` fed an espeak-ng recording of "Okay, go back to the previous one. No wait,
+  next please." resampled to 16 kHz): the worker posted `no-gpu` (headless has `navigator.gpu` but no adapter), loaded
+  WASM q8 in 16.0 s from an empty cache, and transcribed it exactly in 3.0 s. Caches afterwards: `transformers-cache` holds
+  the model files from huggingface.co (and the WASM), and the new `hands-free-runtime` holds
+  `ort-wasm-simd-threaded.asyncify.{wasm,mjs}`; the worker's jsDelivr requests were answered by the service worker.
+  After a reload: ready in 3.1–3.3 s with no request to huggingface.co or jsDelivr. The mic path (`mic.ts`) is
+  unchanged since M11's fake-microphone check.
+- Production build: main entry `index-*.js` 297.3 kB (unchanged); lazy chunks `HandsFreeToggle` 6.3 → 7.8 kB (unlock,
+  crash guard, error look), `engine` 1.9 → 4.4 kB (the speaker), `input` 3.7 → 4.2 kB, `stt.worker` 546 kB (not
+  precached). Precache 105 entries, 3.46 MB. No `.wasm` in `dist`, no e2e fake in the bundle, the jsDelivr route in
+  `sw.js`.
+- Design pass (Latte; phone 412×915, desktop 1920×1080; screenshots in the session scratchpad): the error look is the
+  same chip with a warning icon on `red-soft` (ink on it ≈ 5.6:1), next to the existing red error banner; off after a
+  crash (switch knob left) and on while it can't read aloud (knob right, "HANDS-FREE" from `md` up). Nothing wraps at
+  phone width. The prototype has no voice control; this reuses its chip, banner and red token.
+- **Not verifiable here:** real Safari / iPhone (the unlock utterance, the WASM path on iOS, memory during the model
+  load), a real Linux Chromium with speech-dispatcher (only the coordinator's report of its voice list), WebGPU on a
+  real GPU, real speakers and microphones.
+
 ## Owner checks
+
+- Deploy, then on the **iPhone** (Safari tab and the installed app): open a recipe → Cook → mise en place → **tap** the
+  mic chip. Expect the spinner while the model downloads the first time (~45 MB; on mobile data it can take a minute or
+  more) and the **prep list read aloud right away**. It now runs the model on the CPU on iOS; the page should no longer
+  reload. If it did crash anyway, the next load shows "Hands-free couldn't start on this device, so it's off." instead
+  of looping: tell me.
+- On the iPhone, check the **side mute switch**: on some iOS versions it silences `speechSynthesis` (the app can't tell);
+  turn it off and the volume up before judging.
+- Reload the cook page: the chip is **off** until you tap it (by design now). Moving on to the steps and the review keeps
+  it on without another tap.
+- **Linux Chromium:** speech needs speech-dispatcher and a voice (espeak-ng) installed system-side (being handled
+  separately in `~/dotfiles/nixos`). Without them, expect the red chip and "This device can't read aloud right now.
+  Hands-free is still listening." after ~5 s, and "next" / "back" still working. With them, it should pick an English
+  voice without "+" (en-CA if there is one) and read; the console should say "No available adapters." once per device
+  (then never again: it remembers there's no GPU).
+- The "Failed to cache ort-wasm…" console warning can still appear (the library's own copy); the service worker now
+  keeps the file, so a second visit shouldn't download it again.
