@@ -45,7 +45,7 @@ export async function openMic(onSegment: (pcm: Float32Array) => void, onError: (
     if (stopped) return;
     for (const seg of segmenter.push(downsample(chunk, ctx.sampleRate))) onSegment(seg);
   };
-  // Without a user gesture the context can start suspended (hands-free came back on by itself): resume on the next tap.
+  // Without a user gesture the context can start suspended (hands-free restarted on the next cooking page without a new tap): resume on the next tap.
   const resume = () => void ctx.resume().catch(() => undefined);
   if (ctx.state === "suspended") resume();
   window.addEventListener("pointerdown", resume, { once: true, capture: true });

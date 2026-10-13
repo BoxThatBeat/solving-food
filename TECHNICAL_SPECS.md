@@ -115,7 +115,7 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Outbound requests from functions (PC Express, M5) | Cloud Run egress to the internet: 1 GiB / month free (North America) | one or two small JSON requests per search, plus one per mapped product per week (~50): < 2,000 requests, < 50 MB / month | 20× |
 | Price writes (M5) | in the 20,000 writes / day | ≤ 12 per product search (each result's price) + one per mapped product per week; prices nobody refreshed for 60 days are deleted weekly | — |
 | Suggestions and optimiser (M5) | no functions | client-only, in Web Workers; the scoring snapshot reuses the plan model's listeners plus cook events (shared with History) and `prices` at the household's store | — |
-| Hands-free mode (M11, R4.31–R4.34) | no Firebase use | speech runs on the device. The Whisper tiny.en model (~41 MB, q8) comes from the Hugging Face Hub and ONNX Runtime's WASM (~5.5 MB) from cdn.jsdelivr.net, once per device, kept in the browser's Cache API; neither is on Hosting (the build drops onnxruntime-web's 27 MB WASM copy). Hosting serves only the ~550 kB worker script to those who switch it on (not precached): < 10 MB / month | — |
+| Hands-free mode (M11, R4.31–R4.34) | no Firebase use | speech runs on the device. The Whisper tiny.en model (~41 MB, q8) comes from the Hugging Face Hub and ONNX Runtime's WASM (~5.5 MB) from cdn.jsdelivr.net, once per device, kept in the browser's Cache API; neither is on Hosting (the build drops onnxruntime-web's 27 MB WASM copy). Hosting serves only the ~550 kB worker script to those who switch it on (not precached): < 10 MB / month. M12: the service worker also keeps ONNX Runtime's WASM from jsDelivr (browser storage only, nothing on Firebase) | — |
 | Cloud Build (function deploys) | 2,500 build-minutes / month | ~10 deploys × ~2 min | 100× |
 | Artifact Registry | 0.5 GB storage | one image per function; cleanup policy deletes images older than 1 day | — |
 | Cloud Run (2nd gen functions run on it) | 2M requests, 180k vCPU-s / month | same as Functions invocations; 256 MiB, max 2 instances | 200× |
@@ -1147,35 +1147,71 @@ records tasks in `_stubTasks/{taskName}` (`scheduled` → `deleted`) and a stub 
 `_stubPushes` (never sent). Unit tests drive the handler directly with an in-memory queue. Device registration happens
 on the first timer (permission, then `getToken` with the VAPID key on the app's service worker).
 
-### Hands-free mode (M11, R4.31–R4.34)
+### Hands-free mode (M11, M12, R4.31–R4.34)
 
 A voice assistant for the cooking views, all on the device. Four parts with separate lifecycles, so speech can be
 interrupted at once whatever inference is doing:
 
-- **State and lifecycle** (`apps/web/src/voice/handsFree.ts`, main bundle, ~2 kB): the device setting
-  (`localStorage sf.handsFree`), the state the toggle shows (off / loading / listening / speaking / muted), the open
+- **State and lifecycle** (`apps/web/src/voice/handsFree.ts`, main bundle, ~2 kB): the on/off choice (in memory for the
+  page session; M11's `localStorage sf.handsFree` is no longer read and is removed on load), the state the toggle shows
+  (off / loading / listening / speaking / muted / error), the open
   page's **voice script** (`useVoiceScript({ id, intro, ingredients, steps, next, previous })`) and the commands. The
   engine runs only while the setting is on **and** a page showing `<HandsFreeToggle>` is mounted (mise en place, step
   mode, the review); unmounting waits 800 ms, so moving from the cook view to the review keeps the microphone open.
   Everything else is a dynamic `import()` the first time hands-free starts.
-- **Speaker** (`voice/speaker.ts`): `SpeechSynthesisUtterance`, `lang = "en-CA"` (an en-CA voice when the device has
-  one), one utterance per sentence, texts made speakable by core `speakable()` ("600 g" → "600 grams", "430°F" → "430
-  degrees Fahrenheit", "1½" → "1 and a half"). `say()` replaces whatever is being read; `cancel()` is
-  `speechSynthesis.cancel()`. It remembers what it said for 8 s after each sentence (the echo filter).
+- **Starts only from a tap** (M12): `handsFree.setEnabled(true)` runs synchronously in the toggle's click and is the only
+  way the engine starts; a fresh page load shows the toggle off. Within the page session the choice carries across
+  cooking pages (the engine restarts when the next cooking page mounts; the tap already unlocked speech).
+- **Safari unlock** (M12): in that click, before anything is awaited, `setEnabled` speaks a single-space utterance (kept
+  referenced in a module variable until it ends) and calls `speechSynthesis.resume()` if it's paused. Safari only lets a
+  page speak once `speak()` has been called inside a gesture; the first real read comes after the lazy imports.
+- **Crash-loop guard** (M12): `localStorage sf.handsFree.starting = "1"` while the engine starts (set in `start()`,
+  removed once the microphone and model are ready, on a stop or failure, and on `pagehide`). A page that loads with it
+  set treats the last start as a crash (an iPhone killed the page loading the model): it removes the flag, shows the
+  toggle's error look and the banner "Hands-free couldn't start on this device, so it's off.", and starts nothing.
+- **Speaker** (`voice/speaker.ts`): `SpeechSynthesisUtterance`, `lang = "en-CA"`, one utterance per sentence. The
+  voice is picked by `pickVoice()` once per voice-list change (never per utterance: espeak-ng on Linux lists ~15,000
+  voices, ~950 English, variants named "English (America)+f3", none marked default): English voices only, ranked en-CA
+  first, then a name without "+", then not espeak-ng (pico, Samantha, Serena…), then `localService`, then list order;
+  none means `lang` alone. `voiceschanged` is listened to for the engine's lifetime (Linux Chromium fires it first
+  with 0 voices, then with the real list ~2 s later): the first read waits at most 1 s for a non-empty list and then
+  goes with `lang` alone, later batches use the re-picked voice, and a first read queued before the list arrived that
+  never started is retried once with the voice when the watchdog fires. Headless Chromium never initialises TTS
+  (`getVoices()` is always empty), so the e2e tests stub `speechSynthesis` with a voice and `onstart`. texts made speakable by core
+  `speakable()` ("600 g" → "600 grams", "430°F" → "430 degrees Fahrenheit", "1½" → "1 and a half"). `say()` replaces
+  whatever is being read. It remembers what it said for 8 s after each sentence (the echo filter). Browser rules (M12):
+  `speechSynthesis.cancel()` only when one of its own utterances is still queued, and after a cancel the next batch is
+  spoken a macrotask later (Chrome drops a `speak()` in the same task as a `cancel()`); every utterance stays in an
+  array until `onend`/`onerror` (Chrome can garbage-collect it otherwise and `onend` never fires); the first read waits
+  once for `voiceschanged` (at most 1 s); a 4 s watchdog on the first sentence of each batch, cleared by `onstart`,
+  `onend` or `onerror`. `e.error` `interrupted` / `canceled` is a normal end; `not-allowed`, `synthesis-unavailable`,
+  `synthesis-failed`, `audio-busy`, `language-unavailable`, `voice-unavailable`, or the watchdog (with no voices, or
+  after the one retry; a first sentence that ends without starting while there are no voices is left to the
+  watchdog) mean **speech unavailable** (reported once until hands-free is
+  switched off and on). No `speechSynthesis` at all is the same state.
 - **Microphone** (`voice/mic.ts`, main thread): `getUserMedia({ audio: { echoCancellation, noiseSuppression,
   autoGainControl } })` → an AudioWorklet (inline blob module; ScriptProcessor where there is none) at the device rate
   → core `downsample()` to 16 kHz mono → core `SpeechSegmenter`: an energy voice-activity detector whose threshold is
   3.5× the quietest 30 ms frame of the last 3 s (at least 0.01 RMS), 300 ms of pre-roll, a segment ends after **1.5 s of
   silence** (or at 15 s), less than 200 ms of voice is dropped. `stop()` ends every track and closes the AudioContext,
-  so the browser's recording indicator goes away. A context that starts suspended (hands-free came back on without a
-  tap) resumes on the next tap or key.
+  so the browser's recording indicator goes away. A context that starts suspended (hands-free restarted on the next
+  cooking page without a new tap) resumes on the next tap or key.
 - **Recogniser** (`voice/stt.worker.ts` + `voice/input.ts`): a module Web Worker running Transformers.js
   `pipeline("automatic-speech-recognition", "onnx-community/whisper-tiny.en")`, WebGPU (fp32 encoder, q4 decoder) when an
-  adapter is available, else WASM (q8, one thread: no COOP/COEP headers, so no SharedArrayBuffer). It receives
+  adapter is available, else WASM (q8, one thread: no COOP/COEP headers, so no SharedArrayBuffer). The page decides
+  whether the worker may try WebGPU (`{ type: "load", gpu }`, M12): never on WebKit (`navigator.vendor` "Apple…" or an
+  iPhone/iPad UA: Safari 26 exposes `navigator.gpu`, and the GPU path took the page down on an iPhone), and never once
+  this device's `requestAdapter()` returned null (the worker posts `no-gpu`, the page stores `localStorage
+  sf.handsFree.gpu = "0"`, so "No available adapters" is logged once per device). A worker `error` / `messageerror`
+  event fails the start, or, after the model is ready, switches hands-free off with a banner; a `pipeline()` that throws
+  posts `error`. It receives
   Float32 PCM (transferred) and returns text; up to 3 segments queue, oldest dropped. The worker survives a toggle off
   (switching back on is instant) and is terminated when no cooking page is open. Model files load from the Hugging Face
   Hub and ONNX Runtime's WASM from jsDelivr; the library caches both in the Cache API (`transformers-cache`), so later
-  starts need no download (measured: first start 10.8 s in headless Chromium on this machine, 3.3 s from cache).
+  starts need no download (measured: first start 10.8 s in headless Chromium on this machine, 3.3 s from cache). The
+  library's copy of the WASM can fail to store (`Cache.put() encountered a network error`, seen on the owner's
+  Chromium), so the service worker also keeps `cdn.jsdelivr.net/npm/onnxruntime-web@<version>/dist/*` (Workbox
+  `CacheFirst`, cache `hands-free-runtime`, 6 entries, 1 year; M12). The model files are left to `transformers-cache`.
 
 **Commands** (core `parseVoiceCommand()`): lower-case words with punctuation and Whisper's bracketed tags removed;
 keywords `next`, `previous|back|before`, `ingredients`, `steps|instructions`, `stop`, `mute`, "shut up", `unmute`
@@ -1192,14 +1228,20 @@ still load): mise en place → its prep list; a step → "For step n:", its ingr
 "Step n." and its instructions with ingredient names but no amounts (they were just read). A new script id (entering a
 step or mise en place) reads its intro; text changes under the same id (servings, data arriving) don't.
 
-**Errors** (`VoiceError`, a message fit for the user): no `speechSynthesis`, no `getUserMedia` / AudioContext, the
-microphone refused or missing or ended, the model failing to load → an error banner (R12.1) and the setting switches
-off. Nothing in the UI lists the commands (owner's request).
+**Errors** (`VoiceError`, a message fit for the user): no `getUserMedia` / AudioContext, the microphone refused or
+missing or ended, the model failing to load, the worker crashing, or the last start crashing the page → an error banner
+(R12.1), the toggle switches off and shows its error look (a warning icon on red-soft) until the next tap. **Speech
+unavailable** (above) is different (M12): a banner "This device can't read aloud right now. Hands-free is still
+listening.", the toggle's error look while it stays on, the microphone and commands keep working, and
+`console.warn("[hands-free] reading aloud isn't available: <reason>")`. A speech failure never takes the
+microphone/model failure path. Nothing in the UI lists the commands (owner's request).
 
 **Test seam:** emulator builds only (`import.meta.env.VITE_USE_EMULATORS`, a build-time constant, so production builds
 don't contain it) and only when a test sets `window.__handsFreeFake`: `voice/fake.ts` replaces the microphone and the
 recogniser with `window.__handsFree` (`hear(text)`, `mic: "on" | "off"`, `denyMic`); the test stubs `speechSynthesis`
-and `SpeechSynthesisUtterance` with `addInitScript` and reads what the app asked to say.
+and `SpeechSynthesisUtterance` with `addInitScript` and reads what the app asked to say (the stub fires `onstart` a task
+later, counts the unlock utterance apart, and can act as a device with no voices). The speaker's browser rules have unit
+tests against a fake `speechSynthesis` that drops a `speak()` in a `cancel()`'s task (`voice/speaker.test.ts`).
 
 ### Theming
 
@@ -1307,7 +1349,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | `recipe-detail.spec.ts` | Supply badges next to ingredients; servings scaling; missing-tool warning; protein per serving (R4.8–R4.9, R4.13–R4.14, R6.15) |
 | `cooking.spec.ts` | Mise en place; step mode navigation (swipe, tap, keys); inline amounts; portrait/landscape and tablet layouts; wake lock requested; the back button from step mode to mise en place; a long step scrolls with the buttons uncovered at 360×640 (M9) (R4.10–R4.12, R4.24) |
 | `timers.spec.ts` | Start, pause, cancel, and adjust timers; foreground alarm; push scheduled and cancelled (task stub); install prompt on iOS; offline warning banner (R4.23) |
-| `hands-free.spec.ts` | (M11) The toggle on mise en place, every step and the review (not a meal's order list); on reads the prep list, a new step reads its ingredients then instructions; next / previous / before, last keyword wins, ingredients, instructions, stop, shut up, unmute; remembered per device; off closes the mic and silences at once; leaving the cook view closes the mic; a refused mic switches it off with a banner; axe and a 44 px toggle (R4.31–R4.34) |
+| `hands-free.spec.ts` | (M11) The toggle on mise en place, every step and the review (not a meal's order list); on reads the prep list, a new step reads its ingredients then instructions; next / previous / before, last keyword wins, ingredients, instructions, stop, shut up, unmute; off closes the mic and silences at once; leaving the cook view closes the mic; a refused mic switches it off with a banner; axe and a 44 px toggle; (M12) no start on load even with M11's remembered setting, a reload starts off, the crash-loop guard, a device that can't read aloud keeps taking commands (R4.31–R4.34) |
 | `recipe-edit.spec.ts` | Manual create and edit with fixed cuisine/protein lists; version history and restore; concurrent-edit warning; offline draft saved when online; delete with all-users warning moves to Trash and hides from search and plans; restore from Trash; purge after 30 days (clock) cleans up plans, meals, and favourites (R4.15, R4.19, R4.25–R4.26) |
 | `drop-folder.spec.ts` | Upload `.cook` files → recipes appear with downloaded images; invalid file shows an error banner on whatever page is open; file deleted after processing; duplicate goes to the review list; keep existing / keep new / keep both; wording with preparation words, qualifiers and spelling variants resolves to the catalogue with no new ingredient (M8) (R4.16–R4.17, R4.20) |
 | `ingredients.spec.ts` | (M8) An import with a new name: notification with Open recipe + Review ingredients, Recipes banner (session dismiss), Settings count, review card with its recipe, Merge into… preview and confirm repoint the recipe and move a seeded Supply lot with Σ transactions == amount, alias learned, merged page notice; More sheet link on phones (R4.27, R8.16) |
@@ -1369,6 +1411,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | M9 | Owner review 2 | Latte only (accent stays), side recipes and meal type as the first filter, Supply search, cooking back button and scrolling steps, a review marks the meal eaten, eating out (plan item kind `out`), expiring meals first, use it up before ordering, fibre like protein, one switch for protein and fibre tracking |
 | M10 | Owner review 3 | The skill splits crowded steps, a more-text arrow in step mode, a recipe thumbnail next to every recipe name, staples on the grocery list by themselves (the cadence prompt retired), a Nutrition Facts panel on every recipe from the Canadian Nutrient File |
 | M11 | Hands-free mode | A voice assistant in the cooking views: reads ingredients and steps aloud (`speechSynthesis`, en-CA), spoken commands by keyword (last wins), Whisper tiny.en via Transformers.js in a Web Worker, mic capture and VAD on the main thread, nothing recorded while off, model cached in the browser |
+| M12 | Hands-free fixes | Owner bug report (no reading heard; iPhone crash loop): speaker browser rules and a speech-unavailable state that keeps listening, tap-only start with a Safari unlock utterance, crash-loop guard, WASM on WebKit, remembered no-GPU, worker crash handling, service-worker cache for ONNX Runtime's WASM |
 
 Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix. The detailed, task-level plan for each milestone lives in `Planning/`.
 

@@ -1,7 +1,7 @@
 // Speaker (M12): the speech-synthesis quirks that kept hands-free silent on the owner's devices, against a fake
 // `speechSynthesis` that behaves like the browsers do.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Speaker, WATCHDOG_MS } from "./speaker";
+import { pickVoice, Speaker, WATCHDOG_MS } from "./speaker";
 
 type Mode = "normal" | "silent" | "not-allowed";
 
@@ -87,6 +87,20 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe("pickVoice", () => {
+  const v = (name: string, lang: string, localService = true) => ({ name, lang, localService });
+  it("prefers en-CA, then a name without espeak-ng's '+' variants, then a natural voice over espeak-ng, then local", () => {
+    // espeak-ng's list: thousands of voices, variants named "…+f3", none default.
+    const espeak = Array.from({ length: 2000 }, (_, i) => v(`English (America)+variant${i}`, "en-US"));
+    expect(pickVoice([...espeak, v("eSpeak English", "en-US"), v("pico en-US", "en-US"), v("Deutsch", "de-DE")])!.name).toBe("pico en-US");
+    expect(pickVoice([...espeak, v("English (America)", "en-US")])!.name).toBe("English (America)");
+    expect(pickVoice([v("Samantha", "en-US"), v("English (Canada)+f2", "en_CA")])!.name).toBe("English (Canada)+f2");
+    expect(pickVoice([v("Serena", "en-GB", false), v("Daniel", "en-GB", true)])!.name).toBe("Daniel");
+    expect(pickVoice([v("Amélie", "fr-CA")])).toBeUndefined();
+    expect(pickVoice([])).toBeUndefined();
+  });
+});
+
 describe("Speaker", () => {
   it("reads each sentence, in order, with the en-CA voice when the device has one", async () => {
     const { synth, speaker, onSpeaking } = setup();
@@ -138,6 +152,39 @@ describe("Speaker", () => {
     synth.finish();
     synth.finish();
     expect(live()).toBe(0);
+  });
+
+  it("re-picks the voice on every voiceschanged: an early empty list, then the real one for later batches", async () => {
+    const { synth, speaker } = setup();
+    synth.voices = [];
+    speaker.say(["First."]);
+    synth.fireVoicesChanged(); // Linux Chromium: the first event comes with no voices
+    await vi.advanceTimersByTimeAsync(1000); // the wait gives up after 1 s: the first read goes with lang alone
+    expect(synth.queue.map((u) => [u.text, u.voice, u.lang])).toEqual([["First.", null, "en-CA"]]);
+    synth.finish();
+    synth.voices = [
+      { lang: "en-US", localService: true, name: "English (America)+f3" },
+      { lang: "en-CA", localService: true, name: "English (Canada)" },
+    ];
+    synth.fireVoicesChanged();
+    speaker.say(["Second."]);
+    await vi.advanceTimersByTimeAsync(0);
+    expect((synth.queue[0]!.voice as { name: string }).name).toBe("English (Canada)");
+  });
+
+  it("a first read queued before the voice list arrived and never started is retried once with a voice", async () => {
+    const { synth, speaker, onUnavailable } = setup();
+    synth.voices = [];
+    synth.mode = "silent";
+    speaker.say(["Hello."]);
+    await vi.advanceTimersByTimeAsync(1000 + 2000);
+    synth.voices = [{ lang: "en-US", localService: true, name: "English (America)" }];
+    synth.fireVoicesChanged();
+    synth.mode = "normal";
+    await vi.advanceTimersByTimeAsync(WATCHDOG_MS);
+    expect(synth.queue.map((u) => u.text)).toEqual(["Hello."]);
+    await vi.advanceTimersByTimeAsync(WATCHDOG_MS * 2);
+    expect(onUnavailable).not.toHaveBeenCalled();
   });
 
   it("waits for voiceschanged (once) before the first read", async () => {

@@ -89,6 +89,52 @@ R4.31 (changed: no start without a tap; reading-unavailable state), R4.33 (uncha
 
 ## Decisions
 
+- **No start without a tap (item 1):** the remembered setting is gone rather than kept as a hint. A fresh page load
+  always shows the toggle **off** (`data-state="off"`), and M11's `localStorage sf.handsFree` is removed on load so an
+  old "on" can't come back. Within the same page session the choice still carries across cooking pages (mise en place
+  → steps → review → the next cook's mise en place): that page already had its tap (speech is unlocked), and the crash
+  guard covers the model load. A "remembered, tap to resume" hint state was considered and dropped: it would be a
+  second look for the same "off" switch, and the owner asked for no explanatory text. PRD R4.31 reworded.
+- **Crash guard (item 2):** `sf.handsFree.starting` is set at the start of `start()` (before the lazy imports) and
+  cleared once the microphone and model are ready, on any stop or failure, and on `pagehide` (a normal reload or
+  closing the tab mid-download isn't a crash; a killed WebContent process fires no `pagehide`). Detected when the
+  hands-free module loads (with the cook routes): the flag is removed (so one bad start costs one warning, not a
+  loop), the toggle shows its error look (off), and the existing error banner says "Hands-free couldn't start on this
+  device, so it's off." A tap tries again.
+- **Safari unlock (item 3):** `setEnabled(true)` speaks `" "` (lang en-CA) synchronously in the click, kept in a module
+  variable until it ends; it also calls `speechSynthesis.resume()` but only when `paused` is true (harmless, and
+  un-sticks Chrome/Safari after the page was backgrounded mid-utterance). The speaker doesn't count the unlock as its
+  own, so the first read never cancels it (no cancel/speak race on the first read).
+- **Speaker (item 4):** `say()` records its sentences for the echo filter at once, waits for voices (once per engine),
+  then speaks; it only cancels when one of its own utterances is queued or a batch is waiting, and the batch after a
+  cancel goes a macrotask later. The watchdog (4 s) watches the first sentence of each batch only: a long first
+  sentence that has started is fine. A first sentence that ends without `onstart` on a device with no voices also
+  counts as unavailable (some Chromium builds end it at once instead of hanging). After "unavailable" the speaker
+  stays silent (no repeated watchdogs or warnings) until hands-free is switched off and on (`reset()`).
+- **Voice choice (item 4, from a check of the owner's Linux Chromium with speech-dispatcher, sent mid-run):** espeak-ng
+  lists ~15,000 voices (~950 English, variants with "+" in the name, none default) and `voiceschanged` fires twice
+  (0 voices, then the list ~2 s later). So `pickVoice()` ranks once per list change (en-CA, then no "+", then not
+  espeak-ng, then local, then list order), `voiceschanged` is listened to for the engine's lifetime, the first read
+  waits at most 1 s and then goes with `lang` alone, and a first read that was queued before the list arrived and never
+  started gets one retry with the new voice when the watchdog fires (instead of "unavailable"). The e2e stub keeps
+  returning a voice and firing `onstart`, so the watchdog never fires a banner in normal e2e runs (headless Chromium has
+  no TTS at all).
+- **Speech unavailable (item 5):** a separate `problem: "speech"` in the hands-free state: the toggle stays checked,
+  shows the error look (warning icon on `red-soft`, screen-reader state "Listening, can't read aloud"; muted still
+  shows muted), and the banner reads "This device can't read aloud right now. Hands-free is still listening." No
+  `speechSynthesis` at all is the same state now (M11 switched hands-free off for it): the commands still work without
+  a voice. Mic/model failures keep M11's behaviour (off + banner) and now also get the error look until the next tap.
+- **WebGPU (item 6):** the page decides and passes `gpu` to the worker. WebKit is detected on the page by
+  `navigator.vendor` starting with "Apple" or an iPhone/iPad/iPod UA (covers iOS Chrome/Firefox, which are WebKit, and
+  iPadOS). `no-gpu` is only remembered for "no adapter"; a WebGPU pipeline that throws still falls back to WASM for
+  that start but isn't remembered (it may be a transient failure). A worker crash after the model is ready disposes the
+  worker and switches hands-free off with "The speech model stopped working, so hands-free mode is off." No load
+  timeout: on mobile data the first 45 MB download can legitimately take minutes.
+- **Service-worker cache (item 7):** Workbox `CacheFirst` for `cdn.jsdelivr.net/npm/onnxruntime-web@<v>/dist/*`
+  (`hands-free-runtime`, 6 entries, 1 year, status 200 only): the URLs are versioned, so a new library version simply
+  makes new entries and the old ones age out. The model files from huggingface.co (and its CDN redirect) are already
+  kept by the library's `transformers-cache` (M11 measured a no-download restart; re-checked below), so no second copy.
+
 ## Verification
 
 ## Owner checks

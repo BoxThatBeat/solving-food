@@ -17,6 +17,7 @@ ordered, checkable tasks with the files they touch, the tests that prove them, a
 | [M9-owner-review-2.md](M9-owner-review-2.md) | Owner review 2 | M8 | Latte only, side recipes, meal type first, Supply search, cooking back/scroll, review marks eaten, eating out, expiring meals first, use it up before ordering, fibre, nutrition switch |
 | [M10-owner-review-3.md](M10-owner-review-3.md) | Owner review 3 | M9 | Skill splits long steps, more-text arrow in step mode, recipe thumbnails everywhere, staples on the grocery list, Nutrition Facts panel (Canadian Nutrient File) |
 | [M11-hands-free.md](M11-hands-free.md) | Hands-free mode | M10 | A voice assistant in the cooking views: read-aloud ingredients and steps, spoken commands (next, back, ingredients, steps, stop, mute), Whisper tiny.en on the device in a Web Worker, nothing recorded while off |
+| [M12-hands-free-fixes.md](M12-hands-free-fixes.md) | Hands-free fixes | M11 | Owner bug report: reading aloud actually heard (speaker browser rules, Safari unlock), a can't-read-aloud state that keeps listening, no start without a tap, crash-loop guard, CPU model on Safari/iOS, service-worker cache for the WASM |
 
 ## How to use these plans
 

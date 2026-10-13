@@ -32,7 +32,7 @@ export interface EngineCallbacks {
 }
 
 /** A speaker for a browser without speech synthesis: says nothing, reports itself unavailable on first use. */
-function silentSpeaker(onUnavailable: (reason: string) => void): Pick<Speaker, "say" | "cancel" | "reset" | "recent"> {
+function silentSpeaker(onUnavailable: (reason: string) => void): Pick<Speaker, "say" | "cancel" | "reset" | "recent" | "dispose"> {
   let told = false;
   return {
     say: () => {
@@ -44,6 +44,7 @@ function silentSpeaker(onUnavailable: (reason: string) => void): Pick<Speaker, "
       told = false;
     },
     recent: () => [],
+    dispose: () => undefined,
   };
 }
 
@@ -85,7 +86,7 @@ export async function createEngine(cb: EngineCallbacks): Promise<Engine> {
     },
     dispose() {
       listening = false;
-      speaker.cancel();
+      speaker.dispose();
       input.dispose();
     },
   };

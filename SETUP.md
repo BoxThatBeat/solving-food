@@ -206,6 +206,18 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
 - **Tests:** emulator builds contain an e2e seam (`voice/fake.ts`, used only when a test sets `window.__handsFreeFake`);
   production builds don't (the condition is `import.meta.env.VITE_USE_EMULATORS`, a build-time constant).
 
+## M12 hands-free fixes (2026-10-13)
+
+- **Still no Firebase or GCP change.** The service worker now also caches ONNX Runtime's WASM and loader from
+  cdn.jsdelivr.net (`hands-free-runtime`, CacheFirst, 6 entries, 1 year): the library's own Cache API copy failed to
+  store on the owner's Chromium. Model files stay in the library's `transformers-cache`.
+- **Device keys** (`localStorage`): `sf.handsFree.starting` (set while hands-free starts; still set on the next load =
+  the last start crashed the page, so it isn't started and a banner says so), `sf.handsFree.gpu = "0"` (this device's
+  WebGPU had no adapter: use WASM). M11's `sf.handsFree` (remembered "on") is removed on load: a start needs a tap.
+- **Linux desktops:** Chromium reads aloud through speech-dispatcher; without it (and a voice such as espeak-ng)
+  `speechSynthesis` has no voices and hands-free says the device can't read aloud while still taking commands.
+  That's a machine-level package (`~/dotfiles/nixos`), not part of this repo.
+
 ## CI/CD (GitHub Actions)
 
 - `.github/workflows/checks.yml`: on PRs and pushes to `master`: lint, typecheck, unit tests, build, requirement-tag

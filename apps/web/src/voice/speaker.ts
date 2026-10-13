@@ -6,7 +6,11 @@
 // - Chrome drops an utterance spoken in the same tick as `cancel()`: after a cancel the next batch starts a macrotask
 //   later, and `cancel()` is only called when something of ours is still queued.
 // - Chrome can garbage-collect an utterance before its `onend` fires: every utterance stays in `live` until it ends.
-// - The voice list loads asynchronously: the first read waits once for `voiceschanged` (at most 1 s).
+// - The voice list loads asynchronously and `voiceschanged` can fire more than once (Linux Chromium with
+//   speech-dispatcher: first with 0 voices, the real list ~2 s later). The first read waits at most 1 s for a non-empty
+//   list, then goes with `lang` alone; every `voiceschanged` re-picks the voice for later batches.
+// - The list can be huge (espeak-ng: ~15,000 voices, ~950 English, variants named "English (America)+f3", no default):
+//   the voice is chosen once per list change by a simple ranking (`pickVoice`), never per utterance.
 // - A device without voices (Linux Chromium without speech-dispatcher) or a refused `speak()` (Safari without a tap)
 //   is silent without an error: a watchdog on the first sentence of each batch reports the speaker unavailable when it
 //   neither starts nor fails within 4 s.
@@ -15,6 +19,28 @@ import { sentences, speakable } from "@solving-food/core";
 const ECHO_MS = 8000;
 const VOICES_WAIT_MS = 1000;
 export const WATCHDOG_MS = 4000;
+
+type VoiceLike = Pick<SpeechSynthesisVoice, "lang" | "name" | "localService"> & { voiceURI?: string };
+
+/**
+ * The voice to read with (one pass over the list): English only; en-CA first, then a name without "+" (espeak-ng's
+ * variants), then not espeak-ng (pico, Samantha, Serena and other natural voices sound better), then a local voice,
+ * then list order. None (an empty list, no English voice) means `lang = "en-CA"` alone.
+ */
+export function pickVoice<V extends VoiceLike>(voices: readonly V[]): V | undefined {
+  let best: V | undefined;
+  let bestScore = -1;
+  for (const v of voices) {
+    const lang = v.lang.replace("_", "-").toLowerCase();
+    if (!lang.startsWith("en")) continue;
+    const score = (lang === "en-ca" ? 8 : 0) + (v.name.includes("+") ? 0 : 4) + (/espeak/i.test(`${v.name} ${v.voiceURI ?? ""}`) ? 0 : 2) + (v.localService ? 1 : 0);
+    if (score > bestScore) {
+      best = v;
+      bestScore = score;
+    }
+  }
+  return best;
+}
 
 /** `SpeechSynthesisErrorEvent.error` values that mean this device can't read aloud (others are a normal end). */
 const FAILURES = new Set(["not-allowed", "synthesis-unavailable", "synthesis-failed", "audio-busy", "language-unavailable", "voice-unavailable"]);
@@ -37,6 +63,11 @@ export class Speaker {
   /** A batch is queued or waiting to be (what the toggle shows as speaking). */
   private busy = false;
   private voices: Promise<void> | null = null;
+  /** The chosen voice, re-picked on every `voiceschanged`. */
+  private chosen: SpeechSynthesisVoice | undefined;
+  private onVoicesChanged = () => {
+    this.chosen = pickVoice(this.synth.getVoices());
+  };
   private watchdog: ReturnType<typeof setTimeout> | null = null;
   private unavailable = false;
   private said: Array<{ text: string; until: number }> = [];
@@ -47,27 +78,25 @@ export class Speaker {
     private Utterance: UtteranceCtor = window.SpeechSynthesisUtterance,
   ) {}
 
+  /** Resolves once the list is non-empty, or after 1 s (then the first read goes with `lang` alone). */
   private waitForVoices(): Promise<void> {
     this.voices ??= new Promise<void>((resolve) => {
-      if (this.synth.getVoices().length) return resolve();
+      this.synth.addEventListener?.("voiceschanged", this.onVoicesChanged);
+      this.onVoicesChanged();
+      if (this.chosen || this.synth.getVoices().length) return resolve();
+      const check = () => {
+        if (!this.synth.getVoices().length) return; // an early, empty voiceschanged: keep waiting
+        done();
+      };
       const done = () => {
         clearTimeout(timer);
-        this.synth.removeEventListener?.("voiceschanged", done);
+        this.synth.removeEventListener?.("voiceschanged", check);
         resolve();
       };
       const timer = setTimeout(done, VOICES_WAIT_MS);
-      this.synth.addEventListener?.("voiceschanged", done);
+      this.synth.addEventListener?.("voiceschanged", check);
     });
     return this.voices;
-  }
-
-  private voice(): SpeechSynthesisVoice | undefined {
-    const voices = this.synth.getVoices();
-    return (
-      voices.find((v) => v.lang === "en-CA" || v.lang === "en_CA") ??
-      voices.find((v) => v.lang.startsWith("en") && v.localService) ??
-      undefined
-    );
   }
 
   private fail(reason: string) {
@@ -102,10 +131,11 @@ export class Speaker {
     });
   }
 
-  private speak(batch: number, lines: string[], entries: Array<{ until: number }>) {
+  private speak(batch: number, lines: string[], entries: Array<{ until: number }>, retried = false) {
     if (batch !== this.batch || this.unavailable) return;
     this.cancelled = false;
-    const voice = this.voice();
+    const voice = this.chosen;
+    const hadVoices = this.synth.getVoices().length > 0;
     lines.forEach((text, i) => {
       const u = new this.Utterance(text);
       u.lang = "en-CA";
@@ -127,8 +157,12 @@ export class Speaker {
         if (i === 0) this.clearWatchdog();
       };
       u.onend = () => {
-        // Ended without ever starting on a device with no voices: nothing was heard.
-        if (i === 0 && !started && this.live.includes(u) && !this.synth.getVoices().length) return this.fail("no voices (the utterance ended without starting)");
+        // Ended without ever starting while there are no voices: nothing was heard. Leave the watchdog running: it
+        // retries once if the voice list arrives in time, else reports the speaker unavailable.
+        if (i === 0 && !started && this.live.includes(u) && !this.synth.getVoices().length) {
+          this.live.splice(this.live.indexOf(u), 1);
+          return;
+        }
         end();
       };
       u.onerror = (e: SpeechSynthesisErrorEvent) => {
@@ -145,6 +179,18 @@ export class Speaker {
       this.watchdog = null;
       if (batch !== this.batch) return;
       const voices = this.synth.getVoices().length;
+      // Queued before the voice list arrived and the list is here now: try the batch once more with a real voice.
+      if (!hadVoices && voices && !retried) {
+        this.live = [];
+        this.synth.cancel();
+        const again = ++this.batch;
+        if (!this.busy) {
+          this.busy = true;
+          this.cb.onSpeaking(true);
+        }
+        setTimeout(() => this.speak(again, lines, entries, true), 0);
+        return;
+      }
       this.fail(voices ? "speech never started" : "no voices on this device");
     }, WATCHDOG_MS);
   }
@@ -171,6 +217,12 @@ export class Speaker {
   reset() {
     this.cancel();
     this.unavailable = false;
+  }
+
+  /** The engine is going away: stop listening for voice-list changes. */
+  dispose() {
+    this.cancel();
+    this.synth.removeEventListener?.("voiceschanged", this.onVoicesChanged);
   }
 
   /** Sentences being read or read in the last few seconds. */
