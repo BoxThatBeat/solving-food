@@ -557,6 +557,28 @@ of its recipes.
 
 For each planned item, the client finds the earliest-expiring lot among its ingredients that the item would use, and shows a badge when it expires within the period (R6.7). **Plan order (M9, R6.24):** the Plan list's default sort is *Expiring first* over the same lookup, at any horizon: `soonestUseDays()` (core `cooking.ts`, fractional days to that lot's expiry, null when nothing it uses expires) feeds `expiryDays`, compared ascending with nulls last, ties by the combined suggestion score, then title; `<CollectionView defaultSort>` makes Expiring first the sheet's default on that page. Supply expiring with no planned use raises an alert with suggestions sorted by `expiryUrgency` (R6.13).
 
+### Use it up before ordering (M9, R6.25)
+
+The "Use it or lose it" alert (R6.13) only sees food once it's in Supply, too late to plan for it. `orderSpare()` (core
+`alerts.ts`) applies the same rule to Supply as it will be when the next order arrives:
+
+```
+order     = the grocery builder's plan lines (what Copy would order: shortfall rounded up to packs), per ingredient
+lot       = newLotFor(amount, ingredient.defaultLocation, shelfLifeDays, now)    // bought now, its usual shelf life
+until     = max(period end, now + USE_SOON_DAYS + 1 days)                      // as the expiry alerts
+spare     = expiringSpare(lots + lot, plannedNeeds, until) − expiringSpare(lots, plannedNeeds, until)   // FEFO
+flag when spare ≥ 10 g (0.5 for counts), the ingredient isn't free-use, and the lot expires by `until`
+```
+
+Only the spare the order adds counts (what's already in Supply is the existing alert's). The Plan page's
+`<UseItUp>` card (right column under the expiry alerts on wide screens, near the top on phones) lists the flagged
+ingredients soonest first with the spare amount, the amount bought and roughly how long it keeps, and the top two
+`recipesUsing()` (not planned, not blocked: no side dishes), each + opening Create meal. Dismiss writes
+`order:<ingredientId>` into the period's `dismissedLots` (the alerts' field; no new data). Once the list is ordered its
+lines are incoming, the builder buys nothing more, and the card empties; when the order arrives the lots are the
+expiry alert's. Client-only; no reads beyond the plan model's listeners. Approximation: expiry is estimated from now,
+not the delivery day.
+
 ### Optimiser ("n dinners under $x")
 
 1. **Set score:** Σ suggestion scores + an *ingredient-overlap bonus* (a shared spinach bag makes the second spinach recipe nearly free) − penalties for repeated cuisine or protein. Hard constraints: total marginal cost ≤ x, exactly n recipes, and caps per cuisine and protein.
@@ -1182,7 +1204,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | `plan.spec.ts` | Create meal with one recipe, with several recipes, and from a saved meal; Add to plan shortcut from a recipe; remove items; default servings; meal types (R5.5, R5.7); coverage strip shows only planned meal types, fills left to right, shows n/N and overflow, cells not clickable; budget meter goes down, ignores incoming and in-supply ingredients, goes back up after receiving, goes negative and turns red, never blocks; expiry badges; protein summary; landing page redirect (R6.1–R6.7, R6.17, R11.12–R11.13) |
 | `rollover.spec.ts` | Uncooked items carry over at period end; two members opening at once creates one period (R6.6) |
 | `leftovers.spec.ts` | Meal-prep batch fills lunch cells when planned; confirmed ▲/▼ count replaces the estimate; leftover supply item with expiry; leftover plan items roll over; mark eaten (R6.8–R6.10, R9.5) |
-| `suggestions.spec.ts` | Ranking reflects expiry, supply, ratings, variety, and protein goal; weight sliders and presets change the order; expiry alerts (R6.11–R6.14, R6.16) |
+| `suggestions.spec.ts` | Ranking reflects expiry, supply, ratings, variety, and protein goal; weight sliders and presets change the order; expiry alerts; use it up before ordering (M9, R6.25) (R6.11–R6.14, R6.16) |
 | `optimiser.spec.ts` | "n dinners under $x" respects the budget; Next gives a different good set; Back restores the previous one; "No more good combinations" when exhausted; Accept adds all; protein-goal toggle (R6.18–R6.20) |
 | `prices.spec.ts` | Store picker (defaults to Loblaws Greenbank Road); in-app product search links a brand mapping; live price used when fresh; falls back to estimates when stale or failed; "price unknown" marker (R6.21–R6.22, R7.10) |
 | `grocery.spec.ts` | List built from plan − supply − incoming with pack rounding (mapping, default pack, or raw); expired lots treated as missing; free-use ingredients excluded (R8.14); brand names applied; grouped by store with mapping winning over category rule; copy button copies only the PC Express section and marks the list ordered (with undo); regenerating doesn't re-add ordered items; manual additions; cadence prompts including the seeded default interval (R7.1–R7.7) |

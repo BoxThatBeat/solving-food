@@ -192,6 +192,7 @@ flowchart LR
 
 - **R6.12** Users can **tune the weight** of each factor in Settings. Presets such as *"Use it up"*, *"Cheap week"*, and *"Adventurous"* are available.
 - **R6.13** **Expiry alerts.** If supply will expire during the period (e.g. salmon), the app shows it prominently and suggests recipes that use more of it.
+- **R6.25** **Use it up before ordering.** Before the grocery list is ordered, the Plan page has a **Use it up** section for food the next order would bring that no planned meal uses and that won't keep (it would expire within the period, or within a few days of its end, after its usual shelf life where it's stored): typically the rest of a pack. Each entry shows how much would be spare, how much is being bought, roughly how long it keeps, and up to two recipes that use it, each one tap from Create meal, so meals can be added before ordering instead of rescuing the food after it arrives. It uses the same rule as the expiry alerts (R6.13), can be dismissed for the period, and disappears once the list is ordered.
 
 ### 6.4 Protein Goal
 
@@ -301,7 +302,7 @@ Everything here belongs to the household except the theme, which is per user.
 
 | Page | Purpose |
 |---|---|
-| **Plan** | Current period's meals, Create meal, budget meter, suggestions, optimiser, expiry alerts, pending reviews |
+| **Plan** | Current period's meals (expiring first), Create meal (incl. eating out), budget meter, suggestions, optimiser, expiry alerts, use it up before ordering, pending reviews |
 | **Recipes** | Global library: search, filter, add, review possible duplicates, Trash |
 | **Meals** | Saved meals (named recipe collections) |
 | **Supply** | Current and projected amounts, expiry dates, transactions |

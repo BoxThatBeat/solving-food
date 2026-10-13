@@ -41,6 +41,7 @@ import { PlanItemCard, PlanItemSheet, type PlanItemView } from "@/components/pla
 import { MEAL_LABEL, useCreateMeal } from "@/components/plan/plan-sheet-context";
 import { SuggestedSection } from "@/components/plan/Suggested";
 import { ExpiryAlerts } from "@/components/plan/ExpiryAlerts";
+import { UseItUp } from "@/components/plan/UseItUp";
 import { OptimiserCard } from "@/components/plan/Optimiser";
 import { CadencePrompt } from "@/components/grocery/CadencePrompt";
 import { usePlanModel } from "@/data/planModel";
@@ -273,6 +274,25 @@ function PlanPage() {
               if (m.periodId) void dismissExpiryAlert(m.hid, m.periodId, lots).catch((e) => notify({ kind: "error", message: `Couldn't dismiss it: ${(e as Error).message}` }));
             }}
           />
+          {/* M9 (R6.25): what the next order will bring that won't keep and no planned meal uses. */}
+          {m.ready ? (
+            <UseItUp
+              items={m.useItUp}
+              dismissed={dismissed}
+              ingredient={(id) => {
+                const i = m.ingredients.get(id);
+                return i ? { name: i.name, canonicalUnit: i.canonicalUnit, unitWeightG: i.unitWeightG } : undefined;
+              }}
+              summaries={summaries ?? []}
+              scores={suggestions.byId}
+              plannedIds={plannedIds}
+              servings={m.household?.defaultServings ?? 4}
+              onAdd={(id) => openCreateMeal({ recipeIds: [id] })}
+              onDismiss={(key) => {
+                if (m.periodId) void dismissExpiryAlert(m.hid, m.periodId, [key]).catch((e) => notify({ kind: "error", message: `Couldn't dismiss it: ${(e as Error).message}` }));
+              }}
+            />
+          ) : null}
         </div>
       </div>
 

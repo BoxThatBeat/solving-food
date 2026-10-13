@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import { addPref, brokenDiets, DIETS, formatPref, matchesPref, parsePref, preferenceBlock, prefLabel, type PrefRecipe } from "./preferences";
 import { cadenceInterval, duePrompts, isDue, snoozeUntil, updateCadence } from "./cadence";
-import { expiryAlerts, recipesUsing } from "./alerts";
+import { expiryAlerts, orderSpare, recipesUsing } from "./alerts";
 import { snoozeCadencePayload } from "./commands";
 
 const DAY = 86_400_000;
@@ -201,5 +201,46 @@ describe("PC Express shapes", async () => {
   it("price doc IDs", () => {
     expect(priceDocId("1032", "20123_EA")).toBe("1032_20123_EA");
     expect(priceDocId("a/b", "c")).toBe("a-b_c");
+  });
+});
+
+describe("use it up before ordering (M9, R6.25)", () => {
+  const TZ = "America/Toronto";
+  const ings: Record<string, { canonicalUnit: "g" | "count"; defaultLocation: "fridge" | "pantry"; shelfLifeDays: Record<string, number | null>; freeUse?: boolean }> = {
+    spinach: { canonicalUnit: "g", defaultLocation: "fridge", shelfLifeDays: { fridge: 5 } },
+    rice: { canonicalUnit: "g", defaultLocation: "pantry", shelfLifeDays: { pantry: 365 } },
+    oil: { canonicalUnit: "g", defaultLocation: "pantry", shelfLifeDays: { pantry: 2 }, freeUse: true },
+    lemon: { canonicalUnit: "count", defaultLocation: "fridge", shelfLifeDays: { fridge: 3 } },
+  };
+  const until = NOW + 7 * DAY;
+  const run = (order: Array<{ ingredientId: string; amount: number }>, use: Record<string, number>, lots: Record<string, Array<{ amount: number; days: number }>> = {}) =>
+    orderSpare(
+      new Map(Object.entries(lots).map(([id, ls]) => [id, ls.map((l, i) => ({ lotId: `l${i}`, amount: l.amount, location: "fridge" as const, acquiredAtMs: NOW - DAY, expiresFreshMs: NOW + l.days * DAY }))])),
+      new Map(Object.entries(use)),
+      order,
+      (id) => ings[id],
+      until,
+      NOW,
+      TZ,
+    );
+
+  it("flags what a pack adds beyond the plan when it expires within the period", () => {
+    const r = run([{ ingredientId: "spinach", amount: 312 }], { spinach: 140 });
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatchObject({ ingredientId: "spinach", amount: 172, bought: 312 });
+    expect(r[0]!.daysLeft).toBeGreaterThanOrEqual(4);
+  });
+  it("ignores long shelf lives, free-use, tiny spares, and spares the plan uses", () => {
+    expect(run([{ ingredientId: "rice", amount: 2000 }], { rice: 300 })).toEqual([]);
+    expect(run([{ ingredientId: "oil", amount: 1000 }], { oil: 10 })).toEqual([]);
+    expect(run([{ ingredientId: "spinach", amount: 145 }], { spinach: 140 })).toEqual([]);
+    expect(run([{ ingredientId: "spinach", amount: 312 }], { spinach: 312 })).toEqual([]);
+  });
+  it("counts only the spare the order adds: Supply already expiring is the existing alert's", () => {
+    // 100 g already in the fridge expiring in 2 days; plan uses 140: FEFO takes the old 100 then 40 of the new bag.
+    const r = run([{ ingredientId: "spinach", amount: 312 }], { spinach: 140 }, { spinach: [{ amount: 100, days: 2 }] });
+    expect(r[0]!.amount).toBeCloseTo(272);
+    // Counts: a 6-pack of lemons for a recipe needing 2.
+    expect(run([{ ingredientId: "lemon", amount: 6 }], { lemon: 2 })[0]).toMatchObject({ ingredientId: "lemon", amount: 4 });
   });
 });

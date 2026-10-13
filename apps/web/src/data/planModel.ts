@@ -12,6 +12,7 @@ import {
   incomingFrom,
   itemCosts,
   needsFor,
+  orderSpare,
   projectedSupply,
   unexpiredByIngredient,
   USE_SOON_DAYS,
@@ -103,11 +104,15 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[]; extraIn
   // Spare supply expiring within the period (or the next few days): what no planned meal will use (R6.13, M5).
   const tz = household?.timezone ?? "America/Toronto";
   const periodEndMs = millis(period.data?.end);
-  const expiring = useMemo(() => {
-    const plannedNeeds = needsFor(inputs, ctx);
-    const until = Math.max(periodEndMs ?? 0, addLocalDays(supply.now, USE_SOON_DAYS + 1, tz));
-    return expiringSpare(lotsByIngredient, plannedNeeds, until, supply.now, tz);
-  }, [inputs, ctx, periodEndMs, supply.now, tz, lotsByIngredient]);
+  const plannedNeeds = useMemo(() => needsFor(inputs, ctx), [inputs, ctx]);
+  const untilMs = Math.max(periodEndMs ?? 0, addLocalDays(supply.now, USE_SOON_DAYS + 1, tz));
+  const expiring = useMemo(() => expiringSpare(lotsByIngredient, plannedNeeds, untilMs, supply.now, tz), [plannedNeeds, untilMs, supply.now, tz, lotsByIngredient]);
+  // Use it up before ordering (M9, R6.25): the same rule, on Supply as it will be when the next order (the plan lines
+  // the grocery builder would buy) arrives.
+  const useItUp = useMemo(
+    () => orderSpare(lotsByIngredient, plannedNeeds, Object.values(built.items), (id) => ingredients.get(id), untilMs, supply.now, tz),
+    [lotsByIngredient, plannedNeeds, built.items, ingredients, untilMs, supply.now, tz],
+  );
 
   // Ready to price: every recipe loaded and every ingredient they use.
   const recipesReady = recipeIds.every((id) => recipes.has(id));
@@ -138,6 +143,7 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[]; extraIn
     projected,
     lotsByIngredient,
     expiring,
+    useItUp,
     livePrices,
   };
 }

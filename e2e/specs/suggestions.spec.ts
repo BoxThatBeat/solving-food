@@ -66,3 +66,49 @@ test("Suggested and Expiring first sort any list; Uses expiring filters it (R6.1
   expect(titles.length).toBeGreaterThan(0);
   await expect(page.getByRole("button", { name: "Remove filter Uses expiring" })).toBeVisible();
 });
+
+test("use it up before ordering: the next order's spare that won't keep, with recipes that use it (R6.25)", { tag: ["@R6.25"] }, async ({ page, household }) => {
+  const main = await makePlanRecipe("Use-up main"); // 600 g chicken thigh (1 kg pack, keeps 2 days) + 140 g baby spinach (312 g bag, 5 days)
+  const useUp = await makePlanRecipe("Spinach use-up", { lines: "Blend @baby spinach{170%g} with @lemon{1}." });
+  const pid = await seedPeriod(household.hid);
+  const { seedPlanItem } = await import("../pages/plan");
+  await seedPlanItem(household.hid, pid, [main.id]);
+  const plan = new PlanPage(page);
+  await plan.goto();
+
+  const card = page.getByTestId("use-it-up");
+  await expect(card).toBeVisible({ timeout: 20_000 });
+  const spinach = card.getByTestId("use-it-up-item").filter({ hasText: "Baby spinach" });
+  await expect(spinach).toContainText(/Baby spinach: 17\d g spare/); // the bag (~310 g) less the plan's 140 g
+  await expect(spinach).toContainText(/Buying 3\d\d g · keeps about [45] days/i);
+  await expect(card.getByTestId("use-it-up-item").filter({ hasText: "Chicken thigh" })).toContainText(/Chicken thigh: 400 g spare/);
+  const using = card.getByRole("list", { name: "Recipes that use up baby spinach" });
+  await expect(using.getByRole("listitem").first()).toContainText(useUp.title);
+  await expect(using.getByRole("listitem").first()).toContainText("uses 170 g");
+
+  // Add it before ordering: the spinach is used up and leaves the card; the chicken stays until dismissed.
+  await using.getByRole("button", { name: `Add ${useUp.title} to plan` }).click();
+  await plan.finish({});
+  await expect(spinach).toHaveCount(0);
+  await expect(card.getByTestId("use-it-up-item").filter({ hasText: "Chicken thigh" })).toBeVisible();
+  await card.getByRole("button", { name: "Dismiss use it up for chicken thigh" }).click();
+  await expect(page.getByTestId("use-it-up")).toHaveCount(0);
+  await expect.poll(async () => (await adminDb.doc(`households/${household.hid}/periods/${pid}`).get()).data()?.dismissedLots).toContain("order:chicken-thigh");
+});
+
+test("use it up disappears once the list is ordered (R6.25)", { tag: ["@R6.25"] }, async ({ page, household }) => {
+  const main = await makePlanRecipe("Use-up ordered");
+  const pid = await seedPeriod(household.hid);
+  const { seedPlanItem } = await import("../pages/plan");
+  await seedPlanItem(household.hid, pid, [main.id]);
+  const plan = new PlanPage(page);
+  await plan.goto();
+  await expect(page.getByTestId("use-it-up")).toBeVisible({ timeout: 20_000 });
+  // Ordered: the lines move to an ordered list (incoming), so the next order buys nothing more.
+  const { seedOrderedList, groceryLine } = await import("../pages/supply");
+  await seedOrderedList(household.hid, pid, {
+    "chicken-thigh": groceryLine({ ingredientId: "chicken-thigh", amount: 1000, packAmount: 1000, packLabel: "1 kg", productName: "Chicken thighs", storeId: "pc-express", estPriceCents: 1299 }),
+    "baby-spinach": groceryLine({ ingredientId: "baby-spinach", amount: 312, packAmount: 312, packLabel: "312 g", productName: "Baby spinach", storeId: "pc-express", estPriceCents: 499 }),
+  });
+  await expect(page.getByTestId("use-it-up")).toHaveCount(0);
+});
