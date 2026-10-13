@@ -190,6 +190,22 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   categories, conversions, and pack sizes; ingredients created in the app are known to them once a planned recipe or
   supply loads them.
 
+## M11 hands-free mode (2026-10-13)
+
+- **No Firebase or GCP change.** Speech recognition runs in the browser: `@huggingface/transformers` (pinned 4.3.1) in
+  `apps/web/src/voice/stt.worker.ts` downloads `onnx-community/whisper-tiny.en` (q8 on WASM: ~41 MB, once per device)
+  from the Hugging Face Hub, and ONNX Runtime's WASM (~5.5 MB) from cdn.jsdelivr.net; the library keeps both in the
+  browser's Cache API (`transformers-cache`). Nothing is served from Hosting except the ~550 kB worker script, which
+  Workbox does not precache (runtime cache `hands-free` once used).
+- **Build:** `vite.config.ts` has a small `dropOrtWasm()` plugin that removes the 27 MB `ort-wasm-*.wasm` onnxruntime-web
+  would otherwise copy into `dist` (never requested: the library loads it from the CDN). `pnpm-workspace.yaml` sets
+  `allowBuilds: onnxruntime-node: false` (a Node-only dependency of Transformers.js; its install script downloads native
+  binaries we don't use).
+- **No headers added:** no CSP exists, and cross-origin isolation (COOP/COEP) isn't needed: ONNX Runtime runs one WASM
+  thread without SharedArrayBuffer, which is plenty for tiny.en.
+- **Tests:** emulator builds contain an e2e seam (`voice/fake.ts`, used only when a test sets `window.__handsFreeFake`);
+  production builds don't (the condition is `import.meta.env.VITE_USE_EMULATORS`, a build-time constant).
+
 ## CI/CD (GitHub Actions)
 
 - `.github/workflows/checks.yml`: on PRs and pushes to `master`: lint, typecheck, unit tests, build, requirement-tag

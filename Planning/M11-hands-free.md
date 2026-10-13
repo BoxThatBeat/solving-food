@@ -74,8 +74,8 @@ on-device audio, nothing recorded while off).
       switches itself off; the cook carries on.
 
 ### 4. Build, documents, tests
-- [ ] Workbox: the voice chunks are not precached (only people who use the feature download them); spec §2 quota row.
-- [ ] PRD R4.31–R4.34; spec §12 (voice architecture, worker, model source and caching, test seam), §2, §14.1; SETUP.md.
+- [x] Workbox: the voice chunks are not precached (only people who use the feature download them); spec §2 quota row.
+- [x] PRD R4.31–R4.34; spec §12 (voice architecture, worker, model source and caching, test seam), §2, §14.1; SETUP.md.
 - [ ] e2e `hands-free.spec.ts` (@R4.31–@R4.34) and an axe check of the cook page with the toggle on.
 - [ ] Design pass (phone, desktop) and accessibility (contrast, 44 px, focus ring).
 

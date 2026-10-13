@@ -115,6 +115,7 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Outbound requests from functions (PC Express, M5) | Cloud Run egress to the internet: 1 GiB / month free (North America) | one or two small JSON requests per search, plus one per mapped product per week (~50): < 2,000 requests, < 50 MB / month | 20× |
 | Price writes (M5) | in the 20,000 writes / day | ≤ 12 per product search (each result's price) + one per mapped product per week; prices nobody refreshed for 60 days are deleted weekly | — |
 | Suggestions and optimiser (M5) | no functions | client-only, in Web Workers; the scoring snapshot reuses the plan model's listeners plus cook events (shared with History) and `prices` at the household's store | — |
+| Hands-free mode (M11, R4.31–R4.34) | no Firebase use | speech runs on the device. The Whisper tiny.en model (~41 MB, q8) comes from the Hugging Face Hub and ONNX Runtime's WASM (~5.5 MB) from cdn.jsdelivr.net, once per device, kept in the browser's Cache API; neither is on Hosting (the build drops onnxruntime-web's 27 MB WASM copy). Hosting serves only the ~550 kB worker script to those who switch it on (not precached): < 10 MB / month | — |
 | Cloud Build (function deploys) | 2,500 build-minutes / month | ~10 deploys × ~2 min | 100× |
 | Artifact Registry | 0.5 GB storage | one image per function; cleanup policy deletes images older than 1 day | — |
 | Cloud Run (2nd gen functions run on it) | 2M requests, 180k vCPU-s / month | same as Functions invocations; 256 MiB, max 2 instances | 200× |
@@ -134,6 +135,7 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | PWA | `vite-plugin-pwa` (Workbox) for the app shell; Firestore persistent cache for data |
 | Theme | The design prototype's Catppuccin `FLAV` / `ACCENTS` tables (Latte default) → CSS variables → Tailwind theme |
 | Search | MiniSearch (client-side full-text) over the recipe index (§9) |
+| Voice (M11) | Transformers.js (`@huggingface/transformers`, Whisper tiny.en) in a Web Worker for speech recognition; the Web Speech API's `speechSynthesis` for reading aloud |
 | Backend | Cloud Functions for Firebase (2nd gen, Node 22), region `us-east1` |
 | Cooklang | A TypeScript Cooklang parser in `packages/core` (evaluate `@cooklang/cooklang-ts`; write a small one if it lags the spec). Used **only** for drop-folder imports and `.cook` export. |
 | Testing | Vitest, fast-check, Firebase Emulator Suite, `@firebase/rules-unit-testing`, Playwright |
@@ -1063,6 +1065,7 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 - **`<StepMode>`**: full-screen, swipe between steps, inline amounts, Screen Wake Lock API, inline timers (§12 Cooking timers). Adapts to orientation and size (§12 Cooking layouts). M9: the step text is its own scroll area (`min-h-0 flex-1 overflow-y-auto`, focusable) inside the card; ingredients (capped at a third of the card, scrolling), timers and the Back / Next row are `flex-none`, so a long step never pushes or covers them.
 - **Cook phase history** (M9, R4.12): the cook routes take `?mode=mise|steps`; moving forward (order → mise en place → step mode) pushes an entry, the back button pops it and the phase follows the URL; finishing a recipe of a meal pops back to the order list (`history.go(-n)`), so Back from there leaves the cook view. A plan item that's no longer planned (Back from the review) shows "This meal is already cooked" instead of a new cook session.
 - **`<MiseEnPlace>`**: the prep checklist shown before step mode.
+- **`<HandsFreeToggle>`** (M11, R4.31): in the cook header on mise en place and step mode (not on a meal's order list) and on the review; see "Hands-free mode" below.
 - **`<ReviewSheet>`**: per-user 1–10 rating for each recipe, and for the meal when it has a `savedMealId` (otherwise a "Save this meal?" prompt for multi-recipe meals, R5.8) → used amounts (pre-filled with what `finishCooking` already deducted) → leftovers ▲/▼. Submits a `submitReview` command whose corrections are the differences. It can be completed later from **Pending reviews** on the Plan page. As built (M3): a full-screen phase at `/review/:eventId` (as the prototype's cook "review" phase) with three tabs; ratings default to none (a rating is only sent when picked); an optional note goes on the cook event and shows in History; once someone has confirmed the amounts, later visitors see only "Rate it".
 - **`<SupplyAdjust>`**: typed amount, ±5 / ±25 buttons, Apply.
 - **Supply search** (M9, R8.17): a search box above the location tabs (`?q=`, URL replaced 200 ms after typing) filters rows by label, ingredient name and aliases (case and accent insensitive), and leftovers by label, combined with the location and chip filters; "No Supply matches “x”" with Clear search.
@@ -1143,6 +1146,60 @@ Dead tokens are pruned. Queue and push sit behind two small adapters; under the 
 records tasks in `_stubTasks/{taskName}` (`scheduled` → `deleted`) and a stub pusher records payloads in
 `_stubPushes` (never sent). Unit tests drive the handler directly with an in-memory queue. Device registration happens
 on the first timer (permission, then `getToken` with the VAPID key on the app's service worker).
+
+### Hands-free mode (M11, R4.31–R4.34)
+
+A voice assistant for the cooking views, all on the device. Four parts with separate lifecycles, so speech can be
+interrupted at once whatever inference is doing:
+
+- **State and lifecycle** (`apps/web/src/voice/handsFree.ts`, main bundle, ~2 kB): the device setting
+  (`localStorage sf.handsFree`), the state the toggle shows (off / loading / listening / speaking / muted), the open
+  page's **voice script** (`useVoiceScript({ id, intro, ingredients, steps, next, previous })`) and the commands. The
+  engine runs only while the setting is on **and** a page showing `<HandsFreeToggle>` is mounted (mise en place, step
+  mode, the review); unmounting waits 800 ms, so moving from the cook view to the review keeps the microphone open.
+  Everything else is a dynamic `import()` the first time hands-free starts.
+- **Speaker** (`voice/speaker.ts`): `SpeechSynthesisUtterance`, `lang = "en-CA"` (an en-CA voice when the device has
+  one), one utterance per sentence, texts made speakable by core `speakable()` ("600 g" → "600 grams", "430°F" → "430
+  degrees Fahrenheit", "1½" → "1 and a half"). `say()` replaces whatever is being read; `cancel()` is
+  `speechSynthesis.cancel()`. It remembers what it said for 8 s after each sentence (the echo filter).
+- **Microphone** (`voice/mic.ts`, main thread): `getUserMedia({ audio: { echoCancellation, noiseSuppression,
+  autoGainControl } })` → an AudioWorklet (inline blob module; ScriptProcessor where there is none) at the device rate
+  → core `downsample()` to 16 kHz mono → core `SpeechSegmenter`: an energy voice-activity detector whose threshold is
+  3.5× the quietest 30 ms frame of the last 3 s (at least 0.01 RMS), 300 ms of pre-roll, a segment ends after **1.5 s of
+  silence** (or at 15 s), less than 200 ms of voice is dropped. `stop()` ends every track and closes the AudioContext,
+  so the browser's recording indicator goes away. A context that starts suspended (hands-free came back on without a
+  tap) resumes on the next tap or key.
+- **Recogniser** (`voice/stt.worker.ts` + `voice/input.ts`): a module Web Worker running Transformers.js
+  `pipeline("automatic-speech-recognition", "onnx-community/whisper-tiny.en")`, WebGPU (fp32 encoder, q4 decoder) when an
+  adapter is available, else WASM (q8, one thread: no COOP/COEP headers, so no SharedArrayBuffer). It receives
+  Float32 PCM (transferred) and returns text; up to 3 segments queue, oldest dropped. The worker survives a toggle off
+  (switching back on is instant) and is terminated when no cooking page is open. Model files load from the Hugging Face
+  Hub and ONNX Runtime's WASM from jsDelivr; the library caches both in the Cache API (`transformers-cache`), so later
+  starts need no download (measured: first start 10.8 s in headless Chromium on this machine, 3.3 s from cache).
+
+**Commands** (core `parseVoiceCommand()`): lower-case words with punctuation and Whisper's bracketed tags removed;
+keywords `next`, `previous|back|before`, `ingredients`, `steps|instructions`, `stop`, `mute`, "shut up", `unmute`
+("un-mute", "un mute" joined); scanning from the end, the last keyword wins. "step" and "ingredient" (singular) aren't
+keywords, so "next step" means next. Before parsing, `stripEcho()` drops the app's own words when a transcript of three
+or more words is at least 60 % words it said in the last 8 s (so a step reading "Next, add…" through the speakers isn't
+a command, while a keyword the user says over it still is); one- and two-word transcripts are taken as heard.
+
+**Actions:** next / previous move like the buttons (never past the last step: finishing sends `finishCooking`, so it
+stays a tap; in mise en place "next" starts step mode); ingredients / steps re-read (in mise en place: all ingredients /
+the prep list); stop cancels speech; mute cancels and stays silent (nothing is read, not even on a new step) while
+listening goes on; unmute clears it. **Reading:** switching on reads the page's intro at once (while the model may
+still load): mise en place → its prep list; a step → "For step n:", its ingredients ("600 grams chicken thigh"), then
+"Step n." and its instructions with ingredient names but no amounts (they were just read). A new script id (entering a
+step or mise en place) reads its intro; text changes under the same id (servings, data arriving) don't.
+
+**Errors** (`VoiceError`, a message fit for the user): no `speechSynthesis`, no `getUserMedia` / AudioContext, the
+microphone refused or missing or ended, the model failing to load → an error banner (R12.1) and the setting switches
+off. Nothing in the UI lists the commands (owner's request).
+
+**Test seam:** emulator builds only (`import.meta.env.VITE_USE_EMULATORS`, a build-time constant, so production builds
+don't contain it) and only when a test sets `window.__handsFreeFake`: `voice/fake.ts` replaces the microphone and the
+recogniser with `window.__handsFree` (`hear(text)`, `mic: "on" | "off"`, `denyMic`); the test stubs `speechSynthesis`
+and `SpeechSynthesisUtterance` with `addInitScript` and reads what the app asked to say.
 
 ### Theming
 
@@ -1250,6 +1307,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | `recipe-detail.spec.ts` | Supply badges next to ingredients; servings scaling; missing-tool warning; protein per serving (R4.8–R4.9, R4.13–R4.14, R6.15) |
 | `cooking.spec.ts` | Mise en place; step mode navigation (swipe, tap, keys); inline amounts; portrait/landscape and tablet layouts; wake lock requested; the back button from step mode to mise en place; a long step scrolls with the buttons uncovered at 360×640 (M9) (R4.10–R4.12, R4.24) |
 | `timers.spec.ts` | Start, pause, cancel, and adjust timers; foreground alarm; push scheduled and cancelled (task stub); install prompt on iOS; offline warning banner (R4.23) |
+| `hands-free.spec.ts` | (M11) The toggle on mise en place, every step and the review (not a meal's order list); on reads the prep list, a new step reads its ingredients then instructions; next / previous / before, last keyword wins, ingredients, instructions, stop, shut up, unmute; remembered per device; off closes the mic and silences at once; leaving the cook view closes the mic; a refused mic switches it off with a banner; axe and a 44 px toggle (R4.31–R4.34) |
 | `recipe-edit.spec.ts` | Manual create and edit with fixed cuisine/protein lists; version history and restore; concurrent-edit warning; offline draft saved when online; delete with all-users warning moves to Trash and hides from search and plans; restore from Trash; purge after 30 days (clock) cleans up plans, meals, and favourites (R4.15, R4.19, R4.25–R4.26) |
 | `drop-folder.spec.ts` | Upload `.cook` files → recipes appear with downloaded images; invalid file shows an error banner on whatever page is open; file deleted after processing; duplicate goes to the review list; keep existing / keep new / keep both; wording with preparation words, qualifiers and spelling variants resolves to the catalogue with no new ingredient (M8) (R4.16–R4.17, R4.20) |
 | `ingredients.spec.ts` | (M8) An import with a new name: notification with Open recipe + Review ingredients, Recipes banner (session dismiss), Settings count, review card with its recipe, Merge into… preview and confirm repoint the recipe and move a seeded Supply lot with Σ transactions == amount, alias learned, merged page notice; More sheet link on phones (R4.27, R8.16) |
@@ -1310,6 +1368,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | M8 | Ingredient matching | A much better deterministic matcher (spelling variants, preparation and state words, qualifiers, suggestions), the `mergeIngredient` callable with alias learning that moves Supply in every household, a strict Claude skill, ingredient review reachable from Settings, More, the Recipes banner, the Drop page and the import notification; the live cleanup of the 62 needs-review ingredients |
 | M9 | Owner review 2 | Latte only (accent stays), side recipes and meal type as the first filter, Supply search, cooking back button and scrolling steps, a review marks the meal eaten, eating out (plan item kind `out`), expiring meals first, use it up before ordering, fibre like protein, one switch for protein and fibre tracking |
 | M10 | Owner review 3 | The skill splits crowded steps, a more-text arrow in step mode, a recipe thumbnail next to every recipe name, staples on the grocery list by themselves (the cadence prompt retired), a Nutrition Facts panel on every recipe from the Canadian Nutrient File |
+| M11 | Hands-free mode | A voice assistant in the cooking views: reads ingredients and steps aloud (`speechSynthesis`, en-CA), spoken commands by keyword (last wins), Whisper tiny.en via Transformers.js in a Web Worker, mic capture and VAD on the main thread, nothing recorded while off, model cached in the browser |
 
 Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix. The detailed, task-level plan for each milestone lives in `Planning/`.
 
