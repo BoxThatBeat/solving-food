@@ -36,3 +36,4 @@ export * from "./timers";
 export * from "./projection";
 export * from "./export";
 export * from "./pcx";
+export * from "./handsFree";
