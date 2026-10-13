@@ -65,7 +65,7 @@ meal eaten), R6.23 (new: eating out), R6.24 (new: expiring meals first), R6.25 (
       Supply and the ledger are unchanged (eaten on a cooked meal never touched Supply).
 - [ ] Plan card: a cooked meal shows "Cooked · review to finish" and a **Review** button (its pending review) instead of
       "Mark eaten". Leftovers ("Ate one") and snacks ("Ate it") keep their buttons.
-- [ ] Functions test; e2e `review.spec.ts` @R9.5.
+- [ ] Functions test; e2e `leftovers.spec.ts` @R9.5 (the cooked meal is reviewed from its card and becomes eaten).
 
 ### 6. Eating out (item 1, R6.23)
 > "Mark off meals in the plan where you know you will be eating out."

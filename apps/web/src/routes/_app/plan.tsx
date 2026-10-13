@@ -52,6 +52,7 @@ import { useNotify } from "@/components/notifications-context";
 import { ExpiredLotPrompts } from "@/components/supply/ExpiredLotPrompt";
 import { dateText, expiredEntries, itemExpiry, unitFor } from "@/components/supply/format";
 import { PendingReviews } from "@/components/cook/PendingReviews";
+import { usePendingReviews } from "@/components/cook/helpers";
 import { useOnline } from "@/hooks/useOnline";
 import { useReadySession } from "@/session/useSession";
 
@@ -91,11 +92,14 @@ function PlanPage() {
     return out;
   }, [m.supply.pendingCommands]);
   const supplyNow = m.supply.now;
+  // Cooked meals waiting for their review (M9, R9.5): the card's Review button; the review marks them eaten.
+  const pending = usePendingReviews(m.hid, s.user.uid);
+  const reviewOf = React.useMemo(() => new Map(pending.filter((e) => e.reason === "review" && e.planItemId).map((e) => [e.planItemId!, e.id])), [pending]);
   const views: PlanItemView[] = React.useMemo(
     () =>
       m.items.map((i) => {
         const status = optimistic.get(i.id) ?? i.data.status;
-        const v: PlanItemView = { id: i.id, item: i.data, title: planItemTitle(i.data, titleOf, sideNameOf), cost: m.ready ? m.costs.get(i.id) : undefined, status };
+        const v: PlanItemView = { id: i.id, item: i.data, title: planItemTitle(i.data, titleOf, sideNameOf), cost: m.ready ? m.costs.get(i.id) : undefined, status, review: reviewOf.get(i.id) };
         if (status === "planned" && i.data.kind === "meal") {
           // R6.7: the soonest-expiring lot this meal would use, when it expires within the period (or within days).
           const needs = mealRequirements(i.data.recipes, i.data.servings, m.ctx, i.data.sides);
@@ -112,7 +116,7 @@ function PlanPage() {
         }
         return v;
       }),
-    [m.items, titleOf, sideNameOf, m.costs, m.ready, optimistic, m.ctx, m.lotsByIngredient, m.ingredients, m.supply.items, supplyNow, endMs, tz],
+    [m.items, titleOf, sideNameOf, m.costs, m.ready, optimistic, reviewOf, m.ctx, m.lotsByIngredient, m.ingredients, m.supply.items, supplyNow, endMs, tz],
   );
   const rows = React.useMemo(
     () => stripModel(views.map((v) => ({ coverage: v.item.coverage, status: v.status })), cells.length, m.household?.plannedMealTypes ?? []),

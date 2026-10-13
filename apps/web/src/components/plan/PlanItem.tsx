@@ -1,7 +1,8 @@
 // A planned meal on the Plan page (PRD R5.1, R5.5, R6.1) and its sheet: change servings and meal type, save an
 // unsaved meal to Meals (R5.8), remove. M3: Cook → opens the cook view; cooked meals, leftovers, and snacks can be
 // marked eaten (R9.5, `markEaten`); an expiry badge names the soonest-expiring ingredient the meal would use (R6.7);
-// leftovers show their use-by (R6.10).
+// leftovers show their use-by (R6.10). M9 (R9.5): a cooked meal's review marks it eaten, so a cooked meal shows
+// Review (its pending review) instead of Mark eaten.
 import * as React from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { X } from "lucide-react";
@@ -42,6 +43,8 @@ export interface PlanItemView {
   status: StoredPlanItem["status"];
   /** "Salmon expires in 2 days" (R6.7). */
   expiry?: string | undefined;
+  /** A cooked meal's pending review (cook event ID): finishing it marks the meal eaten (M9, R9.5). */
+  review?: string | undefined;
   /** Leftovers: "use by 13 Oct" and whether the batch is already past it. */
   leftover?: { useBy: string | null; expired: boolean } | undefined;
 }
@@ -58,7 +61,7 @@ function recipeMeta(r: StoredRecipe | undefined): React.ReactNode {
 }
 
 function costLine(v: PlanItemView): string {
-  if (v.status === "cooked") return "COOKED · MARK EATEN WHEN FINISHED";
+  if (v.status === "cooked") return v.review ? "COOKED · REVIEW TO FINISH" : "COOKED";
   if (v.status === "eaten") return "EATEN";
   if (v.status !== "planned") return v.status.toUpperCase();
   if (v.item.kind === "leftover") return "ALREADY PAID FOR";
@@ -74,7 +77,9 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
   const status = v.status;
   const leftover = it.kind === "leftover";
   const canCook = status === "planned" && !leftover && it.recipes.length > 0;
-  const canEat = status === "cooked" || (status === "planned" && (leftover || it.mealType === "snack"));
+  // A cooked meal is finished by its review (M9); Mark eaten stays only for one whose review is already done (older data).
+  const canReview = status === "cooked" && !!v.review;
+  const canEat = (status === "cooked" && !v.review) || (status === "planned" && (leftover || it.mealType === "snack"));
   const eat = () => {
     sendCommand(hid, uid, "markEaten", { planItemId: v.id });
     notify({ kind: "success", message: leftover ? `Ate a portion of ${v.title}` : `${v.title} marked eaten` });
@@ -168,6 +173,16 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
           <Button size="sm" onClick={() => void navigate({ to: "/plan/$itemId/cook", params: { itemId: v.id } })} aria-label={`Cook ${v.title}`} className="shadow-hard-sm">
             Cook →
           </Button>
+        ) : null}
+        {canReview ? (
+          <Link
+            to="/review/$eventId"
+            params={{ eventId: v.review! }}
+            aria-label={`Review ${v.title} to finish it`}
+            className="press inline-flex min-h-10 items-center rounded-ui border-2 border-line bg-acc px-3 text-[0.875rem] font-extrabold text-onc no-underline shadow-hard-sm"
+          >
+            Review →
+          </Link>
         ) : null}
         {canEat ? (
           <Button size="sm" variant="secondary" onClick={eat} aria-label={leftover ? `Ate one: ${v.title}` : `Mark ${v.title} eaten`} className="shadow-hard-sm">

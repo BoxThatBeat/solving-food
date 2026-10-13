@@ -260,7 +260,7 @@ flowchart LR
   3. **Confirm leftovers** with ▲/▼ (R6.9).
 - **R9.3** Supply is updated in two steps so that it's never left stale. **Done cooking** immediately subtracts the recipe's ingredients (at the planned servings) and adds the recipe's estimated leftover portions. The review then **corrects** supply by the difference between those defaults and what the user confirms. If the review is never completed, the defaults stand.
 - **R9.4** A review doesn't have to be done straight away. Cooked meals without a review appear in a **"pending reviews"** prompt so any household member can finish it later (e.g. that evening). Each other member is prompted to add their own rating.
-- **R9.5** The user can mark which planned items were **eaten**. This covers leftovers and snacks as well as cooked meals.
+- **R9.5** Planned items are marked **eaten**. Completing a cooked meal's **review marks it eaten** automatically; there is no separate step (M9, owner's review). Leftovers and snacks, which have no review, are marked eaten by the user ("Ate one", "Ate it"). Until its review is done, a cooked meal on the Plan page shows a **Review** button.
 
 ---
 

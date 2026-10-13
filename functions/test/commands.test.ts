@@ -234,6 +234,9 @@ describe("cooking, review, leftovers, eaten", () => {
     expect(ev.leftoverPortions).toBe(3);
     expect((await supply("leftover_ev1"))!.canonicalAmount).toBe(3);
     expect((await db.collection(`households/${HID}/planItems`).where("leftoverSupplyId", "==", "leftover_ev1").get()).size).toBe(3);
+    // M9 (R9.5): the review marks the cooked meal eaten; its leftovers stay planned.
+    expect((await db.doc(`households/${HID}/planItems/p1`).get()).data()!.status).toBe("eaten");
+    expect((await db.collection(`households/${HID}/planItems`).where("leftoverSupplyId", "==", "leftover_ev1").get()).docs.every((d) => d.data().status === "planned")).toBe(true);
     const st = (await db.doc(`households/${HID}/stats/recipe_r-chicken`).get()).data()!;
     expect([st.ratingSum, st.ratingCount, st.timesCooked]).toEqual([8, 1, 1]);
     expect((await db.doc(`households/${HID}/stats/recipe_not-in-meal`).get()).exists).toBe(false);
@@ -247,12 +250,13 @@ describe("cooking, review, leftovers, eaten", () => {
     expect((await supply("chicken"))!.canonicalAmount).toBe(chickenNow);
   });
 
-  it("markEaten: a leftover portion leaves supply; a cooked meal changes status only; an uncooked dinner is refused", async () => {
+  it("markEaten: a leftover portion leaves supply; a reviewed meal is already eaten; an uncooked dinner is refused", async () => {
     const lo = (await db.collection(`households/${HID}/planItems`).where("leftoverSupplyId", "==", "leftover_ev1").get()).docs[0]!;
     expect((await command("markEaten", { planItemId: lo.id })).status).toBe("applied");
     expect((await supply("leftover_ev1"))!.canonicalAmount).toBe(2);
     expect((await db.doc(lo.ref.path).get()).data()!.status).toBe("eaten");
-    expect((await command("markEaten", { planItemId: "p1" })).status).toBe("applied");
+    // p1 was marked eaten by its review (M9): marking it again is a no-op.
+    expect((await command("markEaten", { planItemId: "p1" })).result).toBe("already eaten");
     expect((await db.doc(`households/${HID}/planItems/p1`).get()).data()!.status).toBe("eaten");
     await db.doc(`households/${HID}/planItems/p2`).set({ periodId: "2026-10-05", kind: "meal", mealType: "dinner", servings: 4, recipes: [{ recipeId: "r-rice", servingsMultiplier: 1 }], coverage: { dinner: 1 }, status: "planned", addedBy: UID });
     expect((await command("markEaten", { planItemId: "p2" })).status).toBe("failed");

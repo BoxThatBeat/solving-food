@@ -331,6 +331,10 @@ export async function submitReview(ctx: Ctx, p: CommandPayload<"submitReview">):
     }
     await ctx.store.load([...deltas.map((d) => d.ingredientId), ...(newPortions !== oldPortions ? [loId] : [])]);
   }
+  // M9 (R9.5): completing the review marks the cooked meal eaten; there's no separate step. Status only: a cooked
+  // meal's Supply was settled by finishCooking and the corrections above (markEaten on a cooked meal never touched it).
+  const planRef = doCorrect && typeof e.planItemId === "string" ? hh(ctx, `planItems/${e.planItemId}`) : null;
+  const planSnap = planRef ? await ctx.tx.get(planRef) : null;
 
   // Ratings: one per person, event, and target; re-rating replaces and adjusts the stats.
   ratings.forEach((r, i) => {
@@ -417,6 +421,7 @@ export async function submitReview(ctx: Ctx, p: CommandPayload<"submitReview">):
     eventUpdate.takes = takes.filter((t) => t.amount > 1e-6);
     eventUpdate.reviewStatus = "done";
     eventUpdate.reviewedBy = ctx.uid;
+    if (planRef && planSnap?.exists && planSnap.data()!.status === "cooked") ctx.tx.update(planRef, { status: "eaten" });
   }
   if (Object.keys(eventUpdate).length) ctx.tx.update(eventRef, eventUpdate);
   return doCorrect || !p.used ? undefined : "already reviewed: ratings added";

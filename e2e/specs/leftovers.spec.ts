@@ -37,7 +37,7 @@ test("cooking a batch turns its leftovers into supply portions with a use-by and
   await expect(page.getByTestId("leftover-row")).toContainText(r.title);
 });
 
-test("mark eaten: a leftover portion leaves supply and its cell turns solid; a cooked meal and a snack too (R9.5, R6.2)", { tag: ["@R9.5", "@R6.2"] }, async ({ page, household }) => {
+test("mark eaten: a leftover portion leaves supply and its cell turns solid; a snack too; a cooked meal is eaten when reviewed (R9.5, R6.2)", { tag: ["@R9.5", "@R6.2"] }, async ({ page, household }) => {
   const r = await makeCookRecipe("Eat it", { leftovers: 1 });
   const snack = await makeCookRecipe("Snack it", { leftovers: 0, lines: "Slice @tomato{125%g}." });
   const pid = await seedPeriod(household.hid);
@@ -52,9 +52,19 @@ test("mark eaten: a leftover portion leaves supply and its cell turns solid; a c
   const leftover = page.getByTestId("plan-item").filter({ hasText: "Leftover" });
   await leftover.getByRole("button", { name: /^Ate one/ }).click();
   await expect(leftover.getByTestId("plan-item-status")).toHaveText(/eaten/i);
-  const cooked = plan.item(r.title).filter({ hasNotText: "Leftover" });
-  await cooked.getByRole("button", { name: `Mark ${r.title} eaten` }).click();
   await plan.item("Afternoon snack").getByRole("button", { name: "Mark Afternoon snack eaten" }).click();
+  // M9: a cooked meal has no Mark eaten step; its review marks it eaten.
+  const cooked = plan.item(r.title).filter({ hasNotText: "Leftover" });
+  await expect(cooked.getByTestId("plan-item-cost")).toHaveText("COOKED · REVIEW TO FINISH");
+  await expect(cooked.getByRole("button", { name: `Mark ${r.title} eaten` })).toHaveCount(0);
+  await cooked.getByRole("link", { name: `Review ${r.title} to finish it` }).click();
+  await expect(page).toHaveURL(/\/review\//);
+  await page.getByRole("button", { name: "Next →" }).click();
+  await page.getByRole("button", { name: "Next →" }).click();
+  await page.getByRole("button", { name: "Save & update supply" }).click();
+  await expect(page).toHaveURL(/\/plan$/);
+  await expect(cooked.getByTestId("plan-item-status")).toHaveText(/eaten/i);
+  await expect(cooked.getByTestId("plan-item-cost")).toHaveText("EATEN");
   expect(await commandsSettled(household.hid, 4)).toEqual([]);
   const [ev] = await cookEvents(household.hid);
   await expectSupply(household.hid, `leftover_${ev!.id}`, 0);
