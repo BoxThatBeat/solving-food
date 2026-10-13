@@ -14,6 +14,7 @@ ordered, checkable tasks with the files they touch, the tests that prove them, a
 | [M6-sides.md](M6-sides.md) | Sides | M5 | Sides on meals with per-person portions, seed sides, Settings → Sides, sides on the grocery list, in the budget, deducted from Supply at Done cooking |
 | [M7-review-fixes.md](M7-review-fixes.md) | Review fixes | M6 | Owner review: units v3, version history, recipe page actions, Recipes skeletons, restart period, kitchen tool names, Plan page layout |
 | [M8-ingredient-matching.md](M8-ingredient-matching.md) | Ingredient matching | M7 | Matcher (variants, preparation words, suggestions), Merge into… (moves Supply, learns aliases), strict skill, discoverable review, live cleanup |
+| [M9-owner-review-2.md](M9-owner-review-2.md) | Owner review 2 | M8 | Latte only, side recipes, meal type first, Supply search, cooking back/scroll, review marks eaten, eating out, expiring meals first, use it up before ordering, fibre, nutrition switch |
 
 ## How to use these plans
 
