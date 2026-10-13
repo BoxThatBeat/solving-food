@@ -521,6 +521,16 @@ export async function addManualItem(hid: string, periodId: string, item: Grocery
   return id;
 }
 
+/**
+ * Removes a staple line from the draft and keeps it off until `untilMs` (M10, R7.12), in one write. Expired entries
+ * are pruned on the way.
+ */
+export function dismissStaple(hid: string, itemId: string, ingredientId: string, untilMs: number, current: Readonly<Record<string, number>> | undefined, nowMs: number) {
+  const args: unknown[] = [new FieldPath("dismissedStaples", ingredientId), Math.round(untilMs)];
+  for (const [id, until] of Object.entries(current ?? {})) if (until <= nowMs && id !== ingredientId) args.push(new FieldPath("dismissedStaples", id), deleteField());
+  return updateDoc(draftRef(hid), new FieldPath("items", itemId), deleteField(), ...args);
+}
+
 export function removeItem(hid: string, listId: string, itemId: string) {
   return updateDoc(doc(db, "households", hid, "groceryLists", listId), new FieldPath("items", itemId), deleteField());
 }

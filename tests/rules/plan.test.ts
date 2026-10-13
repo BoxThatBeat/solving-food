@@ -181,6 +181,10 @@ describe("household collections are member-only (R2.8)", () => {
     const ref = doc(db, "households/h-alice/groceryLists/draft");
     await assertSucceeds(setDoc(ref, { periodId: "2026-10-05", status: "draft", createdAt: serverTimestamp(), items: { tomato: groceryItem } }));
     await assertSucceeds(updateDoc(ref, { "items.tomato.checked": true, "items.tomato.checkedBy": ALICE.uid }));
+    // M10 (R7.12): a removed staple is remembered on the draft until a time.
+    await assertSucceeds(updateDoc(ref, { "dismissedStaples.milk": Date.now() + 86_400_000 }));
+    await assertFails(updateDoc(ref, { dismissedStaples: "milk" }));
+    await assertFails(updateDoc(ref, { somethingElse: 1 }));
     const ordered = doc(db, "households/h-alice/groceryLists/o1");
     await assertFails(setDoc(ordered, { periodId: "2026-10-05", status: "ordered", createdAt: serverTimestamp(), items: {} }));
     await assertSucceeds(setDoc(ordered, { periodId: "2026-10-05", status: "ordered", createdAt: serverTimestamp(), orderedAt: serverTimestamp(), orderedBy: ALICE.uid, items: { tomato: groceryItem } }));

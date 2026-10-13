@@ -474,7 +474,10 @@ export const groceryItemSchema = z.object({
   storeId: id,
   estPriceCents: cents.min(0).nullable(),
   priceSource: z.enum(["live", "estimate", "unknown"]).optional(),
-  source: z.enum(["plan", "manual", "cadence"]),
+  /** `staple` (M10, R7.12): added by the list itself for a staple that's due; `cadence`: a pre-M10 "Yes, add it". */
+  source: z.enum(["plan", "manual", "cadence", "staple"]),
+  /** Why a staple line is on the list (M10): due by the cadence, used by planned meals, or none left in Supply. */
+  stapleReason: z.enum(["cadence", "plan", "out"]).optional(),
   checked: z.boolean(),
   checkedBy: z.string().optional(),
   /** Set by receiveGroceries: canonical amount that arrived (0 = didn't arrive) and the ingredient actually bought. */
@@ -495,6 +498,8 @@ export const groceryListSchema = z.object({
   /** Σ estimated cost of what arrived (prices at the time): the period's spend (R10.3). */
   receivedCents: z.number().int().min(0).optional(),
   items: z.record(z.string(), groceryItemSchema),
+  /** Staples removed from the draft (M10, R7.12): ingredient ID → epoch ms until which the list doesn't add it again. */
+  dismissedStaples: z.record(z.string(), z.number()).optional(),
 });
 export type GroceryListDoc = z.infer<typeof groceryListSchema>;
 

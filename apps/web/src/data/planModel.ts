@@ -132,6 +132,8 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[]; extraIn
     ingredients,
     stores: ctx.stores,
     ctx,
+    /** The plan items as the grocery builder reads them. */
+    inputs,
     built,
     costs,
     budget,

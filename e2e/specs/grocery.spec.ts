@@ -15,7 +15,7 @@ async function gotoGrocery(page: Page) {
   await expect(page.getByText("Building the list…")).toHaveCount(0, { timeout: 20_000 });
 }
 
-test("built from the plan, rounded to packs, free-use excluded, metric only (R7.1, R7.2, R8.13)", { tag: ["@R7.1", "@R7.2", "@R8.13", "@smoke"] }, async ({ page, household }) => {
+test("built from the plan, rounded to packs, free-use not a plan line, metric only (R7.1, R7.2, R8.13, R8.14)", { tag: ["@R7.1", "@R7.2", "@R8.13", "@R8.14", "@smoke"] }, async ({ page, household }) => {
   const raw = `e2e-loose-${Math.random().toString(36).slice(2, 8)}`;
   await adminDb.doc(`ingredients/${raw}`).set({ name: raw.replace(/-/g, " "), aliases: [], category: "produce", defaultLocation: "fridge", allowedMeasures: ["weight"], canonicalUnit: "g", proteinPer100g: 1, shelfLifeDays: { fridge: 5 }, freezable: false, isStaple: false, freeUse: false, needsReview: false });
   forgetIngredients();
@@ -31,10 +31,13 @@ test("built from the plan, rounded to packs, free-use excluded, metric only (R7.
   await expect(line(page, "Chicken thigh")).toContainText("$25.98");
   await expect(line(page, "Baby spinach")).toContainText("×1");
   await expect(line(page, new RegExp(raw.replace(/-/g, " "), "i"))).toContainText("150 g");
-  await expect(line(page, /olive oil/i)).toHaveCount(0);
+  // Free-use olive oil isn't a plan line (R8.14); never bought here, it's on the list as a staple instead (M10, R7.12).
+  await expect(line(page, /olive oil/i)).toHaveCount(1);
+  await expect(line(page, /olive oil/i)).toContainText("used by planned meals");
+  await expect(line(page, /olive oil/i)).not.toContainText("need ");
   await expect(pcx).not.toContainText(/\d ?(oz|lb)\b/); // no imperial anywhere on the list (R8.13)
   // The stored draft holds the same lines (deterministic IDs).
-  await expect.poll(async () => Object.keys((await adminDb.doc(`households/${household.hid}/groceryLists/draft`).get()).data()?.items ?? {}).sort()).toEqual(["baby-spinach", "chicken-thigh", raw].sort());
+  await expect.poll(async () => Object.keys((await adminDb.doc(`households/${household.hid}/groceryLists/draft`).get()).data()?.items ?? {}).sort()).toEqual(["baby-spinach", "chicken-thigh", raw, "staple_olive-oil"].sort());
 });
 
 test("brand mappings name the product and set the pack; stores group the list, and a mapping beats a category rule (R7.3, R7.4)", { tag: ["@R7.3", "@R7.4"] }, async ({ page, household }) => {
@@ -72,7 +75,8 @@ test("Copy copies only the PC Express section and marks the list ordered; Undo p
   await expect(page.getByTestId("notifications")).toContainText(/list marked ordered/i);
   if (browserName === "chromium") {
     const text = await page.evaluate(() => navigator.clipboard.readText());
-    expect(text).toBe(["Please add these to my PC Express cart:", "- Baby spinach, 312 g × 1", "Substitutions: closest equivalent size; skip if unavailable."].join("\n"));
+    // Olive oil is a staple line (M10, R7.12: free-use, used by the meal, never bought here), ordered like any PC Express line.
+    expect(text).toBe(["Please add these to my PC Express cart:", "- Baby spinach, 312 g × 1", "- Olive oil, 1 L × 1", "Substitutions: closest equivalent size; skip if unavailable."].join("\n"));
   }
   const ordered = page.getByTestId("ordered-list");
   await expect(ordered).toContainText("Chicken thigh"); // Costco's checklist travels with the order

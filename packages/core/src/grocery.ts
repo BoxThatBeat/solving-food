@@ -17,6 +17,7 @@ import { formatGrams, formatQuantity } from "./units";
 import type { GroceryItem } from "./types";
 import { packToCanonical, resolvePrice, type LivePrice, type PriceEstimate, type PriceSource } from "./pricing";
 import type { RecipeRef } from "./plan";
+import { cadenceInterval, isDue, type CadenceLike } from "./cadence";
 
 export interface GroceryIngredient extends ConvertibleIngredient {
   id: string;
@@ -375,9 +376,100 @@ function stable(v: unknown): string {
   return JSON.stringify(v);
 }
 
+// ---------- staples on the list (M10, PRD R7.12, R7.7, R8.14)
+
+export interface StapleIngredient extends GroceryIngredient {
+  isStaple?: boolean | undefined;
+  defaultCadenceDays?: number | undefined;
+}
+
+export interface StapleInput {
+  /** The period's plan items: free-use ingredients their recipes and sides use (with an amount) count as needed. */
+  items: readonly PlanItemInput[];
+  /** The household's cadence docs (every staple it has bought). */
+  cadence: ReadonlyArray<{ ingredientId: string; c: CadenceLike }>;
+  /** Ingredients already on a list: any draft line other than a staple line, the plan lines, ordered lists. */
+  onList: ReadonlySet<string>;
+  /** `dismissedStaples` of the draft: ingredient → until (ms). */
+  dismissed?: Readonly<Record<string, number>> | undefined;
+  nowMs: number;
+}
+
+export type StapleReason = "cadence" | "plan" | "out";
+
+/** Free-use ingredients the planned, uncooked items use with an amount (optional and vague lines don't count). */
+export function freeUseNeeded(items: readonly PlanItemInput[], ctx: { recipes: BuildContext["recipes"]; ingredients: (id: string) => Pick<GroceryIngredient, "freeUse"> | undefined }): Set<string> {
+  const out = new Set<string>();
+  for (const it of items) {
+    if (it.status !== "planned") continue;
+    for (const ref of it.recipes) {
+      for (const line of ctx.recipes(ref.recipeId)?.ingredients ?? []) {
+        if (line.optional || !(line.canonicalAmount > 0)) continue;
+        if (ctx.ingredients(line.ingredientId)?.freeUse) out.add(line.ingredientId);
+      }
+    }
+  }
+  return out;
+}
+
 /**
- * Regeneration (§8): which fields of the stored draft to write so it matches the generated plan lines. Manual and
- * cadence lines are kept; ticks on plan lines survive; plan lines no longer needed are removed. Field-level updates,
+ * The staples the list adds by itself (R7.12), most overdue first, then by name. A staple (free-use or marked staple)
+ * is due when:
+ *   - cadence: bought before and 85 % of its interval has passed (the R7.7 rule; a snooze is respected);
+ *   - plan:    free-use, a planned meal uses it, and the household has never bought it (or the cadence says it's due);
+ *   - out:     a tracked staple bought before with no unexpired Supply left.
+ * Never when it's already on a list or the household removed it from the list until a later time.
+ */
+export function dueStaples(input: StapleInput, ctx: { recipes: BuildContext["recipes"]; ingredients: (id: string) => StapleIngredient | undefined; supply: BuildContext["supply"] }): Array<{ ingredientId: string; reason: StapleReason }> {
+  const cadence = new Map(input.cadence.map((x) => [x.ingredientId, x.c]));
+  const usedByPlan = freeUseNeeded(input.items, ctx);
+  const ids = new Set([...cadence.keys(), ...usedByPlan]);
+  const out: Array<{ ingredientId: string; reason: StapleReason; rank: number }> = [];
+  for (const id of ids) {
+    const ing = ctx.ingredients(id);
+    if (!ing || !(ing.isStaple || ing.freeUse)) continue;
+    if (input.onList.has(id)) continue;
+    if ((input.dismissed?.[id] ?? 0) > input.nowMs) continue;
+    const c = cadence.get(id) ?? null;
+    if (c?.snoozedUntilMs && input.nowMs < c.snoozedUntilMs) continue; // "Not yet" from a pre-M10 prompt
+    const bought = !!c?.lastPurchasedAtMs;
+    const days = cadenceInterval(c, ing.defaultCadenceDays);
+    const ratio = bought && days ? (input.nowMs - c!.lastPurchasedAtMs!) / (days * 86_400_000) : 0;
+    if (bought && isDue(c, ing, input.nowMs)) out.push({ ingredientId: id, reason: "cadence", rank: ratio });
+    else if (ing.freeUse && usedByPlan.has(id) && !bought) out.push({ ingredientId: id, reason: "plan", rank: 0 });
+    else if (!ing.freeUse && bought && (ctx.supply.get(id) ?? 0) <= EPS) out.push({ ingredientId: id, reason: "out", rank: ratio });
+  }
+  const name = (id: string) => ctx.ingredients(id)?.name ?? id;
+  return out.sort((a, b) => b.rank - a.rank || name(a.ingredientId).localeCompare(name(b.ingredientId))).map(({ ingredientId, reason }) => ({ ingredientId, reason }));
+}
+
+/** The draft key of a staple line. */
+export const stapleKey = (ingredientId: string) => `staple_${ingredientId}`;
+
+/** The staple lines (one default pack each, priced and store-resolved like a manual line), keyed `staple_<id>`. */
+export function stapleLines(input: StapleInput, ctx: Omit<BuildContext, "ingredients"> & { ingredients: (id: string) => StapleIngredient | undefined }): Record<string, GroceryItem> {
+  const out: Record<string, GroceryItem> = {};
+  for (const { ingredientId, reason } of dueStaples(input, ctx)) {
+    out[stapleKey(ingredientId)] = { ...manualItem({ ingredientId, packs: 1 }, ctx), source: "staple", stapleReason: reason };
+  }
+  return out;
+}
+
+/** Until when a removed staple stays off the list: its usual interval, and at least to the end of the period. */
+export function stapleDismissUntil(ingredient: { defaultCadenceDays?: number | undefined }, cadence: Pick<CadenceLike, "avgIntervalDays" | "purchaseCount"> | null, nowMs: number, periodEndMs: number | null): number {
+  const days = cadenceInterval(cadence, ingredient.defaultCadenceDays) ?? 7;
+  return Math.max(nowMs + days * 86_400_000, periodEndMs ?? 0);
+}
+
+/** Generated line sources: rewritten by regeneration; the rest (manual, cadence) are kept as stored. */
+export function isGenerated(it: Pick<GroceryItem, "source">): boolean {
+  return it.source === "plan" || it.source === "staple";
+}
+
+/**
+ * Regeneration (§8): which fields of the stored draft to write so it matches the generated lines (plan lines and, since
+ * M10, staple lines). Manual and cadence lines are kept; ticks on generated lines survive; generated lines no longer
+ * wanted are removed. Field-level updates,
  * so two members regenerating or ticking at once don't overwrite each other (§11).
  */
 export function mergeDraft(existing: Readonly<Record<string, GroceryItem>>, generated: Readonly<Record<string, GroceryItem>>): { set: Record<string, GroceryItem>; remove: string[] } {
@@ -385,12 +477,12 @@ export function mergeDraft(existing: Readonly<Record<string, GroceryItem>>, gene
   const remove: string[] = [];
   for (const [id, gen] of Object.entries(generated)) {
     const e = existing[id];
-    if (e && e.source !== "plan") continue; // a manual line with an ingredient ID never collides (manual_<uuid>)
+    if (e && !isGenerated(e)) continue; // a manual line with an ingredient ID never collides (manual_<uuid>)
     const merged: GroceryItem = { ...gen, checked: e?.checked ?? false };
     if (e?.checkedBy) merged.checkedBy = e.checkedBy;
     if (!e || stable(e) !== stable(merged)) set[id] = merged;
   }
-  for (const [id, e] of Object.entries(existing)) if (e.source === "plan" && !(id in generated)) remove.push(id);
+  for (const [id, e] of Object.entries(existing)) if (isGenerated(e) && !(id in generated)) remove.push(id);
   return { set, remove };
 }
 
@@ -408,9 +500,11 @@ export function groupByStore(items: Readonly<Record<string, GroceryItem>>, store
   return out;
 }
 
+const SOURCE_ORDER: Record<GroceryItem["source"], number> = { plan: 0, staple: 1, cadence: 1, manual: 2 };
+
 function sortLines(lines: Array<[string, GroceryItem]>): Array<[string, GroceryItem]> {
-  // Plan lines alphabetically, then manual lines in the order they were added.
-  return lines.sort(([, a], [, b]) => (a.source === b.source ? (a.source === "plan" ? a.productName.localeCompare(b.productName) : 0) : a.source === "plan" ? -1 : 1));
+  // Plan lines alphabetically, then staples (M10) alphabetically, then manual lines in the order they were added.
+  return lines.sort(([, a], [, b]) => SOURCE_ORDER[a.source] - SOURCE_ORDER[b.source] || (a.source === "manual" ? 0 : a.productName.localeCompare(b.productName)));
 }
 
 /** A canonical amount in metric (R8.13): "140 g", "3 (640 g)", or "3" for a count with no unit weight. */

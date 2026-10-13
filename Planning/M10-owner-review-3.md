@@ -48,16 +48,16 @@ wording: the panel isn't tracking).
 
 ### 4. Staples appear on the grocery list (item 4, R7.12, R7.7, R8.14, R6.4)
 > "ingredients marked as staple should auto appear in grocery list if it doesn't already"
-- [ ] Core `stapleLines()` (grocery.ts): the household's staples that are due and not on any list become `staple_<id>`
+- [x] Core `stapleLines()` (grocery.ts): the household's staples that are due and not on any list become `staple_<id>`
       lines (source `staple`, one default pack, priced, store-resolved). Due = the cadence's rule (85 % of the
       interval since the last purchase, R7.7), or a free-use ingredient a planned meal uses that the household has
       never bought. Not added when already on the draft (any line for that ingredient), on an ordered list, or removed
-      from the list this period. Not in the budget (R6.4).
-- [ ] Grocery page: staple lines in their store card under a "Staples" divider, each removable (×) and tickable;
-      removing one records it in the draft's `dismissedStaples` (cleared when the period changes) so it isn't re-added.
+      from the list until later (its usual interval, at least to the period's end). Not in the budget (R6.4).
+- [x] Grocery page: staple lines in their store card under a "Staples" divider, each removable (×) and tickable;
+      removing one records it in the draft's `dismissedStaples` (ingredient → until) so it isn't re-added.
       Rules allow `dismissedStaples`.
-- [ ] The "Are you out of milk?" prompt is retired (Grocery and Plan pages): the staple line replaces it.
-- [ ] PRD R7.7, R7.12, R8.14, R6.4; spec §5 free-use, §8 builder and cadence; unit tests; rules test; e2e
+- [x] The "Are you out of milk?" prompt is retired (Grocery and Plan pages): the staple line replaces it.
+- [x] PRD R7.7, R7.12, R8.14, R6.4; spec §5 free-use, §8 builder and cadence; unit tests; rules test; e2e
       `cadence.spec.ts` @R7.7 @R7.12 rewritten, `grocery.spec.ts` free-use check updated.
 
 ### 5. Nutrition facts on every recipe (item 5, R4.30, R6.27)
@@ -79,6 +79,48 @@ wording: the panel isn't tracking).
       share page).
 
 ## Decisions
+
+- **Skill (item 1):** the rule lives in `references/conventions.md` (hand-written, not generated, so `pnpm gen:skill` has
+  nothing to regenerate) with a before/after example; a single action is never split, qualifying sentences and timers
+  stay with their action, and separate source steps are never merged. The example is a plain code block (not
+  `cooklang`), so the skill test that imports every `cooklang` example doesn't need a full file for it.
+- **More-text arrow (item 2):** a chevron in a dark circle on a fade of the card colour, pinned to the bottom of the
+  step text area, `aria-hidden` (the area itself is focusable and labelled "Step text"). It shows while more than 4 px
+  remain below and is re-measured on scroll, resize and step change; tapping it scrolls 80 % of the area. No animation
+  (nothing for reduced-motion users to switch off).
+- **Thumbnails (item 3):** one `<RecipeThumb>` (the Suggested card's 4 rem framed image; `sizes="4rem"` so the 480 px
+  WebP) and `<MealThumb>` (first recipe + "+N") for rows naming a meal of several recipes (Create meal's saved meals
+  and confirm step, History, pending reviews). A single-recipe plan card puts it beside the title; a multi-recipe card
+  puts one on each recipe row. Eating-out cards have no recipe, so no image. The Meals page cards already had a large
+  two-image header and keep it. Without a photo, the cuisine stripes (the Suggested and recipe-card placeholder); a
+  decorative placeholder is now `aria-hidden` instead of an image named " (no photo)".
+- **Staples (item 4):** "auto appear" is read as "appear when the household probably needs them", not "every staple
+  every time": the seed has 113 staples and free-use ingredients, and listing them all on every order would bury the
+  list and send them all to ChatGPT. A staple line is added when the cadence says it's due (the R7.7 rule), when a
+  planned meal uses a free-use staple with an amount ("to taste" salt doesn't count) that the household has never
+  bought, or when a tracked staple it has bought has run out in Supply. The "Are you out of milk?" prompt is
+  **retired**: it asked about exactly the lines that now appear by themselves; removing the line is the "not yet",
+  and it keeps the staple off for its usual interval and at least until the period ends (stored on the draft as
+  `dismissedStaples`, so no new command or function). Old `cadence_` lines and snoozes are still honoured. Staple
+  lines are generated like plan lines (ticks kept), priced, grouped by store under a "Staples" divider, copied for
+  ChatGPT, and excluded from the budget (R6.4).
+- **Nutrition data (item 5):** Health Canada's Canadian Nutrient File, through its public API, for 453 of 480
+  ingredients (food codes in `data/nutrition-sources.json`, chosen per ingredient by four parallel mapping passes and
+  spot-checked against the existing protein/fibre values); 27 reference entries where CNF has nothing fitting (blends,
+  plant milks, some prepared and frozen foods, water: USDA FoodData Central or label estimates, noted per ingredient);
+  CNF gaps (sugars for 32 foods, saturated fat for 3) filled from USDA SR Legacy or estimates, noted in
+  `nutrientSource`. Protein and fibre keep their M1/M9 fields and values (changing them would move every protein
+  figure and goal); the panel shows them from those fields. Ground coffee and coffee beans are dry-grounds estimates
+  (they overstate a brewed drink).
+- **Nutrition model (item 5):** `nutrients` per 100 g on ingredients and `nutrition` per serving on recipes, keyed
+  `kcal … ironMg`; `nutritionApproximate` lists the keys an ingredient lacked, so each value gets its own "~". The
+  recipe index summary is unchanged (cards don't show the panel), so `recipeIndex` chunks don't grow. In-app-edited
+  ingredients keep their edits on `pnpm ingredients:upload` but get the seed's nutrients when they have none, so every
+  existing recipe gets its panel.
+- **Panel and the switch (item 5):** the panel is a fact sheet, not tracking, so the "Track protein and fibre" switch
+  doesn't hide it (R6.27 says so); it shows on the signed-out share page too. Native `<details>` (closed by default,
+  keyboard and screen reader for free) styled as a brutalist card with a Canadian Nutrition Facts table: Health Canada
+  rounding and % daily values (none for carbohydrate, protein and cholesterol, as on Canadian labels).
 
 ## Verification
 

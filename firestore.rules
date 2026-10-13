@@ -554,10 +554,13 @@ service cloud.firestore {
         // A received list is history (its cost is the period's spend, R10.3): no edits or deletes.
         allow delete: if isMember(hid) && resource.data.status != 'received';
         allow create, update: if isMember(hid) && (resource == null || resource.data.status != 'received')
-          && request.resource.data.keys().hasOnly(['periodId', 'status', 'createdAt', 'orderedAt', 'orderedBy', 'items'])
+          && request.resource.data.keys().hasOnly(['periodId', 'status', 'createdAt', 'orderedAt', 'orderedBy', 'items', 'dismissedStaples'])
           && request.resource.data.keys().hasAll(['periodId', 'status', 'createdAt', 'items'])
           && request.resource.data.status in ['draft', 'ordered']
           && request.resource.data.items is map && request.resource.data.items.size() <= 400
+          // M10 (R7.12): staples removed from the list, ingredient ID → until (ms).
+          && (!('dismissedStaples' in request.resource.data) || (request.resource.data.dismissedStaples is map
+              && request.resource.data.dismissedStaples.size() <= 300))
           && (request.resource.data.status == 'draft' || (request.resource.data.orderedAt is timestamp
               && request.resource.data.orderedBy is string));
       }

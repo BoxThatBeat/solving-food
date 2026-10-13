@@ -2,8 +2,9 @@
 // rounded to packs, brand-mapped, grouped by store. Ticks are live for every member (field updates on the items map).
 // Copy hands the PC Express section to ChatGPT and marks the list ordered, with Undo (R7.5). Prototype "Grocery",
 // phase "order". An ordered list is confirmed on arrival (phase "receipt", R7.8) with the freeze prompt for bulk buys
-// (R7.9): <ReceiveSheet> sends one receiveGroceries command.
-import { CadencePrompt } from "@/components/grocery/CadencePrompt";
+// (R7.9): <ReceiveSheet> sends one receiveGroceries command. M10 (R7.12): staples that are due are on the list by
+// themselves (a "Staples" group in each store card); removing one keeps it off for its usual interval.
+import { useStapleLines } from "@/components/grocery/staples";
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
@@ -14,8 +15,10 @@ import {
   formatPeriodRange,
   groupByStore,
   manualItem,
+  isGenerated,
   mergeDraft,
   pcExpressLines,
+  stapleDismissUntil,
   type GroceryItem,
   type StoreEntry,
 } from "@solving-food/core";
@@ -25,7 +28,7 @@ import { Input, Select } from "@/components/ui/input";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/chip";
 import { useNotify } from "@/components/notifications-context";
-import { addLine, addManualItem, DRAFT_ID, syncDraft, millis, orderDraft, removeItem, tickItem, undoOrder, type StoredList } from "@/data/plan";
+import { addLine, addManualItem, dismissStaple, DRAFT_ID, syncDraft, millis, orderDraft, removeItem, tickItem, undoOrder, type StoredList } from "@/data/plan";
 import { usePlanModel } from "@/data/planModel";
 import { ReceiveSheet } from "@/components/grocery/ReceiveSheet";
 import { searchIngredients, useAllIngredients, type IngredientEntry } from "@/data/ingredients";
@@ -50,29 +53,47 @@ function GroceryPage() {
   // Lists with a receiveGroceries command still on its way to the server: shown as "adding to supply…".
   const receivingIds = new Set(m.supply.pendingCommands.flatMap((p) => (p.command.type === "receiveGroceries" ? [p.command.payload.listId] : [])));
 
+  // Staples that are due (M10, R7.12): generated like plan lines, never in the budget (R6.4).
+  const staples = useStapleLines(m);
+  const generated = React.useMemo(() => ({ ...m.built.items, ...staples.lines }), [m.built.items, staples.lines]);
+
   // Regenerate (§8): keep the stored draft in step with the plan. Manual lines and ticks survive; field-level writes.
   const sync = React.useCallback(async () => {
-    if (!m.ready || m.draft.data === undefined || !m.periodId) return;
+    if (!m.ready || !staples.ready || m.draft.data === undefined || !m.periodId) return;
     // Cheap check on the snapshot first; the transaction re-reads before writing.
-    const { set, remove } = mergeDraft(m.draft.data?.items ?? {}, m.built.items);
+    const { set, remove } = mergeDraft(m.draft.data?.items ?? {}, generated);
     if (!Object.keys(set).length && !remove.length && m.draft.data && m.draft.data.periodId === m.periodId) return;
-    await syncDraft(m.hid, m.periodId, m.built.items);
-  }, [m.ready, m.draft.data, m.built.items, m.periodId, m.hid]);
+    await syncDraft(m.hid, m.periodId, generated);
+  }, [m.ready, staples.ready, m.draft.data, generated, m.periodId, m.hid]);
   React.useEffect(() => {
     const t = setTimeout(() => void sync().catch((e) => console.warn("grocery sync failed", e)), 300);
     return () => clearTimeout(t);
   }, [sync]);
 
-  // What the page shows: fresh plan lines (with the stored ticks) plus the stored manual lines.
+  // What the page shows: fresh generated lines (plan and staples, with the stored ticks) plus the stored manual lines.
   const items: Record<string, GroceryItem> = React.useMemo(() => {
     const out: Record<string, GroceryItem> = {};
-    for (const [id, it] of Object.entries(m.built.items)) {
+    for (const [id, it] of Object.entries(generated)) {
       const stored = draftItems?.[id];
       out[id] = { ...it, checked: stored?.checked ?? false, ...(stored?.checkedBy ? { checkedBy: stored.checkedBy } : {}) };
     }
-    for (const [id, it] of Object.entries(draftItems ?? {})) if (it.source !== "plan") out[id] = it;
+    // Stored staple lines wait for the staples to load rather than flicker out.
+    for (const [id, it] of Object.entries(draftItems ?? {})) if (!isGenerated(it) || (it.source === "staple" && !staples.ready)) out[id] = it;
     return out;
-  }, [m.built.items, draftItems]);
+  }, [generated, draftItems, staples.ready]);
+
+  const remove = (id: string) => {
+    const it = items[id];
+    const fail = () => notify({ kind: "error", message: "Couldn't remove it" });
+    if (it?.source === "staple" && it.ingredientId) {
+      const ing = staples.ingredientOf(it.ingredientId);
+      const until = stapleDismissUntil(ing ?? {}, staples.cadenceOf(it.ingredientId), Date.now(), millis(m.period?.end));
+      // Not yet in the stored draft (regeneration is debounced): only the dismissal is written.
+      const write = draftItems?.[id] ? dismissStaple(m.hid, id, it.ingredientId, until, m.draft.data?.dismissedStaples, Date.now()) : m.periodId ? addLine(m.hid, m.periodId, id, it, !!m.draft.data).then(() => dismissStaple(m.hid, id, it.ingredientId!, until, m.draft.data?.dismissedStaples, Date.now())) : Promise.resolve();
+      return write.then(() => notify({ kind: "success", message: `Removed ${it.productName} · it won't be added again for a while` })).catch(fail);
+    }
+    return removeItem(m.hid, DRAFT_ID, id).catch(fail);
+  };
 
   const groups = groupByStore(items, m.stores);
   const pcxCount = pcExpressLines(items, m.stores).length;
@@ -130,7 +151,6 @@ function GroceryPage() {
         <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">Grocery</h1>
         <span className="font-mono text-[0.65625rem] font-bold uppercase">Plan needs − supply − ordered · rounded to packs · brand-mapped · food only</span>
       </div>
-      <CadencePrompt m={m} uid={s.user.uid} />
 
       {!m.ready ? (
         <p className="m-0 text-sm font-bold">Building the list…</p>
@@ -147,7 +167,7 @@ function GroceryPage() {
               lines={g.items}
               ingredients={m.ingredients}
               onTick={(id, on) => tick(DRAFT_ID, id, on)}
-              onRemove={(id) => removeItem(m.hid, DRAFT_ID, id).catch(() => notify({ kind: "error", message: "Couldn't remove it" }))}
+              onRemove={(id) => void remove(id)}
               footer={
                 g.store.kind === "pcExpress" ? (
                   <div className="flex flex-col gap-2 border-t-2 border-line bg-base p-3">
@@ -243,6 +263,8 @@ function lineSub(it: GroceryItem, ing: IngredientEntry | undefined): string {
     ? `${it.packs} × ${it.packLabel && !/ k?g$/.test(it.packLabel) ? `${it.packLabel} (${formatCanonical(it.packAmount, unit, ing?.unitWeightG)})` : formatCanonical(it.packAmount, unit, ing?.unitWeightG)}`
     : formatCanonical(it.amount, unit, ing?.unitWeightG);
   if (it.source === "manual") return `${name} · added by hand · ${pack}`;
+  if (it.source === "staple") return `${name} · ${it.stapleReason === "plan" ? "used by planned meals" : it.stapleReason === "out" ? "none left in Supply" : "probably running low"} · ${pack}`;
+  if (it.source === "cadence") return `${name} · staple · ${pack}`;
   return `${name} · need ${formatCanonical(it.need ?? it.amount, unit, ing?.unitWeightG)} → ${pack}`;
 }
 
@@ -278,8 +300,14 @@ function StoreCard({
         </span>
       </header>
       <ul className="m-0 list-none p-0">
-        {lines.map(([id, it]) => (
-          <li key={id} className={cn("flex items-center gap-2.5 border-t-2 border-line px-3.5 py-2 first:border-t-0", it.checked && "bg-mantle")} data-testid="grocery-line">
+        {lines.map(([id, it], i) => (
+          <React.Fragment key={id}>
+          {(it.source === "staple" || it.source === "cadence") && (i === 0 || (lines[i - 1]![1].source !== "staple" && lines[i - 1]![1].source !== "cadence")) ? (
+            <li aria-hidden className="border-t-2 border-line bg-mantle px-3.5 py-1 font-mono text-[0.5625rem] font-bold tracking-[0.06rem] uppercase first:border-t-0" data-testid="staples-divider">
+              Staples
+            </li>
+          ) : null}
+          <li className={cn("flex items-center gap-2.5 border-t-2 border-line px-3.5 py-2 first:border-t-0", it.checked && "bg-mantle")} data-testid="grocery-line">
             <button
               type="button"
               role="checkbox"
@@ -307,6 +335,7 @@ function StoreCard({
               </button>
             ) : null}
           </li>
+          </React.Fragment>
         ))}
       </ul>
       {footer}

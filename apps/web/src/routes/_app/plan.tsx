@@ -43,7 +43,6 @@ import { SuggestedSection } from "@/components/plan/Suggested";
 import { ExpiryAlerts } from "@/components/plan/ExpiryAlerts";
 import { UseItUp } from "@/components/plan/UseItUp";
 import { OptimiserCard } from "@/components/plan/Optimiser";
-import { CadencePrompt } from "@/components/grocery/CadencePrompt";
 import { usePlanModel } from "@/data/planModel";
 import { dismissExpiryAlert, millis } from "@/data/plan";
 import { useScoringSnapshot, useSuggestions } from "@/data/suggestions";
@@ -197,7 +196,6 @@ function PlanPage() {
         <Button onClick={() => openCreateMeal()}>+ Create meal</Button>
       </div>
       <PendingReviews hid={m.hid} uid={s.user.uid} />
-      <CadencePrompt m={m} uid={s.user.uid} />
       <ExpiredLotPrompts entries={expired} hid={m.hid} uid={s.user.uid} tz={tz} nowMs={supplyNow} />
       {ended && !online ? (
         <div role="status" className="rounded-ui border-2 border-dashed border-line bg-base p-3 text-sm font-bold">

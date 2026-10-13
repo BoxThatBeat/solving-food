@@ -419,7 +419,7 @@ Each ingredient declares the **measurements it allows** (R8.3) and one **canonic
 Ingredients used freely and often outside recipes have `freeUse: true` (they're also `isStaple`). Examples: cooking oils, salt, pepper, butter, sugar, and condiments. **Spices are not free-use**: they're tracked by amount like any other ingredient.
 
 - They're shown in recipes as normal but **skipped in supply math**: cooking doesn't subtract them, the grocery builder doesn't add them from planned meals, and "can make with supply" ignores them.
-- They're managed **only by the staples cadence** (§8). Purchases record the date (for the cadence) but don't create tracked amounts.
+- They're managed **only by the staples cadence** (§8). Purchases record the date (for the cadence) but don't create tracked amounts. Since M10 they reach the grocery list as **staple lines** (§8 "Staples on the list"): when due by the cadence, or when a planned meal uses one (with an amount) that the household has never bought.
 - On the Supply page they appear in a **Staples** group showing when each was last bought and when the cadence expects it to run out, with no amount.
 - The flag is part of the ingredient seed data and can be changed in the ingredient editor.
 
@@ -648,7 +648,7 @@ incoming  = Σ amounts on this household's grocery lists with status "ordered" (
 shortfall = max(0, needs − unexpired supply − incoming)
 packSize  = brandMapping.packAmount ?? ingredient.defaultPackAmount ?? shortfall   // no rounding if unknown
 packs     = ceil(shortfall / packSize)
-+ manual items + accepted "are you out of X?" prompts
++ manual items + staple lines (M10: staples that are due and not on a list; §8 "Staples on the list")
 → store: brandMapping.storeId → ingredient sourcing rule → category sourcing rule → household default store
 ```
 
@@ -700,9 +700,25 @@ logs `pcx refresh failed twice` on a second bad week in a row (the log-based ale
 Road store ID is not committed: it is resolved at runtime (deviation from "kept in `packages/core` config"). The budget
 meter shows the source mix ("3 live · 9 estimated · 1 price unknown"); brand rows show the live price and its age.
 
+**Staples on the list (M10, R7.12, R7.7, R8.14):** `dueStaples()` / `stapleLines()` in `packages/core/src/grocery.ts`.
+A staple (`isStaple` or `freeUse`) is due when (1) **cadence**: bought before and `isDue()` (85 % of the interval since
+the last purchase); (2) **plan**: free-use, a planned uncooked meal uses it with an amount (not "to taste"), and the
+household has no purchase on record; or (3) **out**: a tracked staple bought before with no unexpired Supply left. A
+staple already on a list (any draft line but a staple line, the plan lines, any ordered list), snoozed by a pre-M10
+"Not yet", or dismissed is skipped. Each due staple is a generated line keyed `staple_<id>` (source `staple`,
+`stapleReason`), one default pack through `manualItem()` (brand mapping, price, store). The Grocery page computes them
+from the cadence docs (`useStapleLines`) and regenerates them with the plan lines (`mergeDraft` manages both sources:
+ticks kept, stale lines removed); they sort after the plan lines under a "Staples" divider in each store card, are
+copied for ChatGPT like any PC Express line, and are excluded from the budget (only plan lines are priced into
+`spent`). Removing one writes `dismissedStaples.<id> = until` on the draft with the line's deletion
+(`stapleDismissUntil`: now + its interval, at least to the period's end; expired entries are pruned on the next
+dismissal). This **replaces** the M5 prompt: the "Are you out of X?" card (Grocery and Plan pages) is gone; old
+`cadence_<id>` lines and `snoozedUntil` are still honoured. Decision: adding every staple in the catalogue (113 seed
+ingredients) to every list would bury it, so "auto appear" is read as "appear when the household probably needs it".
+
 **Staples cadence as built (M5):** `packages/core/src/cadence.ts`. Prompts are for staples and free-use ingredients
 only, at most one at a time (most overdue first), not for anything already on the draft, the plan lines, or an
-ordered list. Yes adds a `cadence_<ingredientId>` line (source `cadence`) to the draft; Not yet sends a `snoozeCadence`
+ordered list. (M5–M9; retired in M10, see above) Yes added a `cadence_<ingredientId>` line (source `cadence`) to the draft; Not yet sent a `snoozeCadence`
 command (cadence is function-only) for a quarter interval, at least a day; the next purchase clears the snooze. Shown on
 the Grocery and Plan pages.
 
@@ -1246,7 +1262,8 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | `suggestions.spec.ts` | Ranking reflects expiry, supply, ratings, variety, and protein goal; weight sliders and presets change the order; expiry alerts; use it up before ordering (M9, R6.25) (R6.11–R6.14, R6.16) |
 | `optimiser.spec.ts` | "n dinners under $x" respects the budget; Next gives a different good set; Back restores the previous one; "No more good combinations" when exhausted; Accept adds all; protein-goal toggle (R6.18–R6.20) |
 | `prices.spec.ts` | Store picker (defaults to Loblaws Greenbank Road); in-app product search links a brand mapping; live price used when fresh; falls back to estimates when stale or failed; "price unknown" marker (R6.21–R6.22, R7.10) |
-| `grocery.spec.ts` | List built from plan − supply − incoming with pack rounding (mapping, default pack, or raw); expired lots treated as missing; free-use ingredients excluded (R8.14); brand names applied; grouped by store with mapping winning over category rule; copy button copies only the PC Express section and marks the list ordered (with undo); regenerating doesn't re-add ordered items; manual additions; cadence prompts including the seeded default interval (R7.1–R7.7) |
+| `grocery.spec.ts` | List built from plan − supply − incoming with pack rounding (mapping, default pack, or raw); expired lots treated as missing; free-use ingredients excluded (R8.14); brand names applied; grouped by store with mapping winning over category rule; copy button copies only the PC Express section and marks the list ordered (with undo); regenerating doesn't re-add ordered items; manual additions; free-use olive oil as a staple line, not a plan line (R8.14, M10) (R7.1–R7.6) |
+| `cadence.spec.ts` | (M10) Staples on the list by themselves: due by the cadence, a free-use staple a planned meal uses, not when bought recently or already listed; the Staples group; removing one keeps it off; no "Are you out of" prompt (R7.7, R7.12, R8.14) |
 | `receive.spec.ts` | Confirm unchanged = everything bought; edit quantities and substitutions; freeze prompt for bulk freezable items; supply updated (R7.8–R7.9) |
 | `supply.spec.ts` | Search by name and alias (R8.17, M9); starts empty; add via ingredient picker in each allowed measurement; current (projected) display in metric only (R8.13); Staples group for free-use items (R8.14); per-lot expiry flags; expired lot excluded from amounts and "can make" until Still good / Threw it out (R8.15); freeze/thaw; ±5/±25 + Apply corrections; discard; filters; transaction history with infinite scroll (R8.1–R8.12) |
 | `review.spec.ts` | Done cooking deducts recipe defaults and adds estimated leftovers immediately; review opens when all recipes are checked off and on early "Done cooking"; per-user ratings; adjusting used ingredients posts corrections for the difference; pending reviews completed later by another member (R9.1–R9.4) |

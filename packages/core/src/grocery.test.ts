@@ -13,12 +13,16 @@ import {
   needsFor,
   packLabel,
   storeFor,
+  dueStaples,
+  stapleLines,
+  stapleDismissUntil,
   type BuildContext,
   type GroceryIngredient,
   type MappingEntry,
   type PlanItemInput,
   type RecipeLines,
   type RuleEntry,
+  type StapleIngredient,
 } from "./grocery";
 import { budgetState } from "./budget";
 import { resolvePrice, costPerServing, formatCents } from "./pricing";
@@ -306,5 +310,77 @@ describe("sides (R5.10, R7.11)", () => {
         },
       ),
     );
+  });
+});
+
+describe("staples on the list (M10, R7.12)", () => {
+  const DAY = 86_400_000;
+  const NOW = Date.UTC(2026, 9, 13);
+  const SING: Record<string, StapleIngredient> = {
+    ...ING,
+    oil: { ...ING.oil!, isStaple: true, defaultCadenceDays: 60 },
+    milk: { ...ING.milk!, isStaple: true, defaultCadenceDays: 7 },
+    salt: { id: "salt", name: "salt", category: "spices", freeUse: true, isStaple: true, defaultCadenceDays: 180, allowedMeasures: ["weight"], canonicalUnit: "g" },
+    eggs: { id: "eggs", name: "eggs", category: "dairy", freeUse: false, isStaple: true, defaultCadenceDays: 14, allowedMeasures: ["count"], canonicalUnit: "count", defaultPackAmount: 12, defaultPackMeasure: "count" },
+  };
+  const sctx = (over: Partial<BuildContext> = {}) => ({ ...ctx(over), ingredients: (id: string) => SING[id] });
+  const bought = (daysAgo: number, count = 1) => ({ avgIntervalDays: null, lastPurchasedAtMs: NOW - daysAgo * DAY, purchaseCount: count });
+
+  it("adds a free-use ingredient a planned meal uses when the household has never bought it", () => {
+    const lines = stapleLines({ items: [plan("a", "pasta")], cadence: [], onList: new Set(), nowMs: NOW }, sctx());
+    expect(Object.keys(lines)).toEqual(["staple_oil"]);
+    expect(lines.staple_oil).toMatchObject({ ingredientId: "oil", source: "staple", stapleReason: "plan", packs: 1, storeId: "pc-express", amount: 920 });
+    // Bought last week (interval 60 days): it isn't due, so not added.
+    expect(stapleLines({ items: [plan("a", "pasta")], cadence: [{ ingredientId: "oil", c: bought(7) }], onList: new Set(), nowMs: NOW }, sctx())).toEqual({});
+  });
+
+  it("adds staples due by the cadence (85 % of the interval), most overdue first; respects a snooze", () => {
+    const cadence = [
+      { ingredientId: "milk", c: bought(6) }, // 6/7 = 0.86 → due
+      { ingredientId: "oil", c: bought(59) }, // 0.98 → due, more overdue
+      { ingredientId: "salt", c: bought(10) }, // not due
+    ];
+    const due = dueStaples({ items: [], cadence, onList: new Set(), nowMs: NOW }, sctx());
+    expect(due).toEqual([
+      { ingredientId: "oil", reason: "cadence" },
+      { ingredientId: "milk", reason: "cadence" },
+    ]);
+    const snoozed = [{ ingredientId: "milk", c: { ...bought(6), snoozedUntilMs: NOW + DAY } }];
+    expect(dueStaples({ items: [], cadence: snoozed, onList: new Set(), nowMs: NOW }, sctx())).toEqual([]);
+  });
+
+  it("adds a tracked staple bought before that Supply has none of", () => {
+    const cadence = [{ ingredientId: "eggs", c: bought(2) }];
+    expect(dueStaples({ items: [], cadence, onList: new Set(), nowMs: NOW }, sctx())).toEqual([{ ingredientId: "eggs", reason: "out" }]);
+    expect(dueStaples({ items: [], cadence, onList: new Set(), nowMs: NOW }, sctx({ supply: new Map([["eggs", 6]]) }))).toEqual([]);
+  });
+
+  it("never adds what's already on a list, or what was removed until later; non-staples never", () => {
+    const cadence = [{ ingredientId: "milk", c: bought(8) }, { ingredientId: "tomato", c: bought(30) }];
+    expect(dueStaples({ items: [], cadence, onList: new Set(["milk"]), nowMs: NOW }, sctx())).toEqual([]);
+    expect(dueStaples({ items: [], cadence, onList: new Set(), dismissed: { milk: NOW + DAY }, nowMs: NOW }, sctx())).toEqual([]);
+    expect(dueStaples({ items: [], cadence, onList: new Set(), dismissed: { milk: NOW - DAY }, nowMs: NOW }, sctx())).toEqual([{ ingredientId: "milk", reason: "cadence" }]);
+  });
+
+  it("is not in the budget: buildList stays plan lines only", () => {
+    expect(Object.keys(buildList([plan("a", "pasta")], ctx()).items)).not.toContain("oil");
+  });
+
+  it("a removed staple stays off for its interval and at least to the end of the period", () => {
+    expect(stapleDismissUntil({ defaultCadenceDays: 4 }, null, NOW, NOW + 6 * DAY)).toBe(NOW + 6 * DAY);
+    expect(stapleDismissUntil({ defaultCadenceDays: 60 }, null, NOW, NOW + 6 * DAY)).toBe(NOW + 60 * DAY);
+  });
+
+  it("regeneration manages staple lines like plan lines (ticks kept, stale ones removed)", () => {
+    const line = stapleLines({ items: [plan("a", "pasta")], cadence: [], onList: new Set(), nowMs: NOW }, sctx()).staple_oil!;
+    const existing = { staple_oil: { ...line, checked: true }, staple_salt: { ...line, ingredientId: "salt" }, manual_x: { ...line, source: "manual" as const } };
+    const { set, remove } = mergeDraft(existing, { staple_oil: line });
+    expect(set).toEqual({});
+    expect(remove).toEqual(["staple_salt"]);
+  });
+
+  it("groups staples after plan lines and before manual ones", () => {
+    const items = { m: { ...manualItem({ freeText: "napkins", packs: 1 }, ctx()) }, s: { ...manualItem({ ingredientId: "oil", packs: 1 }, ctx()), source: "staple" as const }, p: buildList([plan("a", "curry")], ctx()).items.tomato! };
+    expect(groupByStore(items, STORES)[0]!.items.map(([k]) => k)).toEqual(["p", "s", "m"]);
   });
 });
