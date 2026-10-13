@@ -218,6 +218,16 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   `speechSynthesis` has no voices and hands-free says the device can't read aloud while still taking commands.
   That's a machine-level package (`~/dotfiles/nixos`), not part of this repo.
 
+## M13 hands-free on iOS and latency (2026-10-13)
+
+- **Still no Firebase or GCP change.** No headers added: COOP/COEP (for multi-threaded WASM) was considered and rejected
+  (it breaks the Firebase Auth popup and cross-origin Storage images).
+- **Hidden diagnostics:** open any cook page with `?voicedebug=1` (e.g. `…/recipes/<id>/cook?voicedebug=1`): a scroll
+  icon appears next to the hands-free toggle; its sheet lists the last 50 voice events and has **Copy**. The flag is
+  remembered on that device (`localStorage sf.voiceDebug`) until a page is opened with `?voicedebug=0`. The sheet's
+  "Listen while reading aloud" choice is `localStorage sf.handsFree.talkOver` ("1" always, "0" never, unset = not on
+  iPhone/iPad).
+
 ## CI/CD (GitHub Actions)
 
 - `.github/workflows/checks.yml`: on PRs and pushes to `master`: lint, typecheck, unit tests, build, requirement-tag

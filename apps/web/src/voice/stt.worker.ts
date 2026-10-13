@@ -1,4 +1,5 @@
-// Speech recognition for hands-free mode (R4.32, R4.34): Whisper tiny.en through Transformers.js, in this Web Worker so
+// Speech recognition for hands-free mode (R4.32, R4.34): Moonshine base (M13; Whisper tiny.en in M11–M12) through
+// Transformers.js, in this Web Worker so
 // inference never blocks the cooking controls. In: 16 kHz mono Float32 PCM from the page. Out: text. Nothing else goes
 // in or out; the audio is never stored or sent. The model files (and ONNX Runtime's WASM) download once from the
 // Hugging Face Hub / jsDelivr CDNs and are kept by the library in the browser's Cache API (`transformers-cache`).
@@ -14,10 +15,16 @@ export type SttResponse =
   | { type: "text"; id: number; text: string; ms: number }
   | { type: "error"; id?: number; message: string };
 
-const MODEL = "onnx-community/whisper-tiny.en";
+/**
+ * Moonshine base since M13 (it was Whisper tiny.en, the owner's choice in M11). Whisper pads every input to 30 s, so a
+ * one-word command cost a full 30 s encoder pass (~3 s on one WASM thread here); Moonshine's cost follows the audio
+ * length. Benchmark (headless Chromium, WASM q8, 132 synthetic command clips, clean and noisy): Moonshine base p50
+ * 0.28–0.55 s vs 3.0 s, commands right 107/132 vs 98/132. Same pipeline and options: switching back is this line.
+ */
+const MODEL = "onnx-community/moonshine-base-ONNX";
 
 env.allowLocalModels = false;
-// No cross-origin isolation (no COOP/COEP headers), so no SharedArrayBuffer: one WASM thread, plenty for tiny.en.
+// No cross-origin isolation (no COOP/COEP headers), so no SharedArrayBuffer: one WASM thread.
 if (env.backends.onnx.wasm) env.backends.onnx.wasm.numThreads = 1;
 
 let asr: Promise<{ run: AutomaticSpeechRecognitionPipeline; device: "webgpu" | "wasm"; loadMs: number; warmMs: number }> | null = null;

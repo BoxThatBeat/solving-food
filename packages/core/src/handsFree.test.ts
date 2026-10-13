@@ -119,11 +119,11 @@ describe("SpeechSegmenter (R4.34: 0.7 s of silence since M13)", () => {
   const words = (ms: number) => Float32Array.from({ length: (RATE * ms) / 1000 }, (_, i) => (i % 5600 < 4000 ? 0.2 * Math.sin(i / 3) : 0.001));
   const quiet = (ms: number) => Float32Array.from({ length: (RATE * ms) / 1000 }, (_, i) => 0.001 * Math.sin(i));
 
-  it("the constants: 0.7 s of silence, a 10 s cap, 250 ms of speech at least", () => {
+  it("the constants: 0.7 s of silence, a 10 s cap, 200 ms of speech at least", () => {
     expect(SILENCE_MS).toBeGreaterThanOrEqual(600);
     expect(SILENCE_MS).toBeLessThanOrEqual(800);
     expect(MAX_SEGMENT_MS).toBeLessThanOrEqual(15_000);
-    expect(MIN_SPEECH_MS).toBe(250);
+    expect(MIN_SPEECH_MS).toBe(200);
   });
 
   it("emits a segment only after SILENCE_MS of silence", () => {
@@ -182,8 +182,10 @@ describe("SpeechSegmenter (R4.34: 0.7 s of silence since M13)", () => {
     const s = new SpeechSegmenter({ maxMs: 3000 });
     const out = s.push(words(7000));
     expect(out.length).toBe(2);
-    const c = new SpeechSegmenter();
+    const short: number[] = [];
+    const c = new SpeechSegmenter({ onShort: (ms) => short.push(ms) });
     expect([...c.push(tone(120)), ...c.push(quiet(2000))]).toEqual([]); // a click
+    expect(short).toHaveLength(1);
     expect([...c.push(tone(MIN_SPEECH_MS - 60)), ...c.push(quiet(2000))]).toEqual([]); // a clatter
     expect([...c.push(tone(MIN_SPEECH_MS + 90)), ...c.push(quiet(2000))]).toHaveLength(1); // "next"
   });

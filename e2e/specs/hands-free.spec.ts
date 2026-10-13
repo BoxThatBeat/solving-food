@@ -1,6 +1,6 @@
 // hands-free.spec.ts (TECHNICAL_SPECS §14.1, M11): the hands-free toggle on mise en place, step mode and the review;
 // what it reads and when; spoken commands; the microphone closed whenever it's off. Playwright has no microphone and
-// can't run Whisper, so the emulator build's e2e seam replaces both (`window.__handsFreeFake`): a test says what was
+// can't run the speech model, so the emulator build's e2e seam replaces both (`window.__handsFreeFake`): a test says what was
 // heard with `__handsFree.hear(text)` and reads `__handsFree.mic`. Speech synthesis is stubbed here and records what
 // the app asked it to say; it starts each sentence a task later (`onstart`) like a browser, or, with `tts: "silent"`,
 // behaves like a device without voices (never starts). M12: hands-free starts only from a tap; a start that crashed
@@ -21,7 +21,7 @@ async function fakeVoice(page: Page, opts: { remembered?: boolean; denyMic?: boo
   await page.addInitScript((o) => {
     const w = window as unknown as Record<string, unknown>;
     w.__handsFreeFake = true;
-    w.__handsFree = { mic: "off", loads: 0, denyMic: !!o.denyMic, hear: () => undefined };
+    w.__handsFree = { mic: "off", loads: 0, denyMic: !!o.denyMic, hear: () => undefined, segment: () => undefined, speaking: [] };
     // M11 remembered "on" per device: it must no longer start anything by itself (M12).
     if (o.remembered) localStorage.setItem("sf.handsFree", "1");
     const silent = o.tts === "silent";
@@ -357,4 +357,94 @@ test("a device that can't read aloud: the toggle shows its error look and a bann
   await toggle(page).click();
   await expect(toggle(page)).toHaveAttribute("data-state", "off");
   expect(await mic(page)).toBe("off");
+});
+
+test("M13: the toggle shows a heard look from the end of speech until the command is applied, and the mic is told when reading starts and ends (R4.31, R4.34)", { tag: ["@R4.31", "@R4.34"] }, async ({ page, household }) => {
+  void household;
+  await fakeVoice(page);
+  const r = await makeCookRecipe("Hands-free heard");
+  await page.goto(`/recipes/${r.id}/cook?step=0`);
+  const card = page.getByTestId("step-card");
+  await expect(card).toContainText("Step 1 of 3", { ignoreCase: true });
+  const sw = toggle(page);
+  await sw.click();
+  await expect.poll(() => mic(page)).toBe("on");
+  await expect(sw).not.toHaveAttribute("data-heard");
+
+  // Speech went to the recogniser: the heard look until the transcript's command has been applied.
+  await page.evaluate(() => (window as unknown as { __handsFree: { segment: () => void } }).__handsFree.segment());
+  await expect(sw).toHaveAttribute("data-heard", "true");
+  await expect(sw).toHaveAccessibleDescription("Heard");
+  await hear(page, "next");
+  await expect(card).toContainText("Step 2 of 3", { ignoreCase: true });
+  await expect(sw).not.toHaveAttribute("data-heard");
+
+  // Nothing understood clears it too; no command text appears anywhere.
+  await page.evaluate(() => (window as unknown as { __handsFree: { segment: () => void } }).__handsFree.segment());
+  await expect(sw).toHaveAttribute("data-heard", "true");
+  await hear(page, "");
+  await expect(sw).not.toHaveAttribute("data-heard");
+  await expect(page.locator("body")).not.toContainText(/say “?next|unmute|shut up/i);
+
+  // "stop" over the voice: the mic was told reading started, and that it ended (M13: it re-checks the microphone).
+  await hear(page, "steps");
+  await expect.poll(async () => (await tts(page)).queued).toBeGreaterThan(0);
+  await hear(page, "stop");
+  await expect.poll(async () => (await tts(page)).queued).toBe(0);
+  const told = await page.evaluate(() => (window as unknown as { __handsFree: { speaking: boolean[] } }).__handsFree.speaking);
+  expect(told).toContain(true);
+  expect(told.at(-1)).toBe(false);
+
+  // Off clears the look at once.
+  await page.evaluate(() => (window as unknown as { __handsFree: { segment: () => void } }).__handsFree.segment());
+  await expect(sw).toHaveAttribute("data-heard", "true");
+  await sw.click();
+  await expect(sw).not.toHaveAttribute("data-heard");
+});
+
+test("M13: the voice diagnostics exist only after ?voicedebug=1: the last events with timestamps, and Copy (R4.34)", { tag: ["@R4.34"] }, async ({ page, household }) => {
+  void household;
+  await fakeVoice(page);
+  await page.addInitScript(() => {
+    const w = window as unknown as { __copied: string[] };
+    w.__copied = [];
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (t: string) => void w.__copied.push(t) } });
+  });
+  const r = await makeCookRecipe("Hands-free diagnostics");
+  const diagButton = page.getByRole("button", { name: "Voice diagnostics" });
+
+  // Normal UI: no trace of it.
+  await page.goto(`/recipes/${r.id}/cook?step=0`);
+  await expect(page.getByTestId("step-card")).toContainText("Step 1 of 3", { ignoreCase: true });
+  await expect(toggle(page)).toBeVisible();
+  await expect(diagButton).toHaveCount(0);
+
+  // With the flag: a button next to the toggle; events are recorded from the start.
+  await page.goto(`/recipes/${r.id}/cook?step=0&voicedebug=1`);
+  await expect(diagButton).toBeVisible();
+  await toggle(page).click();
+  await expect.poll(() => mic(page)).toBe("on");
+  await hear(page, "next");
+  await expect(page.getByTestId("step-card")).toContainText("Step 2 of 3", { ignoreCase: true });
+  await diagButton.click();
+  const sheet = page.getByRole("dialog", { name: "Voice diagnostics" });
+  await expect(sheet).toBeVisible();
+  const events = sheet.getByRole("list", { name: "Voice events" });
+  await expect(events).toContainText("mic opened");
+  await expect(events).toContainText("speech started");
+  await expect(events).toContainText("command applied command=next");
+  await expect(events.getByRole("listitem").first()).toContainText(/^\d\d:\d\d:\d\d\.\d{3}/);
+  await sheet.getByRole("button", { name: "Copy" }).click();
+  await expect(sheet.getByRole("status")).toHaveText("Copied.");
+  const copied = await page.evaluate(() => (window as unknown as { __copied: string[] }).__copied.at(-1) ?? "");
+  expect(copied).toMatch(/^hands-free diagnostics/);
+  expect(copied).toMatch(/\d\d:\d\d:\d\d\.\d{3} command applied command=next/);
+  await page.keyboard.press("Escape");
+
+  // Remembered on this device until ?voicedebug=0.
+  await page.goto(`/recipes/${r.id}/cook?step=0`);
+  await expect(diagButton).toBeVisible();
+  await page.goto(`/recipes/${r.id}/cook?step=0&voicedebug=0`);
+  await expect(toggle(page)).toBeVisible();
+  await expect(diagButton).toHaveCount(0);
 });

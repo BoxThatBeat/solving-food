@@ -109,8 +109,12 @@ export function downsample(input: Float32Array, fromRate: number, toRate = STT_S
 export const SILENCE_MS = 700;
 /** A segment is cut and sent at this length even while speech goes on (commands are short). */
 export const MAX_SEGMENT_MS = 10_000;
-/** Less voiced audio than this is a click, a cough or a clatter, not speech: dropped. */
-export const MIN_SPEECH_MS = 250;
+/**
+ * Less voiced audio than this is a click or a clatter, not speech: dropped. 200 ms, not the 250 ms first planned for
+ * M13: a clean synthetic "stop" or "mute" has only ~270 ms of voiced frames, and one was lost through a real
+ * microphone path at 250.
+ */
+export const MIN_SPEECH_MS = 200;
 /** Quiet audio kept on each side of the speech when a segment is trimmed, so no syllable is clipped. */
 const PAD_MS = 150;
 
@@ -126,6 +130,8 @@ export interface SegmenterOptions {
   prerollMs?: number;
   /** The quietest level counted as speech (RMS of [-1, 1] samples). */
   minThreshold?: number;
+  /** Told about a burst too short to be speech (for the diagnostics). */
+  onShort?: (voicedMs: number) => void;
 }
 
 /** A finished utterance and what the diagnostics show about it (M13). */
@@ -159,6 +165,7 @@ export class SpeechSegmenter {
   private readonly prerollFrames: number;
   private readonly padFrames: number;
   private readonly minThreshold: number;
+  private readonly onShort: ((voicedMs: number) => void) | undefined;
   private pending: number[] = [];
   private preroll: Float32Array[] = [];
   private frames: Float32Array[] = [];
@@ -182,6 +189,7 @@ export class SpeechSegmenter {
     this.prerollFrames = Math.ceil((opts.prerollMs ?? 300) / FRAME_MS);
     this.padFrames = Math.ceil(PAD_MS / FRAME_MS);
     this.minThreshold = opts.minThreshold ?? 0.01;
+    this.onShort = opts.onShort;
   }
 
   /** True while a segment is being collected. */
@@ -252,6 +260,7 @@ export class SpeechSegmenter {
       const from = Math.max(0, this.firstLoud - this.padFrames);
       const to = Math.min(this.frames.length, this.lastLoud + 1 + this.padFrames);
       const pcm = this.voiced >= this.minVoiced ? concat(this.frames.slice(from, to)) : null;
+      if (!pcm) this.onShort?.(this.voiced * FRAME_MS);
       const seg = pcm && { pcm, ms: (to - from) * FRAME_MS, voicedMs: this.voiced * FRAME_MS, rms: this.voicedRms / this.voiced, waitedMs: this.silent * FRAME_MS };
       this.speaking = false;
       this.frames = [];

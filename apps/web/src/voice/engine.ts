@@ -1,6 +1,6 @@
 // The hands-free engine (lazy chunk; PRD R4.31–R4.34, TECHNICAL_SPECS §12 "Hands-free mode"). Three parts with their
 // own lifecycles: the speaker (speech synthesis on the main thread, cancellable at once), the microphone (capture and
-// voice activity detection on the main thread, closed whenever hands-free is off) and the recogniser (Whisper in a Web
+// voice activity detection on the main thread, closed whenever hands-free is off) and the recogniser (Moonshine since M13, Whisper before, in a Web
 // Worker). A transcript becomes a command by `parseVoiceCommand()` after `stripEcho()` removes what the app itself said.
 import { parseVoiceCommand, stripEcho, type VoiceCommand } from "@solving-food/core";
 import { diag } from "./diag";

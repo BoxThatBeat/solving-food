@@ -22,9 +22,9 @@ afterEach(() => {
 
 describe("voice diagnostics", () => {
   it("is off without the flag, on with ?voicedebug=1 (remembered), off again with ?voicedebug=0", () => {
-    let store = stubPage("");
+    stubPage("");
     expect(readDiagFlag()).toBe(false);
-    store = stubPage("?step=0&voicedebug=1");
+    let store = stubPage("?step=0&voicedebug=1");
     expect(readDiagFlag()).toBe(true);
     expect(store.get(DIAG_KEY)).toBe("1");
     stubPage("", Object.fromEntries(store));

@@ -124,7 +124,7 @@ export async function openMic(opts: MicOptions, deps: MicDeps = browserDeps()): 
   let reacquiring = false;
   let lastReacquire = -Infinity;
   let checkTimer: ReturnType<typeof setTimeout> | null = null;
-  const segmenter = new SpeechSegmenter();
+  const segmenter = new SpeechSegmenter({ onShort: (voicedMs) => diag("segment ignored", { speech_ms: voicedMs }) });
 
   let ctx = deps.createContext();
   const handle = (chunk: Float32Array) => {

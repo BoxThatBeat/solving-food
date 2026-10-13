@@ -115,7 +115,7 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Outbound requests from functions (PC Express, M5) | Cloud Run egress to the internet: 1 GiB / month free (North America) | one or two small JSON requests per search, plus one per mapped product per week (~50): < 2,000 requests, < 50 MB / month | 20× |
 | Price writes (M5) | in the 20,000 writes / day | ≤ 12 per product search (each result's price) + one per mapped product per week; prices nobody refreshed for 60 days are deleted weekly | — |
 | Suggestions and optimiser (M5) | no functions | client-only, in Web Workers; the scoring snapshot reuses the plan model's listeners plus cook events (shared with History) and `prices` at the household's store | — |
-| Hands-free mode (M11, R4.31–R4.34) | no Firebase use | speech runs on the device. The Whisper tiny.en model (~41 MB, q8) comes from the Hugging Face Hub and ONNX Runtime's WASM (~5.5 MB) from cdn.jsdelivr.net, once per device, kept in the browser's Cache API; neither is on Hosting (the build drops onnxruntime-web's 27 MB WASM copy). Hosting serves only the ~550 kB worker script to those who switch it on (not precached): < 10 MB / month. M12: the service worker also keeps ONNX Runtime's WASM from jsDelivr (browser storage only, nothing on Firebase) | — |
+| Hands-free mode (M11, R4.31–R4.34) | no Firebase use | speech runs on the device. The speech model (M13: Moonshine base, ~63 MB q8; Whisper tiny.en ~41 MB before) comes from the Hugging Face Hub and ONNX Runtime's WASM (~5.5 MB) from cdn.jsdelivr.net, once per device, kept in the browser's Cache API; neither is on Hosting (the build drops onnxruntime-web's 27 MB WASM copy). Hosting serves only the ~550 kB worker script to those who switch it on (not precached): < 10 MB / month. M12: the service worker also keeps ONNX Runtime's WASM from jsDelivr (browser storage only, nothing on Firebase) | — |
 | Cloud Build (function deploys) | 2,500 build-minutes / month | ~10 deploys × ~2 min | 100× |
 | Artifact Registry | 0.5 GB storage | one image per function; cleanup policy deletes images older than 1 day | — |
 | Cloud Run (2nd gen functions run on it) | 2M requests, 180k vCPU-s / month | same as Functions invocations; 256 MiB, max 2 instances | 200× |
@@ -1147,7 +1147,7 @@ records tasks in `_stubTasks/{taskName}` (`scheduled` → `deleted`) and a stub 
 `_stubPushes` (never sent). Unit tests drive the handler directly with an in-memory queue. Device registration happens
 on the first timer (permission, then `getToken` with the VAPID key on the app's service worker).
 
-### Hands-free mode (M11, M12, R4.31–R4.34)
+### Hands-free mode (M11, M12, M13, R4.31–R4.34)
 
 A voice assistant for the cooking views, all on the device. Four parts with separate lifecycles, so speech can be
 interrupted at once whatever inference is doing:
@@ -1179,7 +1179,10 @@ interrupted at once whatever inference is doing:
   never started is retried once with the voice when the watchdog fires. Headless Chromium never initialises TTS
   (`getVoices()` is always empty), so the e2e tests stub `speechSynthesis` with a voice and `onstart`. texts made speakable by core
   `speakable()` ("600 g" → "600 grams", "430°F" → "430 degrees Fahrenheit", "1½" → "1 and a half"). `say()` replaces
-  whatever is being read. It remembers what it said for 8 s after each sentence (the echo filter). Browser rules (M12):
+  whatever is being read. It remembers what it said for 8 s after each sentence (the echo filter); since M13 every entry
+  also expires by an estimate of its reading time (core `speechDurationMs()`: 1 s + 90 ms a character, at most 30 s,
+  counted from the batch start plus the sentences before it, refreshed by `onstart`), so an `onend` that never fires
+  can't keep the app's words in the filter for good, and a cancel cuts every entry to 8 s from then. Browser rules (M12):
   `speechSynthesis.cancel()` only when one of its own utterances is still queued, and after a cancel the next batch is
   spoken a macrotask later (Chrome drops a `speak()` in the same task as a `cancel()`); every utterance stays in an
   array until `onend`/`onerror` (Chrome can garbage-collect it otherwise and `onend` never fires); the first read waits
@@ -1192,20 +1195,40 @@ interrupted at once whatever inference is doing:
 - **Microphone** (`voice/mic.ts`, main thread): `getUserMedia({ audio: { echoCancellation, noiseSuppression,
   autoGainControl } })` → an AudioWorklet (inline blob module; ScriptProcessor where there is none) at the device rate
   → core `downsample()` to 16 kHz mono → core `SpeechSegmenter`: an energy voice-activity detector whose threshold is
-  3.5× the quietest 30 ms frame of the last 3 s (at least 0.01 RMS), 300 ms of pre-roll, a segment ends after **1.5 s of
-  silence** (or at 15 s), less than 200 ms of voice is dropped. `stop()` ends every track and closes the AudioContext,
-  so the browser's recording indicator goes away. A context that starts suspended (hands-free restarted on the next
-  cooking page without a new tap) resumes on the next tap or key.
+  3.5× the quietest 30 ms frame of the last 3 s (at least 0.01 RMS), 300 ms of pre-roll, a segment ends after
+  **`SILENCE_MS` = 0.7 s of silence** (M13; 1.5 s in M11) or at `MAX_SEGMENT_MS` = 10 s, less than `MIN_SPEECH_MS` =
+  200 ms of voice is dropped (250 ms was planned; a real "stop" can be shorter), and the segment is trimmed to the speech plus 150 ms each side before it goes to the
+  worker (`pushSegments()` also returns its length, voiced time, level and the silence actually waited, for the
+  diagnostics). `stop()` ends every track and closes the AudioContext, so the browser's recording indicator goes away.
+- **Microphone recovery** (M13, `mic.ts`): on iOS, playing `speechSynthesis` changes the audio session; WebKit mutes the
+  capture track (`track.muted`, a `mute` event) and/or moves the AudioContext to `interrupted`/`suspended`. M12
+  resumed the context once, so after the first read the segmenter heard silence (the owner's "next" did nothing until
+  speech was unavailable). Now: the context is resumed on every `statechange` away from `running` and on any tap or
+  key; track `mute`/`unmute`/`ended` are watched; the engine tells the input when reading starts and ends
+  (`VoiceInput.speaking(on)`, also after every cancel), and after a read the mic is nudged: `resume()`, then if the
+  track is still muted or the context isn't running 500 ms later, the microphone is **re-acquired** (old track stopped,
+  a new `getUserMedia` connected to the same worklet; a context that still won't run is rebuilt with a new worklet)
+  without touching the toggle. A track muted while the app is silent gets 1 s, then the same. An `ended` track gets one
+  re-acquire; ending again within 3 s (or a failing `getUserMedia`) switches hands-free off with "The microphone
+  stopped". **iOS rule** (`isIOS()`: iPhone/iPad/iPod UA, or a Mac UA with touch points): frames are ignored while the
+  app speaks (the track is kept, the segmenter reset) and the mic is re-acquired right after each batch, so a command
+  said over the voice may not be heard there; elsewhere the mic listens over the voice. The owner can override it from
+  the diagnostics (`localStorage sf.handsFree.talkOver` "1" always listen / "0" never; read at each start).
 - **Recogniser** (`voice/stt.worker.ts` + `voice/input.ts`): a module Web Worker running Transformers.js
-  `pipeline("automatic-speech-recognition", "onnx-community/whisper-tiny.en")`, WebGPU (fp32 encoder, q4 decoder) when an
-  adapter is available, else WASM (q8, one thread: no COOP/COEP headers, so no SharedArrayBuffer). The page decides
+  `pipeline("automatic-speech-recognition", "onnx-community/moonshine-base-ONNX")` (M13; `whisper-tiny.en` in
+  M11–M12, see "Model choice" below), WebGPU (fp32 encoder, q4 decoder) when an adapter is available, else WASM (q8, one thread: no COOP/COEP headers, so no SharedArrayBuffer). The page decides
   whether the worker may try WebGPU (`{ type: "load", gpu }`, M12): never on WebKit (`navigator.vendor` "Apple…" or an
   iPhone/iPad UA: Safari 26 exposes `navigator.gpu`, and the GPU path took the page down on an iPhone), and never once
   this device's `requestAdapter()` returned null (the worker posts `no-gpu`, the page stores `localStorage
   sf.handsFree.gpu = "0"`, so "No available adapters" is logged once per device). A worker `error` / `messageerror`
   event fails the start, or, after the model is ready, switches hands-free off with a banner; a `pipeline()` that throws
   posts `error`. It receives
-  Float32 PCM (transferred) and returns text; up to 3 segments queue, oldest dropped. The worker survives a toggle off
+  Float32 PCM (transferred) and returns text; up to 3 segments queue, oldest dropped. **Decoding** (M13,
+  `decodeOptions()`): greedy (`num_beams: 1`, `do_sample: false`), no timestamps, no chunking (one window), and
+  `max_new_tokens` = 5 a second of audio, at least 16, at most 64 (a command costs a handful of decoder steps, a long
+  sentence still reaches its last keyword). Right after the model loads, one **warm-up** pass on a second of silence,
+  so the first real command isn't the slow one; `ready` reports `loadMs` and `warmMs`, `text` reports the inference
+  `ms`. The worker survives a toggle off
   (switching back on is instant) and is terminated when no cooking page is open. Model files load from the Hugging Face
   Hub and ONNX Runtime's WASM from jsDelivr; the library caches both in the Cache API (`transformers-cache`), so later
   starts need no download (measured: first start 10.8 s in headless Chromium on this machine, 3.3 s from cache). The
@@ -1218,7 +1241,45 @@ keywords `next`, `previous|back|before`, `ingredients`, `steps|instructions`, `s
 ("un-mute", "un mute" joined); scanning from the end, the last keyword wins. "step" and "ingredient" (singular) aren't
 keywords, so "next step" means next. Before parsing, `stripEcho()` drops the app's own words when a transcript of three
 or more words is at least 60 % words it said in the last 8 s (so a step reading "Next, add…" through the speakers isn't
-a command, while a keyword the user says over it still is); one- and two-word transcripts are taken as heard.
+a command, while a keyword the user says over it still is); one- and two-word transcripts are taken as heard, and so
+is one made only of command words ("Next. Next. Next.", M13).
+
+**Heard look** (M13): from the moment a segment goes to the recogniser until its transcript has been handled (command
+applied, or nothing understood), `handsFree` state `heard` is true and the toggle shows a pulsing sound-wave icon
+(`data-heard`, screen-reader description "Heard"; the pulse is `motion-safe` only, the icon change is the cue
+without motion). It never outlasts 10 s and clears on off. No command text (owner rule).
+
+**Latency** (M13): speech end → `SILENCE_MS` (0.7 s) → segment trimmed and posted → worker inference → command applied
+in the same task. Measured on the real microphone path (headless Chromium, fake microphone fed natural-voice command
+recordings, WASM, one thread): 0.85–1.0 s from the end of a short command to its transcript (0.72 s silence + 0.13–0.3 s
+inference), ~1.5 s for "go back to the previous one, no wait, next please"; M12 needed 1.5 s + ~3 s.
+
+**Model choice** (M13): Whisper pads every input to 30 s, so each command cost a full 30 s encoder pass (~3 s on one
+WASM thread here); Moonshine's encoder cost follows the audio length. Benchmark in headless Chromium, WASM q8, one thread,
+greedy short decoding, 132 clips (14 command phrases in 3 natural voices and 12 in 2 espeak-ng voices, each clean and with
+pink noise), accuracy = the parsed command matches the phrase's:
+
+| Model (q8) | Download | Commands right | p50 / p95 inference |
+|---|---|---|---|
+| whisper-tiny.en (M11–M12) | ~41 MB | 98/132 (74 %) | 3.0 s / 3.9–5.7 s |
+| moonshine-tiny | ~28 MB | 96/132 (73 %) | 0.13–0.23 s / 0.35–0.62 s |
+| **moonshine-base** (M13) | ~63 MB | **107/132 (81 %)** | 0.28–0.55 s / 0.77–1.5 s |
+
+Moonshine base is the one that is both clearly faster (≥ 5×) and at least as accurate; tiny is faster still but missed
+two more commands than Whisper. The owner had specified Whisper tiny.en: switching back is the `MODEL` constant in
+`stt.worker.ts`. All three miss some one-word commands in synthetic voices ("stop" → "Tom", "mute" → "newt"). Cross-origin isolation
+(COOP/COEP headers, for multi-threaded WASM) was **rejected**: `Cross-Origin-Embedder-Policy` breaks the Firebase
+Auth popup and cross-origin images (Storage photos without CORP headers), so ONNX Runtime stays on one WASM thread.
+
+**Diagnostics** (M13, owner only): `voice/diag.ts` keeps the last 50 events (mic opened / re-acquired / closed,
+context state and resumes, track mute / unmute / ended, listening paused / resumed, each segment with length, speech
+time, RMS and silence waited, each transcription with text, model ms and total ms since the speech ended, command
+applied with ms since the speech ended, echo-filter drops, speech start / end / unavailable, model device, load and
+warm-up time) only when the page was opened with `?voicedebug=1` (remembered in `localStorage sf.voiceDebug` until
+`?voicedebug=0`). Then `<HandsFreeToggle>` lazily renders `VoiceDiagnostics` (its own chunk, excluded from the
+precache): a button next to the toggle opens a sheet with the events, Copy (the log as text with the user agent),
+Clear, and the "listen while reading aloud" override above. Without the flag nothing is recorded and nothing renders;
+`diag.ts` is only imported by lazy chunks.
 
 **Actions:** next / previous move like the buttons (never past the last step: finishing sends `finishCooking`, so it
 stays a tap; in mise en place "next" starts step mode); ingredients / steps re-read (in mise en place: all ingredients /
@@ -1349,7 +1410,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | `recipe-detail.spec.ts` | Supply badges next to ingredients; servings scaling; missing-tool warning; protein per serving (R4.8–R4.9, R4.13–R4.14, R6.15) |
 | `cooking.spec.ts` | Mise en place; step mode navigation (swipe, tap, keys); inline amounts; portrait/landscape and tablet layouts; wake lock requested; the back button from step mode to mise en place; a long step scrolls with the buttons uncovered at 360×640 (M9) (R4.10–R4.12, R4.24) |
 | `timers.spec.ts` | Start, pause, cancel, and adjust timers; foreground alarm; push scheduled and cancelled (task stub); install prompt on iOS; offline warning banner (R4.23) |
-| `hands-free.spec.ts` | (M11) The toggle on mise en place, every step and the review (not a meal's order list); on reads the prep list, a new step reads its ingredients then instructions; next / previous / before, last keyword wins, ingredients, instructions, stop, shut up, unmute; off closes the mic and silences at once; leaving the cook view closes the mic; a refused mic switches it off with a banner; axe and a 44 px toggle; (M12) no start on load even with M11's remembered setting, a reload starts off, the crash-loop guard, a device that can't read aloud keeps taking commands (R4.31–R4.34) |
+| `hands-free.spec.ts` | (M11) The toggle on mise en place, every step and the review (not a meal's order list); on reads the prep list, a new step reads its ingredients then instructions; next / previous / before, last keyword wins, ingredients, instructions, stop, shut up, unmute; off closes the mic and silences at once; leaving the cook view closes the mic; a refused mic switches it off with a banner; axe and a 44 px toggle; (M12) no start on load even with M11's remembered setting, a reload starts off, the crash-loop guard, a device that can't read aloud keeps taking commands; (M13) the heard look appears and clears and the mic is told when reading starts and ends, the diagnostics only with `?voicedebug=1` and Copy (R4.31–R4.34) |
 | `recipe-edit.spec.ts` | Manual create and edit with fixed cuisine/protein lists; version history and restore; concurrent-edit warning; offline draft saved when online; delete with all-users warning moves to Trash and hides from search and plans; restore from Trash; purge after 30 days (clock) cleans up plans, meals, and favourites (R4.15, R4.19, R4.25–R4.26) |
 | `drop-folder.spec.ts` | Upload `.cook` files → recipes appear with downloaded images; invalid file shows an error banner on whatever page is open; file deleted after processing; duplicate goes to the review list; keep existing / keep new / keep both; wording with preparation words, qualifiers and spelling variants resolves to the catalogue with no new ingredient (M8) (R4.16–R4.17, R4.20) |
 | `ingredients.spec.ts` | (M8) An import with a new name: notification with Open recipe + Review ingredients, Recipes banner (session dismiss), Settings count, review card with its recipe, Merge into… preview and confirm repoint the recipe and move a seeded Supply lot with Σ transactions == amount, alias learned, merged page notice; More sheet link on phones (R4.27, R8.16) |
@@ -1412,6 +1473,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | M10 | Owner review 3 | The skill splits crowded steps, a more-text arrow in step mode, a recipe thumbnail next to every recipe name, staples on the grocery list by themselves (the cadence prompt retired), a Nutrition Facts panel on every recipe from the Canadian Nutrient File |
 | M11 | Hands-free mode | A voice assistant in the cooking views: reads ingredients and steps aloud (`speechSynthesis`, en-CA), spoken commands by keyword (last wins), Whisper tiny.en via Transformers.js in a Web Worker, mic capture and VAD on the main thread, nothing recorded while off, model cached in the browser |
 | M12 | Hands-free fixes | Owner bug report (no reading heard; iPhone crash loop): speaker browser rules and a speech-unavailable state that keeps listening, tap-only start with a Safari unlock utterance, crash-loop guard, WASM on WebKit, remembered no-GPU, worker crash handling, service-worker cache for ONNX Runtime's WASM |
+| M13 | Hands-free on iOS and latency | Owner report (commands dead after the first read on iPhone; the wait too long): microphone recovery (context resume, track watch, re-acquire after reading, iOS pauses listening while speaking), bounded echo filter, 0.7 s silence wait with trimmed segments, short greedy decoding with a warm-up pass, model benchmark, heard look, hidden `?voicedebug=1` diagnostics |
 
 Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix. The detailed, task-level plan for each milestone lives in `Planning/`.
 
