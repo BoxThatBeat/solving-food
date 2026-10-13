@@ -173,6 +173,16 @@ meal eaten), R6.23 (new: eating out), R6.24 (new: expiring meals first), R6.25 (
   desktop Plan already labels its sort "Filter · EXPIRING FIRST"). Fix from the pass: the summary card showed empty
   fibre rows for every meal type; a fibre row now shows only with planned meals or a goal.
 
+## After the push (2026-10-13)
+
+- CI failed on desktop-1080p and phone-android: from about the 300th recipe write of the run, the `recipeIndex`
+  function's transaction (read and rewrite one chunk of up to 500 summaries) took 2–7 s, then one hung for 60 s and
+  the Firestore emulator stopped answering every test for a minute (the Supply picker showed no catalogue, sign-in
+  never redirected). Not an M9 bug as such: the suite got a few recipes longer. Fix in `functions/src/recipeIndex.ts`:
+  chunks hold 100 summaries, a chunk with room is found by one query instead of reading every chunk inside the
+  transaction, and a recipe write that can't change the index (stats, timestamps, the `indexChunk` echo) is skipped
+  without a transaction. Spec §9 and the data model updated; `recipeIndex.test.ts` covers the skip and the capacity.
+
 ## Owner checks
 
 - After deploying, run `pnpm ingredients:upload` (no `--force`): it writes `fibrePer100g` to the 480 seed ingredients

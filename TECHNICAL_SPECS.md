@@ -203,7 +203,7 @@ recipes/{recipeId}                                // source of truth (structured
   createdBy, updatedBy, version, createdAt, updatedAt
 recipes/{recipeId}/versions/{version}             // full snapshot + editedBy, editedAt
 
-recipeIndex/{chunkN}                              // ≤ ~500 compact summaries per doc (§9); from M2 each also has
+recipeIndex/{chunkN}                              // ≤ 100 compact summaries per doc (§9); from M2 each also has
                                                   // tools[] and lines {ingredientId: canonical per serving} (a map:
                                                   // Firestore can't store nested arrays) for the tools and cost filters
 
@@ -698,7 +698,7 @@ Every save writes the recipe and a `versions/{n}` snapshot in **one batch**. Rul
 
 ### Search
 
-Firestore has no full-text search. An `onDocumentWritten(recipes/*)` function maintains `recipeIndex/{chunk}` documents, each holding ≤ ~500 compact summaries: `{id, title, tags, cuisine, mainProtein, proteinPerServingG, ingredientIds, totalMin, thumb}`. A recipe is assigned a chunk on creation (`indexChunk`, the lowest chunk with room) and stays there. Recipes with `status: trashed` or `pendingDuplicateReview` are left out of the index. The client loads a few chunk documents (cached offline), builds a **MiniSearch** index (ingredient names resolved from the `ingredients` collection, household notes merged in), and applies every filter in memory: supply, tools, favourites, cooked before, and cost. Meals use the same approach with a smaller index.
+Firestore has no full-text search. An `onDocumentWritten(recipes/*)` function maintains `recipeIndex/{chunk}` documents, each holding ≤ 100 compact summaries (`CHUNK_CAPACITY`; 500 until M9): `{id, title, tags, cuisine, mainProtein, proteinPerServingG, ingredientIds, totalMin, thumb}`. A recipe is assigned a chunk on creation (`indexChunk`: a chunk with room, found by one query, else a new one) and stays there. Each index change is one transaction that reads and rewrites the whole chunk, so chunks stay small, and a recipe write that can't change the index (stats, timestamps, the `indexChunk` echo: same summary, same indexed status) is skipped without a transaction; the e2e suite's hundreds of recipes made 500-summary chunks slow enough to stall the emulator (M9). Recipes with `status: trashed` or `pendingDuplicateReview` are left out of the index. The client loads a few chunk documents (cached offline), builds a **MiniSearch** index (ingredient names resolved from the `ingredients` collection, household notes merged in), and applies every filter in memory: supply, tools, favourites, cooked before, and cost. Meals use the same approach with a smaller index.
 
 ### Drop folder
 

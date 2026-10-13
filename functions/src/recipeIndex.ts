@@ -1,12 +1,15 @@
 // Search index maintenance (TECHNICAL_SPECS §9 "Search"): `recipeIndex/{chunk}` documents hold compact summaries of
-// active recipes, ≤ CHUNK_CAPACITY recipes per chunk. A recipe gets a chunk on its first write (the lowest chunk with
-// room, written back as `indexChunk` without a version bump) and keeps it. Trashed and pending-duplicate recipes are
-// removed from their chunk's summaries but keep their place. One transaction per write.
+// active recipes, ≤ CHUNK_CAPACITY recipes per chunk. A recipe gets a chunk on its first write (a chunk with room, else
+// a new one, written back as `indexChunk` without a version bump) and keeps it. Trashed and pending-duplicate recipes
+// are removed from their chunk's summaries but keep their place. One transaction per write that can change the index;
+// writes that can't (stats, timestamps, the `indexChunk` echo) are skipped without touching Firestore: every
+// transaction reads and rewrites a whole chunk, and in the e2e suite (hundreds of recipes, two writers) 500-summary
+// chunks got slow enough to stall the emulator for everyone.
 import { FieldValue, type DocumentData, type Transaction } from "firebase-admin/firestore";
 import { isIndexed, recipeSummary, type RecipeDoc, type RecipeSummary } from "@solving-food/core";
 import { db } from "./admin";
 
-export const CHUNK_CAPACITY = 500;
+export const CHUNK_CAPACITY = 100;
 
 export interface IndexChunk {
   /** Recipes assigned to this chunk (indexed or not). */
@@ -15,21 +18,36 @@ export interface IndexChunk {
   recipes: Record<string, RecipeSummary>;
 }
 
-const chunkRef = (n: number) => db.collection("recipeIndex").doc(String(n));
+const chunks = () => db.collection("recipeIndex");
+const chunkRef = (n: number) => chunks().doc(String(n));
 
+/** A chunk with room (one query, so only that chunk is read and locked), else the next number after the highest. */
 async function findChunkWithRoom(tx: Transaction): Promise<number> {
-  for (let n = 0; ; n++) {
-    const snap = await tx.get(chunkRef(n));
-    if (!snap.exists || ((snap.data() as IndexChunk).count ?? 0) < CHUNK_CAPACITY) return n;
-  }
+  const open = await tx.get(chunks().where("count", "<", CHUNK_CAPACITY).limit(1));
+  if (!open.empty) return Number(open.docs[0]!.id);
+  const ids = (await chunks().listDocuments()).map((d) => Number(d.id)).filter((n) => Number.isInteger(n));
+  return ids.length ? Math.max(...ids) + 1 : 0;
 }
 
 function sameSummary(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
+/** True when a write from `before` to `after` can't change the index: the chunk is assigned and neither the summary nor
+ *  whether the recipe is indexed changed. */
+export function indexUnchanged(id: string, before: DocumentData | null, after: DocumentData | null): boolean {
+  if (!before || !after || typeof after.indexChunk !== "number") return false;
+  if (isIndexed(before.status) !== isIndexed(after.status)) return false;
+  try {
+    return sameSummary(recipeSummary(id, before as RecipeDoc), recipeSummary(id, after as RecipeDoc));
+  } catch {
+    return false;
+  }
+}
+
 /** Brings the index in line with the recipe's current state. `after` null means the recipe was deleted. */
 export async function syncRecipeIndex(id: string, before: DocumentData | null, after: DocumentData | null): Promise<void> {
+  if (indexUnchanged(id, before, after)) return;
   const recipeRef = db.collection("recipes").doc(id);
   await db.runTransaction(async (tx) => {
     if (!after) {
@@ -72,6 +90,6 @@ export async function syncRecipeIndex(id: string, before: DocumentData | null, a
 
 /** Every summary in the index (for the drop folder's duplicate check). */
 export async function loadIndex(): Promise<RecipeSummary[]> {
-  const snap = await db.collection("recipeIndex").get();
+  const snap = await chunks().get();
   return snap.docs.flatMap((d) => Object.values((d.data() as IndexChunk).recipes ?? {}));
 }
