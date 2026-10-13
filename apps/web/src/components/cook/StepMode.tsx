@@ -162,6 +162,8 @@ export function StepMode({
         Step {i + 1} of {n}
         {s.section ? ` · ${s.section}` : ""}
       </span>
+      {/* M9 (owner review): a long step scrolls inside the card; the controls below never move under it. */}
+      <div className="min-h-[4.5rem] flex-1 overflow-y-auto overscroll-contain" data-testid="step-scroll" tabIndex={0} aria-label="Step text">
       <p className="step-text m-0 font-extrabold text-pretty" data-testid="step-text">
         {renderStep(s.text, recipe.ingredients, lookup, factor).map((seg, k) =>
           seg.kind === "text" ? (
@@ -174,9 +176,10 @@ export function StepMode({
           ),
         )}
       </p>
+      </div>
       {layout !== "wide" && layout !== "phone-landscape" ? <StepIngredients lines={lines} lookup={lookup} factor={factor} big={layout === "tablet-portrait"} /> : null}
       {layout === "phone" || layout === "tablet-portrait" ? (
-        <div className="mt-auto flex flex-col gap-3">
+        <div className="flex flex-none flex-col gap-3">
           {s.timerSeconds ? <TimerBox timers={timers} recipeId={recipeId} step={i} seconds={s.timerSeconds} /> : null}
           <OtherTimers timers={timers} except={timerId(recipeId, i)} />
         </div>
@@ -255,7 +258,7 @@ export function StepMode({
 function StepIngredients({ lines, lookup, factor, big, boxed }: { lines: RecipeIngredient[]; lookup: IngredientLookup; factor: number; big?: boolean; boxed?: boolean }) {
   if (!lines.length) return null;
   return (
-    <div className={cn("flex flex-col gap-1.5", boxed ? "rounded-ui border-bw bg-base p-3 shadow-hard" : "border-t-2 border-dashed border-line pt-3")} data-testid="step-ingredients">
+    <div className={cn("flex flex-col gap-1.5", boxed ? "rounded-ui border-bw bg-base p-3 shadow-hard" : "max-h-[35%] flex-none overflow-y-auto border-t-2 border-dashed border-line pt-3")} data-testid="step-ingredients">
       <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">FOR THIS STEP</span>
       {lines.map((l) => {
         const t = lineText(l, lookup, factor);

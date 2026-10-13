@@ -3,8 +3,10 @@
 // ▲/▼), cook each through mise en place and step mode, check it off. Done cooking (or the last recipe checked off)
 // sends `finishCooking`, which deducts the recipe defaults right away, and opens the review. One-recipe meals skip the
 // ordering step. The screen stays awake while cooking (Screen Wake Lock).
+// M9 (owner review): each phase is a browser history entry (`?mode=mise|steps`, pushed going forward), so the back
+// button goes from step mode to mise en place, and from a meal's mise en place to its order list.
 import * as React from "react";
-import { useNavigate, useRouter } from "@tanstack/react-router";
+import { useLocation, useNavigate, useRouter } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
 import { formatMinutes, missingTools, scaleFactor, type MealSide, type MealType, type RecipeRef } from "@solving-food/core";
 import { Button } from "@/components/ui/button";
@@ -42,6 +44,16 @@ export interface CookTarget {
 }
 
 type Phase = { kind: "order" } | { kind: "mise"; recipe: number } | { kind: "steps"; recipe: number; step: number };
+type Mode = "mise" | "steps" | undefined;
+
+/** The history entry a phase lives in: the first phase (order, or a single recipe's mise en place) has no mode. */
+function modeOf(p: Phase, single: boolean): Mode {
+  return p.kind === "steps" ? "steps" : p.kind === "mise" && !single ? "mise" : undefined;
+}
+/** How deep a mode is in the cook session's own history entries. */
+function depthOf(m: Mode, single: boolean): number {
+  return m === "steps" ? (single ? 1 : 2) : m === "mise" ? 1 : 0;
+}
 
 const PROGRESS = (k: string) => `sf.cook.${k}`;
 
@@ -56,6 +68,7 @@ function loadProgress(key: string): { phase: Phase; order: string[]; done: strin
 
 export function CookSession({ target, hid, uid, tools, initialStep }: { target: CookTarget; hid: string; uid: string; tools: readonly string[]; initialStep?: { recipeId?: string | undefined; step: number } | undefined }) {
   const navigate = useNavigate();
+  const router = useRouter();
   const notify = useNotify();
   const online = useOnline();
   const recipeMap = useRecipeDocs(target.recipes.map((r) => r.recipeId));
@@ -75,6 +88,38 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
     if (saved?.phase) return saved.phase;
     return single ? { kind: "mise", recipe: 0 } : { kind: "order" };
   });
+  // Phase history (M9): forward moves push an entry, the back button pops it and the phase follows the URL.
+  const location = useLocation();
+  const mode = (location.search as { mode?: Mode }).mode;
+  const lastRecipe = React.useRef(phase.kind === "order" ? 0 : phase.recipe);
+  React.useEffect(() => {
+    if (phase.kind !== "order") lastRecipe.current = phase.recipe;
+  }, [phase]);
+  const go = (next: Phase, how: "push" | "replace" = "push") => {
+    setPhase(next);
+    const m = modeOf(next, single);
+    if (m === mode) return;
+    const { step: _s, recipe: _r, ...rest } = location.search as Record<string, unknown>;
+    void navigate({ to: location.pathname, search: { ...rest, mode: m } as never, replace: how === "replace" });
+  };
+  /** Back to an earlier phase by popping our own entries, so Back afterwards doesn't land on a stale phase. */
+  const back = (to: Phase) => {
+    const n = depthOf(mode, single) - depthOf(modeOf(to, single), single);
+    setPhase(to);
+    if (n > 0) router.history.go(-n);
+  };
+  const seenMode = React.useRef(mode);
+  React.useEffect(() => {
+    if (seenMode.current === mode) return;
+    seenMode.current = mode;
+    setPhase((p) => {
+      if (modeOf(p, single) === mode) return p;
+      const recipe = lastRecipe.current;
+      if (mode === "steps") return { kind: "steps", recipe, step: 0 };
+      if (mode === "mise") return { kind: "mise", recipe };
+      return single ? { kind: "mise", recipe: 0 } : { kind: "order" };
+    });
+  }, [mode, single]);
   const [installAsk, setInstallAsk] = React.useState(false);
   const [finished, setFinished] = React.useState(false);
   const awake = useWakeLock(true);
@@ -84,7 +129,6 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
     return () => setUpdateDeferred(false);
   }, []);
   // Load the review screen's code now, so Done cooking works with no signal even before the service worker has it.
-  const router = useRouter();
   React.useEffect(() => {
     void router.preloadRoute({ to: "/review/$eventId", params: { eventId: "preload" } }).catch(() => undefined);
   }, [router]);
@@ -148,7 +192,7 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
     const id = order[i]!;
     if (single) return finish();
     if (!done.includes(id)) checkOff(id);
-    if (done.length + 1 < target.recipes.length) setPhase({ kind: "order" });
+    if (done.length + 1 < target.recipes.length) back({ kind: "order" });
   };
 
   const move = (i: number, d: -1 | 1) => setOrder((o) => {
@@ -216,7 +260,7 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
                         ▼
                       </button>
                     </span>
-                    <Button onClick={() => setPhase({ kind: "mise", recipe: i })} aria-label={`Cook ${r.title}`} className="flex-none px-3">
+                    <Button onClick={() => go({ kind: "mise", recipe: i })} aria-label={`Cook ${r.title}`} className="flex-none px-3">
                       Cook →
                     </Button>
                   </li>
@@ -226,7 +270,7 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
             <p className="m-0 text-[0.8125rem] font-semibold text-sub">The review opens once every recipe is checked off, or when you tap Done cooking.</p>
           </div>
         ) : phase.kind === "mise" && current ? (
-          <MiseEnPlace recipe={current} lookup={lookup} factor={factorFor(order[phase.recipe]!)} missingTools={tools.length ? missingTools(current.tools, tools) : []} onStart={() => setPhase({ kind: "steps", recipe: phase.recipe, step: 0 })} />
+          <MiseEnPlace recipe={current} lookup={lookup} factor={factorFor(order[phase.recipe]!)} missingTools={tools.length ? missingTools(current.tools, tools) : []} onStart={() => go({ kind: "steps", recipe: phase.recipe, step: 0 })} />
         ) : phase.kind === "steps" && current ? (
           <StepMode
             recipe={current}

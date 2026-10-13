@@ -52,7 +52,7 @@ meal eaten), R6.23 (new: eating out), R6.24 (new: expiring meals first), R6.25 (
 > "When a recipe step text is very long, it should be scrollable text. Not just overflow over the UI buttons" ·
 > "should be able to go back to mise en place mode with the back button"
 - [ ] Step text sits in its own scroll area (`min-h-0 flex-1 overflow-y-auto`) inside the step card; the step nav and
-      timers never move under it. A fade hint shows when there's more text.
+      timers never move under it (no fade hint: the scroll area is focusable and scrolls by touch, wheel and keys).
 - [ ] Each cook phase is a history entry (`?mode=mise|steps` on the cook routes, pushed when moving forward, replaced
       otherwise); the browser back button from step mode returns to mise en place (and from mise en place to the
       order list for multi-recipe meals). A finished plan meal's cook page says it's cooked instead of starting over.

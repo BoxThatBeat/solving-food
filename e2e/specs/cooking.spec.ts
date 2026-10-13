@@ -101,3 +101,71 @@ test("a meal of several recipes: choose the order, each shows its total time; ch
   await expect(page).toHaveURL(/\/review\//);
   await expect(page.getByRole("heading", { name: "Rate it" })).toBeVisible();
 });
+
+test("the back button goes from step mode to mise en place, and from a meal's mise en place to its order list (R4.12)", { tag: ["@R4.12"] }, async ({ page, household }) => {
+  const r = await makeCookRecipe("Back flow");
+  const b = await makeCookRecipe("Back flow second", { leftovers: 0, lines: "Boil @jasmine rice{300%g} for ~{12%minutes}." });
+  const pid = await seedPeriod(household.hid);
+  await seedPlanItem(household.hid, pid, [r.id]);
+  await seedPlanItem(household.hid, pid, [r.id, b.id], { name: "Back two-part" });
+  const plan = new PlanPage(page);
+  await plan.goto();
+  await plan.item(r.title).getByRole("button", { name: `Cook ${r.title}` }).click();
+  await expect(page.getByRole("heading", { name: "Mise en place" })).toBeVisible();
+  await page.getByRole("button", { name: "Start step mode →" }).click();
+  await expect(page.getByTestId("step-card")).toBeVisible();
+  await page.getByRole("button", { name: "Next step →" }).click();
+  await page.goBack();
+  await expect(page.getByRole("heading", { name: "Mise en place" })).toBeVisible();
+  await expect(page).toHaveURL(/\/plan\/[^/?]+\/cook$/);
+  // Forward again returns to step mode; back twice leaves the cook view.
+  await page.goForward();
+  await expect(page.getByTestId("step-card")).toBeVisible();
+  await page.goBack();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/plan$/);
+
+  // A meal of two: step mode → mise en place → the order list.
+  await plan.item("Back two-part").getByRole("button", { name: "Cook Back two-part" }).click();
+  const list = page.getByRole("list", { name: "Recipes in cooking order" });
+  await list.getByRole("button", { name: `Cook ${b.title}` }).click();
+  await page.getByRole("button", { name: "Start step mode →" }).click();
+  await expect(page.getByTestId("step-card")).toBeVisible();
+  await page.goBack();
+  await expect(page.getByRole("heading", { name: "Mise en place" })).toBeVisible();
+  await page.goBack();
+  await expect(list).toBeVisible();
+  // Finishing a recipe pops back to the list, so Back from there leaves the cook view.
+  await list.getByRole("button", { name: `Cook ${b.title}` }).click();
+  await page.getByRole("button", { name: "Start step mode →" }).click();
+  for (;;) {
+    const next = page.getByRole("button", { name: "Next step →" });
+    if (!(await next.isVisible())) break;
+    await next.click();
+  }
+  await page.getByRole("button", { name: "Recipe done ✓" }).click();
+  await expect(list.getByRole("checkbox", { name: `${b.title} done` })).toHaveAttribute("aria-checked", "true");
+  await page.goBack();
+  await expect(page).toHaveURL(/\/plan$/);
+});
+
+test("a very long step scrolls inside the card; Back and Next stay visible and uncovered on a small phone (R4.10)", { tag: ["@R4.10"] }, async ({ page, household }) => {
+  const words = Array.from({ length: 160 }, (_, i) => `word${i}`).join(" ");
+  const r = await makeCookRecipe("Long step", { lines: `Sear @chicken thigh{600%g} in @olive oil{2%tbsp}, then ${words}, until golden and the end of the step is here.` });
+  await page.setViewportSize({ width: 360, height: 640 });
+  await page.goto(`/recipes/${r.id}/cook?step=0`);
+  const scroller = page.getByTestId("step-scroll");
+  await expect(page.getByTestId("step-text")).toContainText("word159");
+  const next = page.getByRole("button", { name: /^(Next step →|Done cooking ✓)$/ });
+  const back = page.getByRole("button", { name: "← Back" });
+  await expect(next).toBeInViewport({ ratio: 1 });
+  await expect(back).toBeInViewport({ ratio: 1 });
+  // The text overflows its own box (so it scrolls), and that box ends above the buttons.
+  expect(await scroller.evaluate((el) => el.scrollHeight > el.clientHeight + 10)).toBe(true);
+  const box = (await scroller.boundingBox())!;
+  const btn = (await next.boundingBox())!;
+  expect(box.y + box.height).toBeLessThanOrEqual(btn.y);
+  await scroller.evaluate((el) => (el.scrollTop = el.scrollHeight));
+  await expect(page.getByText("the end of the step is here", { exact: false })).toBeInViewport();
+  void household;
+});

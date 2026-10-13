@@ -102,9 +102,9 @@ flowchart LR
 
 - **R4.8** The detail view shows the image, servings, times, ingredients, steps, tools, source link, and the household's notes.
 - **R4.9** **Next to every ingredient**, the view shows how much of it is in supply (e.g. `Salmon 400 g · have 250 g ⚠`). Free-use ingredients (R8.14) show *staple* instead of an amount. Expired lots don't count (R8.15).
-- **R4.10** **Step mode** shows one step at a time in large text, full screen, with that step's ingredients and any timers. The screen stays awake while it's open.
+- **R4.10** **Step mode** shows one step at a time in large text, full screen, with that step's ingredients and any timers. The screen stays awake while it's open. A step too long for the screen scrolls inside its own area; the Back / Next buttons and the timers always stay visible and are never covered (M9).
 - **R4.11** Step instructions always show ingredient **amounts inline** where each ingredient is mentioned (e.g. "Add the butter (30 g)").
-- **R4.12** A **mise en place** screen lists all prep tasks up front (chop, measure, preheat) before step mode starts.
+- **R4.12** A **mise en place** screen lists all prep tasks up front (chop, measure, preheat) before step mode starts. The browser or phone **back button** in step mode returns to mise en place (and, in a meal of several recipes, from mise en place to the list of recipes) instead of leaving the cooking view (M9).
 - **R4.13** Users can scale servings, and quantities update to match. On the recipe page the servings control sits directly above the ingredients it scales.
 - **R4.14** If the household is missing a tool the recipe needs (from the kitchen tools setting), the view says so.
 

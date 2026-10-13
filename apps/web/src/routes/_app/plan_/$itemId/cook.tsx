@@ -1,6 +1,6 @@
 // /plan/:itemId/cook: cook a planned meal (PRD R5.6, R9.1–R9.3). The plan item's recipes, servings, and saved meal feed
 // <CookSession>; Done cooking marks the item cooked through `finishCooking`.
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { doc } from "firebase/firestore";
 import { planItemTitle } from "@solving-food/core";
 import { db } from "@/firebase/app";
@@ -32,6 +32,18 @@ function CookPlanItem() {
       </PageBody>
     );
   const it = item.data;
+  // Back from the review (M9: cook phases are history entries) lands here after the meal was cooked.
+  if (it.status !== "planned")
+    return (
+      <PageBody>
+        <EmptyState>
+          <p className="m-0 mb-3">This meal is already {it.status}.</p>
+          <Link to="/plan" className="font-extrabold text-ink underline">
+            Back to the plan
+          </Link>
+        </EmptyState>
+      </PageBody>
+    );
   // The title names the meal in history: wait for the recipes rather than call it "Recipe".
   if (it.recipes.some((r) => !recipes.has(r.recipeId)) && !it.name) return null;
   const title = planItemTitle(it, (id) => recipes.get(id)?.title);
