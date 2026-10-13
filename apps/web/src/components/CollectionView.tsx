@@ -40,6 +40,8 @@ export interface CollectionViewProps {
   header?: React.ReactNode;
   /** The search bar sticks to the top on phones; off inside sheets. */
   sticky?: boolean;
+  /** The sort when the URL names none (Suggested; the Plan list uses Expiring first, M9). */
+  defaultSort?: CollectionSort;
   /** Meal type options: recipes also have "side" (R4.28); plan items only the plan's meal types. */
   courses?: readonly string[];
   /** Filter groups that make no sense for this list (e.g. "cooked" on plan items). */
@@ -120,7 +122,8 @@ export function CollectionView(p: CollectionViewProps) {
     setOpen(false);
   };
   const count = (key: FilterKey, value: unknown) => p.optionCount?.(key, value);
-  const sort = draft.sort ?? "suggested";
+  const defaultSort = p.defaultSort ?? "suggested";
+  const sort = draft.sort ?? defaultSort;
   const courses = (p.courses ?? RECIPE_COURSES) as readonly (typeof RECIPE_COURSES)[number][];
 
   return (
@@ -216,7 +219,7 @@ export function CollectionView(p: CollectionViewProps) {
                   key={s}
                   type="button"
                   aria-pressed={sort === s}
-                  onClick={() => setDraft((d) => ({ ...d, sort: s === "suggested" ? undefined : s }))}
+                  onClick={() => setDraft((d) => ({ ...d, sort: s === defaultSort ? undefined : s }))}
                   className={cn(
                     "flex cursor-pointer justify-between rounded-ui border-2 border-line px-2 py-[0.6875rem] text-left text-[0.8125rem] font-extrabold",
                     sort === s ? "bg-acc text-onc" : "bg-base text-ink shadow-hard-sm",

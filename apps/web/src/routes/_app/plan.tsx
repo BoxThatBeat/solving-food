@@ -14,6 +14,7 @@ import {
   imageVariant,
   daysLeft,
   earliestExpiringUse,
+  soonestUseDays,
   expiresPhrase,
   mealRequirements,
   USE_SOON_DAYS,
@@ -55,6 +56,9 @@ import { PendingReviews } from "@/components/cook/PendingReviews";
 import { usePendingReviews } from "@/components/cook/helpers";
 import { useOnline } from "@/hooks/useOnline";
 import { useReadySession } from "@/session/useSession";
+
+/** M9 (owner review, R6.24): planned meals whose ingredients expire soonest first; ties by Suggested. */
+const PLAN_DEFAULT_SORT = "expiry" as const;
 
 export const Route = createFileRoute("/_app/plan")({
   validateSearch: (s) => collectionSearchSchema.parse(s),
@@ -104,6 +108,8 @@ function PlanPage() {
           // R6.7: the soonest-expiring lot this meal would use, when it expires within the period (or within days).
           const needs = mealRequirements(i.data.recipes, i.data.servings, m.ctx, i.data.sides);
           const e = earliestExpiringUse(needs, (id) => m.lotsByIngredient.get(id), supplyNow);
+          // M9 (R6.24): the list's default order is the soonest-expiring ingredient first; the badge says why.
+          v.soonDays = soonestUseDays(needs, (id) => m.lotsByIngredient.get(id), supplyNow)?.days;
           if (e && (e.expiresMs <= (endMs ?? 0) || daysLeft(e.expiresMs, supplyNow, tz) <= USE_SOON_DAYS)) {
             const name = m.ingredients.get(e.ingredientId)?.name ?? e.ingredientId.replace(/-/g, " ");
             v.expiry = `${name} ${expiresPhrase(e.expiresMs, supplyNow, tz)}`;
@@ -129,14 +135,15 @@ function PlanPage() {
     (id: string): HouseholdFacts => {
       const v = views.find((x) => x.id === id);
       const c = v ? combinedSuggestion(v.item.recipes.map((r) => r.recipeId), suggestions.byId) : null;
-      return c ? { ...NO_FACTS, suggestion: { raw: c.raw, blocked: c.blocked }, expiryDays: c.expiryDays } : NO_FACTS;
+      // Expiring first (the default, M9) uses the meal's own soonest-expiring ingredient, ties by the suggestion score.
+      return { ...NO_FACTS, ...(c ? { suggestion: { raw: c.raw, blocked: c.blocked } } : {}), expiryDays: v?.soonDays ?? null };
     },
     [views, suggestions.byId],
   );
   const result = React.useMemo(() => {
     const q = (search.q ?? "").trim().toLowerCase();
     const matches = q ? new Map(listRows.filter((r) => [r.title, ...r.ingredientNames, ...r.tags].some((t) => t.toLowerCase().includes(q))).map((r) => [r.id, 1])) : null;
-    return applyCollection(listRows, search, factsOf, matches);
+    return applyCollection(listRows, { ...search, sort: search.sort ?? PLAN_DEFAULT_SORT }, factsOf, matches);
   }, [listRows, search, factsOf]);
   const viewById = new Map(views.map((v) => [v.id, v]));
   const groups = MEAL_TYPES.map((t) => ({ type: t, items: result.items.map((r) => viewById.get(r.id)!).filter((v) => v && v.item.mealType === t) })).filter((g) => g.items.length);
@@ -199,6 +206,7 @@ function PlanPage() {
             placeholder="Search this period's meals…"
             noun="planned meals"
             countFor={(x) => applyCollection(listRows, x, factsOf, null).items.length}
+            defaultSort={PLAN_DEFAULT_SORT}
             hide={["tools", "cost", "supply"]}
             courses={MEAL_TYPES}
             sticky={false}
@@ -206,7 +214,7 @@ function PlanPage() {
               <div className="flex items-baseline justify-between gap-2">
                 <h2 className="m-0 font-display text-[1.375rem] font-normal">This period</h2>
                 <span className="font-mono text-[0.65625rem] font-bold" data-testid="plan-count">
-                  {m.loading ? "LOADING…" : `${planned} TO COOK · ${SORT_LABELS[search.sort ?? "suggested"].toUpperCase()}`}
+                  {m.loading ? "LOADING…" : `${planned} TO COOK · ${SORT_LABELS[search.sort ?? PLAN_DEFAULT_SORT].toUpperCase()}`}
                 </span>
               </div>
             }

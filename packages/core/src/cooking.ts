@@ -148,6 +148,16 @@ export function earliestExpiringUse(needs: ReadonlyMap<string, number>, lotsOf: 
   return best;
 }
 
+/**
+ * The Plan list's default order (M9, R6.24): fractional days until the soonest unexpired lot a planned meal would use
+ * expires (`earliestExpiringUse`), or null when it uses nothing that expires. Sorting by it ascending, nulls last and
+ * ties by the previous order (the suggestion score), puts the meal to make first at the top.
+ */
+export function soonestUseDays(needs: ReadonlyMap<string, number>, lotsOf: (ingredientId: string) => readonly LedgerLot[] | undefined, nowMs: number): { days: number; ingredientId: string } | null {
+  const e = earliestExpiringUse(needs, lotsOf, nowMs);
+  return e ? { days: (e.expiresMs - nowMs) / 86_400_000, ingredientId: e.ingredientId } : null;
+}
+
 // ---------- pending reviews (R9.4)
 
 /** How long another member keeps being asked to add their rating. */

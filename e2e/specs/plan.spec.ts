@@ -341,3 +341,30 @@ test.describe("eating out (M9)", () => {
     expect(items.filter((i) => i.kind === "out").map((i) => i.periodId)).toEqual([oldId]);
   });
 });
+
+test.describe("expiring first (M9)", () => {
+  test("planned meals are ordered by their soonest-expiring ingredient; the badge says why; the rest keep their order", { tag: ["@R6.24"] }, async ({ page, household }) => {
+    const { seedSupply } = await import("../pages/supply");
+    const rice = await makePlanRecipe("Order rice", { lines: "Boil @jasmine rice{300%g}." });
+    const chicken = await makePlanRecipe("Order chicken", { lines: "Sear @chicken thigh{600%g}." });
+    const spinach = await makePlanRecipe("Order spinach", { lines: "Wilt @baby spinach{140%g}." });
+    const pid = await seedPeriod(household.hid);
+    for (const r of [rice, chicken, spinach]) await seedPlanItem(household.hid, pid, [r.id]);
+    await seedSupply(household.hid, "chicken-thigh", [{ amount: 1000, expiresInDays: 5 }], { label: "chicken thigh" });
+    await seedSupply(household.hid, "baby-spinach", [{ amount: 200, expiresInDays: 2 }], { label: "baby spinach" });
+    const plan = new PlanPage(page);
+    await plan.goto();
+    await expect(page.getByTestId("plan-count")).toHaveText(/EXPIRING FIRST/);
+    const titles = page.getByRole("region", { name: "Dinner" }).getByTestId("plan-item").getByRole("button", { name: /^Order / });
+    await expect(titles).toHaveText([spinach.title, chicken.title, rice.title]);
+    await expect(plan.item(spinach.title).getByTestId("expiry-badge")).toHaveText(/baby spinach expires (in 2 days|tomorrow)/i);
+    // Another sort is still a choice; Expiring first is the default (no sort in the URL).
+    await page.getByRole("button", { name: /^Filter and sort/ }).click();
+    const sheet = page.getByRole("dialog", { name: "Filter & sort" });
+    await expect(sheet.getByRole("button", { name: "Expiring first" })).toHaveAttribute("aria-pressed", "true");
+    await sheet.getByRole("group", { name: "Sort by" }).getByRole("button", { name: "Name", exact: true }).click();
+    await sheet.getByRole("button", { name: /^Show 3 planned meals/ }).click();
+    await expect(page).toHaveURL(/sort=name/);
+    await expect(titles).toHaveText([chicken.title, rice.title, spinach.title]);
+  });
+});

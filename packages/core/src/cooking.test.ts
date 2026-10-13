@@ -3,6 +3,7 @@ import fc from "fast-check";
 import {
   cookedCoverage,
   earliestExpiringUse,
+  soonestUseDays,
   leftoverMealTypeOf,
   leftoverPortionsByType,
   mealRequirements,
@@ -179,6 +180,10 @@ describe("projected supply and can-make (R8.4, R4.3, R4.4)", () => {
     const e = earliestExpiringUse(new Map([["chicken", 600], ["spinach", 1]]), (id) => (id === "chicken" ? lots(500, 5) : lots(100, 2)), NOW);
     expect(e).toEqual({ ingredientId: "spinach", expiresMs: NOW + 2 * DAY });
     expect(earliestExpiringUse(new Map([["chicken", 1]]), () => lots(5, -1), NOW)).toBeNull();
+  });
+  it("plan order (M9, R6.24): days to the soonest-expiring ingredient a meal uses; null when nothing expires", () => {
+    expect(soonestUseDays(new Map([["chicken", 600], ["spinach", 1]]), (id) => (id === "chicken" ? lots(500, 5) : lots(100, 2)), NOW)).toEqual({ days: 2, ingredientId: "spinach" });
+    expect(soonestUseDays(new Map([["chicken", 1]]), () => undefined, NOW)).toBeNull();
   });
 });
 

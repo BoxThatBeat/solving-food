@@ -167,6 +167,7 @@ flowchart LR
 - **R6.5** Going over budget is allowed. The meter goes negative and turns red, but the app **never stops** the user from adding meals.
 - **R6.6** Meals not cooked by the end of the period **roll over** into the next period's plan automatically.
 - **R6.23** **Eating out.** In Create meal, an **Eating out** choice adds a plan entry for a meal type the household will eat out, with an optional note ("Pizza at Mom's"). It has no recipes, so it adds nothing to the grocery list or the budget, takes nothing from Supply, and can't be cooked. It shows distinctly on the Plan page (an *Eating out* card) and in the coverage strip (a hatched cell), and it counts as covered for the period. It can be removed like any planned meal and doesn't carry over into the next period.
+- **R6.24** **Expiring meals first.** By default the Plan page lists the planned meals whose ingredients (the Supply they would use) expire soonest first, so the household makes those first; meals with nothing expiring follow in the Suggested order, and ties keep that order. The expiry badge (R6.7) says why. Any other sort can still be chosen.
 - **R6.7** Planned meals show an **expiry badge** when one of their ingredients is expiring soon, e.g. *"Salmon expires in 2 days"*.
 
 ### 6.2 Meal Prep & Leftovers

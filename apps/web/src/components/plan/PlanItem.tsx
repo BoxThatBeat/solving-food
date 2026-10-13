@@ -41,6 +41,8 @@ export interface PlanItemView {
   cost: { cents: number; unknown: number } | undefined;
   /** Shown status: a pending finishCooking / markEaten is applied optimistically. */
   status: StoredPlanItem["status"];
+  /** Days to the soonest-expiring ingredient a planned meal uses, any horizon: the Plan list's default order (M9, R6.24). */
+  soonDays?: number | undefined;
   /** "Salmon expires in 2 days" (R6.7). */
   expiry?: string | undefined;
   /** A cooked meal's pending review (cook event ID): finishing it marks the meal eaten (M9, R9.5). */

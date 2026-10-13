@@ -555,7 +555,7 @@ of its recipes.
 
 ### Expiry badges & alerts
 
-For each planned item, the client finds the earliest-expiring lot among its ingredients that the item would use, and shows a badge when it expires within the period (R6.7). Supply expiring with no planned use raises an alert with suggestions sorted by `expiryUrgency` (R6.13).
+For each planned item, the client finds the earliest-expiring lot among its ingredients that the item would use, and shows a badge when it expires within the period (R6.7). **Plan order (M9, R6.24):** the Plan list's default sort is *Expiring first* over the same lookup, at any horizon: `soonestUseDays()` (core `cooking.ts`, fractional days to that lot's expiry, null when nothing it uses expires) feeds `expiryDays`, compared ascending with nulls last, ties by the combined suggestion score, then title; `<CollectionView defaultSort>` makes Expiring first the sheet's default on that page. Supply expiring with no planned use raises an alert with suggestions sorted by `expiryUrgency` (R6.13).
 
 ### Optimiser ("n dinners under $x")
 
