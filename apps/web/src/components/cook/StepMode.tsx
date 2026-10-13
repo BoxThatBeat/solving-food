@@ -258,7 +258,7 @@ export function StepMode({
 function StepIngredients({ lines, lookup, factor, big, boxed }: { lines: RecipeIngredient[]; lookup: IngredientLookup; factor: number; big?: boolean; boxed?: boolean }) {
   if (!lines.length) return null;
   return (
-    <div className={cn("flex flex-col gap-1.5", boxed ? "rounded-ui border-bw bg-base p-3 shadow-hard" : "max-h-[35%] flex-none overflow-y-auto border-t-2 border-dashed border-line pt-3")} data-testid="step-ingredients">
+    <div className={cn("flex flex-col gap-1.5", boxed ? "rounded-ui border-bw bg-base p-3 shadow-hard" : "max-h-[35%] flex-none overflow-y-auto border-t-2 border-dashed border-line pt-3")} data-testid="step-ingredients" {...(boxed ? {} : { tabIndex: 0, role: "group", "aria-label": "This step's ingredients" })}>
       <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">FOR THIS STEP</span>
       {lines.map((l) => {
         const t = lineText(l, lookup, factor);
