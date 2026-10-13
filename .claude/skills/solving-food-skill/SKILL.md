@@ -19,7 +19,9 @@ recipe to the shared library. Your job: write that file correctly and deliver it
    `main_protein`, `prep_time`, `cook_time`, `tags`. Optional: `source`, `image`, `leftover_portions`, `prep`,
    `tools`. Details in [references/conventions.md](references/conventions.md).
 4. **Write the body**: one paragraph per step, original order and wording, each ingredient marked with `@` where
-   it is first used, with its amount. Syntax in [references/syntax.md](references/syntax.md).
+   it is first used, with its amount. A source step that crams several separate actions into many sentences is
+   split into one step per action where that's logical ("Split a crowded step" in
+   [references/conventions.md](references/conventions.md)). Syntax in [references/syntax.md](references/syntax.md).
 5. **Name ingredients** the way the app knows them: every `@ingredient{}` token is a name or alias from
    [references/ingredients.md](references/ingredients.md) whenever one means the same thing, with preparation
    words outside the token.
@@ -115,6 +117,7 @@ Add @salmon fillet{600%g} and @lemon{1}, sliced. Roast ~{12%minutes} more.
 - [ ] Every ingredient from the ingredient list is an `@` token with its amount; nothing was dropped or merged.
 - [ ] Salt and pepper are separate tokens; preparation words are outside tokens.
 - [ ] Step 6 done: every token is a name or alias from `ingredients.md`, or a new name you will list with a reason.
-- [ ] Steps keep the original order and meaning; timers use `~{n%minutes}`.
+- [ ] Steps keep the original order and meaning; a long step of several separate actions is split, one action
+      per step; timers use `~{n%minutes}`.
 - [ ] `image` is a direct image URL, or a relative path to a photo you will upload with the file.
 - [ ] `source` is the page URL (without tracking parameters) when there is one.

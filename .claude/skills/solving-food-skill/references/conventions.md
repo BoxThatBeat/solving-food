@@ -23,6 +23,30 @@ every file imports the same way.
 ## Body
 
 - One paragraph per step, in the original order, keeping the original wording (light trimming of chatter is fine).
+- **Split a crowded step.** When one source step packs several sentences that are really separate actions (do
+  this, then that, then something else), write each action as its own step (its own paragraph), in the original
+  order and with the original wording. The app shows one step at a time in large text while someone cooks, so short
+  steps are easier to follow and to come back to. Split only where it's logical:
+  - Never split one action: a sentence that only qualifies the action before it ("Season with salt.", "It should be
+    golden and crisp.", "Don't let it burn.") stays with that action.
+  - A timer stays with the action it times; a sentence that says when to move on ("When the onions are soft, …")
+    starts the next step.
+  - A step that is already one or two short sentences stays as it is. Don't merge separate source steps either.
+
+  Before (one source step):
+
+  > Heat the oil in a skillet over medium heat. Add the onion and cook until soft, about 5 minutes. Stir in the garlic
+  > and cook for 1 minute more, until fragrant. Add the tomatoes and simmer for 15 minutes, stirring now and then.
+
+  After (three steps):
+
+  ```
+  Heat @olive oil{2%tbsp} in a #skillet{} over medium heat. Add @onion{1}, diced, and cook until soft, about ~{5%minutes}.
+
+  Stir in @garlic{2%cloves}, minced, and cook for ~{1%minute} more, until fragrant.
+
+  Add @canned diced tomatoes{28%oz} and simmer for ~{15%minutes}, stirring now and then.
+  ```
 - Mark each ingredient where it is **first used** in the steps, with its full quantity. If the recipe uses it in
   parts ("half the butter… the remaining butter"), give each part its amount and they are added up.
 - If the steps never mention an ingredient from the ingredient list (common with "season to taste"), add it to the
