@@ -10,6 +10,20 @@
     "densityGPerMl": 1.03,
     "proteinPer100g": 3.3,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 50,
+      "fatG": 1.98,
+      "satFatG": 1.26,
+      "transFatG": 0.09,
+      "carbG": 4.8,
+      "sugarsG": 5.06,
+      "sodiumMg": 47,
+      "cholesterolMg": 8,
+      "potassiumMg": 140,
+      "calciumMg": 120,
+      "ironMg": 0.02
+    },
+    "nutrientSource": "CNF 61 Milk, fluid, partly skimmed, 2% M.F.",
     "shelfLifeDays": {
       "fridge": 7,
       "freezer": 90
@@ -33,6 +47,19 @@
     "densityGPerMl": 1.03,
     "proteinPer100g": 3.2,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 61,
+      "fatG": 3.25,
+      "satFatG": 1.86,
+      "carbG": 4.8,
+      "sugarsG": 5.05,
+      "sodiumMg": 43,
+      "cholesterolMg": 10,
+      "potassiumMg": 132,
+      "calciumMg": 113,
+      "ironMg": 0.03
+    },
+    "nutrientSource": "CNF 113 Milk, fluid, whole, pasteurized, homogenized, 3.25% M.F.",
     "shelfLifeDays": {
       "fridge": 7,
       "freezer": 90
@@ -55,6 +82,19 @@
     "densityGPerMl": 1.03,
     "proteinPer100g": 3.4,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 42,
+      "fatG": 0.97,
+      "satFatG": 0.63,
+      "carbG": 4.99,
+      "sugarsG": 5.2,
+      "sodiumMg": 44,
+      "cholesterolMg": 5,
+      "potassiumMg": 150,
+      "calciumMg": 125,
+      "ironMg": 0.03
+    },
+    "nutrientSource": "CNF 63 Milk, fluid, partly skimmed, 1% M.F.",
     "shelfLifeDays": {
       "fridge": 7,
       "freezer": 90
@@ -77,6 +117,19 @@
     "densityGPerMl": 1.03,
     "proteinPer100g": 3.4,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 34,
+      "fatG": 0.08,
+      "satFatG": 0.06,
+      "carbG": 4.96,
+      "sugarsG": 5.09,
+      "sodiumMg": 42,
+      "cholesterolMg": 2,
+      "potassiumMg": 156,
+      "calciumMg": 122,
+      "ironMg": 0.03
+    },
+    "nutrientSource": "CNF 114 Milk, fluid, skim",
     "shelfLifeDays": {
       "fridge": 7,
       "freezer": 90
@@ -99,6 +152,19 @@
     "densityGPerMl": 1.04,
     "proteinPer100g": 3.2,
     "fibrePer100g": 0.8,
+    "nutrients": {
+      "kcal": 77,
+      "fatG": 1.9,
+      "satFatG": 1.18,
+      "carbG": 12.13,
+      "sugarsG": 9.55,
+      "sodiumMg": 66,
+      "cholesterolMg": 8,
+      "potassiumMg": 169,
+      "calciumMg": 109,
+      "ironMg": 0.24
+    },
+    "nutrientSource": "CNF 70 Milk, fluid, chocolate, partly skimmed, 2% M.F.",
     "shelfLifeDays": {
       "fridge": 7
     },
@@ -120,6 +186,20 @@
     "densityGPerMl": 1.03,
     "proteinPer100g": 3.3,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 40,
+      "fatG": 0.88,
+      "satFatG": 0.55,
+      "transFatG": 0.04,
+      "carbG": 4.79,
+      "sugarsG": 4.79,
+      "sodiumMg": 190,
+      "cholesterolMg": 4,
+      "potassiumMg": 151,
+      "calciumMg": 116,
+      "ironMg": 0.05
+    },
+    "nutrientSource": "CNF 124 Milk, fluid, buttermilk, cultured, 1% M.F.",
     "shelfLifeDays": {
       "fridge": 14,
       "freezer": 90
@@ -142,6 +222,19 @@
     "densityGPerMl": 1.01,
     "proteinPer100g": 3,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 118,
+      "fatG": 10,
+      "satFatG": 6.23,
+      "carbG": 4.42,
+      "sugarsG": 0.16,
+      "sodiumMg": 41.2,
+      "cholesterolMg": 31.4,
+      "potassiumMg": 131.5,
+      "calciumMg": 106.7,
+      "ironMg": 0.08
+    },
+    "nutrientSource": "CNF 150 Cream, cereal (half and half), 10% M.F.",
     "shelfLifeDays": {
       "fridge": 10,
       "freezer": 120
@@ -164,6 +257,19 @@
     "densityGPerMl": 1.01,
     "proteinPer100g": 2.7,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 185,
+      "fatG": 18,
+      "satFatG": 11.2,
+      "carbG": 3.77,
+      "sugarsG": 0.14,
+      "sodiumMg": 40.2,
+      "cholesterolMg": 61.1,
+      "potassiumMg": 123.3,
+      "calciumMg": 97.5,
+      "ironMg": 0.05
+    },
+    "nutrientSource": "CNF 136 Cream, table (coffee), 18% M.F.",
     "shelfLifeDays": {
       "fridge": 10,
       "freezer": 120
@@ -186,6 +292,19 @@
     "densityGPerMl": 1,
     "proteinPer100g": 2.8,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 328,
+      "fatG": 35,
+      "satFatG": 21.81,
+      "carbG": 2.85,
+      "sugarsG": 0.11,
+      "sodiumMg": 36,
+      "cholesterolMg": 128.5,
+      "potassiumMg": 82.2,
+      "calciumMg": 66.3,
+      "ironMg": 0.03
+    },
+    "nutrientSource": "CNF 138 Cream, whipping, 35% M.F.",
     "shelfLifeDays": {
       "fridge": 10,
       "freezer": 120
@@ -208,6 +327,19 @@
     "densityGPerMl": 0.97,
     "proteinPer100g": 2.4,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 188,
+      "fatG": 18,
+      "satFatG": 11.21,
+      "carbG": 4.27,
+      "sugarsG": 0.16,
+      "sodiumMg": 48.7,
+      "cholesterolMg": 42,
+      "potassiumMg": 139,
+      "calciumMg": 112,
+      "ironMg": 0.06
+    },
+    "nutrientSource": "CNF 152 Cream, sour, cultured, 18% M.F.",
     "shelfLifeDays": {
       "fridge": 21
     },
@@ -229,6 +361,20 @@
     "densityGPerMl": 0.96,
     "proteinPer100g": 0.9,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 717,
+      "fatG": 81.11,
+      "satFatG": 51.37,
+      "transFatG": 4.64,
+      "carbG": 0.06,
+      "sugarsG": 0.06,
+      "sodiumMg": 643,
+      "cholesterolMg": 215,
+      "potassiumMg": 24,
+      "calciumMg": 24,
+      "ironMg": 0.02
+    },
+    "nutrientSource": "CNF 118 Butter, regular",
     "shelfLifeDays": {
       "fridge": 60,
       "freezer": 270
@@ -252,6 +398,20 @@
     "densityGPerMl": 0.96,
     "proteinPer100g": 0.9,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 717,
+      "fatG": 81.11,
+      "satFatG": 51.37,
+      "transFatG": 4.44,
+      "carbG": 0.06,
+      "sugarsG": 0.06,
+      "sodiumMg": 11,
+      "cholesterolMg": 215,
+      "potassiumMg": 24,
+      "calciumMg": 24,
+      "ironMg": 0.02
+    },
+    "nutrientSource": "CNF 92 Butter, unsalted",
     "shelfLifeDays": {
       "fridge": 60,
       "freezer": 270
@@ -275,6 +435,20 @@
     "densityGPerMl": 0.96,
     "proteinPer100g": 0.2,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 716,
+      "fatG": 80.65,
+      "satFatG": 11.09,
+      "transFatG": 0.32,
+      "carbG": 0.64,
+      "sugarsG": 0,
+      "sodiumMg": 631,
+      "cholesterolMg": 0,
+      "potassiumMg": 44,
+      "calciumMg": 10,
+      "ironMg": 0
+    },
+    "nutrientSource": "CNF 7463 Margarine, tub, non-hydrogenated, canola oil (includes some sunflower oil)",
     "shelfLifeDays": {
       "fridge": 150,
       "freezer": 365
@@ -298,6 +472,20 @@
     "unitWeightG": 50,
     "proteinPer100g": 12.6,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 145,
+      "fatG": 10.01,
+      "satFatG": 3.04,
+      "transFatG": 0.07,
+      "carbG": 0.98,
+      "sugarsG": 0.77,
+      "sodiumMg": 125.5,
+      "cholesterolMg": 365.8,
+      "potassiumMg": 113.7,
+      "calciumMg": 44.8,
+      "ironMg": 1.39
+    },
+    "nutrientSource": "CNF 125 Egg, chicken, whole, fresh or frozen, raw",
     "shelfLifeDays": {
       "fridge": 35
     },
@@ -321,6 +509,20 @@
     "unitWeightG": 33,
     "proteinPer100g": 10.9,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 48,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 1.18,
+      "sugarsG": 0.71,
+      "sodiumMg": 165.5,
+      "cholesterolMg": 0,
+      "potassiumMg": 119.6,
+      "calciumMg": 7.9,
+      "ironMg": 0.06
+    },
+    "nutrientSource": "CNF 126 Egg, chicken, white, fresh or frozen, raw",
     "shelfLifeDays": {
       "fridge": 7,
       "freezer": 365
@@ -354,6 +556,20 @@
     "densityGPerMl": 0.47,
     "proteinPer100g": 24.9,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 406,
+      "fatG": 33.82,
+      "satFatG": 19.37,
+      "transFatG": 1.18,
+      "carbG": 1.33,
+      "sugarsG": 0.28,
+      "sodiumMg": 644,
+      "cholesterolMg": 102,
+      "potassiumMg": 76,
+      "calciumMg": 675,
+      "ironMg": 0.16
+    },
+    "nutrientSource": "CNF 119 Cheese, cheddar",
     "shelfLifeDays": {
       "fridge": 42,
       "freezer": 180
@@ -386,6 +602,20 @@
     "densityGPerMl": 0.47,
     "proteinPer100g": 24.9,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 406,
+      "fatG": 33.82,
+      "satFatG": 19.37,
+      "transFatG": 1.18,
+      "carbG": 1.33,
+      "sugarsG": 0.28,
+      "sodiumMg": 644,
+      "cholesterolMg": 102,
+      "potassiumMg": 76,
+      "calciumMg": 675,
+      "ironMg": 0.16
+    },
+    "nutrientSource": "CNF 119 Cheese, cheddar",
     "shelfLifeDays": {
       "fridge": 42,
       "freezer": 180
@@ -408,6 +638,19 @@
     "densityGPerMl": 0.47,
     "proteinPer100g": 24,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 394,
+      "fatG": 32.11,
+      "satFatG": 20.22,
+      "carbG": 2.57,
+      "sugarsG": 0.52,
+      "sodiumMg": 604,
+      "cholesterolMg": 95,
+      "potassiumMg": 127,
+      "calciumMg": 685,
+      "ironMg": 0.76
+    },
+    "nutrientSource": "CNF 24 Cheese, colby",
     "shelfLifeDays": {
       "fridge": 42,
       "freezer": 180
@@ -438,6 +681,19 @@
     "densityGPerMl": 0.47,
     "proteinPer100g": 22.2,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 300,
+      "fatG": 22.35,
+      "satFatG": 13.15,
+      "carbG": 2.19,
+      "sugarsG": 1.03,
+      "sodiumMg": 627,
+      "cholesterolMg": 79,
+      "potassiumMg": 76,
+      "calciumMg": 505,
+      "ironMg": 0.44
+    },
+    "nutrientSource": "CNF 110 Cheese, mozzarella, (52% water, 22.5% M.F.)",
     "shelfLifeDays": {
       "fridge": 28,
       "freezer": 180
@@ -460,6 +716,19 @@
     "unitWeightG": 15,
     "proteinPer100g": 18,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 300,
+      "fatG": 22.35,
+      "satFatG": 13.15,
+      "carbG": 2.19,
+      "sugarsG": 1.03,
+      "sodiumMg": 627,
+      "cholesterolMg": 79,
+      "potassiumMg": 76,
+      "calciumMg": 505,
+      "ironMg": 0.44
+    },
+    "nutrientSource": "CNF 110 Cheese, mozzarella, (52% water, 22.5% M.F.)",
     "shelfLifeDays": {
       "fridge": 14
     },
@@ -490,6 +759,19 @@
     "densityGPerMl": 0.42,
     "proteinPer100g": 35.8,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 392,
+      "fatG": 25.83,
+      "satFatG": 16.41,
+      "carbG": 3.22,
+      "sugarsG": 0.8,
+      "sodiumMg": 1376,
+      "cholesterolMg": 68,
+      "potassiumMg": 92,
+      "calciumMg": 1184,
+      "ironMg": 0.82
+    },
+    "nutrientSource": "CNF 40 Cheese, parmesan, hard",
     "shelfLifeDays": {
       "fridge": 90,
       "freezer": 240
@@ -512,6 +794,19 @@
     "densityGPerMl": 0.63,
     "proteinPer100g": 14.2,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 264,
+      "fatG": 21.28,
+      "satFatG": 14.95,
+      "carbG": 4.09,
+      "sugarsG": 4.09,
+      "sodiumMg": 917,
+      "cholesterolMg": 89,
+      "potassiumMg": 62,
+      "calciumMg": 493,
+      "ironMg": 0.65
+    },
+    "nutrientSource": "CNF 108 Cheese, feta",
     "shelfLifeDays": {
       "fridge": 30,
       "freezer": 90
@@ -541,6 +836,19 @@
     "densityGPerMl": 0.98,
     "proteinPer100g": 6.2,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 342,
+      "fatG": 34.24,
+      "satFatG": 19.29,
+      "carbG": 4.07,
+      "sugarsG": 3.21,
+      "sodiumMg": 365,
+      "cholesterolMg": 110,
+      "potassiumMg": 138,
+      "calciumMg": 98,
+      "ironMg": 0.38
+    },
+    "nutrientSource": "CNF 28 Cheese, cream",
     "shelfLifeDays": {
       "fridge": 21,
       "freezer": 60
@@ -563,6 +871,20 @@
     "densityGPerMl": 0.95,
     "proteinPer100g": 11.1,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 81,
+      "fatG": 2.27,
+      "satFatG": 1.24,
+      "transFatG": 0.07,
+      "carbG": 4.76,
+      "sugarsG": 4,
+      "sodiumMg": 308,
+      "cholesterolMg": 12,
+      "potassiumMg": 125,
+      "calciumMg": 111,
+      "ironMg": 0.13
+    },
+    "nutrientSource": "CNF 120 Cheese, cottage, (2% M.F.)",
     "shelfLifeDays": {
       "fridge": 10
     },
@@ -584,6 +906,19 @@
     "densityGPerMl": 1.05,
     "proteinPer100g": 11.3,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 174,
+      "fatG": 12.98,
+      "satFatG": 8.29,
+      "carbG": 3.04,
+      "sugarsG": 0.27,
+      "sodiumMg": 84,
+      "cholesterolMg": 51,
+      "potassiumMg": 105,
+      "calciumMg": 207,
+      "ironMg": 0.38
+    },
+    "nutrientSource": "CNF 43 Cheese, ricotta, with whole milk",
     "shelfLifeDays": {
       "fridge": 10,
       "freezer": 60
@@ -607,6 +942,19 @@
     "unitWeightG": 21,
     "proteinPer100g": 27,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 380,
+      "fatG": 27.8,
+      "satFatG": 17.78,
+      "carbG": 5.38,
+      "sugarsG": 1.32,
+      "sodiumMg": 70,
+      "cholesterolMg": 92,
+      "potassiumMg": 77,
+      "calciumMg": 791,
+      "ironMg": 0.2
+    },
+    "nutrientSource": "CNF 47 Cheese, swiss (emmental)",
     "shelfLifeDays": {
       "fridge": 30,
       "freezer": 180
@@ -629,6 +977,19 @@
     "densityGPerMl": 0.47,
     "proteinPer100g": 24.5,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 374,
+      "fatG": 30.28,
+      "satFatG": 19.07,
+      "carbG": 0.68,
+      "sugarsG": 0.5,
+      "sodiumMg": 600,
+      "cholesterolMg": 89,
+      "potassiumMg": 81,
+      "calciumMg": 746,
+      "ironMg": 0.72
+    },
+    "nutrientSource": "CNF 34 Cheese, monterey",
     "shelfLifeDays": {
       "fridge": 30,
       "freezer": 180
@@ -657,6 +1018,19 @@
     "densityGPerMl": 0.47,
     "proteinPer100g": 23,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 374,
+      "fatG": 30.28,
+      "satFatG": 19.07,
+      "carbG": 0.68,
+      "sugarsG": 0.5,
+      "sodiumMg": 600,
+      "cholesterolMg": 89,
+      "potassiumMg": 81,
+      "calciumMg": 746,
+      "ironMg": 0.72
+    },
+    "nutrientSource": "CNF 34 Cheese, monterey",
     "shelfLifeDays": {
       "fridge": 30,
       "freezer": 180
@@ -679,6 +1053,19 @@
     "densityGPerMl": 0.6,
     "proteinPer100g": 18.5,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 264,
+      "fatG": 21.08,
+      "satFatG": 14.57,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 459,
+      "cholesterolMg": 46,
+      "potassiumMg": 26,
+      "calciumMg": 140,
+      "ironMg": 1.9
+    },
+    "nutrientSource": "CNF 98 Cheese, goat, soft, (more than 55% water, 21% M.F.)",
     "shelfLifeDays": {
       "fridge": 14,
       "freezer": 90
@@ -700,6 +1087,19 @@
     "canonicalUnit": "g",
     "proteinPer100g": 20.8,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 334,
+      "fatG": 27.68,
+      "satFatG": 17.41,
+      "carbG": 0.45,
+      "sugarsG": 0.45,
+      "sodiumMg": 629,
+      "cholesterolMg": 100,
+      "potassiumMg": 152,
+      "calciumMg": 184,
+      "ironMg": 0.5
+    },
+    "nutrientSource": "CNF 20 Cheese, brie",
     "shelfLifeDays": {
       "fridge": 21
     },
@@ -727,6 +1127,20 @@
     "unitWeightG": 21,
     "proteinPer100g": 16,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 261,
+      "fatG": 15.12,
+      "satFatG": 10.23,
+      "transFatG": 0.47,
+      "carbG": 13.73,
+      "sugarsG": 6.1,
+      "sodiumMg": 1814,
+      "cholesterolMg": 62,
+      "potassiumMg": 323,
+      "calciumMg": 573,
+      "ironMg": 0.18
+    },
+    "nutrientSource": "CNF 7005 Cheese, processed product, cheddar, slices",
     "shelfLifeDays": {
       "fridge": 60
     },
@@ -748,6 +1162,19 @@
     "unitWeightG": 21,
     "proteinPer100g": 24,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 254,
+      "fatG": 15.92,
+      "satFatG": 10.11,
+      "carbG": 2.77,
+      "sugarsG": 1.13,
+      "sodiumMg": 619,
+      "cholesterolMg": 64,
+      "potassiumMg": 84,
+      "calciumMg": 782,
+      "ironMg": 0.22
+    },
+    "nutrientSource": "CNF 111 Cheese, mozzarella, partially skim, (52% water, 16.5% M.F.)",
     "shelfLifeDays": {
       "fridge": 30
     },
@@ -777,6 +1204,20 @@
     "densityGPerMl": 1.03,
     "proteinPer100g": 10.3,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 58,
+      "fatG": 0.04,
+      "satFatG": 0.04,
+      "transFatG": 0,
+      "carbG": 3.21,
+      "sugarsG": 3.2,
+      "sodiumMg": 33,
+      "cholesterolMg": 4,
+      "potassiumMg": 147,
+      "calciumMg": 109,
+      "ironMg": 0.11
+    },
+    "nutrientSource": "CNF 6979 Yogourt, Greek style, plain, fat free (0-0.5% M.F.)",
     "shelfLifeDays": {
       "fridge": 14,
       "freezer": 60
@@ -800,6 +1241,20 @@
     "densityGPerMl": 1.03,
     "proteinPer100g": 8.6,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 79,
+      "fatG": 0.04,
+      "satFatG": 0.04,
+      "transFatG": 0,
+      "carbG": 9.17,
+      "sugarsG": 8.7,
+      "sodiumMg": 29,
+      "cholesterolMg": 4,
+      "potassiumMg": 129,
+      "calciumMg": 96,
+      "ironMg": 0.11
+    },
+    "nutrientSource": "CNF 6981 Yogourt, Greek style, vanilla flavoured, fat free (0-0.5% M.F.)",
     "shelfLifeDays": {
       "fridge": 14,
       "freezer": 60
@@ -830,6 +1285,20 @@
     "densityGPerMl": 1.03,
     "proteinPer100g": 4.5,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 50,
+      "fatG": 1.98,
+      "satFatG": 1.31,
+      "transFatG": 0.04,
+      "carbG": 3.4,
+      "sugarsG": 3.45,
+      "sodiumMg": 40,
+      "cholesterolMg": 10,
+      "potassiumMg": 174,
+      "calciumMg": 147,
+      "ironMg": 0.12
+    },
+    "nutrientSource": "CNF 6961 Yogourt, plain (2-3.9% M.F.)",
     "shelfLifeDays": {
       "fridge": 14,
       "freezer": 60
@@ -853,6 +1322,20 @@
     "densityGPerMl": 1.03,
     "proteinPer100g": 3.9,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 88,
+      "fatG": 2.83,
+      "satFatG": 1.86,
+      "transFatG": 0.06,
+      "carbG": 11.61,
+      "sugarsG": 11.57,
+      "sodiumMg": 49,
+      "cholesterolMg": 11,
+      "potassiumMg": 155,
+      "calciumMg": 110,
+      "ironMg": 0.09
+    },
+    "nutrientSource": "CNF 6964 Yogourt, vanilla flavoured (2-3.9% M.F.)",
     "shelfLifeDays": {
       "fridge": 14,
       "freezer": 60
@@ -875,6 +1358,19 @@
     "densityGPerMl": 1.03,
     "proteinPer100g": 1,
     "fibrePer100g": 0.8,
+    "nutrients": {
+      "kcal": 45,
+      "fatG": 2.33,
+      "satFatG": 0.19,
+      "carbG": 5.37,
+      "sugarsG": 4,
+      "sodiumMg": 43,
+      "cholesterolMg": 0,
+      "potassiumMg": 18,
+      "calciumMg": 155,
+      "ironMg": 0.21
+    },
+    "nutrientSource": "USDA FDC 2705412 Oat milk (FNDDS); sugars from typical label (Oatly Original ~4 g/100 ml)",
     "shelfLifeDays": {
       "fridge": 10
     },
@@ -896,6 +1392,20 @@
     "densityGPerMl": 1.02,
     "proteinPer100g": 0.5,
     "fibrePer100g": 0.2,
+    "nutrients": {
+      "kcal": 15,
+      "fatG": 1.22,
+      "satFatG": 0.1,
+      "transFatG": 0,
+      "carbG": 0.34,
+      "sugarsG": 0,
+      "sodiumMg": 60,
+      "cholesterolMg": 0,
+      "potassiumMg": 31,
+      "calciumMg": 173,
+      "ironMg": 0.29
+    },
+    "nutrientSource": "USDA FDC 2705409 Almond milk, unsweetened (FNDDS)",
     "shelfLifeDays": {
       "fridge": 10
     },
@@ -917,6 +1427,20 @@
     "densityGPerMl": 1.03,
     "proteinPer100g": 2.9,
     "fibrePer100g": 0.4,
+    "nutrients": {
+      "kcal": 43,
+      "fatG": 1.47,
+      "satFatG": 0.2,
+      "transFatG": 0,
+      "carbG": 4.92,
+      "sugarsG": 3.65,
+      "sodiumMg": 47,
+      "cholesterolMg": 0,
+      "potassiumMg": 147.9,
+      "calciumMg": 123.2,
+      "ironMg": 0.42
+    },
+    "nutrientSource": "CNF 6720 Plant-based beverage, soy, enriched, all flavours",
     "shelfLifeDays": {
       "fridge": 10
     },
@@ -945,6 +1469,17 @@
     "unitWeightG": 28,
     "proteinPer100g": 7,
     "fibrePer100g": 1,
+    "nutrients": {
+      "kcal": 393,
+      "fatG": 21.4,
+      "satFatG": 8.9,
+      "transFatG": 0,
+      "carbG": 42.9,
+      "sugarsG": 7.1,
+      "sodiumMg": 786,
+      "cholesterolMg": 0
+    },
+    "nutrientSource": "estimate: Pillsbury Original Crescent Rolls label (1 roll 28 g: 110 kcal, 6 g fat, 2.5 g sat, 12 g carb, 2 g sugars, 220 mg sodium) scaled to 100 g",
     "shelfLifeDays": {
       "fridge": 30,
       "freezer": 60
@@ -967,6 +1502,20 @@
     "unitWeightG": 60,
     "proteinPer100g": 7,
     "fibrePer100g": 1.2,
+    "nutrients": {
+      "kcal": 307,
+      "fatG": 10.58,
+      "satFatG": 2.81,
+      "transFatG": 3.44,
+      "carbG": 46.32,
+      "sugarsG": 4.4,
+      "sodiumMg": 977,
+      "cholesterolMg": 1,
+      "potassiumMg": 162,
+      "calciumMg": 51,
+      "ironMg": 2.48
+    },
+    "nutrientSource": "CNF 3683 Biscuit, plain/buttermilk, refrigerated dough, higher fat; sugarsG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "fridge": 30,
       "freezer": 60

@@ -10,6 +10,20 @@
     "densityGPerMl": 0.92,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 885,
+      "fatG": 100,
+      "satFatG": 13.81,
+      "transFatG": 0.05,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 2,
+      "cholesterolMg": 0,
+      "potassiumMg": 1,
+      "calciumMg": 1,
+      "ironMg": 0.56
+    },
+    "nutrientSource": "CNF 422 Vegetable oil, olive",
     "shelfLifeDays": {
       "cupboard": 540
     },
@@ -32,6 +46,19 @@
     "densityGPerMl": 0.92,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 884,
+      "fatG": 100,
+      "satFatG": 7.83,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 0,
+      "cholesterolMg": 0,
+      "potassiumMg": 0,
+      "calciumMg": 0,
+      "ironMg": 0
+    },
+    "nutrientSource": "CNF 5510 Vegetable oil,  canola and soybean",
     "shelfLifeDays": {
       "cupboard": 365
     },
@@ -54,6 +81,20 @@
     "densityGPerMl": 0.92,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 885,
+      "fatG": 100,
+      "satFatG": 7.37,
+      "transFatG": 2.31,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 0,
+      "cholesterolMg": 0,
+      "potassiumMg": 0,
+      "calciumMg": 0,
+      "ironMg": 0
+    },
+    "nutrientSource": "CNF 451 Vegetable oil, canola",
     "shelfLifeDays": {
       "cupboard": 365
     },
@@ -76,6 +117,19 @@
     "densityGPerMl": 0.92,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 885,
+      "fatG": 100,
+      "satFatG": 11.56,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 0,
+      "cholesterolMg": 0,
+      "potassiumMg": 0,
+      "calciumMg": 0,
+      "ironMg": 0
+    },
+    "nutrientSource": "CNF 450 Vegetable oil, avocado",
     "shelfLifeDays": {
       "cupboard": 365
     },
@@ -98,6 +152,19 @@
     "densityGPerMl": 0.92,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 885,
+      "fatG": 100,
+      "satFatG": 14.2,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 0,
+      "cholesterolMg": 0,
+      "potassiumMg": 0,
+      "calciumMg": 0,
+      "ironMg": 0
+    },
+    "nutrientSource": "CNF 424 Vegetable oil, sesame",
     "shelfLifeDays": {
       "cupboard": 365
     },
@@ -120,6 +187,20 @@
     "densityGPerMl": 0.92,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 863,
+      "fatG": 100,
+      "satFatG": 86.5,
+      "transFatG": 0.18,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 0,
+      "cholesterolMg": 0,
+      "potassiumMg": 0,
+      "calciumMg": 0,
+      "ironMg": 0.04
+    },
+    "nutrientSource": "CNF 420 Vegetable oil, coconut",
     "shelfLifeDays": {
       "cupboard": 730
     },
@@ -141,6 +222,20 @@
     "canonicalUnit": "g",
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 792,
+      "fatG": 78.69,
+      "satFatG": 5.03,
+      "transFatG": 0,
+      "carbG": 20.69,
+      "sugarsG": 0,
+      "sodiumMg": 59,
+      "cholesterolMg": 0,
+      "potassiumMg": 0,
+      "calciumMg": 0,
+      "ironMg": 0
+    },
+    "nutrientSource": "CNF 6465 Vegetable oil, cooking spray",
     "shelfLifeDays": {
       "cupboard": 730
     },
@@ -163,6 +258,19 @@
     "densityGPerMl": 1.02,
     "proteinPer100g": 0.8,
     "fibrePer100g": 1.9,
+    "nutrients": {
+      "kcal": 16,
+      "fatG": 0.25,
+      "satFatG": 0.03,
+      "carbG": 3.47,
+      "sugarsG": 2.55,
+      "sodiumMg": 115,
+      "cholesterolMg": 0,
+      "potassiumMg": 191,
+      "calciumMg": 33,
+      "ironMg": 0.57
+    },
+    "nutrientSource": "CNF 2462 Tomato, red, ripe, canned, whole",
     "shelfLifeDays": {
       "pantry": 540
     },
@@ -185,6 +293,19 @@
     "densityGPerMl": 1.03,
     "proteinPer100g": 1.6,
     "fibrePer100g": 1.9,
+    "nutrients": {
+      "kcal": 32,
+      "fatG": 0.28,
+      "satFatG": 0.04,
+      "carbG": 7.29,
+      "sugarsG": 4.4,
+      "sodiumMg": 186,
+      "cholesterolMg": 0,
+      "potassiumMg": 293,
+      "calciumMg": 34,
+      "ironMg": 1.3
+    },
+    "nutrientSource": "CNF 4736 Tomato, crushed, canned",
     "shelfLifeDays": {
       "pantry": 540
     },
@@ -211,6 +332,19 @@
     "densityGPerMl": 1.02,
     "proteinPer100g": 0.8,
     "fibrePer100g": 1.9,
+    "nutrients": {
+      "kcal": 16,
+      "fatG": 0.25,
+      "satFatG": 0.03,
+      "carbG": 3.47,
+      "sugarsG": 2.55,
+      "sodiumMg": 115,
+      "cholesterolMg": 0,
+      "potassiumMg": 191,
+      "calciumMg": 33,
+      "ironMg": 0.57
+    },
+    "nutrientSource": "CNF 2462 Tomato, red, ripe, canned, whole",
     "shelfLifeDays": {
       "pantry": 540
     },
@@ -232,6 +366,19 @@
     "densityGPerMl": 1.1,
     "proteinPer100g": 4.3,
     "fibrePer100g": 4.1,
+    "nutrients": {
+      "kcal": 82,
+      "fatG": 0.47,
+      "satFatG": 0.1,
+      "carbG": 18.91,
+      "sugarsG": 12.18,
+      "sodiumMg": 59,
+      "cholesterolMg": 0,
+      "potassiumMg": 1014,
+      "calciumMg": 36,
+      "ironMg": 2.98
+    },
+    "nutrientSource": "CNF 2258 Tomato products, canned, paste, no added salt",
     "shelfLifeDays": {
       "pantry": 540
     },
@@ -253,6 +400,19 @@
     "densityGPerMl": 1.03,
     "proteinPer100g": 1.2,
     "fibrePer100g": 1.5,
+    "nutrients": {
+      "kcal": 24,
+      "fatG": 0.3,
+      "satFatG": 0.04,
+      "carbG": 5.31,
+      "sugarsG": 3.56,
+      "sodiumMg": 474,
+      "cholesterolMg": 0,
+      "potassiumMg": 297,
+      "calciumMg": 14,
+      "ironMg": 0.96
+    },
+    "nutrientSource": "CNF 2465 Tomato products, canned, sauce",
     "shelfLifeDays": {
       "pantry": 540
     },
@@ -274,6 +434,20 @@
     "densityGPerMl": 1.05,
     "proteinPer100g": 1.5,
     "fibrePer100g": 1.8,
+    "nutrients": {
+      "kcal": 49,
+      "fatG": 1.48,
+      "satFatG": 0.17,
+      "transFatG": 0.01,
+      "carbG": 7.53,
+      "sugarsG": 5.5,
+      "sodiumMg": 419,
+      "cholesterolMg": 2,
+      "potassiumMg": 319,
+      "calciumMg": 27,
+      "ironMg": 0.78
+    },
+    "nutrientSource": "CNF 4735 Sauce, pasta, spaghetti or marinara, ready-to-serve",
     "shelfLifeDays": {
       "pantry": 540
     },
@@ -296,6 +470,20 @@
     "densityGPerMl": 1.05,
     "proteinPer100g": 1.6,
     "fibrePer100g": 2,
+    "nutrients": {
+      "kcal": 54,
+      "fatG": 1.15,
+      "satFatG": 0.46,
+      "transFatG": 0,
+      "carbG": 8.66,
+      "sugarsG": 3.78,
+      "sodiumMg": 348,
+      "cholesterolMg": 0,
+      "potassiumMg": 354,
+      "calciumMg": 54,
+      "ironMg": 0.9
+    },
+    "nutrientSource": "CNF 6197 Sauce, pizza, canned, ready-to-serve",
     "shelfLifeDays": {
       "pantry": 540
     },
@@ -317,6 +505,19 @@
     "densityGPerMl": 0.69,
     "proteinPer100g": 7,
     "fibrePer100g": 7.6,
+    "nutrients": {
+      "kcal": 139,
+      "fatG": 2.77,
+      "satFatG": 0.21,
+      "carbG": 22.53,
+      "sugarsG": 4.01,
+      "sodiumMg": 246,
+      "cholesterolMg": 0,
+      "potassiumMg": 126,
+      "calciumMg": 45,
+      "ironMg": 1.07
+    },
+    "nutrientSource": "CNF 7060 Chickpeas (garbanzo beans, bengal gram), canned, drained solids",
     "shelfLifeDays": {
       "pantry": 1095
     },
@@ -338,6 +539,19 @@
     "densityGPerMl": 0.73,
     "proteinPer100g": 6.9,
     "fibrePer100g": 6.9,
+    "nutrients": {
+      "kcal": 91,
+      "fatG": 0.29,
+      "satFatG": 0.07,
+      "carbG": 16.55,
+      "sugarsG": 0.23,
+      "sodiumMg": 384,
+      "cholesterolMg": 0,
+      "potassiumMg": 308,
+      "calciumMg": 35,
+      "ironMg": 1.9
+    },
+    "nutrientSource": "CNF 3254 Beans, black turtle, mature seeds, canned, solids and liquid",
     "shelfLifeDays": {
       "pantry": 1095
     },
@@ -359,6 +573,19 @@
     "densityGPerMl": 0.7,
     "proteinPer100g": 6,
     "fibrePer100g": 6.4,
+    "nutrients": {
+      "kcal": 84,
+      "fatG": 0.6,
+      "satFatG": 0.14,
+      "carbG": 14.5,
+      "sugarsG": 1.85,
+      "sodiumMg": 296,
+      "cholesterolMg": 0,
+      "potassiumMg": 237,
+      "calciumMg": 34,
+      "ironMg": 1.17
+    },
+    "nutrientSource": "CNF 3379 Beans, kidney, all types, canned, solids and liquid",
     "shelfLifeDays": {
       "pantry": 1095
     },
@@ -386,6 +613,19 @@
     "densityGPerMl": 0.7,
     "proteinPer100g": 6.8,
     "fibrePer100g": 6.3,
+    "nutrients": {
+      "kcal": 114,
+      "fatG": 0.29,
+      "satFatG": 0.08,
+      "carbG": 21.2,
+      "sugarsG": 0.3,
+      "sodiumMg": 5,
+      "cholesterolMg": 0,
+      "potassiumMg": 454,
+      "calciumMg": 73,
+      "ironMg": 2.99
+    },
+    "nutrientSource": "CNF 3276 Beans, white, canned, solids and liquid, no salt added; sugarsG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "pantry": 1095
     },
@@ -407,6 +647,19 @@
     "densityGPerMl": 0.84,
     "proteinPer100g": 7.5,
     "fibrePer100g": 5.5,
+    "nutrients": {
+      "kcal": 114,
+      "fatG": 0.38,
+      "satFatG": 0.05,
+      "carbG": 19.54,
+      "sugarsG": 1.8,
+      "sodiumMg": 238,
+      "cholesterolMg": 0,
+      "potassiumMg": 369,
+      "calciumMg": 19,
+      "ironMg": 3.33
+    },
+    "nutrientSource": "CNF 3411 Lentils, boiled, salted",
     "shelfLifeDays": {
       "pantry": 1095
     },
@@ -428,6 +681,20 @@
     "densityGPerMl": 1.07,
     "proteinPer100g": 4.8,
     "fibrePer100g": 4.1,
+    "nutrients": {
+      "kcal": 94,
+      "fatG": 0.37,
+      "satFatG": 0.07,
+      "transFatG": 0,
+      "carbG": 21.14,
+      "sugarsG": 7.96,
+      "sodiumMg": 343,
+      "cholesterolMg": 0,
+      "potassiumMg": 224,
+      "calciumMg": 34,
+      "ironMg": 1.19
+    },
+    "nutrientSource": "CNF 3248 Beans, baked, canned, plain or vegetarian",
     "shelfLifeDays": {
       "pantry": 730
     },
@@ -449,6 +716,20 @@
     "densityGPerMl": 1,
     "proteinPer100g": 5.4,
     "fibrePer100g": 5,
+    "nutrients": {
+      "kcal": 90,
+      "fatG": 2.01,
+      "satFatG": 0.63,
+      "transFatG": 0.02,
+      "carbG": 13.55,
+      "sugarsG": 0.54,
+      "sodiumMg": 370,
+      "cholesterolMg": 0,
+      "potassiumMg": 319,
+      "calciumMg": 29,
+      "ironMg": 1.44
+    },
+    "nutrientSource": "CNF 3314 Refried beans, canned",
     "shelfLifeDays": {
       "pantry": 730
     },
@@ -470,6 +751,19 @@
     "densityGPerMl": 0.69,
     "proteinPer100g": 2.3,
     "fibrePer100g": 2,
+    "nutrients": {
+      "kcal": 71,
+      "fatG": 1.37,
+      "satFatG": 0.16,
+      "carbG": 15.06,
+      "sugarsG": 2.42,
+      "sodiumMg": 185,
+      "cholesterolMg": 0,
+      "potassiumMg": 142,
+      "calciumMg": 3,
+      "ironMg": 0.28
+    },
+    "nutrientSource": "CNF 2070 Corn, sweet, canned, brine pack, drained solids",
     "shelfLifeDays": {
       "pantry": 730
     },
@@ -497,6 +791,19 @@
     "densityGPerMl": 1.04,
     "proteinPer100g": 1.1,
     "fibrePer100g": 2.9,
+    "nutrients": {
+      "kcal": 34,
+      "fatG": 0.28,
+      "satFatG": 0.15,
+      "carbG": 8.09,
+      "sugarsG": 3.3,
+      "sodiumMg": 5,
+      "cholesterolMg": 0,
+      "potassiumMg": 206,
+      "calciumMg": 26,
+      "ironMg": 1.39
+    },
+    "nutrientSource": "CNF 2192 Pumpkin, canned",
     "shelfLifeDays": {
       "pantry": 540,
       "fridge": 5
@@ -519,6 +826,19 @@
     "densityGPerMl": 0.96,
     "proteinPer100g": 2,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 197,
+      "fatG": 21.33,
+      "satFatG": 18.91,
+      "carbG": 2.81,
+      "sugarsG": 3.3,
+      "sodiumMg": 13,
+      "cholesterolMg": 0,
+      "potassiumMg": 220,
+      "calciumMg": 18,
+      "ironMg": 3.3
+    },
+    "nutrientSource": "CNF 2565 Nuts, coconut milk (liquid from grated meat and water), canned; sugarsG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "pantry": 540,
       "fridge": 5
@@ -548,6 +868,20 @@
     "densityGPerMl": 1,
     "proteinPer100g": 1.1,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 3,
+      "fatG": 0.02,
+      "satFatG": 0.01,
+      "transFatG": 0,
+      "carbG": 0.24,
+      "sugarsG": 0.11,
+      "sodiumMg": 280,
+      "cholesterolMg": 0.5,
+      "potassiumMg": 17,
+      "calciumMg": 3,
+      "ironMg": 0.03
+    },
+    "nutrientSource": "CNF 1052 Soup, broth, chicken, canned, condensed, water added",
     "shelfLifeDays": {
       "pantry": 365,
       "fridge": 5,
@@ -572,6 +906,20 @@
     "densityGPerMl": 1,
     "proteinPer100g": 1.1,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 5,
+      "fatG": 0.01,
+      "satFatG": 0.01,
+      "transFatG": 0,
+      "carbG": 0.35,
+      "sugarsG": 0.24,
+      "sodiumMg": 293,
+      "cholesterolMg": 0,
+      "potassiumMg": 23,
+      "calciumMg": 4,
+      "ironMg": 0.08
+    },
+    "nutrientSource": "CNF 927 Soup, broth, beef, ready-to-serve",
     "shelfLifeDays": {
       "pantry": 365,
       "fridge": 5,
@@ -595,6 +943,20 @@
     "densityGPerMl": 1,
     "proteinPer100g": 0.2,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 3,
+      "fatG": 0.01,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0.74,
+      "sugarsG": 0.66,
+      "sodiumMg": 252,
+      "cholesterolMg": 0,
+      "potassiumMg": 52,
+      "calciumMg": 5,
+      "ironMg": 0.02
+    },
+    "nutrientSource": "CNF 7374 Soup, broth, vegetable, ready-to-serve",
     "shelfLifeDays": {
       "pantry": 365,
       "fridge": 5,
@@ -624,6 +986,19 @@
     "densityGPerMl": 0.6,
     "proteinPer100g": 16,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 267,
+      "fatG": 13.88,
+      "satFatG": 3.43,
+      "carbG": 18.01,
+      "sugarsG": 17.36,
+      "sodiumMg": 23875,
+      "cholesterolMg": 13,
+      "potassiumMg": 309,
+      "calciumMg": 187,
+      "ironMg": 1.03
+    },
+    "nutrientSource": "CNF 972 Soup, broth, chicken, dehydrated",
     "shelfLifeDays": {
       "pantry": 730
     },
@@ -653,6 +1028,20 @@
     "unitWeightG": 120,
     "proteinPer100g": 25.5,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 86,
+      "fatG": 0.96,
+      "satFatG": 0.21,
+      "transFatG": 0,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 247,
+      "cholesterolMg": 36,
+      "potassiumMg": 179,
+      "calciumMg": 17,
+      "ironMg": 1.63
+    },
+    "nutrientSource": "CNF 3081 Fish, tuna, light, canned in water, drained, salted",
     "shelfLifeDays": {
       "pantry": 1095
     },
@@ -674,6 +1063,20 @@
     "unitWeightG": 213,
     "proteinPer100g": 23,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 138,
+      "fatG": 5.02,
+      "satFatG": 0.9,
+      "transFatG": 0.03,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 381,
+      "cholesterolMg": 83,
+      "potassiumMg": 333,
+      "calciumMg": 283,
+      "ironMg": 0.77
+    },
+    "nutrientSource": "CNF 5965 Fish, salmon, pink, canned, drained solids with bone",
     "shelfLifeDays": {
       "pantry": 1095
     },
@@ -700,6 +1103,20 @@
     "densityGPerMl": 1.08,
     "proteinPer100g": 22.5,
     "fibrePer100g": 5,
+    "nutrients": {
+      "kcal": 598,
+      "fatG": 51.36,
+      "satFatG": 10.15,
+      "transFatG": 0.07,
+      "carbG": 22.31,
+      "sugarsG": 10.49,
+      "sodiumMg": 426,
+      "cholesterolMg": 0,
+      "potassiumMg": 558,
+      "calciumMg": 49,
+      "ironMg": 1.74
+    },
+    "nutrientSource": "CNF 3399 Peanut butter, smooth type, fat, sugar and salt added",
     "shelfLifeDays": {
       "pantry": 180
     },
@@ -722,6 +1139,19 @@
     "densityGPerMl": 1.08,
     "proteinPer100g": 22.5,
     "fibrePer100g": 6,
+    "nutrients": {
+      "kcal": 589,
+      "fatG": 49.94,
+      "satFatG": 7.61,
+      "carbG": 21.57,
+      "sugarsG": 8.41,
+      "sodiumMg": 486,
+      "cholesterolMg": 0,
+      "potassiumMg": 745,
+      "calciumMg": 45,
+      "ironMg": 1.9
+    },
+    "nutrientSource": "CNF 3309 Peanut butter, chunk type, fat, sugar and salt added",
     "shelfLifeDays": {
       "pantry": 180
     },
@@ -743,6 +1173,19 @@
     "densityGPerMl": 1.08,
     "proteinPer100g": 21,
     "fibrePer100g": 9.8,
+    "nutrients": {
+      "kcal": 614,
+      "fatG": 55.5,
+      "satFatG": 4.15,
+      "carbG": 18.82,
+      "sugarsG": 4.43,
+      "sodiumMg": 7,
+      "cholesterolMg": 0,
+      "potassiumMg": 748,
+      "calciumMg": 347,
+      "ironMg": 3.49
+    },
+    "nutrientSource": "CNF 2605 Nuts, almond butter, plain",
     "shelfLifeDays": {
       "pantry": 180
     },
@@ -764,6 +1207,19 @@
     "densityGPerMl": 1.01,
     "proteinPer100g": 17,
     "fibrePer100g": 9.3,
+    "nutrients": {
+      "kcal": 595,
+      "fatG": 53.76,
+      "satFatG": 7.53,
+      "carbG": 21.19,
+      "sugarsG": 0.49,
+      "sodiumMg": 115,
+      "cholesterolMg": 0,
+      "potassiumMg": 414,
+      "calciumMg": 426,
+      "ironMg": 8.95
+    },
+    "nutrientSource": "CNF 2593 Seeds, sesame butter, tahini, roasted and toasted kernels",
     "shelfLifeDays": {
       "pantry": 180
     },
@@ -785,6 +1241,19 @@
     "densityGPerMl": 1.15,
     "proteinPer100g": 6.3,
     "fibrePer100g": 3.4,
+    "nutrients": {
+      "kcal": 541,
+      "fatG": 29.73,
+      "satFatG": 28.42,
+      "carbG": 62.16,
+      "sugarsG": 54.05,
+      "sodiumMg": 41,
+      "cholesterolMg": 0,
+      "potassiumMg": 407,
+      "calciumMg": 108,
+      "ironMg": 4.38
+    },
+    "nutrientSource": "CNF 5736 Sweets, topping, chocolate flavour hazelnut spread",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -806,6 +1275,19 @@
     "densityGPerMl": 1.35,
     "proteinPer100g": 0.4,
     "fibrePer100g": 1.1,
+    "nutrients": {
+      "kcal": 278,
+      "fatG": 0.07,
+      "satFatG": 0.01,
+      "carbG": 68.86,
+      "sugarsG": 48.5,
+      "sodiumMg": 32,
+      "cholesterolMg": 0,
+      "potassiumMg": 77,
+      "calciumMg": 20,
+      "ironMg": 0.49
+    },
+    "nutrientSource": "CNF 4295 Sweets, jams and preserves",
     "shelfLifeDays": {
       "pantry": 365,
       "fridge": 180
@@ -828,6 +1310,20 @@
     "densityGPerMl": 1.42,
     "proteinPer100g": 0.3,
     "fibrePer100g": 0.2,
+    "nutrients": {
+      "kcal": 304,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 82.4,
+      "sugarsG": 82.12,
+      "sodiumMg": 4,
+      "cholesterolMg": 0,
+      "potassiumMg": 52,
+      "calciumMg": 6,
+      "ironMg": 0.42
+    },
+    "nutrientSource": "CNF 4294 Sweets, honey, strained or extracted",
     "shelfLifeDays": {
       "pantry": null
     },
@@ -850,6 +1346,19 @@
     "densityGPerMl": 1.32,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 270,
+      "fatG": 0.14,
+      "satFatG": 0.04,
+      "carbG": 67.22,
+      "sugarsG": 58.59,
+      "sodiumMg": 11.4,
+      "cholesterolMg": 0,
+      "potassiumMg": 214.6,
+      "calciumMg": 72.8,
+      "ironMg": 1.2
+    },
+    "nutrientSource": "CNF 6175 sweets, syrups, maple, prepackaged",
     "shelfLifeDays": {
       "pantry": 365,
       "fridge": 365
@@ -873,6 +1382,19 @@
     "densityGPerMl": 1.37,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 265,
+      "fatG": 0.1,
+      "satFatG": 0.02,
+      "carbG": 69.6,
+      "sugarsG": 42,
+      "sodiumMg": 61,
+      "cholesterolMg": 0,
+      "potassiumMg": 6,
+      "calciumMg": 5,
+      "ironMg": 0.07
+    },
+    "nutrientSource": "CNF 4328 Sweets, syrups, table blends, pancake, with 2% maple",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -894,6 +1416,20 @@
     "densityGPerMl": 0.68,
     "proteinPer100g": 31.6,
     "fibrePer100g": 4,
+    "nutrients": {
+      "kcal": 584,
+      "fatG": 46.97,
+      "satFatG": 4.07,
+      "transFatG": 0,
+      "carbG": 8.13,
+      "sugarsG": 1.87,
+      "sodiumMg": 4,
+      "cholesterolMg": 0,
+      "potassiumMg": 1105,
+      "calciumMg": 73,
+      "ironMg": 11.16
+    },
+    "nutrientSource": "CNF 7568 Seeds, hemp seeds, hulled",
     "shelfLifeDays": {
       "pantry": 365,
       "freezer": 730
@@ -917,6 +1453,20 @@
     "densityGPerMl": 0.55,
     "proteinPer100g": 30,
     "fibrePer100g": 6,
+    "nutrients": {
+      "kcal": 559,
+      "fatG": 49.05,
+      "satFatG": 8.66,
+      "transFatG": 0.06,
+      "carbG": 10.71,
+      "sugarsG": 1.4,
+      "sodiumMg": 7,
+      "cholesterolMg": 0,
+      "potassiumMg": 809,
+      "calciumMg": 46,
+      "ironMg": 8.82
+    },
+    "nutrientSource": "CNF 2516 Seeds, pumpkin and squash seed kernels, dried",
     "shelfLifeDays": {
       "pantry": 180,
       "freezer": 365
@@ -939,6 +1489,19 @@
     "densityGPerMl": 0.59,
     "proteinPer100g": 21,
     "fibrePer100g": 8.6,
+    "nutrients": {
+      "kcal": 585,
+      "fatG": 51.46,
+      "satFatG": 4.46,
+      "carbG": 20,
+      "sugarsG": 2.62,
+      "sodiumMg": 9,
+      "cholesterolMg": 0,
+      "potassiumMg": 645,
+      "calciumMg": 78,
+      "ironMg": 5.25
+    },
+    "nutrientSource": "CNF 2526 Seeds, sunflower seed kernels, dried",
     "shelfLifeDays": {
       "pantry": 180,
       "freezer": 365
@@ -961,6 +1524,20 @@
     "densityGPerMl": 0.81,
     "proteinPer100g": 16.5,
     "fibrePer100g": 34.4,
+    "nutrients": {
+      "kcal": 486,
+      "fatG": 30.74,
+      "satFatG": 3.33,
+      "transFatG": 0.14,
+      "carbG": 42.12,
+      "sugarsG": 0,
+      "sodiumMg": 16,
+      "cholesterolMg": 0,
+      "potassiumMg": 407,
+      "calciumMg": 631,
+      "ironMg": 7.72
+    },
+    "nutrientSource": "CNF 2511 Seeds, chia seeds, dried; sugarsG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "pantry": 730
     },
@@ -989,6 +1566,20 @@
     "densityGPerMl": 0.47,
     "proteinPer100g": 18.3,
     "fibrePer100g": 27.3,
+    "nutrients": {
+      "kcal": 534,
+      "fatG": 42.16,
+      "satFatG": 3.66,
+      "transFatG": 0.01,
+      "carbG": 28.88,
+      "sugarsG": 1.55,
+      "sodiumMg": 30,
+      "cholesterolMg": 0,
+      "potassiumMg": 813,
+      "calciumMg": 255,
+      "ironMg": 5.73
+    },
+    "nutrientSource": "CNF 4528 Seeds, flaxseed (linseed), whole and ground",
     "shelfLifeDays": {
       "pantry": 90,
       "freezer": 365
@@ -1011,6 +1602,19 @@
     "densityGPerMl": 0.61,
     "proteinPer100g": 17.7,
     "fibrePer100g": 11.8,
+    "nutrients": {
+      "kcal": 565,
+      "fatG": 48,
+      "satFatG": 6.72,
+      "carbG": 25.74,
+      "sugarsG": 0.3,
+      "sodiumMg": 11,
+      "cholesterolMg": 0,
+      "potassiumMg": 475,
+      "calciumMg": 989,
+      "ironMg": 14.76
+    },
+    "nutrientSource": "CNF 2521 Seeds, sesame seeds, whole, roasted and toasted; sugarsG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -1032,6 +1636,20 @@
     "densityGPerMl": 0.6,
     "proteinPer100g": 21.2,
     "fibrePer100g": 12.5,
+    "nutrients": {
+      "kcal": 579,
+      "fatG": 49.93,
+      "satFatG": 3.8,
+      "transFatG": 0.01,
+      "carbG": 21.55,
+      "sugarsG": 4.35,
+      "sodiumMg": 1,
+      "cholesterolMg": 0,
+      "potassiumMg": 733,
+      "calciumMg": 269,
+      "ironMg": 3.71
+    },
+    "nutrientSource": "CNF 2534 Nuts, almonds, dried, unblanched, unroasted",
     "shelfLifeDays": {
       "pantry": 270,
       "freezer": 730
@@ -1054,6 +1672,20 @@
     "densityGPerMl": 0.39,
     "proteinPer100g": 21.2,
     "fibrePer100g": 12.5,
+    "nutrients": {
+      "kcal": 579,
+      "fatG": 49.93,
+      "satFatG": 3.8,
+      "transFatG": 0.01,
+      "carbG": 21.55,
+      "sugarsG": 4.35,
+      "sodiumMg": 1,
+      "cholesterolMg": 0,
+      "potassiumMg": 733,
+      "calciumMg": 269,
+      "ironMg": 3.71
+    },
+    "nutrientSource": "CNF 2534 Nuts, almonds, dried, unblanched, unroasted",
     "shelfLifeDays": {
       "pantry": 270,
       "freezer": 730
@@ -1076,6 +1708,20 @@
     "densityGPerMl": 0.46,
     "proteinPer100g": 21.2,
     "fibrePer100g": 9.9,
+    "nutrients": {
+      "kcal": 590,
+      "fatG": 52.52,
+      "satFatG": 3.95,
+      "transFatG": 0.02,
+      "carbG": 18.67,
+      "sugarsG": 4.63,
+      "sodiumMg": 19,
+      "cholesterolMg": 0,
+      "potassiumMg": 659,
+      "calciumMg": 236,
+      "ironMg": 3.28
+    },
+    "nutrientSource": "CNF 2535 Nuts, almonds, dried, blanched, unroasted",
     "shelfLifeDays": {
       "pantry": 270,
       "freezer": 730
@@ -1098,6 +1744,19 @@
     "densityGPerMl": 0.5,
     "proteinPer100g": 15.2,
     "fibrePer100g": 6.7,
+    "nutrients": {
+      "kcal": 655,
+      "fatG": 65.21,
+      "satFatG": 6.13,
+      "carbG": 13.71,
+      "sugarsG": 2.61,
+      "sodiumMg": 2,
+      "cholesterolMg": 0,
+      "potassiumMg": 441,
+      "calciumMg": 98,
+      "ironMg": 2.91
+    },
+    "nutrientSource": "CNF 2590 Nuts, walnuts, English or Persian, dried",
     "shelfLifeDays": {
       "pantry": 180,
       "freezer": 365
@@ -1120,6 +1779,19 @@
     "densityGPerMl": 0.46,
     "proteinPer100g": 9.2,
     "fibrePer100g": 9.6,
+    "nutrients": {
+      "kcal": 691,
+      "fatG": 71.97,
+      "satFatG": 6.18,
+      "carbG": 13.86,
+      "sugarsG": 3.97,
+      "sodiumMg": 0,
+      "cholesterolMg": 0,
+      "potassiumMg": 410,
+      "calciumMg": 70,
+      "ironMg": 2.53
+    },
+    "nutrientSource": "CNF 2582 Nuts, pecans, dried",
     "shelfLifeDays": {
       "pantry": 180,
       "freezer": 730
@@ -1142,6 +1814,19 @@
     "densityGPerMl": 0.58,
     "proteinPer100g": 18.2,
     "fibrePer100g": 3.3,
+    "nutrients": {
+      "kcal": 553,
+      "fatG": 43.85,
+      "satFatG": 7.78,
+      "carbG": 30.19,
+      "sugarsG": 5.91,
+      "sodiumMg": 12,
+      "cholesterolMg": 0,
+      "potassiumMg": 660,
+      "calciumMg": 37,
+      "ironMg": 6.68
+    },
+    "nutrientSource": "CNF 5709 Nuts, cashew nuts, raw",
     "shelfLifeDays": {
       "pantry": 180,
       "freezer": 365
@@ -1164,6 +1849,20 @@
     "densityGPerMl": 0.62,
     "proteinPer100g": 25.8,
     "fibrePer100g": 8.5,
+    "nutrients": {
+      "kcal": 587,
+      "fatG": 49.66,
+      "satFatG": 7.72,
+      "transFatG": 0.03,
+      "carbG": 21.26,
+      "sugarsG": 4.9,
+      "sodiumMg": 6,
+      "cholesterolMg": 0,
+      "potassiumMg": 634,
+      "calciumMg": 58,
+      "ironMg": 1.58
+    },
+    "nutrientSource": "CNF 3362 Peanuts, all types, dry roasted",
     "shelfLifeDays": {
       "pantry": 180,
       "freezer": 365
@@ -1186,6 +1885,19 @@
     "densityGPerMl": 0.57,
     "proteinPer100g": 13.7,
     "fibrePer100g": 3.7,
+    "nutrients": {
+      "kcal": 673,
+      "fatG": 68.37,
+      "satFatG": 4.9,
+      "carbG": 13.08,
+      "sugarsG": 3.59,
+      "sodiumMg": 2,
+      "cholesterolMg": 0,
+      "potassiumMg": 597,
+      "calciumMg": 16,
+      "ironMg": 5.53
+    },
+    "nutrientSource": "CNF 2586 Nuts, pine nuts, pignolia, dried",
     "shelfLifeDays": {
       "pantry": 60,
       "freezer": 180
@@ -1208,6 +1920,19 @@
     "densityGPerMl": 0.7,
     "proteinPer100g": 3.1,
     "fibrePer100g": 3.7,
+    "nutrients": {
+      "kcal": 299,
+      "fatG": 0.46,
+      "satFatG": 0.06,
+      "carbG": 79.18,
+      "sugarsG": 59.19,
+      "sodiumMg": 11,
+      "cholesterolMg": 0,
+      "potassiumMg": 749,
+      "calciumMg": 50,
+      "ironMg": 1.88
+    },
+    "nutrientSource": "CNF 1745 Raisin, seedless (sultana)",
     "shelfLifeDays": {
       "pantry": 180
     },
@@ -1229,6 +1954,19 @@
     "densityGPerMl": 0.5,
     "proteinPer100g": 0.1,
     "fibrePer100g": 5.3,
+    "nutrients": {
+      "kcal": 308,
+      "fatG": 1.37,
+      "satFatG": 0.1,
+      "carbG": 82.36,
+      "sugarsG": 65,
+      "sodiumMg": 3,
+      "cholesterolMg": 0,
+      "potassiumMg": 40,
+      "calciumMg": 10,
+      "ironMg": 0.53
+    },
+    "nutrientSource": "CNF 5390 Cranberry, dried, sweetened",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -1250,6 +1988,19 @@
     "unitWeightG": 24,
     "proteinPer100g": 1.8,
     "fibrePer100g": 6.7,
+    "nutrients": {
+      "kcal": 277,
+      "fatG": 0.15,
+      "satFatG": 0,
+      "carbG": 74.97,
+      "sugarsG": 66.47,
+      "sodiumMg": 1,
+      "cholesterolMg": 0,
+      "potassiumMg": 696,
+      "calciumMg": 64,
+      "ironMg": 0.9
+    },
+    "nutrientSource": "CNF 5401 Date, medjool; satFatG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "pantry": 180,
       "fridge": 365
@@ -1272,6 +2023,19 @@
     "densityGPerMl": 0.81,
     "proteinPer100g": 24.6,
     "fibrePer100g": 10.8,
+    "nutrients": {
+      "kcal": 358,
+      "fatG": 2.17,
+      "satFatG": 0.38,
+      "carbG": 63.1,
+      "sugarsG": 2,
+      "sodiumMg": 7,
+      "cholesterolMg": 0,
+      "potassiumMg": 668,
+      "calciumMg": 48,
+      "ironMg": 7.39
+    },
+    "nutrientSource": "CNF 4869 Lentils, pink, raw; sugarsG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -1293,6 +2057,19 @@
     "densityGPerMl": 0.81,
     "proteinPer100g": 24.6,
     "fibrePer100g": 10.7,
+    "nutrients": {
+      "kcal": 352,
+      "fatG": 1.06,
+      "satFatG": 0.15,
+      "carbG": 63.35,
+      "sugarsG": 2.03,
+      "sodiumMg": 6,
+      "cholesterolMg": 0,
+      "potassiumMg": 677,
+      "calciumMg": 35,
+      "ironMg": 6.51
+    },
+    "nutrientSource": "CNF 3392 Lentils, raw",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -1320,6 +2097,15 @@
     "densityGPerMl": 0.6,
     "proteinPer100g": 7,
     "fibrePer100g": 1,
+    "nutrients": {
+      "kcal": 320,
+      "fatG": 3,
+      "satFatG": 1,
+      "carbG": 62,
+      "sugarsG": 8,
+      "sodiumMg": 11500
+    },
+    "nutrientSource": "estimate: dry ranch seasoning mix packet labels (e.g. Hidden Valley), mostly salt, buttermilk solids, maltodextrin",
     "shelfLifeDays": {
       "cupboard": 730
     },
@@ -1341,6 +2127,19 @@
     "unitWeightG": 225,
     "proteinPer100g": 13,
     "fibrePer100g": 2.4,
+    "nutrients": {
+      "kcal": 334,
+      "fatG": 10.67,
+      "satFatG": 1.18,
+      "carbG": 46.66,
+      "sugarsG": 6.43,
+      "sodiumMg": 766,
+      "cholesterolMg": 3,
+      "potassiumMg": 197,
+      "calciumMg": 145,
+      "ironMg": 2.07
+    },
+    "nutrientSource": "CNF 7140 Macaroni and cheese, box mix with cheese sauce, unprepared",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -1374,6 +2173,19 @@
     "densityGPerMl": 0.46,
     "proteinPer100g": 13.4,
     "fibrePer100g": 4.5,
+    "nutrients": {
+      "kcal": 395,
+      "fatG": 5.3,
+      "satFatG": 1.2,
+      "carbG": 71.98,
+      "sugarsG": 6.2,
+      "sodiumMg": 732,
+      "cholesterolMg": 0,
+      "potassiumMg": 196,
+      "calciumMg": 183,
+      "ironMg": 4.83
+    },
+    "nutrientSource": "CNF 4069 Bread crumbs, dry, grated, plain",
     "shelfLifeDays": {
       "pantry": 180,
       "freezer": 365
@@ -1397,6 +2209,19 @@
     "densityGPerMl": 0.25,
     "proteinPer100g": 12,
     "fibrePer100g": 2.9,
+    "nutrients": {
+      "kcal": 395,
+      "fatG": 5.3,
+      "satFatG": 1.2,
+      "carbG": 71.98,
+      "sugarsG": 6.2,
+      "sodiumMg": 732,
+      "cholesterolMg": 0,
+      "potassiumMg": 196,
+      "calciumMg": 183,
+      "ironMg": 4.83
+    },
+    "nutrientSource": "CNF 4069 Bread crumbs, dry, grated, plain",
     "shelfLifeDays": {
       "pantry": 180
     },
@@ -1418,6 +2243,20 @@
     "unitWeightG": 13,
     "proteinPer100g": 7,
     "fibrePer100g": 7.2,
+    "nutrients": {
+      "kcal": 476,
+      "fatG": 21.79,
+      "satFatG": 7.11,
+      "transFatG": 0.17,
+      "carbG": 63.49,
+      "sugarsG": 1.5,
+      "sodiumMg": 324,
+      "cholesterolMg": 0,
+      "potassiumMg": 231,
+      "calciumMg": 100,
+      "ironMg": 1.64
+    },
+    "nutrientSource": "CNF 3994 Taco shell, baked",
     "shelfLifeDays": {
       "pantry": 90
     },
@@ -1439,6 +2278,20 @@
     "unitWeightG": 3,
     "proteinPer100g": 9,
     "fibrePer100g": 2.8,
+    "nutrients": {
+      "kcal": 510,
+      "fatG": 26.43,
+      "satFatG": 5.56,
+      "transFatG": 1.08,
+      "carbG": 61.3,
+      "sugarsG": 8.18,
+      "sodiumMg": 726,
+      "cholesterolMg": 0,
+      "potassiumMg": 118,
+      "calciumMg": 120,
+      "ironMg": 4.03
+    },
+    "nutrientSource": "CNF 4072 Cracker, standard snack-type",
     "shelfLifeDays": {
       "pantry": 180
     },
@@ -1462,6 +2315,20 @@
     "canonicalUnit": "g",
     "proteinPer100g": 7,
     "fibrePer100g": 5.3,
+    "nutrients": {
+      "kcal": 472,
+      "fatG": 20.68,
+      "satFatG": 2.81,
+      "transFatG": 0.81,
+      "carbG": 67.78,
+      "sugarsG": 0.78,
+      "sodiumMg": 328,
+      "cholesterolMg": 0,
+      "potassiumMg": 182,
+      "calciumMg": 106,
+      "ironMg": 1.52
+    },
+    "nutrientSource": "CNF 4127 Snacks, tortilla chips, plain",
     "shelfLifeDays": {
       "pantry": 90
     },
@@ -1485,6 +2352,20 @@
     "canonicalUnit": "g",
     "proteinPer100g": 6.6,
     "fibrePer100g": 4.4,
+    "nutrients": {
+      "kcal": 532,
+      "fatG": 33.98,
+      "satFatG": 3.4,
+      "transFatG": 0.08,
+      "carbG": 53.83,
+      "sugarsG": 0.33,
+      "sodiumMg": 527,
+      "cholesterolMg": 0,
+      "potassiumMg": 1196,
+      "calciumMg": 21,
+      "ironMg": 1.28
+    },
+    "nutrientSource": "CNF 4407 Snacks, potato chips, plain, salted",
     "shelfLifeDays": {
       "pantry": 60
     },
@@ -1509,6 +2390,18 @@
     "densityGPerMl": 0.85,
     "proteinPer100g": 11,
     "fibrePer100g": 14.5,
+    "nutrients": {
+      "kcal": 375,
+      "fatG": 4.31,
+      "satFatG": 0.64,
+      "carbG": 74,
+      "sugarsG": 0.91,
+      "sodiumMg": 7,
+      "potassiumMg": 274,
+      "calciumMg": 5,
+      "ironMg": 3.04
+    },
+    "nutrientSource": "CNF 6256 Snacks, popcorn, unpopped kernels",
     "shelfLifeDays": {
       "pantry": 730
     },
@@ -1530,6 +2423,19 @@
     "densityGPerMl": 0.97,
     "proteinPer100g": 5,
     "fibrePer100g": 1.5,
+    "nutrients": {
+      "kcal": 418,
+      "fatG": 37.6,
+      "satFatG": 7.07,
+      "transFatG": 0.4,
+      "carbG": 10.1,
+      "sugarsG": 2,
+      "sodiumMg": 603,
+      "potassiumMg": 560,
+      "calciumMg": 306,
+      "ironMg": 0.57
+    },
+    "nutrientSource": "USDA FDC 171579 Sauce, pesto, ready-to-serve, refrigerated (sugars estimated)",
     "shelfLifeDays": {
       "fridge": 14,
       "freezer": 180
@@ -1552,6 +2458,19 @@
     "densityGPerMl": 1.02,
     "proteinPer100g": 7.9,
     "fibrePer100g": 6,
+    "nutrients": {
+      "kcal": 166,
+      "fatG": 9.6,
+      "satFatG": 1.44,
+      "carbG": 14.29,
+      "sugarsG": 0.3,
+      "sodiumMg": 379,
+      "cholesterolMg": 0,
+      "potassiumMg": 228,
+      "calciumMg": 38,
+      "ironMg": 2.44
+    },
+    "nutrientSource": "CNF 4870 Hummus, commercial; sugarsG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "fridge": 7
     },
@@ -1576,6 +2495,20 @@
     "densityGPerMl": 0.38,
     "proteinPer100g": 78,
     "fibrePer100g": 1,
+    "nutrients": {
+      "kcal": 352,
+      "fatG": 1.56,
+      "satFatG": 0.78,
+      "transFatG": 0,
+      "carbG": 6.25,
+      "sugarsG": 0,
+      "sodiumMg": 156,
+      "cholesterolMg": 16,
+      "potassiumMg": 500,
+      "calciumMg": 469,
+      "ironMg": 1.13
+    },
+    "nutrientSource": "CNF 7231 Beverage, protein powder, whey based, powder",
     "shelfLifeDays": {
       "pantry": 365
     },

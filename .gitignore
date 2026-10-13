@@ -35,3 +35,6 @@ functions/lib/
 e2e/test-results/
 e2e/playwright-report/
 e2e/.auth/
+
+# CNF API responses cached by pnpm nutrition:write
+data/.cnf-cache/

@@ -5,7 +5,7 @@ estimates (M2/M5).
 
 ## `ingredients/`
 
-475 ingredients (M1 target ≥ 250, plan 500) in one JSON file per category: `produce`, `meat`, `fish`, `dairy`,
+480 ingredients (M1 target ≥ 250, plan 500) in one JSON file per category: `produce`, `meat`, `fish`, `dairy`,
 `grains`, `pantry`, `baking`, `spices`, `condiments`, `bakery`, `frozen`, `beverages` (the `category` field equals the
 file name). Each is an array of ingredient documents in the shape of `ingredientSchema` in
 `packages/core/src/types.ts` (TECHNICAL_SPECS §4.1, §5), plus an `id` = `ingredientSlug(name)`:
@@ -34,6 +34,30 @@ Scripts (repo root):
   unchanged docs and keeps ones edited in the app (`updatedBy` set) unless `-- --force`.
 
 Sources: USDA FoodData Central (portion weights, protein) and USDA FoodKeeper (shelf lives), curated in M1.
+
+### Nutrition facts (M10, PRD R4.30)
+
+Every ingredient also has `nutrients` (per 100 g: `kcal`, `fatG`, `satFatG`, `transFatG`, `carbG`, `sugarsG`,
+`sodiumMg`, `cholesterolMg`, `potassiumMg`, `calciumMg`, `ironMg`; the first six are required by the validator, the rest
+when the source has them) and `nutrientSource`. They come from **Health Canada's Canadian Nutrient File** (CNF, the
+public API at `https://food-nutrition.canada.ca/api/canadian-nutrient-file/`, no key) through
+`nutrition-sources.json`, which names the CNF food code chosen for each ingredient (453 of 480; raw for meat, fish and
+produce, dry for pasta, rice and legumes, as sold for the rest), or, where CNF has nothing fitting (27: blends,
+plant milks, some prepared and frozen foods, water), reference values with their source (USDA FoodData Central or a
+label estimate). A `fill` entry supplies a value the CNF food lacks (sugars for 32 foods, saturated fat for 3), with
+`fillSource`. Protein and fibre keep their own fields (`proteinPer100g`, `fibrePer100g`, from M1/M9) and are not
+replaced.
+
+- `pnpm nutrition:write`: fetches each CNF food's nutrient amounts (cached in `data/.cnf-cache/`, gitignored;
+  `-- --refresh` refetches), writes `nutrients` + `nutrientSource` into `ingredients/*.json` and runs prettier.
+  Re-run after changing `nutrition-sources.json` or adding an ingredient (add its entry first), then
+  `pnpm ingredients:validate`.
+- `pnpm nutrition:write -- --check`: exits 1 when the JSON doesn't match the sources (offline: needs the cache).
+
+Judgement calls worth knowing: `milk` is 2 %, `greek-yogurt` fat-free, tea is brewed (CNF has no dry leaves), ground
+coffee and coffee beans are an estimate for dry grounds (they overstate a brewed drink), several pasta shapes share
+the dry spaghetti or macaroni entry, and the salted spice blends (Cajun, Montreal steak spice, everything bagel) are
+label estimates.
 
 ## `price-estimates.json`
 

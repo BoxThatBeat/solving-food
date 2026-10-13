@@ -10,6 +10,19 @@
     "densityGPerMl": 1.15,
     "proteinPer100g": 1,
     "fibrePer100g": 0.3,
+    "nutrients": {
+      "kcal": 101,
+      "fatG": 0.1,
+      "satFatG": 0.01,
+      "carbG": 27.4,
+      "sugarsG": 21.27,
+      "sodiumMg": 907,
+      "cholesterolMg": 0,
+      "potassiumMg": 281,
+      "calciumMg": 15,
+      "ironMg": 0.35
+    },
+    "nutrientSource": "CNF 2494 Tomato ketchup (catsup)",
     "shelfLifeDays": {
       "cupboard": 365,
       "fridge": 180
@@ -33,6 +46,20 @@
     "densityGPerMl": 1.05,
     "proteinPer100g": 3.7,
     "fibrePer100g": 3.3,
+    "nutrients": {
+      "kcal": 60,
+      "fatG": 3.34,
+      "satFatG": 0.21,
+      "transFatG": 0.01,
+      "carbG": 5.83,
+      "sugarsG": 0.92,
+      "sodiumMg": 1104,
+      "cholesterolMg": 0,
+      "potassiumMg": 152,
+      "calciumMg": 63,
+      "ironMg": 1.61
+    },
+    "nutrientSource": "CNF 4970 Sauce, mustard, yellow, ready-to-serve",
     "shelfLifeDays": {
       "cupboard": 730,
       "fridge": 365
@@ -56,6 +83,19 @@
     "densityGPerMl": 1.05,
     "proteinPer100g": 4.4,
     "fibrePer100g": 3.3,
+    "nutrients": {
+      "kcal": 91,
+      "fatG": 6.3,
+      "satFatG": 1,
+      "carbG": 5.3,
+      "sugarsG": 1,
+      "sodiumMg": 1307,
+      "cholesterolMg": 0,
+      "potassiumMg": 130,
+      "calciumMg": 124,
+      "ironMg": 1.8
+    },
+    "nutrientSource": "CNF 1135 Sauce, mustard, brown, ready-to-serve; sugarsG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "cupboard": 730,
       "fridge": 365
@@ -79,6 +119,19 @@
     "densityGPerMl": 1.05,
     "proteinPer100g": 6,
     "fibrePer100g": 4.4,
+    "nutrients": {
+      "kcal": 91,
+      "fatG": 6.3,
+      "satFatG": 1,
+      "carbG": 5.3,
+      "sugarsG": 1,
+      "sodiumMg": 1307,
+      "cholesterolMg": 0,
+      "potassiumMg": 130,
+      "calciumMg": 124,
+      "ironMg": 1.8
+    },
+    "nutrientSource": "CNF 1135 Sauce, mustard, brown, ready-to-serve; sugarsG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "cupboard": 730,
       "fridge": 365
@@ -102,6 +155,20 @@
     "densityGPerMl": 0.93,
     "proteinPer100g": 1,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 680,
+      "fatG": 74.85,
+      "satFatG": 11.7,
+      "transFatG": 0.19,
+      "carbG": 0.57,
+      "sugarsG": 0.57,
+      "sodiumMg": 635,
+      "cholesterolMg": 42,
+      "potassiumMg": 20,
+      "calciumMg": 8,
+      "ironMg": 0.21
+    },
+    "nutrientSource": "CNF 531 Salad dressing, mayonnaise, commercial, regular",
     "shelfLifeDays": {
       "cupboard": 120,
       "fridge": 60
@@ -131,6 +198,19 @@
     "densityGPerMl": 1.2,
     "proteinPer100g": 8.1,
     "fibrePer100g": 0.8,
+    "nutrients": {
+      "kcal": 53,
+      "fatG": 0.57,
+      "satFatG": 0.07,
+      "carbG": 4.93,
+      "sugarsG": 0.4,
+      "sodiumMg": 5493,
+      "cholesterolMg": 0,
+      "potassiumMg": 435,
+      "calciumMg": 33,
+      "ironMg": 1.45
+    },
+    "nutrientSource": "CNF 3403 Soy sauce (made with soy and wheat), shoyu, regular",
     "shelfLifeDays": {
       "cupboard": 730
     },
@@ -153,6 +233,19 @@
     "densityGPerMl": 1.2,
     "proteinPer100g": 10.5,
     "fibrePer100g": 0.8,
+    "nutrients": {
+      "kcal": 60,
+      "fatG": 0.1,
+      "satFatG": 0.01,
+      "carbG": 5.57,
+      "sugarsG": 1.7,
+      "sodiumMg": 5586,
+      "cholesterolMg": 0,
+      "potassiumMg": 212,
+      "calciumMg": 20,
+      "ironMg": 2.38
+    },
+    "nutrientSource": "CNF 3329 Soy sauce (made from soy), tamari",
     "shelfLifeDays": {
       "cupboard": 730
     },
@@ -181,6 +274,19 @@
     "densityGPerMl": 1,
     "proteinPer100g": 0.5,
     "fibrePer100g": 0.3,
+    "nutrients": {
+      "kcal": 11,
+      "fatG": 0.37,
+      "satFatG": 0.05,
+      "carbG": 1.75,
+      "sugarsG": 1.26,
+      "sodiumMg": 2643,
+      "cholesterolMg": 0,
+      "potassiumMg": 144,
+      "calciumMg": 8,
+      "ironMg": 0.48
+    },
+    "nutrientSource": "CNF 1029 Sauce, pepper or hot, ready-to-serve",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -203,6 +309,18 @@
     "densityGPerMl": 1.1,
     "proteinPer100g": 1.9,
     "fibrePer100g": 2.2,
+    "nutrients": {
+      "kcal": 93,
+      "fatG": 0.9,
+      "satFatG": 0.1,
+      "carbG": 19.2,
+      "sugarsG": 15.1,
+      "sodiumMg": 2120,
+      "potassiumMg": 320,
+      "calciumMg": 18,
+      "ironMg": 1.6
+    },
+    "nutrientSource": "estimate: USDA SR Legacy 'Sauce, hot chile, sriracha' (FDC 171186), values from reference (API rate-limited); matches Huy Fong label (5 g = 5 kcal, 100 mg Na)",
     "shelfLifeDays": {
       "cupboard": 730
     },
@@ -225,6 +343,20 @@
     "densityGPerMl": 1.15,
     "proteinPer100g": 0.8,
     "fibrePer100g": 0.9,
+    "nutrients": {
+      "kcal": 172,
+      "fatG": 0.63,
+      "satFatG": 0.04,
+      "transFatG": 0,
+      "carbG": 40.77,
+      "sugarsG": 33.24,
+      "sodiumMg": 1027,
+      "cholesterolMg": 0,
+      "potassiumMg": 232,
+      "calciumMg": 33,
+      "ironMg": 0.64
+    },
+    "nutrientSource": "CNF 1017 Sauce, barbecue, ready-to-serve",
     "shelfLifeDays": {
       "cupboard": 365,
       "fridge": 120
@@ -248,6 +380,20 @@
     "densityGPerMl": 1.1,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 78,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 19.46,
+      "sugarsG": 10.03,
+      "sodiumMg": 980,
+      "cholesterolMg": 0,
+      "potassiumMg": 800,
+      "calciumMg": 107,
+      "ironMg": 5.3
+    },
+    "nutrientSource": "CNF 1133 Sauce, worcestershire, ready-to-serve",
     "shelfLifeDays": {
       "cupboard": 730
     },
@@ -270,6 +416,20 @@
     "densityGPerMl": 1,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 18,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0.04,
+      "sugarsG": 0.04,
+      "sodiumMg": 2,
+      "cholesterolMg": 0,
+      "potassiumMg": 2,
+      "calciumMg": 6,
+      "ironMg": 0.03
+    },
+    "nutrientSource": "CNF 14 Vinegar, distilled (white)",
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -292,6 +452,20 @@
     "densityGPerMl": 1,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 22,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0.93,
+      "sugarsG": 0.4,
+      "sodiumMg": 5,
+      "cholesterolMg": 0,
+      "potassiumMg": 73,
+      "calciumMg": 7,
+      "ironMg": 0.2
+    },
+    "nutrientSource": "CNF 13 Vinegar, cider",
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -314,6 +488,20 @@
     "densityGPerMl": 1,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 19,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0.27,
+      "sugarsG": 0,
+      "sodiumMg": 8,
+      "cholesterolMg": 0,
+      "potassiumMg": 39,
+      "calciumMg": 6,
+      "ironMg": 0.45
+    },
+    "nutrientSource": "CNF 6195 Vinegar, red wine",
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -336,6 +524,20 @@
     "densityGPerMl": 1,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 19,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0.27,
+      "sugarsG": 0,
+      "sodiumMg": 8,
+      "cholesterolMg": 0,
+      "potassiumMg": 39,
+      "calciumMg": 6,
+      "ironMg": 0.45
+    },
+    "nutrientSource": "CNF 6195 Vinegar, red wine",
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -358,6 +560,20 @@
     "densityGPerMl": 1.06,
     "proteinPer100g": 0.5,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 88,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 17.03,
+      "sugarsG": 14.95,
+      "sodiumMg": 23,
+      "cholesterolMg": 0,
+      "potassiumMg": 112,
+      "calciumMg": 27,
+      "ironMg": 0.72
+    },
+    "nutrientSource": "CNF 6196 Vinegar, balsamic",
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -380,6 +596,20 @@
     "densityGPerMl": 1,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 18,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0.04,
+      "sugarsG": 0.04,
+      "sodiumMg": 2,
+      "cholesterolMg": 0,
+      "potassiumMg": 2,
+      "calciumMg": 6,
+      "ironMg": 0.03
+    },
+    "nutrientSource": "CNF 14 Vinegar, distilled (white)",
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -402,6 +632,19 @@
     "densityGPerMl": 1.04,
     "proteinPer100g": 1.5,
     "fibrePer100g": 1.9,
+    "nutrients": {
+      "kcal": 29,
+      "fatG": 0.17,
+      "satFatG": 0.03,
+      "carbG": 6.72,
+      "sugarsG": 3.94,
+      "sodiumMg": 705,
+      "cholesterolMg": 0,
+      "potassiumMg": 285,
+      "calciumMg": 30,
+      "ironMg": 0.4
+    },
+    "nutrientSource": "CNF 1025 Sauce, salsa, ready-to-serve",
     "shelfLifeDays": {
       "cupboard": 365,
       "fridge": 14
@@ -425,6 +668,19 @@
     "densityGPerMl": 1.04,
     "proteinPer100g": 0.4,
     "fibrePer100g": 1.1,
+    "nutrients": {
+      "kcal": 130,
+      "fatG": 0.47,
+      "satFatG": 0.05,
+      "carbG": 35.06,
+      "sugarsG": 29.13,
+      "sodiumMg": 811,
+      "cholesterolMg": 0,
+      "potassiumMg": 25,
+      "calciumMg": 3,
+      "ironMg": 0.87
+    },
+    "nutrientSource": "CNF 2340 Pickle relish, sweet",
     "shelfLifeDays": {
       "cupboard": 365,
       "fridge": 270
@@ -449,6 +705,19 @@
     "unitWeightG": 35,
     "proteinPer100g": 0.3,
     "fibrePer100g": 1,
+    "nutrients": {
+      "kcal": 12,
+      "fatG": 0.3,
+      "satFatG": 0.08,
+      "carbG": 2.41,
+      "sugarsG": 1.07,
+      "sodiumMg": 809,
+      "cholesterolMg": 0,
+      "potassiumMg": 117,
+      "calciumMg": 57,
+      "ironMg": 0.26
+    },
+    "nutrientSource": "CNF 2495 Pickles, cucumber, dill (includes Kosher and Polish)",
     "shelfLifeDays": {
       "cupboard": 365,
       "fridge": 90
@@ -472,6 +741,20 @@
     "densityGPerMl": 1,
     "proteinPer100g": 1,
     "fibrePer100g": 0.3,
+    "nutrients": {
+      "kcal": 240,
+      "fatG": 21.12,
+      "satFatG": 2.95,
+      "transFatG": 0.07,
+      "carbG": 12.12,
+      "sugarsG": 10.77,
+      "sodiumMg": 993,
+      "cholesterolMg": 0,
+      "potassiumMg": 84,
+      "calciumMg": 13,
+      "ironMg": 0.26
+    },
+    "nutrientSource": "CNF 532 Salad dressing, italian, commercial, regular",
     "shelfLifeDays": {
       "cupboard": 365,
       "fridge": 90
@@ -495,6 +778,20 @@
     "densityGPerMl": 1,
     "proteinPer100g": 1,
     "fibrePer100g": 0.3,
+    "nutrients": {
+      "kcal": 421,
+      "fatG": 44.54,
+      "satFatG": 6.96,
+      "transFatG": 0.56,
+      "carbG": 5.74,
+      "sugarsG": 4.69,
+      "sodiumMg": 901,
+      "cholesterolMg": 26,
+      "potassiumMg": 64,
+      "calciumMg": 28,
+      "ironMg": 0.3
+    },
+    "nutrientSource": "CNF 5330 Salad dressing, ranch dressing, commercial, regular",
     "shelfLifeDays": {
       "cupboard": 270,
       "fridge": 60
@@ -518,6 +815,19 @@
     "densityGPerMl": 1,
     "proteinPer100g": 2,
     "fibrePer100g": 0.2,
+    "nutrients": {
+      "kcal": 542,
+      "fatG": 57.85,
+      "satFatG": 8.78,
+      "carbG": 3.3,
+      "sugarsG": 2.81,
+      "sodiumMg": 1209,
+      "cholesterolMg": 39,
+      "potassiumMg": 29,
+      "calciumMg": 48,
+      "ironMg": 1.08
+    },
+    "nutrientSource": "CNF 5515 Salad dressing, caesar dressing, regular",
     "shelfLifeDays": {
       "cupboard": 270,
       "fridge": 60
@@ -541,6 +851,20 @@
     "densityGPerMl": 0.98,
     "proteinPer100g": 0.4,
     "fibrePer100g": 0.3,
+    "nutrients": {
+      "kcal": 240,
+      "fatG": 21.12,
+      "satFatG": 2.95,
+      "transFatG": 0.07,
+      "carbG": 12.12,
+      "sugarsG": 10.77,
+      "sodiumMg": 993,
+      "cholesterolMg": 0,
+      "potassiumMg": 84,
+      "calciumMg": 13,
+      "ironMg": 0.26
+    },
+    "nutrientSource": "CNF 532 Salad dressing, italian, commercial, regular",
     "shelfLifeDays": {
       "cupboard": 365,
       "fridge": 90
@@ -564,6 +888,15 @@
     "densityGPerMl": 1,
     "proteinPer100g": 0.2,
     "fibrePer100g": 0.2,
+    "nutrients": {
+      "kcal": 230,
+      "fatG": 20,
+      "satFatG": 1.5,
+      "carbG": 12,
+      "sugarsG": 10,
+      "sodiumMg": 800
+    },
+    "nutrientSource": "estimate: typical commercial balsamic vinaigrette label (Kraft/Renée's: 30 mL ~ 70 kcal, 6 g fat, 3 g sugar, 250 mg Na)",
     "shelfLifeDays": {
       "cupboard": 365,
       "fridge": 90
@@ -587,6 +920,20 @@
     "densityGPerMl": 1.15,
     "proteinPer100g": 5.9,
     "fibrePer100g": 0.1,
+    "nutrients": {
+      "kcal": 89,
+      "fatG": 0.02,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 15.56,
+      "sugarsG": 14.1,
+      "sodiumMg": 3833,
+      "cholesterolMg": 0,
+      "potassiumMg": 225,
+      "calciumMg": 25,
+      "ironMg": 1.7
+    },
+    "nutrientSource": "CNF 997 Sauce, teriyaki, ready-to-serve",
     "shelfLifeDays": {
       "cupboard": 730,
       "fridge": 365
@@ -610,6 +957,19 @@
     "densityGPerMl": 1.13,
     "proteinPer100g": 3.3,
     "fibrePer100g": 2.8,
+    "nutrients": {
+      "kcal": 220,
+      "fatG": 3.39,
+      "satFatG": 0.57,
+      "carbG": 44.08,
+      "sugarsG": 27.26,
+      "sodiumMg": 1615,
+      "cholesterolMg": 3,
+      "potassiumMg": 119,
+      "calciumMg": 32,
+      "ironMg": 1.01
+    },
+    "nutrientSource": "CNF 4729 Sauce, hoisin, ready-to-serve",
     "shelfLifeDays": {
       "cupboard": 730,
       "fridge": 365
@@ -633,6 +993,19 @@
     "densityGPerMl": 1.2,
     "proteinPer100g": 5,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 35,
+      "fatG": 0.01,
+      "satFatG": 0,
+      "carbG": 3.64,
+      "sugarsG": 3.64,
+      "sodiumMg": 7851,
+      "cholesterolMg": 0,
+      "potassiumMg": 288,
+      "calciumMg": 43,
+      "ironMg": 0.78
+    },
+    "nutrientSource": "CNF 4731 Sauce, fish, ready-to-serve",
     "shelfLifeDays": {
       "cupboard": 730
     },
@@ -655,6 +1028,19 @@
     "densityGPerMl": 1.2,
     "proteinPer100g": 1.4,
     "fibrePer100g": 0.3,
+    "nutrients": {
+      "kcal": 51,
+      "fatG": 0.25,
+      "satFatG": 0.04,
+      "carbG": 10.92,
+      "sugarsG": 0,
+      "sodiumMg": 2733,
+      "cholesterolMg": 0,
+      "potassiumMg": 54,
+      "calciumMg": 32,
+      "ironMg": 0.18
+    },
+    "nutrientSource": "CNF 4730 Sauce, oyster, ready-to-serve",
     "shelfLifeDays": {
       "cupboard": 730,
       "fridge": 180
@@ -678,6 +1064,15 @@
     "densityGPerMl": 1.25,
     "proteinPer100g": 0.4,
     "fibrePer100g": 0.9,
+    "nutrients": {
+      "kcal": 220,
+      "fatG": 0.3,
+      "satFatG": 0,
+      "carbG": 54,
+      "sugarsG": 50,
+      "sodiumMg": 1000
+    },
+    "nutrientSource": "estimate: Thai sweet chili sauce labels (Mae Ploy / Lee Kum Kee: ~40 kcal, 10 g sugar, ~200 mg Na per 19 g)",
     "shelfLifeDays": {
       "cupboard": 730,
       "fridge": 180
@@ -701,6 +1096,19 @@
     "densityGPerMl": 1,
     "proteinPer100g": 1.2,
     "fibrePer100g": 3.3,
+    "nutrients": {
+      "kcal": 48,
+      "fatG": 0.69,
+      "satFatG": 0.09,
+      "carbG": 11.29,
+      "sugarsG": 7.99,
+      "sodiumMg": 420,
+      "cholesterolMg": 0,
+      "potassiumMg": 246,
+      "calciumMg": 56,
+      "ironMg": 0.42
+    },
+    "nutrientSource": "CNF 4891 Horseradish, prepared",
     "shelfLifeDays": {
       "fridge": 90
     },
@@ -723,6 +1131,20 @@
     "densityGPerMl": 1,
     "proteinPer100g": 1,
     "fibrePer100g": 0.2,
+    "nutrients": {
+      "kcal": 211,
+      "fatG": 16.7,
+      "satFatG": 3.33,
+      "transFatG": 0.25,
+      "carbG": 13.3,
+      "sugarsG": 4.25,
+      "sodiumMg": 667,
+      "cholesterolMg": 7,
+      "potassiumMg": 68,
+      "calciumMg": 26,
+      "ironMg": 0.25
+    },
+    "nutrientSource": "CNF 1131 Sauce, tartar, ready-to-serve",
     "shelfLifeDays": {
       "cupboard": 365,
       "fridge": 180

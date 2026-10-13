@@ -1,6 +1,7 @@
 // Firestore document shapes (TECHNICAL_SPECS §4) as zod schemas plus inferred types. Shared by the web app and
 // functions. No Firebase imports: timestamps are accepted as anything Timestamp-like or a Date.
 
+import { NUTRITION_KEYS, nutrientsSchema } from "./nutrition";
 import { z } from "zod";
 import {
   CUISINES,
@@ -89,6 +90,10 @@ export const ingredientSchema = z.object({
   proteinPer100g: z.number().min(0).optional(),
   /** Total dietary fibre, g per 100 g (M9, R6.26). Optional: a missing value makes a recipe's fibre approximate. */
   fibrePer100g: z.number().min(0).optional(),
+  /** Per 100 g (M10, R4.30): energy, fats, carbohydrate, sugars, sodium, … for the Nutrition Facts panel (nutrition.ts). */
+  nutrients: nutrientsSchema.optional(),
+  /** Where `nutrients` came from: "CNF 841" (Canadian Nutrient File food code), a USDA FDC ID, or an estimate's note. */
+  nutrientSource: z.string().max(160).optional(),
   shelfLifeDays: shelfLifeSchema,
   defaultPackAmount: z.number().positive().optional(),
   defaultPackMeasure: z.enum(MEASURES).optional(),
@@ -165,6 +170,10 @@ export const recipeSchema = z.object({
   /** Fibre per serving (M9, R6.26), derived like protein; "~" when an ingredient has no fibre value. */
   fibrePerServingG: z.number().min(0).optional(),
   fibreApproximate: z.boolean().optional(),
+  /** Nutrition facts per serving (M10, R4.30), derived like protein from the ingredients' `nutrients`. */
+  nutrition: nutrientsSchema.optional(),
+  /** The `nutrition` keys an ingredient had no value for, so they show "~". */
+  nutritionApproximate: z.array(z.enum(NUTRITION_KEYS)).optional(),
   /** Free-text notes that came with the recipe (Cooklang comments); household notes live in households/{hid}/notes. */
   notes: z.string().optional(),
   sourceUrl: z.url().optional(),

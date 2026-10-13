@@ -16,6 +16,20 @@
     "unitWeightG": 175,
     "proteinPer100g": 22.5,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 120,
+      "fatG": 2.62,
+      "satFatG": 0.56,
+      "transFatG": 0.01,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 45,
+      "cholesterolMg": 73,
+      "potassiumMg": 334,
+      "calciumMg": 5,
+      "ironMg": 0.37
+    },
+    "nutrientSource": "CNF 841 Chicken, broiler, breast, skinless, boneless, meat, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 270
@@ -44,6 +58,20 @@
     "unitWeightG": 110,
     "proteinPer100g": 19.7,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 121,
+      "fatG": 4.12,
+      "satFatG": 1.1,
+      "transFatG": 0.02,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 95,
+      "cholesterolMg": 94,
+      "potassiumMg": 242,
+      "calciumMg": 7,
+      "ironMg": 0.81
+    },
+    "nutrientSource": "CNF 853 Chicken, broiler, thigh, meat, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 270
@@ -66,6 +94,20 @@
     "unitWeightG": 160,
     "proteinPer100g": 17.3,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 221,
+      "fatG": 16.61,
+      "satFatG": 4.52,
+      "transFatG": 0.09,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 81,
+      "cholesterolMg": 98,
+      "potassiumMg": 204,
+      "calciumMg": 7,
+      "ironMg": 0.68
+    },
+    "nutrientSource": "CNF 850 Chicken, broiler, thigh, meat and skin, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 270
@@ -88,6 +130,20 @@
     "unitWeightG": 115,
     "proteinPer100g": 18.1,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 161,
+      "fatG": 9.2,
+      "satFatG": 2.46,
+      "transFatG": 0.05,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 106,
+      "cholesterolMg": 92,
+      "potassiumMg": 211,
+      "calciumMg": 8,
+      "ironMg": 0.71
+    },
+    "nutrientSource": "CNF 844 Chicken, broiler, drumstick, meat and skin, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 270
@@ -110,6 +166,20 @@
     "unitWeightG": 45,
     "proteinPer100g": 17.5,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 191,
+      "fatG": 13.16,
+      "satFatG": 4.06,
+      "transFatG": 0.07,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 84,
+      "cholesterolMg": 111,
+      "potassiumMg": 187,
+      "calciumMg": 11,
+      "ironMg": 0.46
+    },
+    "nutrientSource": "CNF 626 Chicken, broiler, wing, meat and skin, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 270
@@ -132,6 +202,20 @@
     "unitWeightG": 1800,
     "proteinPer100g": 18.6,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 215,
+      "fatG": 15.06,
+      "satFatG": 4.31,
+      "transFatG": 0.1,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 70,
+      "cholesterolMg": 75,
+      "potassiumMg": 189,
+      "calciumMg": 11,
+      "ironMg": 0.9
+    },
+    "nutrientSource": "CNF 560 Chicken, broiler, meat and skin, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 365
@@ -161,6 +245,19 @@
     "densityGPerMl": 0.59,
     "proteinPer100g": 27,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 190,
+      "fatG": 7.41,
+      "satFatG": 2.04,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 86,
+      "cholesterolMg": 89,
+      "potassiumMg": 243,
+      "calciumMg": 15,
+      "ironMg": 1.21
+    },
+    "nutrientSource": "CNF 567 Chicken, broiler, meat only, roasted",
     "shelfLifeDays": {
       "fridge": 4,
       "freezer": 120
@@ -182,6 +279,20 @@
     "canonicalUnit": "g",
     "proteinPer100g": 17.4,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 143,
+      "fatG": 8.1,
+      "satFatG": 2.3,
+      "transFatG": 0.07,
+      "carbG": 0.04,
+      "sugarsG": 0,
+      "sodiumMg": 60,
+      "cholesterolMg": 86,
+      "potassiumMg": 522,
+      "calciumMg": 6,
+      "ironMg": 0.82
+    },
+    "nutrientSource": "CNF 918 Chicken, ground, lean, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 120
@@ -203,6 +314,20 @@
     "canonicalUnit": "g",
     "proteinPer100g": 19.7,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 146,
+      "fatG": 7.23,
+      "satFatG": 2.17,
+      "transFatG": 0.07,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 70.3,
+      "cholesterolMg": 87.2,
+      "potassiumMg": 270.9,
+      "calciumMg": 58.1,
+      "ironMg": 0.97
+    },
+    "nutrientSource": "CNF 815 Turkey, all classes, ground, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 120
@@ -224,6 +349,20 @@
     "canonicalUnit": "g",
     "proteinPer100g": 19.4,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 207,
+      "fatG": 13.68,
+      "satFatG": 5.46,
+      "transFatG": 0.46,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 63.5,
+      "cholesterolMg": 59.8,
+      "potassiumMg": 270.8,
+      "calciumMg": 10.2,
+      "ironMg": 1.8
+    },
+    "nutrientSource": "CNF 2683 Beef, ground, lean, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 120
@@ -245,6 +384,20 @@
     "canonicalUnit": "g",
     "proteinPer100g": 21,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 158,
+      "fatG": 7.59,
+      "satFatG": 3.13,
+      "transFatG": 0.26,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 64,
+      "cholesterolMg": 55,
+      "potassiumMg": 291.8,
+      "calciumMg": 6.3,
+      "ironMg": 1.95
+    },
+    "nutrientSource": "CNF 4996 Beef, ground, extra lean, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 120
@@ -266,6 +419,20 @@
     "canonicalUnit": "g",
     "proteinPer100g": 17.5,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 226,
+      "fatG": 16.1,
+      "satFatG": 6.67,
+      "transFatG": 0.66,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 59,
+      "cholesterolMg": 59.6,
+      "potassiumMg": 266.8,
+      "calciumMg": 10.1,
+      "ironMg": 1.88
+    },
+    "nutrientSource": "CNF 2690 Beef, ground, medium, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 120
@@ -287,6 +454,20 @@
     "canonicalUnit": "g",
     "proteinPer100g": 16.9,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 270,
+      "fatG": 21.7,
+      "satFatG": 8.21,
+      "transFatG": 0.15,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 60.5,
+      "cholesterolMg": 67.4,
+      "potassiumMg": 268,
+      "calciumMg": 8.6,
+      "ironMg": 0.75
+    },
+    "nutrientSource": "CNF 6121 Pork, ground, medium, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 120
@@ -308,6 +489,20 @@
     "canonicalUnit": "g",
     "proteinPer100g": 16.6,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 204,
+      "fatG": 14.12,
+      "satFatG": 6.43,
+      "transFatG": 0.71,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 68.1,
+      "cholesterolMg": 65.3,
+      "potassiumMg": 273.3,
+      "calciumMg": 12.7,
+      "ironMg": 1.02
+    },
+    "nutrientSource": "CNF 3639 Lamb, Canadian, ground, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 120
@@ -330,6 +525,20 @@
     "densityGPerMl": 0.6,
     "proteinPer100g": 19.5,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 153,
+      "fatG": 6.64,
+      "satFatG": 2.72,
+      "transFatG": 0.58,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 65.5,
+      "cholesterolMg": 54.1,
+      "potassiumMg": 318.3,
+      "calciumMg": 6.8,
+      "ironMg": 2.02
+    },
+    "nutrientSource": "CNF 6285 Beef, composite cuts, stewing beef, 0mm (0\") trim, raw",
     "shelfLifeDays": {
       "fridge": 3,
       "freezer": 300
@@ -352,6 +561,20 @@
     "unitWeightG": 250,
     "proteinPer100g": 21,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 170,
+      "fatG": 8.5,
+      "satFatG": 3.5,
+      "transFatG": 0.27,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 57.5,
+      "cholesterolMg": 55.5,
+      "potassiumMg": 320.3,
+      "calciumMg": 7,
+      "ironMg": 2.24
+    },
+    "nutrientSource": "CNF 6142 Beef, loin, top sirloin steak, boneless, lean and fat, 3mm (1/8\") trim, raw",
     "shelfLifeDays": {
       "fridge": 4,
       "freezer": 300
@@ -374,6 +597,20 @@
     "unitWeightG": 300,
     "proteinPer100g": 21,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 153,
+      "fatG": 6.52,
+      "satFatG": 2.79,
+      "transFatG": 0.22,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 58.4,
+      "cholesterolMg": 49.8,
+      "potassiumMg": 273,
+      "calciumMg": 7.2,
+      "ironMg": 2.15
+    },
+    "nutrientSource": "CNF 6107 Beef, loin, strip loin (new york) steak, boneless, lean and fat, 0mm (0\") trim, raw",
     "shelfLifeDays": {
       "fridge": 4,
       "freezer": 300
@@ -396,6 +633,20 @@
     "unitWeightG": 350,
     "proteinPer100g": 19,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 200,
+      "fatG": 12.26,
+      "satFatG": 5.14,
+      "transFatG": 0.4,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 54.5,
+      "cholesterolMg": 52.2,
+      "potassiumMg": 323.5,
+      "calciumMg": 7.1,
+      "ironMg": 2.23
+    },
+    "nutrientSource": "CNF 6066 Beef, rib, rib eye steak, boneless, lean and fat, 0mm (0\") trim, raw",
     "shelfLifeDays": {
       "fridge": 4,
       "freezer": 300
@@ -417,6 +668,20 @@
     "canonicalUnit": "g",
     "proteinPer100g": 21,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 164,
+      "fatG": 7.85,
+      "satFatG": 3.36,
+      "transFatG": 0.25,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 63.5,
+      "cholesterolMg": 46.6,
+      "potassiumMg": 323.5,
+      "calciumMg": 5.7,
+      "ironMg": 1.8
+    },
+    "nutrientSource": "CNF 6020 Beef, flank, flank steak, boneless, lean and fat, 0mm (0\") trim, raw",
     "shelfLifeDays": {
       "fridge": 4,
       "freezer": 300
@@ -446,6 +711,20 @@
     "canonicalUnit": "g",
     "proteinPer100g": 19.5,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 126,
+      "fatG": 3.1,
+      "satFatG": 1.32,
+      "transFatG": 0.1,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 61,
+      "cholesterolMg": 51.5,
+      "potassiumMg": 342.1,
+      "calciumMg": 5.1,
+      "ironMg": 2.1
+    },
+    "nutrientSource": "CNF 6026 Beef, hip, inside (top) round roast, boneless, lean and fat, 0mm (0\") trim, raw",
     "shelfLifeDays": {
       "fridge": 4,
       "freezer": 365
@@ -468,6 +747,20 @@
     "unitWeightG": 500,
     "proteinPer100g": 21,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 107,
+      "fatG": 1.3,
+      "satFatG": 0.61,
+      "transFatG": 0.01,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 54.3,
+      "cholesterolMg": 55.8,
+      "potassiumMg": 376,
+      "calciumMg": 5.7,
+      "ironMg": 1.2
+    },
+    "nutrientSource": "CNF 1931 Pork, loin, tenderloin, lean, raw",
     "shelfLifeDays": {
       "fridge": 4,
       "freezer": 180
@@ -496,6 +789,20 @@
     "unitWeightG": 180,
     "proteinPer100g": 21,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 170,
+      "fatG": 9.03,
+      "satFatG": 2.99,
+      "transFatG": 0.09,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 55,
+      "cholesterolMg": 69,
+      "potassiumMg": 343,
+      "calciumMg": 19,
+      "ironMg": 0.63
+    },
+    "nutrientSource": "CNF 1781 Pork, loin, centre cut (centre chop), bone-in, lean and fat, raw",
     "shelfLifeDays": {
       "fridge": 4,
       "freezer": 180
@@ -517,6 +824,19 @@
     "canonicalUnit": "g",
     "proteinPer100g": 21,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 198,
+      "fatG": 12.58,
+      "satFatG": 4.36,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 50,
+      "cholesterolMg": 63,
+      "potassiumMg": 356,
+      "calciumMg": 18,
+      "ironMg": 0.79
+    },
+    "nutrientSource": "CNF 1773 Pork, loin, whole, lean and fat, raw",
     "shelfLifeDays": {
       "fridge": 4,
       "freezer": 180
@@ -544,6 +864,20 @@
     "canonicalUnit": "g",
     "proteinPer100g": 17,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 245,
+      "fatG": 19,
+      "satFatG": 7.14,
+      "transFatG": 0.15,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 59.2,
+      "cholesterolMg": 69.6,
+      "potassiumMg": 278,
+      "calciumMg": 5,
+      "ironMg": 1
+    },
+    "nutrientSource": "CNF 1971 Pork, shoulder, butt, blade (boneless), lean and fat, raw",
     "shelfLifeDays": {
       "fridge": 4,
       "freezer": 180
@@ -573,6 +907,20 @@
     "unitWeightG": 900,
     "proteinPer100g": 17.3,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 244,
+      "fatG": 18,
+      "satFatG": 6.94,
+      "transFatG": 0.13,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 99.8,
+      "cholesterolMg": 72.3,
+      "potassiumMg": 249,
+      "calciumMg": 29.2,
+      "ironMg": 0.82
+    },
+    "nutrientSource": "CNF 1893 Pork, back ribs, lean and fat, raw",
     "shelfLifeDays": {
       "fridge": 4,
       "freezer": 180
@@ -594,6 +942,20 @@
     "canonicalUnit": "g",
     "proteinPer100g": 15.5,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 256,
+      "fatG": 19.9,
+      "satFatG": 7.56,
+      "transFatG": 0.17,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 91.9,
+      "cholesterolMg": 67.4,
+      "potassiumMg": 225,
+      "calciumMg": 14.6,
+      "ironMg": 0.88
+    },
+    "nutrientSource": "CNF 1933 Pork, side ribs centre cut (spareribs), lean and fat, raw",
     "shelfLifeDays": {
       "fridge": 4,
       "freezer": 180
@@ -616,6 +978,20 @@
     "unitWeightG": 100,
     "proteinPer100g": 14,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 275,
+      "fatG": 21.15,
+      "satFatG": 7.83,
+      "transFatG": 0.14,
+      "carbG": 6.56,
+      "sugarsG": 1.1,
+      "sodiumMg": 756,
+      "cholesterolMg": 59,
+      "potassiumMg": 190,
+      "calciumMg": 7,
+      "ironMg": 0.63
+    },
+    "nutrientSource": "CNF 1198 Sausage, breakfast links or rounds, pork, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 60
@@ -638,6 +1014,20 @@
     "unitWeightG": 100,
     "proteinPer100g": 14.3,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 263,
+      "fatG": 17.58,
+      "satFatG": 6.52,
+      "transFatG": 0.05,
+      "carbG": 10.7,
+      "sugarsG": 1.14,
+      "sodiumMg": 788,
+      "cholesterolMg": 61.7,
+      "potassiumMg": 269,
+      "calciumMg": 5,
+      "ironMg": 0.74
+    },
+    "nutrientSource": "CNF 1152 Sausage, Italian, pork, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 60
@@ -660,6 +1050,20 @@
     "unitWeightG": 25,
     "proteinPer100g": 14,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 275,
+      "fatG": 21.15,
+      "satFatG": 7.83,
+      "transFatG": 0.14,
+      "carbG": 6.56,
+      "sugarsG": 1.1,
+      "sodiumMg": 756,
+      "cholesterolMg": 59,
+      "potassiumMg": 190,
+      "calciumMg": 7,
+      "ironMg": 0.63
+    },
+    "nutrientSource": "CNF 1198 Sausage, breakfast links or rounds, pork, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 60
@@ -682,6 +1086,20 @@
     "unitWeightG": 25,
     "proteinPer100g": 12,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 417,
+      "fatG": 39.69,
+      "satFatG": 13.3,
+      "transFatG": 0.13,
+      "carbG": 1.28,
+      "sugarsG": 1,
+      "sodiumMg": 662,
+      "cholesterolMg": 66,
+      "potassiumMg": 198,
+      "calciumMg": 5,
+      "ironMg": 0.41
+    },
+    "nutrientSource": "CNF 1936 Pork, cured, bacon, raw",
     "shelfLifeDays": {
       "fridge": 7,
       "freezer": 30
@@ -704,6 +1122,20 @@
     "unitWeightG": 30,
     "proteinPer100g": 20,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 111,
+      "fatG": 2.76,
+      "satFatG": 0.91,
+      "transFatG": 0.01,
+      "carbG": 1.29,
+      "sugarsG": 0.9,
+      "sodiumMg": 743,
+      "cholesterolMg": 48,
+      "potassiumMg": 703,
+      "calciumMg": 6,
+      "ironMg": 0.43
+    },
+    "nutrientSource": "CNF 1981 Pork, cured, back bacon (cornmeal, peameal), uncooked",
     "shelfLifeDays": {
       "fridge": 7,
       "freezer": 30
@@ -727,6 +1159,19 @@
     "unitWeightG": 25,
     "proteinPer100g": 20,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 162,
+      "fatG": 8.39,
+      "satFatG": 2.7,
+      "carbG": 2.28,
+      "sugarsG": 0,
+      "sodiumMg": 1278,
+      "cholesterolMg": 53,
+      "potassiumMg": 297,
+      "calciumMg": 7,
+      "ironMg": 0.9
+    },
+    "nutrientSource": "CNF 1887 Pork, cured, ham, boneless, mini ham-half, extra lean and regular, unheated",
     "shelfLifeDays": {
       "fridge": 5,
       "freezer": 60
@@ -749,6 +1194,20 @@
     "unitWeightG": 25,
     "proteinPer100g": 17,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 118,
+      "fatG": 2.03,
+      "satFatG": 0.55,
+      "transFatG": 0,
+      "carbG": 2.61,
+      "sugarsG": 0.34,
+      "sodiumMg": 1139,
+      "cholesterolMg": 45.5,
+      "potassiumMg": 260,
+      "calciumMg": 7,
+      "ironMg": 0.42
+    },
+    "nutrientSource": "CNF 1172 Deli-meat, turkey breast, cooked, sliced",
     "shelfLifeDays": {
       "fridge": 5,
       "freezer": 60
@@ -772,6 +1231,20 @@
     "unitWeightG": 2,
     "proteinPer100g": 20,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 269,
+      "fatG": 19.86,
+      "satFatG": 7.01,
+      "transFatG": 0.19,
+      "carbG": 5.72,
+      "sugarsG": 1.33,
+      "sodiumMg": 1252,
+      "cholesterolMg": 74.2,
+      "potassiumMg": 547,
+      "calciumMg": 58,
+      "ironMg": 1.03
+    },
+    "nutrientSource": "CNF 7164 Deli-meat, pepperoni",
     "shelfLifeDays": {
       "fridge": 21,
       "freezer": 180
@@ -794,6 +1267,19 @@
     "unitWeightG": 8,
     "proteinPer100g": 22,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 425,
+      "fatG": 37,
+      "satFatG": 13.1,
+      "carbG": 1.2,
+      "sugarsG": 1.2,
+      "sodiumMg": 1890,
+      "cholesterolMg": 80,
+      "potassiumMg": 340,
+      "calciumMg": 10,
+      "ironMg": 1.52
+    },
+    "nutrientSource": "CNF 5684 Deli-meat, salami, Italian, pork",
     "shelfLifeDays": {
       "fridge": 21,
       "freezer": 60
@@ -816,6 +1302,20 @@
     "unitWeightG": 50,
     "proteinPer100g": 11,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 291,
+      "fatG": 22.3,
+      "satFatG": 7.95,
+      "transFatG": 0.06,
+      "carbG": 10.02,
+      "sugarsG": 1.15,
+      "sodiumMg": 1104,
+      "cholesterolMg": 71,
+      "potassiumMg": 609,
+      "calciumMg": 60,
+      "ironMg": 0.95
+    },
+    "nutrientSource": "CNF 5705 Wiener (frankfurter), regular, mixed meats",
     "shelfLifeDays": {
       "fridge": 14,
       "freezer": 60
@@ -838,6 +1338,20 @@
     "unitWeightG": 6000,
     "proteinPer100g": 21,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 143,
+      "fatG": 5.95,
+      "satFatG": 1.82,
+      "transFatG": 0.05,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 54.1,
+      "cholesterolMg": 74.4,
+      "potassiumMg": 302.2,
+      "calciumMg": 5.3,
+      "ironMg": 0.41
+    },
+    "nutrientSource": "CNF 688 Turkey, all classes, meat and skin, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 365

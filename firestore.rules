@@ -151,9 +151,20 @@ service cloud.firestore {
 
     // ---------- ingredients/{id} (§4.1, §5): public get for share-link pages; allowlisted users list and edit
 
+    // M10 (R4.30): nutrition facts per 100 g (ingredients) or per serving (recipes); numbers ≥ 0, known keys only.
+    function optNutrients(d) {
+      return !('nutrients' in d) || validNutrients(d.nutrients);
+    }
+    function validNutrients(n) {
+      return n is map && n.keys().hasOnly(['kcal', 'fatG', 'satFatG', 'transFatG', 'carbG', 'sugarsG', 'sodiumMg',
+                                            'cholesterolMg', 'potassiumMg', 'calciumMg', 'ironMg'])
+        && optNum(n, 'kcal') && optNum(n, 'fatG') && optNum(n, 'satFatG') && optNum(n, 'transFatG')
+        && optNum(n, 'carbG') && optNum(n, 'sugarsG') && optNum(n, 'sodiumMg') && optNum(n, 'cholesterolMg')
+        && optNum(n, 'potassiumMg') && optNum(n, 'calciumMg') && optNum(n, 'ironMg');
+    }
     function validIngredient(d) {
       return d.keys().hasOnly(['name', 'aliases', 'category', 'defaultLocation', 'allowedMeasures', 'canonicalUnit',
-                               'densityGPerMl', 'unitWeightG', 'proteinPer100g', 'fibrePer100g', 'shelfLifeDays', 'defaultPackAmount',
+                               'densityGPerMl', 'unitWeightG', 'proteinPer100g', 'fibrePer100g', 'nutrients', 'nutrientSource', 'shelfLifeDays', 'defaultPackAmount',
                                'defaultPackMeasure', 'defaultCadenceDays', 'freezable', 'isStaple', 'freeUse',
                                'needsReview', 'side', 'createdBy', 'updatedBy', 'updatedAt'])
         && d.keys().hasAll(['name', 'aliases', 'category', 'defaultLocation', 'allowedMeasures', 'canonicalUnit',
@@ -166,6 +177,7 @@ service cloud.firestore {
         && d.allowedMeasures.hasOnly(['weight', 'volume', 'count'])
         && d.canonicalUnit in ['g', 'count']
         && optNum(d, 'densityGPerMl') && optNum(d, 'unitWeightG') && optNum(d, 'proteinPer100g') && optNum(d, 'fibrePer100g')
+        && optNutrients(d) && (!('nutrientSource' in d) || str(d.nutrientSource, 1, 160))
         && optNum(d, 'defaultPackAmount') && optNum(d, 'defaultCadenceDays')
         && (!('defaultPackMeasure' in d) || d.defaultPackMeasure in ['weight', 'volume', 'count'])
         && d.shelfLifeDays is map
@@ -188,7 +200,8 @@ service cloud.firestore {
     function validRecipe(d) {
       return d.keys().hasOnly(['title', 'slug', 'servings', 'prepMin', 'cookMin', 'cuisine', 'mainProtein', 'tags',
                                'tools', 'ingredients', 'steps', 'prepTasks', 'defaultLeftoverPortions',
-                               'leftoverMealType', 'proteinPerServingG', 'proteinApproximate', 'fibrePerServingG', 'fibreApproximate', 'notes', 'sourceUrl',
+                               'leftoverMealType', 'proteinPerServingG', 'proteinApproximate', 'fibrePerServingG', 'fibreApproximate',
+                               'nutrition', 'nutritionApproximate', 'notes', 'sourceUrl',
                                'sourceUrlCanonical', 'fingerprint', 'ingredientIds', 'imagePaths', 'indexChunk',
                                'status', 'possibleDuplicateOf', 'trashedAt', 'trashedBy', 'createdBy', 'updatedBy',
                                'version', 'createdAt', 'updatedAt'])
@@ -211,6 +224,8 @@ service cloud.firestore {
         && d.prepTasks is list && d.prepTasks.size() <= 50
         && d.ingredientIds is list && d.ingredientIds.size() <= 100
         && d.imagePaths is list && d.imagePaths.size() <= 10
+        && (!('nutrition' in d) || validNutrients(d.nutrition))
+        && (!('nutritionApproximate' in d) || (d.nutritionApproximate is list && d.nutritionApproximate.size() <= 11))
         && d.defaultLeftoverPortions is int && d.defaultLeftoverPortions >= 0
         && optStr(d, 'notes', 5000) && optStr(d, 'sourceUrl', 2000) && optStr(d, 'sourceUrlCanonical', 2000)
         && str(d.fingerprint, 1, 40)

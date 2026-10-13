@@ -10,6 +10,19 @@
     "densityGPerMl": 0.6,
     "proteinPer100g": 2.8,
     "fibrePer100g": 3,
+    "nutrients": {
+      "kcal": 26,
+      "fatG": 0.29,
+      "satFatG": 0.04,
+      "carbG": 4.78,
+      "sugarsG": 1.35,
+      "sodiumMg": 24,
+      "cholesterolMg": 0,
+      "potassiumMg": 212,
+      "calciumMg": 56,
+      "ironMg": 0.81
+    },
+    "nutrientSource": "CNF 2376 Broccoli, frozen, chopped, unprepared",
     "shelfLifeDays": {
       "freezer": 300
     },
@@ -34,6 +47,19 @@
     "densityGPerMl": 0.57,
     "proteinPer100g": 5.2,
     "fibrePer100g": 4.5,
+    "nutrients": {
+      "kcal": 77,
+      "fatG": 0.4,
+      "satFatG": 0.07,
+      "carbG": 13.62,
+      "sugarsG": 5,
+      "sodiumMg": 108,
+      "cholesterolMg": 0,
+      "potassiumMg": 153,
+      "calciumMg": 22,
+      "ironMg": 1.53
+    },
+    "nutrientSource": "CNF 2151 Peas, green, frozen, unprepared",
     "shelfLifeDays": {
       "freezer": 300
     },
@@ -59,6 +85,19 @@
     "densityGPerMl": 0.58,
     "proteinPer100g": 3,
     "fibrePer100g": 2.1,
+    "nutrients": {
+      "kcal": 88,
+      "fatG": 0.78,
+      "satFatG": 0.12,
+      "carbG": 20.71,
+      "sugarsG": 2.5,
+      "sodiumMg": 3,
+      "cholesterolMg": 0,
+      "potassiumMg": 213,
+      "calciumMg": 4,
+      "ironMg": 0.42
+    },
+    "nutrientSource": "CNF 2391 Corn, sweet, yellow, frozen, kernels cut off the cob, unprepared",
     "shelfLifeDays": {
       "freezer": 300
     },
@@ -83,6 +122,19 @@
     "densityGPerMl": 0.57,
     "proteinPer100g": 2.6,
     "fibrePer100g": 3.5,
+    "nutrients": {
+      "kcal": 72,
+      "fatG": 0.52,
+      "satFatG": 0.1,
+      "carbG": 13.47,
+      "sugarsG": 3.1,
+      "sodiumMg": 47,
+      "cholesterolMg": 0,
+      "potassiumMg": 212,
+      "calciumMg": 25,
+      "ironMg": 0.95
+    },
+    "nutrientSource": "CNF 2271 Vegetables, mixed, frozen, unprepared; sugarsG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "freezer": 300
     },
@@ -107,6 +159,19 @@
     "densityGPerMl": 0.66,
     "proteinPer100g": 4,
     "fibrePer100g": 2.9,
+    "nutrients": {
+      "kcal": 29,
+      "fatG": 0.57,
+      "satFatG": 0.04,
+      "carbG": 4.21,
+      "sugarsG": 0.65,
+      "sodiumMg": 74,
+      "cholesterolMg": 0,
+      "potassiumMg": 346,
+      "calciumMg": 129,
+      "ironMg": 1.89
+    },
+    "nutrientSource": "CNF 2216 Spinach, frozen, unprepared",
     "shelfLifeDays": {
       "freezer": 300
     },
@@ -128,6 +193,19 @@
     "densityGPerMl": 0.55,
     "proteinPer100g": 1.6,
     "fibrePer100g": 2.3,
+    "nutrients": {
+      "kcal": 24,
+      "fatG": 0.27,
+      "satFatG": 0.04,
+      "carbG": 4.68,
+      "sugarsG": 2.22,
+      "sodiumMg": 24,
+      "cholesterolMg": 0,
+      "potassiumMg": 193,
+      "calciumMg": 22,
+      "ironMg": 0.54
+    },
+    "nutrientSource": "CNF 2047 Cauliflower, frozen, unprepared",
     "shelfLifeDays": {
       "freezer": 300
     },
@@ -149,6 +227,19 @@
     "densityGPerMl": 0.5,
     "proteinPer100g": 1.9,
     "fibrePer100g": 2,
+    "nutrients": {
+      "kcal": 24,
+      "fatG": 0.27,
+      "satFatG": 0.04,
+      "carbG": 4.68,
+      "sugarsG": 2.22,
+      "sodiumMg": 24,
+      "cholesterolMg": 0,
+      "potassiumMg": 193,
+      "calciumMg": 22,
+      "ironMg": 0.54
+    },
+    "nutrientSource": "CNF 2047 Cauliflower, frozen, unprepared",
     "shelfLifeDays": {
       "freezer": 300
     },
@@ -173,6 +264,20 @@
     "densityGPerMl": 0.5,
     "proteinPer100g": 2,
     "fibrePer100g": 2.3,
+    "nutrients": {
+      "kcal": 39,
+      "fatG": 0.37,
+      "satFatG": 0.06,
+      "transFatG": 0,
+      "carbG": 8.38,
+      "sugarsG": 2.78,
+      "sodiumMg": 20.1,
+      "cholesterolMg": 0,
+      "potassiumMg": 171.6,
+      "calciumMg": 31.1,
+      "ironMg": 0.74
+    },
+    "nutrientSource": "CNF 6612 Vegetables, asian mix, frozen, boiled, drained (broccoli, green beans, mini corn, snow peas, red pepper)",
     "shelfLifeDays": {
       "freezer": 300
     },
@@ -197,6 +302,18 @@
     "densityGPerMl": 0.66,
     "proteinPer100g": 11,
     "fibrePer100g": 5.2,
+    "nutrients": {
+      "kcal": 110,
+      "fatG": 4.73,
+      "satFatG": 0.62,
+      "carbG": 8.58,
+      "sugarsG": 2.48,
+      "sodiumMg": 6,
+      "potassiumMg": 482,
+      "calciumMg": 60,
+      "ironMg": 2.11
+    },
+    "nutrientSource": "CNF 6217 Soybeans, green (edamame), frozen, unprepared; satFatG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "freezer": 300
     },
@@ -221,6 +338,19 @@
     "densityGPerMl": 0.6,
     "proteinPer100g": 0.7,
     "fibrePer100g": 3.5,
+    "nutrients": {
+      "kcal": 46,
+      "fatG": 0.47,
+      "satFatG": 0.03,
+      "carbG": 11.08,
+      "sugarsG": 5.81,
+      "sodiumMg": 1.3,
+      "cholesterolMg": 0,
+      "potassiumMg": 117.7,
+      "calciumMg": 16.3,
+      "ironMg": 0.54
+    },
+    "nutrientSource": "estimate: mean of CNF 1706 blueberry, 1750 strawberry, 7426 raspberry (all frozen, unsweetened)",
     "shelfLifeDays": {
       "freezer": 300
     },
@@ -242,6 +372,19 @@
     "densityGPerMl": 0.65,
     "proteinPer100g": 0.4,
     "fibrePer100g": 2.7,
+    "nutrients": {
+      "kcal": 51,
+      "fatG": 0.64,
+      "satFatG": 0.05,
+      "carbG": 12.17,
+      "sugarsG": 8.45,
+      "sodiumMg": 1,
+      "cholesterolMg": 0,
+      "potassiumMg": 54,
+      "calciumMg": 8,
+      "ironMg": 0.18
+    },
+    "nutrientSource": "CNF 1706 Blueberry, frozen, unsweetened",
     "shelfLifeDays": {
       "freezer": 300
     },
@@ -263,6 +406,19 @@
     "densityGPerMl": 0.6,
     "proteinPer100g": 0.4,
     "fibrePer100g": 2.1,
+    "nutrients": {
+      "kcal": 35,
+      "fatG": 0.11,
+      "satFatG": 0.01,
+      "carbG": 9.13,
+      "sugarsG": 4.56,
+      "sodiumMg": 2,
+      "cholesterolMg": 0,
+      "potassiumMg": 148,
+      "calciumMg": 16,
+      "ironMg": 0.75
+    },
+    "nutrientSource": "CNF 1750 Strawberry, frozen, unsweetened",
     "shelfLifeDays": {
       "freezer": 300
     },
@@ -284,6 +440,19 @@
     "densityGPerMl": 0.55,
     "proteinPer100g": 0.7,
     "fibrePer100g": 6.5,
+    "nutrients": {
+      "kcal": 52,
+      "fatG": 0.65,
+      "satFatG": 0.02,
+      "carbG": 11.94,
+      "sugarsG": 4.42,
+      "sodiumMg": 1,
+      "cholesterolMg": 0,
+      "potassiumMg": 151,
+      "calciumMg": 25,
+      "ironMg": 0.69
+    },
+    "nutrientSource": "CNF 7426 Raspberry, frozen, unsweetened",
     "shelfLifeDays": {
       "freezer": 300
     },
@@ -305,6 +474,19 @@
     "densityGPerMl": 0.7,
     "proteinPer100g": 0.8,
     "fibrePer100g": 1.6,
+    "nutrients": {
+      "kcal": 60,
+      "fatG": 0.38,
+      "satFatG": 0.09,
+      "carbG": 14.98,
+      "sugarsG": 13.66,
+      "sodiumMg": 1,
+      "cholesterolMg": 0,
+      "potassiumMg": 168,
+      "calciumMg": 11,
+      "ironMg": 0.16
+    },
+    "nutrientSource": "CNF 1603 Mango, raw",
     "shelfLifeDays": {
       "freezer": 300
     },
@@ -326,6 +508,20 @@
     "unitWeightG": 18,
     "proteinPer100g": 15,
     "fibrePer100g": 1,
+    "nutrients": {
+      "kcal": 260,
+      "fatG": 16.14,
+      "satFatG": 3.2,
+      "transFatG": 0.09,
+      "carbG": 16.32,
+      "sugarsG": 0.79,
+      "sodiumMg": 560,
+      "cholesterolMg": 32,
+      "potassiumMg": 223,
+      "calciumMg": 21,
+      "ironMg": 0.91
+    },
+    "nutrientSource": "CNF 7034 Chicken nuggets, dark and white meat, pre-cooked, frozen, not heated",
     "shelfLifeDays": {
       "freezer": 180
     },
@@ -352,6 +548,19 @@
     "unitWeightG": 40,
     "proteinPer100g": 15,
     "fibrePer100g": 1,
+    "nutrients": {
+      "kcal": 263,
+      "fatG": 15.75,
+      "satFatG": 3.26,
+      "carbG": 15.01,
+      "sugarsG": 0.37,
+      "sodiumMg": 536,
+      "cholesterolMg": 41,
+      "potassiumMg": 214,
+      "calciumMg": 19,
+      "ironMg": 1.11
+    },
+    "nutrientSource": "CNF 6320 Chicken breast tenders, breaded, uncooked",
     "shelfLifeDays": {
       "freezer": 180
     },
@@ -373,6 +582,20 @@
     "unitWeightG": 28,
     "proteinPer100g": 11,
     "fibrePer100g": 1.4,
+    "nutrients": {
+      "kcal": 277,
+      "fatG": 16.23,
+      "satFatG": 3.73,
+      "transFatG": 0.12,
+      "carbG": 21.66,
+      "sugarsG": 1.65,
+      "sodiumMg": 402,
+      "cholesterolMg": 28,
+      "potassiumMg": 185,
+      "calciumMg": 16,
+      "ironMg": 0.84
+    },
+    "nutrientSource": "CNF 3006 Fish, fish sticks, frozen, prepared",
     "shelfLifeDays": {
       "freezer": 180
     },
@@ -394,6 +617,20 @@
     "unitWeightG": 110,
     "proteinPer100g": 12,
     "fibrePer100g": 1,
+    "nutrients": {
+      "kcal": 277,
+      "fatG": 16.23,
+      "satFatG": 3.73,
+      "transFatG": 0.12,
+      "carbG": 21.66,
+      "sugarsG": 1.65,
+      "sodiumMg": 402,
+      "cholesterolMg": 28,
+      "potassiumMg": 185,
+      "calciumMg": 16,
+      "ironMg": 0.84
+    },
+    "nutrientSource": "CNF 3006 Fish, fish sticks, frozen, prepared",
     "shelfLifeDays": {
       "freezer": 180
     },
@@ -414,6 +651,19 @@
     "canonicalUnit": "g",
     "proteinPer100g": 2.7,
     "fibrePer100g": 2.7,
+    "nutrients": {
+      "kcal": 147,
+      "fatG": 4.66,
+      "satFatG": 1,
+      "carbG": 24.81,
+      "sugarsG": 0.2,
+      "sodiumMg": 332,
+      "cholesterolMg": 0,
+      "potassiumMg": 408,
+      "calciumMg": 9,
+      "ironMg": 0.62
+    },
+    "nutrientSource": "CNF 2434 Potato, french-fried, frozen, unprepared; sugarsG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "freezer": 365
     },
@@ -438,6 +688,19 @@
     "densityGPerMl": 0.38,
     "proteinPer100g": 2,
     "fibrePer100g": 2.2,
+    "nutrients": {
+      "kcal": 82,
+      "fatG": 0.62,
+      "satFatG": 0.16,
+      "carbG": 17.72,
+      "sugarsG": 0.6,
+      "sodiumMg": 22,
+      "cholesterolMg": 0,
+      "potassiumMg": 285,
+      "calciumMg": 10,
+      "ironMg": 0.98
+    },
+    "nutrientSource": "CNF 2430 Potato, hashed brown, frozen, plain, unprepared; sugarsG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "freezer": 365
     },
@@ -462,6 +725,19 @@
     "unitWeightG": 450,
     "proteinPer100g": 10,
     "fibrePer100g": 2,
+    "nutrients": {
+      "kcal": 268,
+      "fatG": 12.28,
+      "satFatG": 4.27,
+      "carbG": 29.02,
+      "sugarsG": 3.57,
+      "sodiumMg": 447,
+      "cholesterolMg": 14,
+      "potassiumMg": 152,
+      "calciumMg": 179,
+      "ironMg": 2.27
+    },
+    "nutrientSource": "CNF 5860 Fast foods, pizza, cheese, regular crust, frozen, cooked",
     "shelfLifeDays": {
       "freezer": 365
     },
@@ -483,6 +759,19 @@
     "densityGPerMl": 0.56,
     "proteinPer100g": 3.5,
     "fibrePer100g": 0.7,
+    "nutrients": {
+      "kcal": 208,
+      "fatG": 11,
+      "satFatG": 6.79,
+      "carbG": 23.6,
+      "sugarsG": 21.22,
+      "sodiumMg": 80,
+      "cholesterolMg": 44,
+      "potassiumMg": 199,
+      "calciumMg": 128,
+      "ironMg": 0.09
+    },
+    "nutrientSource": "CNF 4163 Dessert, frozen, ice cream, vanilla, 11% M.F.",
     "shelfLifeDays": {
       "freezer": 60
     },
@@ -504,6 +793,19 @@
     "unitWeightG": 35,
     "proteinPer100g": 6.5,
     "fibrePer100g": 1.6,
+    "nutrients": {
+      "kcal": 285,
+      "fatG": 9.7,
+      "satFatG": 1.53,
+      "carbG": 42.98,
+      "sugarsG": 4.91,
+      "sodiumMg": 638,
+      "cholesterolMg": 14,
+      "potassiumMg": 125,
+      "calciumMg": 308,
+      "ironMg": 5.61
+    },
+    "nutrientSource": "CNF 3998 Waffle, plain, frozen, ready-to-heat",
     "shelfLifeDays": {
       "freezer": 240
     },
@@ -525,6 +827,17 @@
     "unitWeightG": 30,
     "proteinPer100g": 6,
     "fibrePer100g": 1.8,
+    "nutrients": {
+      "kcal": 170,
+      "fatG": 2.5,
+      "satFatG": 1,
+      "transFatG": 0,
+      "carbG": 31,
+      "sugarsG": 1.5,
+      "sodiumMg": 380,
+      "cholesterolMg": 5
+    },
+    "nutrientSource": "estimate: typical frozen potato & cheddar perogies label (Cheemo-style), per 100 g uncooked",
     "shelfLifeDays": {
       "freezer": 365
     },
@@ -545,6 +858,19 @@
     "canonicalUnit": "g",
     "proteinPer100g": 7.3,
     "fibrePer100g": 1.4,
+    "nutrients": {
+      "kcal": 551,
+      "fatG": 38.1,
+      "satFatG": 9.64,
+      "carbG": 45.1,
+      "sugarsG": 0.74,
+      "sodiumMg": 249,
+      "cholesterolMg": 0,
+      "potassiumMg": 61,
+      "calciumMg": 10,
+      "ironMg": 2.56
+    },
+    "nutrientSource": "CNF 3973 Puff pastry, frozen, ready-to-bake",
     "shelfLifeDays": {
       "freezer": 365
     },
@@ -566,6 +892,19 @@
     "unitWeightG": 180,
     "proteinPer100g": 5.7,
     "fibrePer100g": 1.5,
+    "nutrients": {
+      "kcal": 457,
+      "fatG": 26.07,
+      "satFatG": 8.16,
+      "carbG": 48.62,
+      "sugarsG": 4.7,
+      "sodiumMg": 409,
+      "cholesterolMg": 0,
+      "potassiumMg": 97,
+      "calciumMg": 19,
+      "ironMg": 2.6
+    },
+    "nutrientSource": "CNF 3970 Pie crust, standard type, frozen, ready-to-bake",
     "shelfLifeDays": {
       "freezer": 240
     },
@@ -587,6 +926,19 @@
     "densityGPerMl": 0.3,
     "proteinPer100g": 1,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 319,
+      "fatG": 25.31,
+      "satFatG": 21.78,
+      "carbG": 23.05,
+      "sugarsG": 23.05,
+      "sodiumMg": 25,
+      "cholesterolMg": 0,
+      "potassiumMg": 18,
+      "calciumMg": 6,
+      "ironMg": 0.12
+    },
+    "nutrientSource": "CNF 60 Dessert topping (non dairy), frozen, semisolid",
     "shelfLifeDays": {
       "freezer": 365,
       "fridge": 14
@@ -609,6 +961,20 @@
     "unitWeightG": 25,
     "proteinPer100g": 14,
     "fibrePer100g": 0.8,
+    "nutrients": {
+      "kcal": 286,
+      "fatG": 22.21,
+      "satFatG": 7.63,
+      "transFatG": 0.58,
+      "carbG": 8.06,
+      "sugarsG": 3.47,
+      "sodiumMg": 666,
+      "cholesterolMg": 66,
+      "potassiumMg": 296,
+      "calciumMg": 80,
+      "ironMg": 1.77
+    },
+    "nutrientSource": "CNF 7424 Meatball, Italian style, frozen",
     "shelfLifeDays": {
       "freezer": 120
     },
@@ -630,6 +996,20 @@
     "unitWeightG": 113,
     "proteinPer100g": 16,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 293,
+      "fatG": 24.7,
+      "satFatG": 10.17,
+      "transFatG": 0.61,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 60.2,
+      "cholesterolMg": 66.2,
+      "potassiumMg": 231.3,
+      "calciumMg": 11.1,
+      "ironMg": 1.8
+    },
+    "nutrientSource": "CNF 2786 Beef, ground, regular, raw",
     "shelfLifeDays": {
       "freezer": 120
     },
@@ -650,6 +1030,17 @@
     "canonicalUnit": "g",
     "proteinPer100g": 2,
     "fibrePer100g": 3.5,
+    "nutrients": {
+      "kcal": 160,
+      "fatG": 6,
+      "satFatG": 0.6,
+      "transFatG": 0,
+      "carbG": 25,
+      "sugarsG": 6,
+      "sodiumMg": 300,
+      "cholesterolMg": 0
+    },
+    "nutrientSource": "estimate: typical frozen sweet potato fries label (McCain-style), per 100 g as sold",
     "shelfLifeDays": {
       "freezer": 365
     },
@@ -673,6 +1064,19 @@
     "canonicalUnit": "g",
     "proteinPer100g": 2.5,
     "fibrePer100g": 2.4,
+    "nutrients": {
+      "kcal": 185,
+      "fatG": 8.71,
+      "satFatG": 1.42,
+      "carbG": 24.8,
+      "sugarsG": 0.28,
+      "sodiumMg": 428,
+      "cholesterolMg": 0,
+      "potassiumMg": 247,
+      "calciumMg": 13,
+      "ironMg": 0.47
+    },
+    "nutrientSource": "CNF 2432 Potato puff, frozen, unprepared",
     "shelfLifeDays": {
       "freezer": 365
     },
@@ -696,6 +1100,19 @@
     "canonicalUnit": "g",
     "proteinPer100g": 4,
     "fibrePer100g": 2.4,
+    "nutrients": {
+      "kcal": 258,
+      "fatG": 14.1,
+      "satFatG": 4.53,
+      "carbG": 30.53,
+      "sugarsG": 4,
+      "sodiumMg": 246,
+      "cholesterolMg": 0,
+      "potassiumMg": 190,
+      "calciumMg": 46,
+      "ironMg": 0.93
+    },
+    "nutrientSource": "CNF 2403 Onion rings, breaded, par-fried, frozen, unprepared; sugarsG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "freezer": 365
     },
@@ -719,6 +1136,20 @@
     "canonicalUnit": "g",
     "proteinPer100g": 8,
     "fibrePer100g": 2,
+    "nutrients": {
+      "kcal": 350,
+      "fatG": 16.61,
+      "satFatG": 5.28,
+      "transFatG": 0.24,
+      "carbG": 41.72,
+      "sugarsG": 3.69,
+      "sodiumMg": 544,
+      "cholesterolMg": 0,
+      "potassiumMg": 103,
+      "calciumMg": 27,
+      "ironMg": 3.05
+    },
+    "nutrientSource": "CNF 7087 Bread, garlic",
     "shelfLifeDays": {
       "freezer": 180
     },

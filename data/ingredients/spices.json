@@ -19,6 +19,20 @@
     "densityGPerMl": 1.2,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 0,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 38758,
+      "cholesterolMg": 0,
+      "potassiumMg": 8,
+      "calciumMg": 24,
+      "ironMg": 0.33
+    },
+    "nutrientSource": "CNF 214 Salt, table",
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -41,6 +55,20 @@
     "densityGPerMl": 0.6,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 0,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 38758,
+      "cholesterolMg": 0,
+      "potassiumMg": 8,
+      "calciumMg": 24,
+      "ironMg": 0.33
+    },
+    "nutrientSource": "CNF 214 Salt, table",
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -63,6 +91,20 @@
     "densityGPerMl": 1.05,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 0,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 38758,
+      "cholesterolMg": 0,
+      "potassiumMg": 8,
+      "calciumMg": 24,
+      "ironMg": 0.33
+    },
+    "nutrientSource": "CNF 214 Salt, table",
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -85,6 +127,20 @@
     "densityGPerMl": 0.5,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 0,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 38758,
+      "cholesterolMg": 0,
+      "potassiumMg": 8,
+      "calciumMg": 24,
+      "ironMg": 0.33
+    },
+    "nutrientSource": "CNF 214 Salt, table",
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -117,6 +173,20 @@
     "densityGPerMl": 0.47,
     "proteinPer100g": 10.4,
     "fibrePer100g": 25.3,
+    "nutrients": {
+      "kcal": 251,
+      "fatG": 3.26,
+      "satFatG": 1.39,
+      "transFatG": 0,
+      "carbG": 63.95,
+      "sugarsG": 0.64,
+      "sodiumMg": 20,
+      "cholesterolMg": 0,
+      "potassiumMg": 1329,
+      "calciumMg": 443,
+      "ironMg": 9.71
+    },
+    "nutrientSource": "CNF 198 Spices, pepper, black",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -139,6 +209,20 @@
     "densityGPerMl": 0.58,
     "proteinPer100g": 10.4,
     "fibrePer100g": 25.3,
+    "nutrients": {
+      "kcal": 251,
+      "fatG": 3.26,
+      "satFatG": 1.39,
+      "transFatG": 0,
+      "carbG": 63.95,
+      "sugarsG": 0.64,
+      "sodiumMg": 20,
+      "cholesterolMg": 0,
+      "potassiumMg": 1329,
+      "calciumMg": 443,
+      "ironMg": 9.71
+    },
+    "nutrientSource": "CNF 198 Spices, pepper, black",
     "shelfLifeDays": {
       "cupboard": 1460
     },
@@ -161,6 +245,19 @@
     "densityGPerMl": 0.5,
     "proteinPer100g": 10.4,
     "fibrePer100g": 26.2,
+    "nutrients": {
+      "kcal": 296,
+      "fatG": 2.12,
+      "satFatG": 0.63,
+      "carbG": 68.61,
+      "sugarsG": 0,
+      "sodiumMg": 5,
+      "cholesterolMg": 0,
+      "potassiumMg": 73,
+      "calciumMg": 265,
+      "ironMg": 14.31
+    },
+    "nutrientSource": "CNF 200 spices, pepper, white; sugarsG: estimate: CNF and USDA list no sugars; herbs and spices used in small amounts",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -182,6 +279,20 @@
     "densityGPerMl": 0.63,
     "proteinPer100g": 16.6,
     "fibrePer100g": 9,
+    "nutrients": {
+      "kcal": 331,
+      "fatG": 0.73,
+      "satFatG": 0.25,
+      "transFatG": 0,
+      "carbG": 72.73,
+      "sugarsG": 2.43,
+      "sodiumMg": 60,
+      "cholesterolMg": 0,
+      "potassiumMg": 1193,
+      "calciumMg": 79,
+      "ironMg": 5.65
+    },
+    "nutrientSource": "CNF 188 Spices, garlic powder",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -204,6 +315,19 @@
     "densityGPerMl": 0.49,
     "proteinPer100g": 10.4,
     "fibrePer100g": 15.2,
+    "nutrients": {
+      "kcal": 342,
+      "fatG": 1.04,
+      "satFatG": 0.22,
+      "carbG": 79.12,
+      "sugarsG": 6.63,
+      "sodiumMg": 73,
+      "cholesterolMg": 0,
+      "potassiumMg": 985,
+      "calciumMg": 384,
+      "ironMg": 3.9
+    },
+    "nutrientSource": "CNF 194 Spices, onion powder",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -233,6 +357,19 @@
     "densityGPerMl": 0.34,
     "proteinPer100g": 8.9,
     "fibrePer100g": 9.2,
+    "nutrients": {
+      "kcal": 349,
+      "fatG": 0.46,
+      "satFatG": 0.08,
+      "carbG": 83.28,
+      "sugarsG": 37.41,
+      "sodiumMg": 21,
+      "cholesterolMg": 0,
+      "potassiumMg": 1622,
+      "calciumMg": 257,
+      "ironMg": 1.55
+    },
+    "nutrientSource": "CNF 2138 Onion, dehydrated flakes",
     "shelfLifeDays": {
       "cupboard": 730
     },
@@ -255,6 +392,20 @@
     "densityGPerMl": 0.46,
     "proteinPer100g": 14.1,
     "fibrePer100g": 34.9,
+    "nutrients": {
+      "kcal": 282,
+      "fatG": 12.89,
+      "satFatG": 2.14,
+      "transFatG": 0,
+      "carbG": 53.99,
+      "sugarsG": 10.34,
+      "sodiumMg": 68,
+      "cholesterolMg": 0,
+      "potassiumMg": 2280,
+      "calciumMg": 229,
+      "ironMg": 21.14
+    },
+    "nutrientSource": "CNF 196 Spices, paprika",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -277,6 +428,20 @@
     "densityGPerMl": 0.46,
     "proteinPer100g": 14.1,
     "fibrePer100g": 34.9,
+    "nutrients": {
+      "kcal": 282,
+      "fatG": 12.89,
+      "satFatG": 2.14,
+      "transFatG": 0,
+      "carbG": 53.99,
+      "sugarsG": 10.34,
+      "sodiumMg": 68,
+      "cholesterolMg": 0,
+      "potassiumMg": 2280,
+      "calciumMg": 229,
+      "ironMg": 21.14
+    },
+    "nutrientSource": "CNF 196 Spices, paprika",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -299,6 +464,20 @@
     "densityGPerMl": 0.54,
     "proteinPer100g": 13.5,
     "fibrePer100g": 34.8,
+    "nutrients": {
+      "kcal": 282,
+      "fatG": 14.28,
+      "satFatG": 2.46,
+      "transFatG": 0,
+      "carbG": 49.7,
+      "sugarsG": 7.19,
+      "sodiumMg": 2867,
+      "cholesterolMg": 0,
+      "potassiumMg": 1950,
+      "calciumMg": 330,
+      "ironMg": 17.3
+    },
+    "nutrientSource": "CNF 177 Spices, chili powder",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -321,6 +500,19 @@
     "densityGPerMl": 0.36,
     "proteinPer100g": 12,
     "fibrePer100g": 27.2,
+    "nutrients": {
+      "kcal": 318,
+      "fatG": 17.27,
+      "satFatG": 3.26,
+      "carbG": 56.63,
+      "sugarsG": 10.34,
+      "sodiumMg": 30,
+      "cholesterolMg": 0,
+      "potassiumMg": 2014,
+      "calciumMg": 148,
+      "ironMg": 7.8
+    },
+    "nutrientSource": "CNF 199 Spices, pepper, red or cayenne",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -352,6 +544,19 @@
     "densityGPerMl": 0.3,
     "proteinPer100g": 12,
     "fibrePer100g": 27.2,
+    "nutrients": {
+      "kcal": 318,
+      "fatG": 17.27,
+      "satFatG": 3.26,
+      "carbG": 56.63,
+      "sugarsG": 10.34,
+      "sodiumMg": 30,
+      "cholesterolMg": 0,
+      "potassiumMg": 2014,
+      "calciumMg": 148,
+      "ironMg": 7.8
+    },
+    "nutrientSource": "CNF 199 Spices, pepper, red or cayenne",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -374,6 +579,19 @@
     "densityGPerMl": 0.42,
     "proteinPer100g": 17.8,
     "fibrePer100g": 10.5,
+    "nutrients": {
+      "kcal": 375,
+      "fatG": 22.27,
+      "satFatG": 1.53,
+      "carbG": 44.24,
+      "sugarsG": 2.25,
+      "sodiumMg": 168,
+      "cholesterolMg": 0,
+      "potassiumMg": 1788,
+      "calciumMg": 931,
+      "ironMg": 66.36
+    },
+    "nutrientSource": "CNF 182 Spices, cumin seed",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -396,6 +614,19 @@
     "densityGPerMl": 0.42,
     "proteinPer100g": 17.8,
     "fibrePer100g": 10.5,
+    "nutrients": {
+      "kcal": 375,
+      "fatG": 22.27,
+      "satFatG": 1.53,
+      "carbG": 44.24,
+      "sugarsG": 2.25,
+      "sodiumMg": 168,
+      "cholesterolMg": 0,
+      "potassiumMg": 1788,
+      "calciumMg": 931,
+      "ironMg": 66.36
+    },
+    "nutrientSource": "CNF 182 Spices, cumin seed",
     "shelfLifeDays": {
       "cupboard": 1460
     },
@@ -417,6 +648,19 @@
     "densityGPerMl": 0.36,
     "proteinPer100g": 12.4,
     "fibrePer100g": 41.9,
+    "nutrients": {
+      "kcal": 298,
+      "fatG": 17.77,
+      "satFatG": 0.99,
+      "carbG": 54.99,
+      "sugarsG": 0,
+      "sodiumMg": 35,
+      "cholesterolMg": 0,
+      "potassiumMg": 1267,
+      "calciumMg": 709,
+      "ironMg": 16.32
+    },
+    "nutrientSource": "CNF 181 Spices, coriander seed (cilantro); sugarsG: estimate: CNF and USDA list no sugars; herbs and spices used in small amounts",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -439,6 +683,20 @@
     "densityGPerMl": 0.6,
     "proteinPer100g": 9.7,
     "fibrePer100g": 22.7,
+    "nutrients": {
+      "kcal": 312,
+      "fatG": 3.25,
+      "satFatG": 1.84,
+      "transFatG": 0.06,
+      "carbG": 67.14,
+      "sugarsG": 3.21,
+      "sodiumMg": 27,
+      "cholesterolMg": 0,
+      "potassiumMg": 2080,
+      "calciumMg": 168,
+      "ironMg": 55
+    },
+    "nutrientSource": "CNF 211 Spices, turmeric, ground",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -461,6 +719,20 @@
     "densityGPerMl": 0.36,
     "proteinPer100g": 9,
     "fibrePer100g": 14.1,
+    "nutrients": {
+      "kcal": 335,
+      "fatG": 4.24,
+      "satFatG": 2.6,
+      "transFatG": 0,
+      "carbG": 71.62,
+      "sugarsG": 3.39,
+      "sodiumMg": 27,
+      "cholesterolMg": 0,
+      "potassiumMg": 1320,
+      "calciumMg": 114,
+      "ironMg": 19.8
+    },
+    "nutrientSource": "CNF 189 Spices, ginger, ground",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -483,6 +755,20 @@
     "densityGPerMl": 0.53,
     "proteinPer100g": 4,
     "fibrePer100g": 53.1,
+    "nutrients": {
+      "kcal": 247,
+      "fatG": 1.24,
+      "satFatG": 0.34,
+      "transFatG": 0,
+      "carbG": 80.59,
+      "sugarsG": 2.17,
+      "sodiumMg": 10,
+      "cholesterolMg": 0,
+      "potassiumMg": 431,
+      "calciumMg": 1002,
+      "ironMg": 8.32
+    },
+    "nutrientSource": "CNF 178 Spices, cinnamon, ground",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -505,6 +791,20 @@
     "unitWeightG": 3,
     "proteinPer100g": 4,
     "fibrePer100g": 53.1,
+    "nutrients": {
+      "kcal": 247,
+      "fatG": 1.24,
+      "satFatG": 0.34,
+      "transFatG": 0,
+      "carbG": 80.59,
+      "sugarsG": 2.17,
+      "sodiumMg": 10,
+      "cholesterolMg": 0,
+      "potassiumMg": 431,
+      "calciumMg": 1002,
+      "ironMg": 8.32
+    },
+    "nutrientSource": "CNF 178 Spices, cinnamon, ground",
     "shelfLifeDays": {
       "cupboard": 1460
     },
@@ -526,6 +826,19 @@
     "densityGPerMl": 0.45,
     "proteinPer100g": 5.8,
     "fibrePer100g": 20.8,
+    "nutrients": {
+      "kcal": 525,
+      "fatG": 36.31,
+      "satFatG": 25.94,
+      "carbG": 49.29,
+      "sugarsG": 2.99,
+      "sodiumMg": 16,
+      "cholesterolMg": 0,
+      "potassiumMg": 350,
+      "calciumMg": 184,
+      "ironMg": 3.04
+    },
+    "nutrientSource": "CNF 193 Spices, nutmeg, ground",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -548,6 +861,20 @@
     "densityGPerMl": 0.43,
     "proteinPer100g": 6,
     "fibrePer100g": 33.9,
+    "nutrients": {
+      "kcal": 274,
+      "fatG": 13,
+      "satFatG": 3.95,
+      "transFatG": 0.25,
+      "carbG": 65.53,
+      "sugarsG": 2.38,
+      "sodiumMg": 277,
+      "cholesterolMg": 0,
+      "potassiumMg": 1020,
+      "calciumMg": 632,
+      "ironMg": 11.83
+    },
+    "nutrientSource": "CNF 179 Spices, cloves, ground",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -570,6 +897,20 @@
     "unitWeightG": 0.1,
     "proteinPer100g": 6,
     "fibrePer100g": 33.9,
+    "nutrients": {
+      "kcal": 274,
+      "fatG": 13,
+      "satFatG": 3.95,
+      "transFatG": 0.25,
+      "carbG": 65.53,
+      "sugarsG": 2.38,
+      "sodiumMg": 277,
+      "cholesterolMg": 0,
+      "potassiumMg": 1020,
+      "calciumMg": 632,
+      "ironMg": 11.83
+    },
+    "nutrientSource": "CNF 179 Spices, cloves, ground",
     "shelfLifeDays": {
       "cupboard": 1460
     },
@@ -591,6 +932,19 @@
     "densityGPerMl": 0.4,
     "proteinPer100g": 10.8,
     "fibrePer100g": 28,
+    "nutrients": {
+      "kcal": 312,
+      "fatG": 6.7,
+      "satFatG": 0.68,
+      "carbG": 68.47,
+      "sugarsG": 0,
+      "sodiumMg": 18,
+      "cholesterolMg": 0,
+      "potassiumMg": 1119,
+      "calciumMg": 383,
+      "ironMg": 13.97
+    },
+    "nutrientSource": "CNF 174 Spices, cardamom, ground; sugarsG: estimate: CNF and USDA list no sugars; herbs and spices used in small amounts",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -613,6 +967,19 @@
     "densityGPerMl": 0.39,
     "proteinPer100g": 6.1,
     "fibrePer100g": 21.6,
+    "nutrients": {
+      "kcal": 263,
+      "fatG": 8.69,
+      "satFatG": 2.55,
+      "carbG": 72.12,
+      "sugarsG": 0,
+      "sodiumMg": 77,
+      "cholesterolMg": 0,
+      "potassiumMg": 1044,
+      "calciumMg": 661,
+      "ironMg": 7.06
+    },
+    "nutrientSource": "CNF 169 Spices, allspice, ground; sugarsG: estimate: CNF and USDA list no sugars; herbs and spices used in small amounts",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -634,6 +1001,19 @@
     "densityGPerMl": 0.35,
     "proteinPer100g": 5.8,
     "fibrePer100g": 35,
+    "nutrients": {
+      "kcal": 342,
+      "fatG": 12.6,
+      "satFatG": 6.53,
+      "carbG": 69.28,
+      "sugarsG": 7.76,
+      "sodiumMg": 52,
+      "cholesterolMg": 0,
+      "potassiumMg": 663,
+      "calciumMg": 682,
+      "ironMg": 19.71
+    },
+    "nutrientSource": "CNF 203 Spices, pumpkin pie spice",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -656,6 +1036,20 @@
     "densityGPerMl": 0.2,
     "proteinPer100g": 9,
     "fibrePer100g": 42.5,
+    "nutrients": {
+      "kcal": 265,
+      "fatG": 4.28,
+      "satFatG": 1.55,
+      "transFatG": 0,
+      "carbG": 68.92,
+      "sugarsG": 4.09,
+      "sodiumMg": 25,
+      "cholesterolMg": 0,
+      "potassiumMg": 1260,
+      "calciumMg": 1597,
+      "ironMg": 36.8
+    },
+    "nutrientSource": "CNF 195 Spices, oregano, ground",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -678,6 +1072,20 @@
     "densityGPerMl": 0.14,
     "proteinPer100g": 23,
     "fibrePer100g": 37.7,
+    "nutrients": {
+      "kcal": 233,
+      "fatG": 4.07,
+      "satFatG": 2.16,
+      "transFatG": 0,
+      "carbG": 47.75,
+      "sugarsG": 1.71,
+      "sodiumMg": 76,
+      "cholesterolMg": 0,
+      "potassiumMg": 2630,
+      "calciumMg": 2240,
+      "ironMg": 89.8
+    },
+    "nutrientSource": "CNF 171 Spices, basil, dried",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -700,6 +1108,19 @@
     "densityGPerMl": 0.2,
     "proteinPer100g": 9.1,
     "fibrePer100g": 37,
+    "nutrients": {
+      "kcal": 276,
+      "fatG": 7.43,
+      "satFatG": 2.73,
+      "carbG": 63.94,
+      "sugarsG": 1.71,
+      "sodiumMg": 55,
+      "cholesterolMg": 0,
+      "potassiumMg": 814,
+      "calciumMg": 1890,
+      "ironMg": 123.6
+    },
+    "nutrientSource": "CNF 210 Spices, thyme, dried",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -722,6 +1143,19 @@
     "densityGPerMl": 0.25,
     "proteinPer100g": 4.9,
     "fibrePer100g": 42.6,
+    "nutrients": {
+      "kcal": 332,
+      "fatG": 15.22,
+      "satFatG": 7.37,
+      "carbG": 64.06,
+      "sugarsG": 0,
+      "sodiumMg": 50,
+      "cholesterolMg": 0,
+      "potassiumMg": 955,
+      "calciumMg": 1280,
+      "ironMg": 29.25
+    },
+    "nutrientSource": "CNF 204 Spices, rosemary, dried; sugarsG: estimate: CNF and USDA list no sugars; herbs and spices used in small amounts",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -743,6 +1177,20 @@
     "densityGPerMl": 0.1,
     "proteinPer100g": 26.6,
     "fibrePer100g": 26.7,
+    "nutrients": {
+      "kcal": 276,
+      "fatG": 4.43,
+      "satFatG": 1.38,
+      "transFatG": 0,
+      "carbG": 51.66,
+      "sugarsG": 7.27,
+      "sodiumMg": 452,
+      "cholesterolMg": 0,
+      "potassiumMg": 3805,
+      "calciumMg": 1468,
+      "ironMg": 97.86
+    },
+    "nutrientSource": "CNF 197 Spices, parsley, dried",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -764,6 +1212,19 @@
     "densityGPerMl": 0.2,
     "proteinPer100g": 20,
     "fibrePer100g": 13.6,
+    "nutrients": {
+      "kcal": 253,
+      "fatG": 4.36,
+      "satFatG": 0.23,
+      "carbG": 55.82,
+      "sugarsG": 0,
+      "sodiumMg": 208,
+      "cholesterolMg": 0,
+      "potassiumMg": 3308,
+      "calciumMg": 1784,
+      "ironMg": 48.78
+    },
+    "nutrientSource": "CNF 185 Spices, dill weed, dried; sugarsG: estimate: CNF and USDA list no sugars; herbs and spices used in small amounts",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -785,6 +1246,19 @@
     "densityGPerMl": 0.14,
     "proteinPer100g": 10.6,
     "fibrePer100g": 40.3,
+    "nutrients": {
+      "kcal": 315,
+      "fatG": 12.75,
+      "satFatG": 7.03,
+      "carbG": 60.73,
+      "sugarsG": 1.71,
+      "sodiumMg": 11,
+      "cholesterolMg": 0,
+      "potassiumMg": 1070,
+      "calciumMg": 1652,
+      "ironMg": 28.12
+    },
+    "nutrientSource": "CNF 206 Spices, sage, ground",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -805,6 +1279,19 @@
     "canonicalUnit": "count",
     "proteinPer100g": 7.6,
     "fibrePer100g": 26.3,
+    "nutrients": {
+      "kcal": 314,
+      "fatG": 8.36,
+      "satFatG": 2.28,
+      "carbG": 74.97,
+      "sugarsG": 0,
+      "sodiumMg": 23,
+      "cholesterolMg": 0,
+      "potassiumMg": 529,
+      "calciumMg": 834,
+      "ironMg": 43
+    },
+    "nutrientSource": "CNF 172 Spices, bay leaf; sugarsG: estimate: CNF and USDA list no sugars; herbs and spices used in small amounts",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -826,6 +1313,20 @@
     "densityGPerMl": 0.2,
     "proteinPer100g": 13,
     "fibrePer100g": 38,
+    "nutrients": {
+      "kcal": 265,
+      "fatG": 4.28,
+      "satFatG": 1.55,
+      "transFatG": 0,
+      "carbG": 68.92,
+      "sugarsG": 4.09,
+      "sodiumMg": 25,
+      "cholesterolMg": 0,
+      "potassiumMg": 1260,
+      "calciumMg": 1597,
+      "ironMg": 36.8
+    },
+    "nutrientSource": "CNF 195 Spices, oregano, ground",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -848,6 +1349,19 @@
     "densityGPerMl": 0.2,
     "proteinPer100g": 10,
     "fibrePer100g": 38,
+    "nutrients": {
+      "kcal": 276,
+      "fatG": 7.43,
+      "satFatG": 2.73,
+      "carbG": 63.94,
+      "sugarsG": 1.71,
+      "sodiumMg": 55,
+      "cholesterolMg": 0,
+      "potassiumMg": 814,
+      "calciumMg": 1890,
+      "ironMg": 123.6
+    },
+    "nutrientSource": "CNF 210 Spices, thyme, dried",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -869,6 +1383,19 @@
     "densityGPerMl": 0.3,
     "proteinPer100g": 9.6,
     "fibrePer100g": 11.3,
+    "nutrients": {
+      "kcal": 307,
+      "fatG": 7.53,
+      "satFatG": 3.29,
+      "carbG": 65.59,
+      "sugarsG": 1.8,
+      "sodiumMg": 27,
+      "cholesterolMg": 0,
+      "potassiumMg": 684,
+      "calciumMg": 996,
+      "ironMg": 35.3
+    },
+    "nutrientSource": "CNF 202 Spices, poultry seasoning",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -890,6 +1417,20 @@
     "densityGPerMl": 0.45,
     "proteinPer100g": 26,
     "fibrePer100g": 12.2,
+    "nutrients": {
+      "kcal": 508,
+      "fatG": 36.24,
+      "satFatG": 1.99,
+      "transFatG": 0,
+      "carbG": 28.09,
+      "sugarsG": 6.79,
+      "sodiumMg": 13,
+      "cholesterolMg": 0,
+      "potassiumMg": 738,
+      "calciumMg": 266,
+      "ironMg": 9.21
+    },
+    "nutrientSource": "CNF 192 Spices, mustard seed, yellow",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -912,6 +1453,20 @@
     "densityGPerMl": 0.42,
     "proteinPer100g": 14.3,
     "fibrePer100g": 33.2,
+    "nutrients": {
+      "kcal": 325,
+      "fatG": 14.01,
+      "satFatG": 1.65,
+      "transFatG": 0,
+      "carbG": 55.83,
+      "sugarsG": 2.76,
+      "sodiumMg": 52,
+      "cholesterolMg": 0,
+      "potassiumMg": 1170,
+      "calciumMg": 525,
+      "ironMg": 19.1
+    },
+    "nutrientSource": "CNF 183 Spices, curry powder",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -934,6 +1489,18 @@
     "densityGPerMl": 0.4,
     "proteinPer100g": 13,
     "fibrePer100g": 28,
+    "nutrients": {
+      "kcal": 380,
+      "fatG": 15,
+      "satFatG": 2,
+      "carbG": 52,
+      "sugarsG": 3,
+      "sodiumMg": 80,
+      "potassiumMg": 1400,
+      "calciumMg": 500,
+      "ironMg": 25
+    },
+    "nutrientSource": "estimate: no-salt blend of coriander, cumin, cardamom, cinnamon, clove, black pepper; weighted from CNF spice entries",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -955,6 +1522,15 @@
     "densityGPerMl": 0.55,
     "proteinPer100g": 9,
     "fibrePer100g": 10,
+    "nutrients": {
+      "kcal": 200,
+      "fatG": 5,
+      "satFatG": 0.8,
+      "carbG": 35,
+      "sugarsG": 3,
+      "sodiumMg": 15000
+    },
+    "nutrientSource": "estimate: salted Cajun blend (paprika, cayenne, garlic, onion, salt ~40%); Tony Chachere's/Club House labels",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -976,6 +1552,15 @@
     "densityGPerMl": 0.65,
     "proteinPer100g": 7,
     "fibrePer100g": 6,
+    "nutrients": {
+      "kcal": 180,
+      "fatG": 4,
+      "satFatG": 0.5,
+      "carbG": 30,
+      "sugarsG": 2,
+      "sodiumMg": 18000
+    },
+    "nutrientSource": "estimate: Club House Montreal Steak Spice label (~190 mg Na per 1 g; salt, garlic, pepper, coriander, dill, red pepper)",
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -998,6 +1583,20 @@
     "densityGPerMl": 0.55,
     "proteinPer100g": 6,
     "fibrePer100g": 8,
+    "nutrients": {
+      "kcal": 322,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 58,
+      "sugarsG": 10.83,
+      "sodiumMg": 7203,
+      "cholesterolMg": 0,
+      "potassiumMg": 1000,
+      "calciumMg": 0,
+      "ironMg": 7.2
+    },
+    "nutrientSource": "CNF 6312 Seasoning mix, taco, dry mix",
     "shelfLifeDays": {
       "cupboard": 730
     },
@@ -1020,6 +1619,15 @@
     "densityGPerMl": 0.55,
     "proteinPer100g": 10,
     "fibrePer100g": 9,
+    "nutrients": {
+      "kcal": 420,
+      "fatG": 30,
+      "satFatG": 4,
+      "carbG": 28,
+      "sugarsG": 2,
+      "sodiumMg": 9000
+    },
+    "nutrientSource": "estimate: Trader Joe's / Club House everything bagel seasoning labels (sesame, poppy, garlic, onion, salt ~9 g Na per 100 g)",
     "shelfLifeDays": {
       "cupboard": 730
     },
@@ -1041,6 +1649,18 @@
     "densityGPerMl": 0.45,
     "proteinPer100g": 10,
     "fibrePer100g": 25,
+    "nutrients": {
+      "kcal": 340,
+      "fatG": 10,
+      "satFatG": 2,
+      "carbG": 62,
+      "sugarsG": 3,
+      "sodiumMg": 50,
+      "potassiumMg": 1000,
+      "calciumMg": 700,
+      "ironMg": 15
+    },
+    "nutrientSource": "estimate: no-salt blend of star anise, clove, cinnamon, fennel, Sichuan pepper; weighted from CNF spice entries",
     "shelfLifeDays": {
       "cupboard": 1095
     },

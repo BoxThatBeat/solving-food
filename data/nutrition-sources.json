@@ -1,0 +1,2317 @@
+{
+  "1-milk": {
+    "cnf": 63,
+    "desc": "Milk, fluid, partly skimmed, 1% M.F."
+  },
+  "acorn-squash": {
+    "cnf": 2448,
+    "desc": "Squash, winter, acorn, raw",
+    "fill": {
+      "sugarsG": 2.2
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.) (winter squash, raw)"
+  },
+  "active-dry-yeast": {
+    "cnf": 4008,
+    "desc": "Leavening agent, yeast, baker's, active, dry"
+  },
+  "all-purpose-flour": {
+    "cnf": 4484,
+    "desc": "Grains, wheat flour, white, all purpose, enriched, calcium fortified",
+    "fill": {
+      "sugarsG": 0.27
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "almond": {
+    "cnf": 2534,
+    "desc": "Nuts, almonds, dried, unblanched, unroasted"
+  },
+  "almond-butter": {
+    "cnf": 2605,
+    "desc": "Nuts, almond butter, plain"
+  },
+  "almond-extract": {
+    "ref": "estimate: pure almond extract (~35% alcohol, McCormick label ~10 kcal/tsp); energy from alcohol only",
+    "values": {
+      "kcal": 250,
+      "fatG": 0,
+      "satFatG": 0,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 0
+    }
+  },
+  "almond-flour": {
+    "cnf": 2535,
+    "desc": "Nuts, almonds, dried, blanched, unroasted"
+  },
+  "almond-milk": {
+    "ref": "USDA FDC 2705409 Almond milk, unsweetened (FNDDS)",
+    "values": {
+      "kcal": 15,
+      "fatG": 1.22,
+      "satFatG": 0.1,
+      "transFatG": 0,
+      "carbG": 0.34,
+      "sugarsG": 0,
+      "sodiumMg": 60,
+      "cholesterolMg": 0,
+      "potassiumMg": 31,
+      "calciumMg": 173,
+      "ironMg": 0.29
+    }
+  },
+  "apple": {
+    "cnf": 1696,
+    "desc": "Apple, raw, with skin"
+  },
+  "apple-cider-vinegar": {
+    "cnf": 13,
+    "desc": "Vinegar, cider"
+  },
+  "apple-juice": {
+    "cnf": 1495,
+    "desc": "Apple juice, canned or bottled, without added vitamin C"
+  },
+  "arborio-rice": {
+    "cnf": 4474,
+    "desc": "Grains, rice, white, medium-grain, dry"
+  },
+  "arugula": {
+    "cnf": 2352,
+    "desc": "Arugula, raw"
+  },
+  "asparagus": {
+    "cnf": 1990,
+    "desc": "Asparagus, raw"
+  },
+  "avocado": {
+    "cnf": 1511,
+    "desc": "Avocado, raw, all commercial varieties"
+  },
+  "avocado-oil": {
+    "cnf": 450,
+    "desc": "Vegetable oil, avocado"
+  },
+  "baby-carrot": {
+    "cnf": 2353,
+    "desc": "Carrot, baby, raw"
+  },
+  "baby-potato": {
+    "cnf": 2505,
+    "desc": "Potato, flesh and skin, raw"
+  },
+  "baby-spinach": {
+    "cnf": 2213,
+    "desc": "Spinach, raw"
+  },
+  "bacon": {
+    "cnf": 1936,
+    "desc": "Pork, cured, bacon, raw"
+  },
+  "bagel": {
+    "cnf": 3671,
+    "desc": "Bagel, plain (with onion, poppy seed and/or sesame seed)"
+  },
+  "baguette": {
+    "cnf": 4063,
+    "desc": "Bread, French or Vienna (also sourdough)"
+  },
+  "baked-bean": {
+    "cnf": 3248,
+    "desc": "Beans, baked, canned, plain or vegetarian"
+  },
+  "baking-chocolate": {
+    "cnf": 4148,
+    "desc": "Candies, bars / chips, semisweet chocolate"
+  },
+  "baking-powder": {
+    "cnf": 4002,
+    "desc": "Leavening agent, baking powder, double acting, sodium, aluminium sulfate"
+  },
+  "baking-soda": {
+    "cnf": 4005,
+    "desc": "Leavening agent, baking soda"
+  },
+  "balsamic-vinaigrette": {
+    "ref": "estimate: typical commercial balsamic vinaigrette label (Kraft/Renée's: 30 mL ~ 70 kcal, 6 g fat, 3 g sugar, 250 mg Na)",
+    "values": {
+      "kcal": 230,
+      "fatG": 20,
+      "satFatG": 1.5,
+      "carbG": 12,
+      "sugarsG": 10,
+      "sodiumMg": 800
+    }
+  },
+  "balsamic-vinegar": {
+    "cnf": 6196,
+    "desc": "Vinegar, balsamic"
+  },
+  "banana": {
+    "cnf": 1704,
+    "desc": "Banana, raw"
+  },
+  "basmati-rice": {
+    "cnf": 4471,
+    "desc": "Grains, rice, white, long-grain, regular, dry"
+  },
+  "bay-leaf": {
+    "cnf": 172,
+    "desc": "Spices, bay leaf",
+    "fill": {
+      "sugarsG": 0
+    },
+    "fillSource": "estimate: CNF and USDA list no sugars; herbs and spices used in small amounts"
+  },
+  "bbq-sauce": {
+    "cnf": 1017,
+    "desc": "Sauce, barbecue, ready-to-serve"
+  },
+  "beef-broth": {
+    "cnf": 927,
+    "desc": "Soup, broth, beef, ready-to-serve"
+  },
+  "beef-roast": {
+    "cnf": 6026,
+    "desc": "Beef, hip, inside (top) round roast, boneless, lean and fat, 0mm (0\") trim, raw"
+  },
+  "beer": {
+    "cnf": 2943,
+    "desc": "Alcohol, beer, regular, (5% alcohol by volume)"
+  },
+  "beet": {
+    "cnf": 2500,
+    "desc": "Beets, raw"
+  },
+  "black-pepper": {
+    "cnf": 198,
+    "desc": "Spices, pepper, black"
+  },
+  "black-peppercorn": {
+    "cnf": 198,
+    "desc": "Spices, pepper, black"
+  },
+  "black-tea": {
+    "cnf": 2909,
+    "desc": "Tea, brewed"
+  },
+  "blackberry": {
+    "cnf": 1515,
+    "desc": "Blackberry, raw"
+  },
+  "blueberry": {
+    "cnf": 1705,
+    "desc": "Blueberry, raw"
+  },
+  "bok-choy": {
+    "cnf": 2038,
+    "desc": "Bok choy, pak-choi, raw"
+  },
+  "bone-in-chicken-thigh": {
+    "cnf": 850,
+    "desc": "Chicken, broiler, thigh, meat and skin, raw"
+  },
+  "boxed-macaroni-and-cheese": {
+    "cnf": 7140,
+    "desc": "Macaroni and cheese, box mix with cheese sauce, unprepared"
+  },
+  "bread-flour": {
+    "cnf": 4445,
+    "desc": "Grains, wheat flour, white, bread flour"
+  },
+  "breadcrumb": {
+    "cnf": 4069,
+    "desc": "Bread crumbs, dry, grated, plain"
+  },
+  "breaded-fish-fillet": {
+    "cnf": 3006,
+    "desc": "Fish, fish sticks, frozen, prepared"
+  },
+  "breakfast-cereal": {
+    "cnf": 1475,
+    "desc": "Cereal, ready to eat, Cheerios, General Mills"
+  },
+  "breakfast-sausage": {
+    "cnf": 1198,
+    "desc": "Sausage, breakfast links or rounds, pork, raw"
+  },
+  "brie-cheese": {
+    "cnf": 20,
+    "desc": "Cheese, brie"
+  },
+  "broccoli": {
+    "cnf": 2374,
+    "desc": "Broccoli, raw"
+  },
+  "brown-rice": {
+    "cnf": 4496,
+    "desc": "Grains, rice, brown, long-grain, dry"
+  },
+  "brown-sugar": {
+    "cnf": 4317,
+    "desc": "Sweets, sugar, brown"
+  },
+  "brownie-mix": {
+    "cnf": 3805,
+    "desc": "Cookie, brownie, regular, dry mix, unprepared",
+    "fill": {
+      "sugarsG": 47
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "brussels-sprout": {
+    "cnf": 2378,
+    "desc": "Brussels sprouts, raw"
+  },
+  "butter": {
+    "cnf": 118,
+    "desc": "Butter, regular"
+  },
+  "buttermilk": {
+    "cnf": 124,
+    "desc": "Milk, fluid, buttermilk, cultured, 1% M.F."
+  },
+  "butternut-squash": {
+    "cnf": 2451,
+    "desc": "Squash, winter, butternut, raw"
+  },
+  "cabbage": {
+    "cnf": 2361,
+    "desc": "Cabbage, raw"
+  },
+  "caesar-dressing": {
+    "cnf": 5515,
+    "desc": "Salad dressing, caesar dressing, regular"
+  },
+  "cajun-seasoning": {
+    "ref": "estimate: salted Cajun blend (paprika, cayenne, garlic, onion, salt ~40%); Tony Chachere's/Club House labels",
+    "values": {
+      "kcal": 200,
+      "fatG": 5,
+      "satFatG": 0.8,
+      "carbG": 35,
+      "sugarsG": 3,
+      "sodiumMg": 15000
+    }
+  },
+  "cake-and-pastry-flour": {
+    "cnf": 4446,
+    "desc": "Grains, wheat flour, white, cake flour"
+  },
+  "candy-cane-kiss": {
+    "cnf": 4155,
+    "desc": "Sweets, confectioner's coating / chips, white chocolate"
+  },
+  "canned-black-bean": {
+    "cnf": 3254,
+    "desc": "Beans, black turtle, mature seeds, canned, solids and liquid"
+  },
+  "canned-chickpea": {
+    "cnf": 7060,
+    "desc": "Chickpeas (garbanzo beans, bengal gram), canned, drained solids"
+  },
+  "canned-corn": {
+    "cnf": 2070,
+    "desc": "Corn, sweet, canned, brine pack, drained solids"
+  },
+  "canned-crushed-tomato": {
+    "cnf": 4736,
+    "desc": "Tomato, crushed, canned"
+  },
+  "canned-diced-tomato": {
+    "cnf": 2462,
+    "desc": "Tomato, red, ripe, canned, whole"
+  },
+  "canned-kidney-bean": {
+    "cnf": 3379,
+    "desc": "Beans, kidney, all types, canned, solids and liquid"
+  },
+  "canned-lentil": {
+    "cnf": 3411,
+    "desc": "Lentils, boiled, salted"
+  },
+  "canned-pumpkin": {
+    "cnf": 2192,
+    "desc": "Pumpkin, canned"
+  },
+  "canned-salmon": {
+    "cnf": 5965,
+    "desc": "Fish, salmon, pink, canned, drained solids with bone"
+  },
+  "canned-tuna": {
+    "cnf": 3081,
+    "desc": "Fish, tuna, light, canned in water, drained, salted"
+  },
+  "canned-white-bean": {
+    "cnf": 3276,
+    "desc": "Beans, white, canned, solids and liquid, no salt added",
+    "fill": {
+      "sugarsG": 0.3
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "canned-whole-tomato": {
+    "cnf": 2462,
+    "desc": "Tomato, red, ripe, canned, whole"
+  },
+  "canola-oil": {
+    "cnf": 451,
+    "desc": "Vegetable oil, canola"
+  },
+  "cantaloupe": {
+    "cnf": 1721,
+    "desc": "Melon, cantaloupe, raw"
+  },
+  "carrot": {
+    "cnf": 2380,
+    "desc": "Carrot, raw"
+  },
+  "cashew": {
+    "cnf": 5709,
+    "desc": "Nuts, cashew nuts, raw"
+  },
+  "cauliflower": {
+    "cnf": 2385,
+    "desc": "Cauliflower, raw"
+  },
+  "cauliflower-rice": {
+    "cnf": 2047,
+    "desc": "Cauliflower, frozen, unprepared"
+  },
+  "cavatappi-pasta": {
+    "cnf": 4506,
+    "desc": "Pasta, macaroni (elbow), enriched, dry"
+  },
+  "cayenne-pepper": {
+    "cnf": 199,
+    "desc": "Spices, pepper, red or cayenne"
+  },
+  "celery": {
+    "cnf": 2386,
+    "desc": "Celery, raw"
+  },
+  "cheddar-cheese": {
+    "cnf": 119,
+    "desc": "Cheese, cheddar"
+  },
+  "cheese-slice": {
+    "cnf": 7005,
+    "desc": "Cheese, processed product, cheddar, slices"
+  },
+  "cherry": {
+    "cnf": 1531,
+    "desc": "Cherry, sweet, raw"
+  },
+  "cherry-tomato": {
+    "cnf": 2460,
+    "desc": "Tomato, red, ripe, raw, year round average"
+  },
+  "chia-seed": {
+    "cnf": 2511,
+    "desc": "Seeds, chia seeds, dried",
+    "fill": {
+      "sugarsG": 0
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "chicken-bouillon-powder": {
+    "cnf": 972,
+    "desc": "Soup, broth, chicken, dehydrated"
+  },
+  "chicken-breast": {
+    "cnf": 841,
+    "desc": "Chicken, broiler, breast, skinless, boneless, meat, raw"
+  },
+  "chicken-broth": {
+    "cnf": 1052,
+    "desc": "Soup, broth, chicken, canned, condensed, water added"
+  },
+  "chicken-drumstick": {
+    "cnf": 844,
+    "desc": "Chicken, broiler, drumstick, meat and skin, raw"
+  },
+  "chicken-nugget": {
+    "cnf": 7034,
+    "desc": "Chicken nuggets, dark and white meat, pre-cooked, frozen, not heated"
+  },
+  "chicken-strip": {
+    "cnf": 6320,
+    "desc": "Chicken breast tenders, breaded, uncooked"
+  },
+  "chicken-thigh": {
+    "cnf": 853,
+    "desc": "Chicken, broiler, thigh, meat, raw"
+  },
+  "chicken-wing": {
+    "cnf": 626,
+    "desc": "Chicken, broiler, wing, meat and skin, raw"
+  },
+  "chili-powder": {
+    "cnf": 177,
+    "desc": "Spices, chili powder"
+  },
+  "chocolate-cake-mix": {
+    "cnf": 3757,
+    "desc": "Cake mix, chocolate (devil's food, fudge), regular, dry, unprepared"
+  },
+  "chocolate-chip": {
+    "cnf": 4148,
+    "desc": "Candies, bars / chips, semisweet chocolate"
+  },
+  "chocolate-kiss": {
+    "cnf": 4186,
+    "desc": "Candies, bars / chips, milk chocolate, plain"
+  },
+  "chocolate-milk": {
+    "cnf": 70,
+    "desc": "Milk, fluid, chocolate, partly skimmed, 2% M.F."
+  },
+  "cinnamon-stick": {
+    "cnf": 178,
+    "desc": "Spices, cinnamon, ground"
+  },
+  "clementine": {
+    "cnf": 1623,
+    "desc": "Tangerine (mandarin), raw"
+  },
+  "coarse-sea-salt": {
+    "cnf": 214,
+    "desc": "Salt, table"
+  },
+  "cocoa-powder": {
+    "cnf": 4223,
+    "desc": "Sweets, cocoa, powder, unsweetened"
+  },
+  "coconut-milk": {
+    "cnf": 2565,
+    "desc": "Nuts, coconut milk (liquid from grated meat and water), canned",
+    "fill": {
+      "sugarsG": 3.3
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "coconut-oil": {
+    "cnf": 420,
+    "desc": "Vegetable oil, coconut"
+  },
+  "cod-fillet": {
+    "cnf": 3194,
+    "desc": "Fish, cod (scrod), atlantic, raw"
+  },
+  "coffee-bean": {
+    "ref": "estimate: roasted whole coffee beans (literature composition ~13% fat, ~12% protein, carbs mostly fibre); grounds are not eaten when brewed",
+    "values": {
+      "kcal": 330,
+      "fatG": 13,
+      "satFatG": 5.5,
+      "transFatG": 0,
+      "carbG": 40,
+      "sugarsG": 0.5,
+      "sodiumMg": 5,
+      "cholesterolMg": 0,
+      "potassiumMg": 1800,
+      "calciumMg": 120,
+      "ironMg": 4
+    }
+  },
+  "coleslaw-mix": {
+    "cnf": 2361,
+    "desc": "Cabbage, raw"
+  },
+  "cooked-chicken": {
+    "cnf": 567,
+    "desc": "Chicken, broiler, meat only, roasted"
+  },
+  "cooked-ham": {
+    "cnf": 1887,
+    "desc": "Pork, cured, ham, boneless, mini ham-half, extra lean and regular, unheated"
+  },
+  "cooked-shrimp": {
+    "cnf": 3212,
+    "desc": "Crustaceans, shrimp, mixed species, boiled or steamed"
+  },
+  "cooking-spray": {
+    "cnf": 6465,
+    "desc": "Vegetable oil, cooking spray"
+  },
+  "corn-on-the-cob": {
+    "cnf": 2388,
+    "desc": "Corn, sweet, yellow, raw"
+  },
+  "corn-syrup": {
+    "cnf": 4323,
+    "desc": "Sweets, syrups, corn light"
+  },
+  "corn-tortilla": {
+    "cnf": 3997,
+    "desc": "Tortilla, ready-to-bake / fry, corn"
+  },
+  "cornmeal": {
+    "cnf": 4418,
+    "desc": "Grains, cornmeal (yellow), whole-grain"
+  },
+  "cornstarch": {
+    "cnf": 4419,
+    "desc": "Grains, cornstarch"
+  },
+  "cottage-cheese": {
+    "cnf": 120,
+    "desc": "Cheese, cottage, (2% M.F.)"
+  },
+  "couscous": {
+    "cnf": 4420,
+    "desc": "Grains, couscous, dry",
+    "fill": {
+      "sugarsG": 0.5
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "cracker": {
+    "cnf": 4072,
+    "desc": "Cracker, standard snack-type"
+  },
+  "cream-cheese": {
+    "cnf": 28,
+    "desc": "Cheese, cream"
+  },
+  "cream-of-tartar": {
+    "cnf": 4006,
+    "desc": "Leavening agent, cream of tartar"
+  },
+  "cremini-mushroom": {
+    "cnf": 4974,
+    "desc": "Mushroom, brown, Italian (crimini), raw"
+  },
+  "crescent-roll": {
+    "ref": "estimate: Pillsbury Original Crescent Rolls label (1 roll 28 g: 110 kcal, 6 g fat, 2.5 g sat, 12 g carb, 2 g sugars, 220 mg sodium) scaled to 100 g",
+    "values": {
+      "kcal": 393,
+      "fatG": 21.4,
+      "satFatG": 8.9,
+      "transFatG": 0,
+      "carbG": 42.9,
+      "sugarsG": 7.1,
+      "sodiumMg": 786,
+      "cholesterolMg": 0
+    }
+  },
+  "croissant": {
+    "cnf": 3882,
+    "desc": "Croissant, butter, commercial"
+  },
+  "crunchy-peanut-butter": {
+    "cnf": 3309,
+    "desc": "Peanut butter, chunk type, fat, sugar and salt added"
+  },
+  "cucumber": {
+    "cnf": 2363,
+    "desc": "Cucumber, raw"
+  },
+  "cumin-seed": {
+    "cnf": 182,
+    "desc": "Spices, cumin seed"
+  },
+  "curry-powder": {
+    "cnf": 183,
+    "desc": "Spices, curry powder"
+  },
+  "dark-chocolate-chip": {
+    "cnf": 6671,
+    "desc": "Candies, chocolate, dark, 60-69% cacao solids"
+  },
+  "deli-turkey": {
+    "cnf": 1172,
+    "desc": "Deli-meat, turkey breast, cooked, sliced"
+  },
+  "dijon-mustard": {
+    "cnf": 1135,
+    "desc": "Sauce, mustard, brown, ready-to-serve",
+    "fill": {
+      "sugarsG": 1
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "dill-pickle": {
+    "cnf": 2495,
+    "desc": "Pickles, cucumber, dill (includes Kosher and Polish)"
+  },
+  "dinner-roll": {
+    "cnf": 4073,
+    "desc": "Roll, dinner, plain (also brown and serve), commercial"
+  },
+  "dried-basil": {
+    "cnf": 171,
+    "desc": "Spices, basil, dried"
+  },
+  "dried-cranberry": {
+    "cnf": 5390,
+    "desc": "Cranberry, dried, sweetened"
+  },
+  "dried-dill": {
+    "cnf": 185,
+    "desc": "Spices, dill weed, dried",
+    "fill": {
+      "sugarsG": 0
+    },
+    "fillSource": "estimate: CNF and USDA list no sugars; herbs and spices used in small amounts"
+  },
+  "dried-green-lentil": {
+    "cnf": 3392,
+    "desc": "Lentils, raw"
+  },
+  "dried-oregano": {
+    "cnf": 195,
+    "desc": "Spices, oregano, ground"
+  },
+  "dried-parsley": {
+    "cnf": 197,
+    "desc": "Spices, parsley, dried"
+  },
+  "dried-red-lentil": {
+    "cnf": 4869,
+    "desc": "Lentils, pink, raw",
+    "fill": {
+      "sugarsG": 2
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "dried-rosemary": {
+    "cnf": 204,
+    "desc": "Spices, rosemary, dried",
+    "fill": {
+      "sugarsG": 0
+    },
+    "fillSource": "estimate: CNF and USDA list no sugars; herbs and spices used in small amounts"
+  },
+  "dried-thyme": {
+    "cnf": 210,
+    "desc": "Spices, thyme, dried"
+  },
+  "dry-mustard": {
+    "cnf": 192,
+    "desc": "Spices, mustard seed, yellow"
+  },
+  "edamame": {
+    "cnf": 6217,
+    "desc": "Soybeans, green (edamame), frozen, unprepared",
+    "fill": {
+      "satFatG": 0.62
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "egg": {
+    "cnf": 125,
+    "desc": "Egg, chicken, whole, fresh or frozen, raw"
+  },
+  "egg-noodle": {
+    "cnf": 4512,
+    "desc": "Pasta, egg noodles, enriched, dry"
+  },
+  "egg-white": {
+    "cnf": 126,
+    "desc": "Egg, chicken, white, fresh or frozen, raw"
+  },
+  "eggplant": {
+    "cnf": 2088,
+    "desc": "Eggplant (aubergine, brinjal), raw"
+  },
+  "elbow-macaroni": {
+    "cnf": 4506,
+    "desc": "Pasta, macaroni (elbow), enriched, dry"
+  },
+  "english-cucumber": {
+    "cnf": 2363,
+    "desc": "Cucumber, raw"
+  },
+  "english-muffin": {
+    "cnf": 3900,
+    "desc": "English muffin, plain (also sourdough)"
+  },
+  "evaporated-milk": {
+    "cnf": 140,
+    "desc": "Milk, evaporated, whole, canned, undiluted, 7.8% M.F."
+  },
+  "everything-bagel-seasoning": {
+    "ref": "estimate: Trader Joe's / Club House everything bagel seasoning labels (sesame, poppy, garlic, onion, salt ~9 g Na per 100 g)",
+    "values": {
+      "kcal": 420,
+      "fatG": 30,
+      "satFatG": 4,
+      "carbG": 28,
+      "sugarsG": 2,
+      "sodiumMg": 9000
+    }
+  },
+  "extra-lean-ground-beef": {
+    "cnf": 4996,
+    "desc": "Beef, ground, extra lean, raw"
+  },
+  "farfalle": {
+    "cnf": 4506,
+    "desc": "Pasta, macaroni (elbow), enriched, dry"
+  },
+  "feta-cheese": {
+    "cnf": 108,
+    "desc": "Cheese, feta"
+  },
+  "fettuccine": {
+    "cnf": 4515,
+    "desc": "Pasta, spaghetti, enriched, dry"
+  },
+  "firm-tofu": {
+    "ref": "USDA FDC 172475 Tofu, raw, firm, prepared with calcium sulfate (sugars estimated from 172476)",
+    "values": {
+      "kcal": 144,
+      "fatG": 8.72,
+      "satFatG": 1.26,
+      "transFatG": 0,
+      "carbG": 2.78,
+      "sugarsG": 0.6,
+      "sodiumMg": 14,
+      "cholesterolMg": 0,
+      "potassiumMg": 237,
+      "calciumMg": 683,
+      "ironMg": 2.66
+    }
+  },
+  "fish-sauce": {
+    "cnf": 4731,
+    "desc": "Sauce, fish, ready-to-serve"
+  },
+  "fish-stick": {
+    "cnf": 3006,
+    "desc": "Fish, fish sticks, frozen, prepared"
+  },
+  "five-spice-powder": {
+    "ref": "estimate: no-salt blend of star anise, clove, cinnamon, fennel, Sichuan pepper; weighted from CNF spice entries",
+    "values": {
+      "kcal": 340,
+      "fatG": 10,
+      "satFatG": 2,
+      "carbG": 62,
+      "sugarsG": 3,
+      "sodiumMg": 50,
+      "potassiumMg": 1000,
+      "calciumMg": 700,
+      "ironMg": 15
+    }
+  },
+  "flaky-sea-salt": {
+    "cnf": 214,
+    "desc": "Salt, table"
+  },
+  "flank-steak": {
+    "cnf": 6020,
+    "desc": "Beef, flank, flank steak, boneless, lean and fat, 0mm (0\") trim, raw"
+  },
+  "flour-tortilla": {
+    "cnf": 4049,
+    "desc": "Tortilla, ready-to-bake / fry, flour",
+    "fill": {
+      "sugarsG": 2.6
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "french-fry": {
+    "cnf": 2434,
+    "desc": "Potato, french-fried, frozen, unprepared",
+    "fill": {
+      "sugarsG": 0.2
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "fresh-basil": {
+    "cnf": 212,
+    "desc": "Basil, fresh"
+  },
+  "fresh-chive": {
+    "cnf": 2059,
+    "desc": "Chives, raw"
+  },
+  "fresh-cilantro": {
+    "cnf": 2067,
+    "desc": "Coriander (cilantro), raw"
+  },
+  "fresh-dill": {
+    "cnf": 213,
+    "desc": "Spices, dill weed, fresh",
+    "fill": {
+      "sugarsG": 0
+    },
+    "fillSource": "estimate: CNF and USDA list no sugars; herbs and spices used in small amounts"
+  },
+  "fresh-ginger": {
+    "cnf": 2091,
+    "desc": "Ginger root, raw"
+  },
+  "fresh-herb": {
+    "cnf": 2405,
+    "desc": "Parsley, fresh"
+  },
+  "fresh-mint": {
+    "cnf": 4725,
+    "desc": "Spices, spearmint, fresh",
+    "fill": {
+      "sugarsG": 0
+    },
+    "fillSource": "estimate: CNF and USDA list no sugars; herbs and spices used in small amounts"
+  },
+  "fresh-mozzarella": {
+    "cnf": 110,
+    "desc": "Cheese, mozzarella, (52% water, 22.5% M.F.)"
+  },
+  "fresh-oregano": {
+    "ref": "estimate: no fresh oregano in CNF or USDA SR; typical fresh leafy herb (between CNF fresh basil/dill and fresh thyme)",
+    "values": {
+      "kcal": 50,
+      "fatG": 1,
+      "satFatG": 0.2,
+      "transFatG": 0,
+      "carbG": 10,
+      "sugarsG": 0.5,
+      "sodiumMg": 10,
+      "cholesterolMg": 0,
+      "potassiumMg": 500,
+      "calciumMg": 300,
+      "ironMg": 6
+    }
+  },
+  "fresh-parsley": {
+    "cnf": 2405,
+    "desc": "Parsley, fresh"
+  },
+  "fresh-rosemary": {
+    "cnf": 4723,
+    "desc": "Spices, rosemary, fresh",
+    "fill": {
+      "sugarsG": 0
+    },
+    "fillSource": "estimate: CNF and USDA list no sugars; herbs and spices used in small amounts"
+  },
+  "fresh-thyme": {
+    "cnf": 215,
+    "desc": "Spices, thyme, fresh",
+    "fill": {
+      "sugarsG": 0
+    },
+    "fillSource": "estimate: CNF and USDA list no sugars; herbs and spices used in small amounts"
+  },
+  "frozen-blueberry": {
+    "cnf": 1706,
+    "desc": "Blueberry, frozen, unsweetened"
+  },
+  "frozen-broccoli": {
+    "cnf": 2376,
+    "desc": "Broccoli, frozen, chopped, unprepared"
+  },
+  "frozen-burger-patty": {
+    "cnf": 2786,
+    "desc": "Beef, ground, regular, raw"
+  },
+  "frozen-cauliflower": {
+    "cnf": 2047,
+    "desc": "Cauliflower, frozen, unprepared"
+  },
+  "frozen-corn": {
+    "cnf": 2391,
+    "desc": "Corn, sweet, yellow, frozen, kernels cut off the cob, unprepared"
+  },
+  "frozen-mango": {
+    "cnf": 1603,
+    "desc": "Mango, raw"
+  },
+  "frozen-meatball": {
+    "cnf": 7424,
+    "desc": "Meatball, Italian style, frozen"
+  },
+  "frozen-mixed-berry": {
+    "ref": "estimate: mean of CNF 1706 blueberry, 1750 strawberry, 7426 raspberry (all frozen, unsweetened)",
+    "values": {
+      "kcal": 46,
+      "fatG": 0.47,
+      "satFatG": 0.03,
+      "carbG": 11.08,
+      "sugarsG": 5.81,
+      "sodiumMg": 1.33,
+      "cholesterolMg": 0,
+      "potassiumMg": 117.67,
+      "calciumMg": 16.33,
+      "ironMg": 0.54
+    }
+  },
+  "frozen-mixed-vegetable": {
+    "cnf": 2271,
+    "desc": "Vegetables, mixed, frozen, unprepared",
+    "fill": {
+      "sugarsG": 3.1
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "frozen-pea": {
+    "cnf": 2151,
+    "desc": "Peas, green, frozen, unprepared"
+  },
+  "frozen-pizza": {
+    "cnf": 5860,
+    "desc": "Fast foods, pizza, cheese, regular crust, frozen, cooked"
+  },
+  "frozen-raspberry": {
+    "cnf": 7426,
+    "desc": "Raspberry, frozen, unsweetened"
+  },
+  "frozen-spinach": {
+    "cnf": 2216,
+    "desc": "Spinach, frozen, unprepared"
+  },
+  "frozen-stir-fry-vegetable": {
+    "cnf": 6612,
+    "desc": "Vegetables, asian mix, frozen, boiled, drained (broccoli, green beans, mini corn, snow peas, red pepper)"
+  },
+  "frozen-strawberry": {
+    "cnf": 1750,
+    "desc": "Strawberry, frozen, unsweetened"
+  },
+  "frozen-waffle": {
+    "cnf": 3998,
+    "desc": "Waffle, plain, frozen, ready-to-heat"
+  },
+  "garam-masala": {
+    "ref": "estimate: no-salt blend of coriander, cumin, cardamom, cinnamon, clove, black pepper; weighted from CNF spice entries",
+    "values": {
+      "kcal": 380,
+      "fatG": 15,
+      "satFatG": 2,
+      "carbG": 52,
+      "sugarsG": 3,
+      "sodiumMg": 80,
+      "potassiumMg": 1400,
+      "calciumMg": 500,
+      "ironMg": 25
+    }
+  },
+  "garlic": {
+    "cnf": 2394,
+    "desc": "Garlic, raw"
+  },
+  "garlic-bread": {
+    "cnf": 7087,
+    "desc": "Bread, garlic"
+  },
+  "garlic-powder": {
+    "cnf": 188,
+    "desc": "Spices, garlic powder"
+  },
+  "ginger-ale": {
+    "cnf": 2855,
+    "desc": "Carbonated drinks, ginger ale"
+  },
+  "goat-cheese": {
+    "cnf": 98,
+    "desc": "Cheese, goat, soft, (more than 55% water, 21% M.F.)"
+  },
+  "graham-cracker-crumb": {
+    "cnf": 3826,
+    "desc": "Cookie, graham cracker, plain or honey (includes cinnamon)"
+  },
+  "granny-smith-apple": {
+    "cnf": 1696,
+    "desc": "Apple, raw, with skin"
+  },
+  "granola": {
+    "cnf": 1334,
+    "desc": "Cereal, ready to eat, Granola: with almonds, Rogers"
+  },
+  "grape": {
+    "cnf": 1718,
+    "desc": "Grape, red or green (European type, such as Thompson seedless), adherent skin, raw"
+  },
+  "grape-tomato": {
+    "cnf": 2460,
+    "desc": "Tomato, red, ripe, raw, year round average"
+  },
+  "grapefruit": {
+    "cnf": 1714,
+    "desc": "Grapefruit, pink, red or white, all areas, raw"
+  },
+  "greek-yogurt": {
+    "cnf": 6979,
+    "desc": "Yogourt, Greek style, plain, fat free (0-0.5% M.F.)"
+  },
+  "green-bean": {
+    "cnf": 2370,
+    "desc": "Beans, snap (Italian, green or yellow), raw"
+  },
+  "green-bell-pepper": {
+    "cnf": 2413,
+    "desc": "Pepper, sweet, green, raw"
+  },
+  "green-leaf-lettuce": {
+    "cnf": 2117,
+    "desc": "Lettuce, looseleaf"
+  },
+  "green-onion": {
+    "cnf": 2144,
+    "desc": "Onion, spring (green) or scallion (includes tops and bulb), raw"
+  },
+  "green-tea": {
+    "cnf": 2909,
+    "desc": "Tea, brewed"
+  },
+  "ground-allspice": {
+    "cnf": 169,
+    "desc": "Spices, allspice, ground",
+    "fill": {
+      "sugarsG": 0
+    },
+    "fillSource": "estimate: CNF and USDA list no sugars; herbs and spices used in small amounts"
+  },
+  "ground-cardamom": {
+    "cnf": 174,
+    "desc": "Spices, cardamom, ground",
+    "fill": {
+      "sugarsG": 0
+    },
+    "fillSource": "estimate: CNF and USDA list no sugars; herbs and spices used in small amounts"
+  },
+  "ground-chicken": {
+    "cnf": 918,
+    "desc": "Chicken, ground, lean, raw"
+  },
+  "ground-cinnamon": {
+    "cnf": 178,
+    "desc": "Spices, cinnamon, ground"
+  },
+  "ground-clove": {
+    "cnf": 179,
+    "desc": "Spices, cloves, ground"
+  },
+  "ground-coffee": {
+    "ref": "estimate: roasted ground coffee, dry grounds (literature composition ~13% fat, ~12% protein, carbs mostly fibre); grounds are not eaten when brewed",
+    "values": {
+      "kcal": 330,
+      "fatG": 13,
+      "satFatG": 5.5,
+      "transFatG": 0,
+      "carbG": 40,
+      "sugarsG": 0.5,
+      "sodiumMg": 5,
+      "cholesterolMg": 0,
+      "potassiumMg": 1800,
+      "calciumMg": 120,
+      "ironMg": 4
+    }
+  },
+  "ground-coriander": {
+    "cnf": 181,
+    "desc": "Spices, coriander seed (cilantro)",
+    "fill": {
+      "sugarsG": 0
+    },
+    "fillSource": "estimate: CNF and USDA list no sugars; herbs and spices used in small amounts"
+  },
+  "ground-cumin": {
+    "cnf": 182,
+    "desc": "Spices, cumin seed"
+  },
+  "ground-flaxseed": {
+    "cnf": 4528,
+    "desc": "Seeds, flaxseed (linseed), whole and ground"
+  },
+  "ground-ginger": {
+    "cnf": 189,
+    "desc": "Spices, ginger, ground"
+  },
+  "ground-lamb": {
+    "cnf": 3639,
+    "desc": "Lamb, Canadian, ground, raw"
+  },
+  "ground-nutmeg": {
+    "cnf": 193,
+    "desc": "Spices, nutmeg, ground"
+  },
+  "ground-pork": {
+    "cnf": 6121,
+    "desc": "Pork, ground, medium, raw"
+  },
+  "ground-sage": {
+    "cnf": 206,
+    "desc": "Spices, sage, ground"
+  },
+  "ground-turkey": {
+    "cnf": 815,
+    "desc": "Turkey, all classes, ground, raw"
+  },
+  "ground-turmeric": {
+    "cnf": 211,
+    "desc": "Spices, turmeric, ground"
+  },
+  "haddock-fillet": {
+    "cnf": 3198,
+    "desc": "Fish, haddock, raw"
+  },
+  "half-and-half": {
+    "cnf": 150,
+    "desc": "Cream, cereal (half and half), 10% M.F."
+  },
+  "halibut-fillet": {
+    "cnf": 3200,
+    "desc": "Fish, halibut, Atlantic or Pacific, raw"
+  },
+  "hamburger-bun": {
+    "cnf": 3985,
+    "desc": "Roll, hamburger / hot dog, plain"
+  },
+  "hash-brown": {
+    "cnf": 2430,
+    "desc": "Potato, hashed brown, frozen, plain, unprepared",
+    "fill": {
+      "sugarsG": 0.6
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "hazelnut-spread": {
+    "cnf": 5736,
+    "desc": "Sweets, topping, chocolate flavour hazelnut spread"
+  },
+  "hemp-heart": {
+    "cnf": 7568,
+    "desc": "Seeds, hemp seeds, hulled"
+  },
+  "herbal-tea": {
+    "cnf": 2916,
+    "desc": "Tea, brewed, herb"
+  },
+  "herbe-de-provence": {
+    "cnf": 210,
+    "desc": "Spices, thyme, dried"
+  },
+  "hoisin-sauce": {
+    "cnf": 4729,
+    "desc": "Sauce, hoisin, ready-to-serve"
+  },
+  "honey": {
+    "cnf": 4294,
+    "desc": "Sweets, honey, strained or extracted"
+  },
+  "honeydew-melon": {
+    "cnf": 1605,
+    "desc": "Melon, honeydew, raw"
+  },
+  "horseradish": {
+    "cnf": 4891,
+    "desc": "Horseradish, prepared"
+  },
+  "hot-dog": {
+    "cnf": 5705,
+    "desc": "Wiener (frankfurter), regular, mixed meats"
+  },
+  "hot-dog-bun": {
+    "cnf": 3985,
+    "desc": "Roll, hamburger / hot dog, plain"
+  },
+  "hot-sauce": {
+    "cnf": 1029,
+    "desc": "Sauce, pepper or hot, ready-to-serve"
+  },
+  "hummus": {
+    "cnf": 4870,
+    "desc": "Hummus, commercial",
+    "fill": {
+      "sugarsG": 0.3
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "ice-cream": {
+    "cnf": 4163,
+    "desc": "Dessert, frozen, ice cream, vanilla, 11% M.F."
+  },
+  "iceberg-lettuce": {
+    "cnf": 2398,
+    "desc": "Lettuce, iceberg"
+  },
+  "icing-sugar": {
+    "cnf": 4319,
+    "desc": "Sweets, sugars, icing (powdered)"
+  },
+  "instant-coffee": {
+    "cnf": 2874,
+    "desc": "Coffee, instant, regular, powder"
+  },
+  "instant-yeast": {
+    "cnf": 4008,
+    "desc": "Leavening agent, yeast, baker's, active, dry"
+  },
+  "italian-dressing": {
+    "cnf": 532,
+    "desc": "Salad dressing, italian, commercial, regular"
+  },
+  "italian-sausage": {
+    "cnf": 1152,
+    "desc": "Sausage, Italian, pork, raw"
+  },
+  "italian-seasoning": {
+    "cnf": 195,
+    "desc": "Spices, oregano, ground"
+  },
+  "jalapeno": {
+    "cnf": 4860,
+    "desc": "Pepper, jalapeno, raw"
+  },
+  "jasmine-rice": {
+    "cnf": 4471,
+    "desc": "Grains, rice, white, long-grain, regular, dry"
+  },
+  "kale": {
+    "cnf": 2395,
+    "desc": "Kale, raw"
+  },
+  "ketchup": {
+    "cnf": 2494,
+    "desc": "Tomato ketchup (catsup)"
+  },
+  "kiwi": {
+    "cnf": 1585,
+    "desc": "Kiwi fruit, raw"
+  },
+  "kosher-salt": {
+    "cnf": 214,
+    "desc": "Salt, table"
+  },
+  "large-shrimp": {
+    "cnf": 3211,
+    "desc": "Crustaceans, shrimp, mixed species, raw"
+  },
+  "lasagna-noodle": {
+    "cnf": 4515,
+    "desc": "Pasta, spaghetti, enriched, dry"
+  },
+  "lean-ground-beef": {
+    "cnf": 2683,
+    "desc": "Beef, ground, lean, raw"
+  },
+  "leek": {
+    "cnf": 2396,
+    "desc": "Leeks (bulb and lower-leaf portion), raw"
+  },
+  "lemon": {
+    "cnf": 1587,
+    "desc": "Lemon, raw, without peel"
+  },
+  "lemon-juice": {
+    "cnf": 1589,
+    "desc": "Lemon juice, raw"
+  },
+  "lemon-zest": {
+    "cnf": 1592,
+    "desc": "Lemon peel, raw"
+  },
+  "lime": {
+    "cnf": 1593,
+    "desc": "Lime, raw"
+  },
+  "lime-juice": {
+    "cnf": 1594,
+    "desc": "Lime juice, raw"
+  },
+  "lime-zest": {
+    "cnf": 1592,
+    "desc": "Lemon peel, raw"
+  },
+  "linguine": {
+    "cnf": 4515,
+    "desc": "Pasta, spaghetti, enriched, dry"
+  },
+  "mango": {
+    "cnf": 1603,
+    "desc": "Mango, raw"
+  },
+  "maple-syrup": {
+    "cnf": 6175,
+    "desc": "sweets, syrups, maple, prepackaged"
+  },
+  "marble-cheese": {
+    "cnf": 24,
+    "desc": "Cheese, colby"
+  },
+  "margarine": {
+    "cnf": 7463,
+    "desc": "Margarine, tub, non-hydrogenated, canola oil (includes some sunflower oil)"
+  },
+  "marshmallow": {
+    "cnf": 4183,
+    "desc": "Candies, marshmallow"
+  },
+  "mayonnaise": {
+    "cnf": 531,
+    "desc": "Salad dressing, mayonnaise, commercial, regular"
+  },
+  "medium-ground-beef": {
+    "cnf": 2690,
+    "desc": "Beef, ground, medium, raw"
+  },
+  "medjool-date": {
+    "cnf": 5401,
+    "desc": "Date, medjool",
+    "fill": {
+      "satFatG": 0
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "milk": {
+    "cnf": 61,
+    "desc": "Milk, fluid, partly skimmed, 2% M.F."
+  },
+  "milk-chocolate-chip": {
+    "cnf": 4186,
+    "desc": "Candies, bars / chips, milk chocolate, plain"
+  },
+  "mini-chocolate-chip": {
+    "cnf": 4148,
+    "desc": "Candies, bars / chips, semisweet chocolate"
+  },
+  "mini-cucumber": {
+    "cnf": 2363,
+    "desc": "Cucumber, raw"
+  },
+  "mini-sweet-pepper": {
+    "cnf": 2484,
+    "desc": "Pepper, sweet, red, raw"
+  },
+  "molasses": {
+    "cnf": 4299,
+    "desc": "Sweets, fancy molasses"
+  },
+  "monterey-jack-cheese": {
+    "cnf": 34,
+    "desc": "Cheese, monterey"
+  },
+  "montreal-steak-spice": {
+    "ref": "estimate: Club House Montreal Steak Spice label (~190 mg Na per 1 g; salt, garlic, pepper, coriander, dill, red pepper)",
+    "values": {
+      "kcal": 180,
+      "fatG": 4,
+      "satFatG": 0.5,
+      "carbG": 30,
+      "sugarsG": 2,
+      "sodiumMg": 18000
+    }
+  },
+  "mozzarella-cheese": {
+    "cnf": 110,
+    "desc": "Cheese, mozzarella, (52% water, 22.5% M.F.)"
+  },
+  "multigrain-bread": {
+    "cnf": 3702,
+    "desc": "Bread, multigrain, commercial"
+  },
+  "mushroom": {
+    "cnf": 2399,
+    "desc": "Mushroom, white, raw"
+  },
+  "mussel": {
+    "cnf": 3115,
+    "desc": "Mollusks, mussel, blue, raw"
+  },
+  "naan": {
+    "cnf": 6606,
+    "desc": "Indian, bread, naan"
+  },
+  "napa-cabbage": {
+    "cnf": 6304,
+    "desc": "Cabbage, napa, raw"
+  },
+  "nectarine": {
+    "cnf": 1611,
+    "desc": "Nectarine, raw"
+  },
+  "oat-flour": {
+    "cnf": 6275,
+    "desc": "Grains, oat flour, whole-grain"
+  },
+  "oat-milk": {
+    "ref": "USDA FDC 2705412 Oat milk (FNDDS); sugars from typical label (Oatly Original ~4 g/100 ml)",
+    "values": {
+      "kcal": 45,
+      "fatG": 2.33,
+      "satFatG": 0.19,
+      "carbG": 5.37,
+      "sugarsG": 4,
+      "sodiumMg": 43,
+      "cholesterolMg": 0,
+      "potassiumMg": 18,
+      "calciumMg": 155,
+      "ironMg": 0.21
+    }
+  },
+  "old-cheddar-cheese": {
+    "cnf": 119,
+    "desc": "Cheese, cheddar"
+  },
+  "olive-oil": {
+    "cnf": 422,
+    "desc": "Vegetable oil, olive"
+  },
+  "onion": {
+    "cnf": 2401,
+    "desc": "Onion, raw"
+  },
+  "onion-flake": {
+    "cnf": 2138,
+    "desc": "Onion, dehydrated flakes"
+  },
+  "onion-powder": {
+    "cnf": 194,
+    "desc": "Spices, onion powder"
+  },
+  "onion-ring": {
+    "cnf": 2403,
+    "desc": "Onion rings, breaded, par-fried, frozen, unprepared",
+    "fill": {
+      "sugarsG": 4
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "orange": {
+    "cnf": 1722,
+    "desc": "Orange, all commercial varieties, raw"
+  },
+  "orange-bell-pepper": {
+    "cnf": 2344,
+    "desc": "Pepper, sweet, yellow, raw",
+    "fill": {
+      "sugarsG": 4.2
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.) (red sweet pepper)"
+  },
+  "orange-juice": {
+    "cnf": 1620,
+    "desc": "Orange juice, chilled, includes from concentrate"
+  },
+  "orzo": {
+    "cnf": 4506,
+    "desc": "Pasta, macaroni (elbow), enriched, dry"
+  },
+  "oyster-sauce": {
+    "cnf": 4730,
+    "desc": "Sauce, oyster, ready-to-serve"
+  },
+  "pancake-mix": {
+    "cnf": 3931,
+    "desc": "Pancake, plain (includes buttermilk), dry mix, complete, unprepared"
+  },
+  "pancake-syrup": {
+    "cnf": 4328,
+    "desc": "Sweets, syrups, table blends, pancake, with 2% maple"
+  },
+  "panko": {
+    "cnf": 4069,
+    "desc": "Bread crumbs, dry, grated, plain"
+  },
+  "paprika": {
+    "cnf": 196,
+    "desc": "Spices, paprika"
+  },
+  "parmesan-cheese": {
+    "cnf": 40,
+    "desc": "Cheese, parmesan, hard"
+  },
+  "parsnip": {
+    "cnf": 2406,
+    "desc": "Parsnip, raw"
+  },
+  "pasta-sauce": {
+    "cnf": 4735,
+    "desc": "Sauce, pasta, spaghetti or marinara, ready-to-serve"
+  },
+  "peach": {
+    "cnf": 1728,
+    "desc": "Peach, raw"
+  },
+  "peameal-bacon": {
+    "cnf": 1981,
+    "desc": "Pork, cured, back bacon (cornmeal, peameal), uncooked"
+  },
+  "peanut": {
+    "cnf": 3362,
+    "desc": "Peanuts, all types, dry roasted"
+  },
+  "peanut-butter": {
+    "cnf": 3399,
+    "desc": "Peanut butter, smooth type, fat, sugar and salt added"
+  },
+  "pear": {
+    "cnf": 1731,
+    "desc": "Pear, raw, with skin"
+  },
+  "pearl-barley": {
+    "cnf": 4411,
+    "desc": "Grains, barley, pearled, dry"
+  },
+  "pecan": {
+    "cnf": 2582,
+    "desc": "Nuts, pecans, dried"
+  },
+  "penne": {
+    "cnf": 4506,
+    "desc": "Pasta, macaroni (elbow), enriched, dry"
+  },
+  "pepita": {
+    "cnf": 2516,
+    "desc": "Seeds, pumpkin and squash seed kernels, dried"
+  },
+  "peppermint-extract": {
+    "ref": "estimate: pure peppermint extract (~89% alcohol, oil of peppermint); energy from alcohol only",
+    "values": {
+      "kcal": 290,
+      "fatG": 0,
+      "satFatG": 0,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 0
+    }
+  },
+  "pepperoni": {
+    "cnf": 7164,
+    "desc": "Deli-meat, pepperoni"
+  },
+  "perogy": {
+    "ref": "estimate: typical frozen potato & cheddar perogies label (Cheemo-style), per 100 g uncooked",
+    "values": {
+      "kcal": 170,
+      "fatG": 2.5,
+      "satFatG": 1,
+      "transFatG": 0,
+      "carbG": 31,
+      "sugarsG": 1.5,
+      "sodiumMg": 380,
+      "cholesterolMg": 5
+    }
+  },
+  "pesto": {
+    "ref": "USDA FDC 171579 Sauce, pesto, ready-to-serve, refrigerated (sugars estimated)",
+    "values": {
+      "kcal": 418,
+      "fatG": 37.6,
+      "satFatG": 7.07,
+      "transFatG": 0.4,
+      "carbG": 10.1,
+      "sugarsG": 2,
+      "sodiumMg": 603,
+      "potassiumMg": 560,
+      "calciumMg": 306,
+      "ironMg": 0.57
+    }
+  },
+  "pie-shell": {
+    "cnf": 3970,
+    "desc": "Pie crust, standard type, frozen, ready-to-bake"
+  },
+  "pine-nut": {
+    "cnf": 2586,
+    "desc": "Nuts, pine nuts, pignolia, dried"
+  },
+  "pineapple": {
+    "cnf": 1734,
+    "desc": "Pineapple, raw"
+  },
+  "pita": {
+    "cnf": 3708,
+    "desc": "Bread, pita, white"
+  },
+  "pizza-crust": {
+    "ref": "estimate: prebaked pizza crust label (Boboli-style, 57 g: 150 kcal, 3 g fat, 1 g sat, 25 g carb, 1 g sugars, 290 mg sodium) scaled to 100 g",
+    "values": {
+      "kcal": 263,
+      "fatG": 5.3,
+      "satFatG": 1.8,
+      "transFatG": 0,
+      "carbG": 43.9,
+      "sugarsG": 1.8,
+      "sodiumMg": 509,
+      "cholesterolMg": 0
+    }
+  },
+  "pizza-dough": {
+    "ref": "estimate: typical raw store-bought pizza dough (flour, water, oil, yeast, salt), per 100 g",
+    "values": {
+      "kcal": 260,
+      "fatG": 3.5,
+      "satFatG": 0.6,
+      "transFatG": 0,
+      "carbG": 48,
+      "sugarsG": 2.5,
+      "sodiumMg": 520,
+      "cholesterolMg": 0
+    }
+  },
+  "pizza-sauce": {
+    "cnf": 6197,
+    "desc": "Sauce, pizza, canned, ready-to-serve"
+  },
+  "plain-yogurt": {
+    "cnf": 6961,
+    "desc": "Yogourt, plain (2-3.9% M.F.)"
+  },
+  "plum": {
+    "cnf": 1740,
+    "desc": "Plum, raw"
+  },
+  "popcorn-kernel": {
+    "cnf": 6256,
+    "desc": "Snacks, popcorn, unpopped kernels"
+  },
+  "pork-chop": {
+    "cnf": 1781,
+    "desc": "Pork, loin, centre cut (centre chop), bone-in, lean and fat, raw"
+  },
+  "pork-loin-roast": {
+    "cnf": 1773,
+    "desc": "Pork, loin, whole, lean and fat, raw"
+  },
+  "pork-rib": {
+    "cnf": 1893,
+    "desc": "Pork, back ribs, lean and fat, raw"
+  },
+  "pork-sausage": {
+    "cnf": 1198,
+    "desc": "Sausage, breakfast links or rounds, pork, raw"
+  },
+  "pork-shoulder": {
+    "cnf": 1971,
+    "desc": "Pork, shoulder, butt, blade (boneless), lean and fat, raw"
+  },
+  "pork-side-rib": {
+    "cnf": 1933,
+    "desc": "Pork, side ribs centre cut (spareribs), lean and fat, raw"
+  },
+  "pork-tenderloin": {
+    "cnf": 1931,
+    "desc": "Pork, loin, tenderloin, lean, raw"
+  },
+  "portobello-mushroom": {
+    "cnf": 4973,
+    "desc": "Mushroom, portabella (portobello), raw"
+  },
+  "potato": {
+    "cnf": 2505,
+    "desc": "Potato, flesh and skin, raw"
+  },
+  "potato-chip": {
+    "cnf": 4407,
+    "desc": "Snacks, potato chips, plain, salted"
+  },
+  "poultry-seasoning": {
+    "cnf": 202,
+    "desc": "Spices, poultry seasoning"
+  },
+  "protein-powder": {
+    "cnf": 7231,
+    "desc": "Beverage, protein powder, whey based, powder"
+  },
+  "puff-pastry": {
+    "cnf": 3973,
+    "desc": "Puff pastry, frozen, ready-to-bake"
+  },
+  "pumpkin-spice": {
+    "cnf": 203,
+    "desc": "Spices, pumpkin pie spice"
+  },
+  "quick-oat": {
+    "cnf": 1439,
+    "desc": "Cereal, hot, oats, quick, dry, Quaker"
+  },
+  "quinoa": {
+    "cnf": 4495,
+    "desc": "Grains, quinoa, dry"
+  },
+  "radish": {
+    "cnf": 2443,
+    "desc": "Radish, raw"
+  },
+  "rainbow-trout-fillet": {
+    "cnf": 3186,
+    "desc": "Fish, trout, rainbow, farmed, raw"
+  },
+  "raisin": {
+    "cnf": 1745,
+    "desc": "Raisin, seedless (sultana)"
+  },
+  "ramen-noodle": {
+    "cnf": 5347,
+    "desc": "Soup, ramen noodles, any flavour, dry"
+  },
+  "ranch-dressing": {
+    "cnf": 5330,
+    "desc": "Salad dressing, ranch dressing, commercial, regular"
+  },
+  "ranch-dressing-mix": {
+    "ref": "estimate: dry ranch seasoning mix packet labels (e.g. Hidden Valley), mostly salt, buttermilk solids, maltodextrin",
+    "values": {
+      "kcal": 320,
+      "fatG": 3,
+      "satFatG": 1,
+      "carbG": 62,
+      "sugarsG": 8,
+      "sodiumMg": 11500
+    }
+  },
+  "raspberry": {
+    "cnf": 1747,
+    "desc": "Raspberry, raw"
+  },
+  "red-bell-pepper": {
+    "cnf": 2484,
+    "desc": "Pepper, sweet, red, raw"
+  },
+  "red-cabbage": {
+    "cnf": 2034,
+    "desc": "Cabbage, red, raw"
+  },
+  "red-onion": {
+    "cnf": 2401,
+    "desc": "Onion, raw"
+  },
+  "red-pepper-flake": {
+    "cnf": 199,
+    "desc": "Spices, pepper, red or cayenne"
+  },
+  "red-potato": {
+    "cnf": 2505,
+    "desc": "Potato, flesh and skin, raw"
+  },
+  "red-wine": {
+    "cnf": 2850,
+    "desc": "Alcohol, table wine, red (11.5% alcohol by volume)"
+  },
+  "red-wine-vinegar": {
+    "cnf": 6195,
+    "desc": "Vinegar, red wine"
+  },
+  "refried-bean": {
+    "cnf": 3314,
+    "desc": "Refried beans, canned"
+  },
+  "refrigerated-biscuit-dough": {
+    "cnf": 3683,
+    "desc": "Biscuit, plain/buttermilk, refrigerated dough, higher fat",
+    "fill": {
+      "sugarsG": 4.4
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "relish": {
+    "cnf": 2340,
+    "desc": "Pickle relish, sweet"
+  },
+  "ribeye-steak": {
+    "cnf": 6066,
+    "desc": "Beef, rib, rib eye steak, boneless, lean and fat, 0mm (0\") trim, raw"
+  },
+  "rice-noodle": {
+    "cnf": 4888,
+    "desc": "Pasta, rice noodles, dry"
+  },
+  "rice-vinegar": {
+    "cnf": 14,
+    "desc": "Vinegar, distilled (white)"
+  },
+  "ricotta-cheese": {
+    "cnf": 43,
+    "desc": "Cheese, ricotta, with whole milk"
+  },
+  "rigatoni": {
+    "cnf": 4506,
+    "desc": "Pasta, macaroni (elbow), enriched, dry"
+  },
+  "rolled-oat": {
+    "cnf": 1464,
+    "desc": "Cereal, hot, oats, large flakes, dry, Quaker"
+  },
+  "roma-tomato": {
+    "cnf": 2460,
+    "desc": "Tomato, red, ripe, raw, year round average"
+  },
+  "romaine-lettuce": {
+    "cnf": 2116,
+    "desc": "Lettuce, cos or romaine"
+  },
+  "rotini": {
+    "cnf": 4506,
+    "desc": "Pasta, macaroni (elbow), enriched, dry"
+  },
+  "rutabaga": {
+    "cnf": 2444,
+    "desc": "Rutabaga (swede), raw"
+  },
+  "salad-dressing": {
+    "cnf": 532,
+    "desc": "Salad dressing, italian, commercial, regular"
+  },
+  "salad-kit": {
+    "ref": "estimate: typical Canadian bagged salad kit with dressing and toppings (e.g. Caesar/chopped kit labels, per 100 g as packed)",
+    "values": {
+      "kcal": 150,
+      "fatG": 12,
+      "satFatG": 2,
+      "transFatG": 0,
+      "carbG": 8,
+      "sugarsG": 3,
+      "sodiumMg": 300,
+      "cholesterolMg": 10,
+      "potassiumMg": 200,
+      "calciumMg": 60,
+      "ironMg": 0.8
+    }
+  },
+  "salami": {
+    "cnf": 5684,
+    "desc": "Deli-meat, salami, Italian, pork"
+  },
+  "salmon-fillet": {
+    "cnf": 3182,
+    "desc": "Fish, salmon, atlantic, farmed, raw"
+  },
+  "salsa": {
+    "cnf": 1025,
+    "desc": "Sauce, salsa, ready-to-serve"
+  },
+  "salt": {
+    "cnf": 214,
+    "desc": "Salt, table"
+  },
+  "scallop": {
+    "cnf": 3213,
+    "desc": "Mollusks, scallop, mixed species, raw"
+  },
+  "sesame-oil": {
+    "cnf": 424,
+    "desc": "Vegetable oil, sesame"
+  },
+  "sesame-seed": {
+    "cnf": 2521,
+    "desc": "Seeds, sesame seeds, whole, roasted and toasted",
+    "fill": {
+      "sugarsG": 0.3
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "shallot": {
+    "cnf": 2326,
+    "desc": "Shallot, raw"
+  },
+  "sirloin-steak": {
+    "cnf": 6142,
+    "desc": "Beef, loin, top sirloin steak, boneless, lean and fat, 3mm (1/8\") trim, raw"
+  },
+  "skim-milk": {
+    "cnf": 114,
+    "desc": "Milk, fluid, skim"
+  },
+  "sliced-almond": {
+    "cnf": 2534,
+    "desc": "Nuts, almonds, dried, unblanched, unroasted"
+  },
+  "slivered-almond": {
+    "cnf": 2535,
+    "desc": "Nuts, almonds, dried, blanched, unroasted"
+  },
+  "smoked-paprika": {
+    "cnf": 196,
+    "desc": "Spices, paprika"
+  },
+  "smoked-salmon": {
+    "cnf": 3050,
+    "desc": "Fish, salmon, chinook (spring), smoked"
+  },
+  "snow-pea": {
+    "cnf": 2408,
+    "desc": "Peas, edible-podded (snow peas), raw"
+  },
+  "sole-fillet": {
+    "cnf": 3216,
+    "desc": "Fish, flatfish (flounder or sole or plaice), raw"
+  },
+  "sour-cream": {
+    "cnf": 152,
+    "desc": "Cream, sour, cultured, 18% M.F."
+  },
+  "sourdough-bread": {
+    "cnf": 4063,
+    "desc": "Bread, French or Vienna (also sourdough)"
+  },
+  "soy-milk": {
+    "cnf": 6720,
+    "desc": "Plant-based beverage, soy, enriched, all flavours"
+  },
+  "soy-sauce": {
+    "cnf": 3403,
+    "desc": "Soy sauce (made with soy and wheat), shoyu, regular"
+  },
+  "spaghetti": {
+    "cnf": 4515,
+    "desc": "Pasta, spaghetti, enriched, dry"
+  },
+  "spaghetti-squash": {
+    "cnf": 2458,
+    "desc": "Squash, winter, spaghetti, raw"
+  },
+  "sparkling-water": {
+    "cnf": 2918,
+    "desc": "Water, mineral, carbonated, bottled"
+  },
+  "spinach": {
+    "cnf": 2213,
+    "desc": "Spinach, raw"
+  },
+  "spring-mix": {
+    "cnf": 6616,
+    "desc": "Lettuce, spring mix (mesclun)"
+  },
+  "sprinkle": {
+    "ref": "estimate: rainbow jimmies/nonpareils labels (Wilton: 4 g = 15-20 kcal, 0.5 g fat, 3-4 g sugar)",
+    "values": {
+      "kcal": 420,
+      "fatG": 10,
+      "satFatG": 8,
+      "carbG": 83,
+      "sugarsG": 78,
+      "sodiumMg": 10
+    }
+  },
+  "sriracha": {
+    "ref": "estimate: USDA SR Legacy 'Sauce, hot chile, sriracha' (FDC 171186), values from reference (API rate-limited); matches Huy Fong label (5 g = 5 kcal, 100 mg Na)",
+    "values": {
+      "kcal": 93,
+      "fatG": 0.9,
+      "satFatG": 0.1,
+      "carbG": 19.2,
+      "sugarsG": 15.1,
+      "sodiumMg": 2120,
+      "potassiumMg": 320,
+      "calciumMg": 18,
+      "ironMg": 1.6
+    }
+  },
+  "steel-cut-oat": {
+    "cnf": 1464,
+    "desc": "Cereal, hot, oats, large flakes, dry, Quaker"
+  },
+  "stewing-beef": {
+    "cnf": 6285,
+    "desc": "Beef, composite cuts, stewing beef, 0mm (0\") trim, raw"
+  },
+  "strawberry": {
+    "cnf": 1749,
+    "desc": "Strawberry, raw"
+  },
+  "strawberry-jam": {
+    "cnf": 4295,
+    "desc": "Sweets, jams and preserves"
+  },
+  "string-cheese": {
+    "cnf": 111,
+    "desc": "Cheese, mozzarella, partially skim, (52% water, 16.5% M.F.)"
+  },
+  "striploin-steak": {
+    "cnf": 6107,
+    "desc": "Beef, loin, strip loin (new york) steak, boneless, lean and fat, 0mm (0\") trim, raw"
+  },
+  "sugar-snap-pea": {
+    "cnf": 2408,
+    "desc": "Peas, edible-podded (snow peas), raw"
+  },
+  "sunflower-seed": {
+    "cnf": 2526,
+    "desc": "Seeds, sunflower seed kernels, dried"
+  },
+  "sweet-chili-sauce": {
+    "ref": "estimate: Thai sweet chili sauce labels (Mae Ploy / Lee Kum Kee: ~40 kcal, 10 g sugar, ~200 mg Na per 19 g)",
+    "values": {
+      "kcal": 220,
+      "fatG": 0.3,
+      "satFatG": 0,
+      "carbG": 54,
+      "sugarsG": 50,
+      "sodiumMg": 1000
+    }
+  },
+  "sweet-onion": {
+    "cnf": 5414,
+    "desc": "Onion, sweet, raw",
+    "fill": {
+      "satFatG": 0.02
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "sweet-potato": {
+    "cnf": 2240,
+    "desc": "Sweet potato, raw"
+  },
+  "sweet-potato-fry": {
+    "ref": "estimate: typical frozen sweet potato fries label (McCain-style), per 100 g as sold",
+    "values": {
+      "kcal": 160,
+      "fatG": 6,
+      "satFatG": 0.6,
+      "transFatG": 0,
+      "carbG": 25,
+      "sugarsG": 6,
+      "sodiumMg": 300,
+      "cholesterolMg": 0
+    }
+  },
+  "sweetened-condensed-milk": {
+    "cnf": 68,
+    "desc": "Milk, condensed, sweetened, canned"
+  },
+  "sweetened-shredded-coconut": {
+    "cnf": 2603,
+    "desc": "Nuts, coconut meat, desiccated, sweetened, shredded"
+  },
+  "swiss-cheese": {
+    "cnf": 47,
+    "desc": "Cheese, swiss (emmental)"
+  },
+  "table-cream": {
+    "cnf": 136,
+    "desc": "Cream, table (coffee), 18% M.F."
+  },
+  "taco-seasoning": {
+    "cnf": 6312,
+    "desc": "Seasoning mix, taco, dry mix"
+  },
+  "taco-shell": {
+    "cnf": 3994,
+    "desc": "Taco shell, baked"
+  },
+  "tahini": {
+    "cnf": 2593,
+    "desc": "Seeds, sesame butter, tahini, roasted and toasted kernels"
+  },
+  "tamari": {
+    "cnf": 3329,
+    "desc": "Soy sauce (made from soy), tamari"
+  },
+  "tartar-sauce": {
+    "cnf": 1131,
+    "desc": "Sauce, tartar, ready-to-serve"
+  },
+  "tater-tot": {
+    "cnf": 2432,
+    "desc": "Potato puff, frozen, unprepared"
+  },
+  "teriyaki-sauce": {
+    "cnf": 997,
+    "desc": "Sauce, teriyaki, ready-to-serve"
+  },
+  "tex-mex-cheese": {
+    "cnf": 34,
+    "desc": "Cheese, monterey"
+  },
+  "tilapia-fillet": {
+    "cnf": 5966,
+    "desc": "Fish, tilapia, raw"
+  },
+  "tomato": {
+    "cnf": 2460,
+    "desc": "Tomato, red, ripe, raw, year round average"
+  },
+  "tomato-paste": {
+    "cnf": 2258,
+    "desc": "Tomato products, canned, paste, no added salt"
+  },
+  "tomato-sauce": {
+    "cnf": 2465,
+    "desc": "Tomato products, canned, sauce"
+  },
+  "tortilla-chip": {
+    "cnf": 4127,
+    "desc": "Snacks, tortilla chips, plain"
+  },
+  "unflavoured-gelatin": {
+    "cnf": 4234,
+    "desc": "Sweets, gelatin, dry powder, unsweetened"
+  },
+  "unsalted-butter": {
+    "cnf": 92,
+    "desc": "Butter, unsalted"
+  },
+  "unsweetened-coconut": {
+    "cnf": 2559,
+    "desc": "Nuts, coconut meat, desiccated, unsweetened"
+  },
+  "vanilla-cake-mix": {
+    "cnf": 3790,
+    "desc": "Cake, white, regular, dry mix, unprepared"
+  },
+  "vanilla-extract": {
+    "cnf": 216,
+    "desc": "Vanilla extract"
+  },
+  "vanilla-greek-yogurt": {
+    "cnf": 6981,
+    "desc": "Yogourt, Greek style, vanilla flavoured, fat free (0-0.5% M.F.)"
+  },
+  "vanilla-yogurt": {
+    "cnf": 6964,
+    "desc": "Yogourt, vanilla flavoured (2-3.9% M.F.)"
+  },
+  "vegetable-broth": {
+    "cnf": 7374,
+    "desc": "Soup, broth, vegetable, ready-to-serve"
+  },
+  "vegetable-oil": {
+    "cnf": 5510,
+    "desc": "Vegetable oil,  canola and soybean"
+  },
+  "vegetable-shortening": {
+    "cnf": 446,
+    "desc": "Shortening, household, soybean (hydrogenated) and palm"
+  },
+  "walnut": {
+    "cnf": 2590,
+    "desc": "Nuts, walnuts, English or Persian, dried"
+  },
+  "water": {
+    "ref": "estimate: water, zero nutrition",
+    "values": {
+      "kcal": 0,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 0,
+      "cholesterolMg": 0,
+      "potassiumMg": 0,
+      "calciumMg": 0,
+      "ironMg": 0
+    }
+  },
+  "watermelon": {
+    "cnf": 1691,
+    "desc": "Watermelon, raw"
+  },
+  "whipped-topping": {
+    "cnf": 60,
+    "desc": "Dessert topping (non dairy), frozen, semisolid"
+  },
+  "whipping-cream": {
+    "cnf": 138,
+    "desc": "Cream, whipping, 35% M.F."
+  },
+  "white-bread": {
+    "cnf": 4066,
+    "desc": "Bread, white, commercial"
+  },
+  "white-chocolate-chip": {
+    "cnf": 4155,
+    "desc": "Sweets, confectioner's coating / chips, white chocolate"
+  },
+  "white-pepper": {
+    "cnf": 200,
+    "desc": "spices, pepper, white",
+    "fill": {
+      "sugarsG": 0
+    },
+    "fillSource": "estimate: CNF and USDA list no sugars; herbs and spices used in small amounts"
+  },
+  "white-rice": {
+    "cnf": 4471,
+    "desc": "Grains, rice, white, long-grain, regular, dry"
+  },
+  "white-sugar": {
+    "cnf": 4318,
+    "desc": "Sweets, sugars, granulated"
+  },
+  "white-vinegar": {
+    "cnf": 14,
+    "desc": "Vinegar, distilled (white)"
+  },
+  "white-wine": {
+    "cnf": 2852,
+    "desc": "Alcohol, table wine, white (11.5% alcohol by volume)"
+  },
+  "white-wine-vinegar": {
+    "cnf": 6195,
+    "desc": "Vinegar, red wine"
+  },
+  "whole-chicken": {
+    "cnf": 560,
+    "desc": "Chicken, broiler, meat and skin, raw"
+  },
+  "whole-clove": {
+    "cnf": 179,
+    "desc": "Spices, cloves, ground"
+  },
+  "whole-grain-mustard": {
+    "cnf": 1135,
+    "desc": "Sauce, mustard, brown, ready-to-serve",
+    "fill": {
+      "sugarsG": 1
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "whole-milk": {
+    "cnf": 113,
+    "desc": "Milk, fluid, whole, pasteurized, homogenized, 3.25% M.F."
+  },
+  "whole-turkey": {
+    "cnf": 688,
+    "desc": "Turkey, all classes, meat and skin, raw"
+  },
+  "whole-wheat-bread": {
+    "cnf": 4067,
+    "desc": "Bread, whole wheat, commercial"
+  },
+  "whole-wheat-flour": {
+    "cnf": 4500,
+    "desc": "Grains, wheat flour, whole-wheat"
+  },
+  "whole-wheat-spaghetti": {
+    "cnf": 4516,
+    "desc": "Pasta, spaghetti, whole-wheat, dry",
+    "fill": {
+      "sugarsG": 3
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.)"
+  },
+  "whole-wheat-tortilla": {
+    "cnf": 7258,
+    "desc": "Tortilla, ready-to-bake / fry, whole-wheat"
+  },
+  "wild-rice": {
+    "cnf": 4449,
+    "desc": "Grains, rice, wild, dry"
+  },
+  "worcestershire-sauce": {
+    "cnf": 1133,
+    "desc": "Sauce, worcestershire, ready-to-serve"
+  },
+  "yellow-bell-pepper": {
+    "cnf": 2344,
+    "desc": "Pepper, sweet, yellow, raw",
+    "fill": {
+      "sugarsG": 4.2
+    },
+    "fillSource": "USDA FoodData Central SR Legacy (approx.) (red sweet pepper)"
+  },
+  "yellow-mustard": {
+    "cnf": 4970,
+    "desc": "Sauce, mustard, yellow, ready-to-serve"
+  },
+  "yellow-potato": {
+    "cnf": 2505,
+    "desc": "Potato, flesh and skin, raw"
+  },
+  "yellow-squash": {
+    "cnf": 2218,
+    "desc": "Squash, summer, crookneck, raw"
+  },
+  "zucchini": {
+    "cnf": 2225,
+    "desc": "Squash, summer, zucchini, raw"
+  }
+}

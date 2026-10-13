@@ -17,6 +17,19 @@
     "unitWeightG": 170,
     "proteinPer100g": 20.4,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 208,
+      "fatG": 13.42,
+      "satFatG": 3.05,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 59,
+      "cholesterolMg": 55,
+      "potassiumMg": 363,
+      "calciumMg": 9,
+      "ironMg": 0.34
+    },
+    "nutrientSource": "CNF 3182 Fish, salmon, atlantic, farmed, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 90
@@ -50,6 +63,20 @@
     "unitWeightG": 14,
     "proteinPer100g": 20.1,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 71,
+      "fatG": 1.01,
+      "satFatG": 0.26,
+      "transFatG": 0.02,
+      "carbG": 0.91,
+      "sugarsG": 0,
+      "sodiumMg": 566,
+      "cholesterolMg": 126,
+      "potassiumMg": 113,
+      "calciumMg": 54,
+      "ironMg": 0.21
+    },
+    "nutrientSource": "CNF 3211 Crustaceans, shrimp, mixed species, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 180
@@ -72,6 +99,20 @@
     "unitWeightG": 10,
     "proteinPer100g": 24,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 119,
+      "fatG": 1.7,
+      "satFatG": 0.52,
+      "transFatG": 0.04,
+      "carbG": 1.52,
+      "sugarsG": 0,
+      "sodiumMg": 947,
+      "cholesterolMg": 211,
+      "potassiumMg": 170,
+      "calciumMg": 91,
+      "ironMg": 0.32
+    },
+    "nutrientSource": "CNF 3212 Crustaceans, shrimp, mixed species, boiled or steamed",
     "shelfLifeDays": {
       "fridge": 3,
       "freezer": 180
@@ -94,6 +135,19 @@
     "unitWeightG": 150,
     "proteinPer100g": 17.8,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 82,
+      "fatG": 0.67,
+      "satFatG": 0.13,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 54,
+      "cholesterolMg": 43,
+      "potassiumMg": 413,
+      "calciumMg": 16,
+      "ironMg": 0.38
+    },
+    "nutrientSource": "CNF 3194 Fish, cod (scrod), atlantic, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 240
@@ -116,6 +170,20 @@
     "unitWeightG": 150,
     "proteinPer100g": 16.3,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 74,
+      "fatG": 0.45,
+      "satFatG": 0.09,
+      "transFatG": 0,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 213,
+      "cholesterolMg": 54,
+      "potassiumMg": 286,
+      "calciumMg": 11,
+      "ironMg": 0.17
+    },
+    "nutrientSource": "CNF 3198 Fish, haddock, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 240
@@ -138,6 +206,19 @@
     "unitWeightG": 115,
     "proteinPer100g": 20.1,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 96,
+      "fatG": 1.7,
+      "satFatG": 0.58,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 52,
+      "cholesterolMg": 50,
+      "potassiumMg": 302,
+      "calciumMg": 10,
+      "ironMg": 0.56
+    },
+    "nutrientSource": "CNF 5966 Fish, tilapia, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 240
@@ -160,6 +241,19 @@
     "unitWeightG": 170,
     "proteinPer100g": 18.6,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 91,
+      "fatG": 1.33,
+      "satFatG": 0.29,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 68,
+      "cholesterolMg": 49,
+      "potassiumMg": 435,
+      "calciumMg": 7,
+      "ironMg": 0.16
+    },
+    "nutrientSource": "CNF 3200 Fish, halibut, Atlantic or Pacific, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 240
@@ -182,6 +276,20 @@
     "unitWeightG": 100,
     "proteinPer100g": 12.4,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 70,
+      "fatG": 1.93,
+      "satFatG": 0.44,
+      "transFatG": 0.01,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 296,
+      "cholesterolMg": 45,
+      "potassiumMg": 160,
+      "calciumMg": 21,
+      "ironMg": 0.18
+    },
+    "nutrientSource": "CNF 3216 Fish, flatfish (flounder or sole or plaice), raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 240
@@ -204,6 +312,20 @@
     "unitWeightG": 150,
     "proteinPer100g": 20.5,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 141,
+      "fatG": 6.18,
+      "satFatG": 1.38,
+      "transFatG": 0.05,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 51,
+      "cholesterolMg": 59,
+      "potassiumMg": 377,
+      "calciumMg": 25,
+      "ironMg": 0.31
+    },
+    "nutrientSource": "CNF 3186 Fish, trout, rainbow, farmed, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 90
@@ -225,6 +347,19 @@
     "canonicalUnit": "g",
     "proteinPer100g": 18.3,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 117,
+      "fatG": 4.32,
+      "satFatG": 0.93,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 672,
+      "cholesterolMg": 23,
+      "potassiumMg": 175,
+      "calciumMg": 11,
+      "ironMg": 0.85
+    },
+    "nutrientSource": "CNF 3050 Fish, salmon, chinook (spring), smoked",
     "shelfLifeDays": {
       "fridge": 14,
       "freezer": 60
@@ -247,6 +382,20 @@
     "unitWeightG": 30,
     "proteinPer100g": 12,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 69,
+      "fatG": 0.49,
+      "satFatG": 0.13,
+      "transFatG": 0.01,
+      "carbG": 3.18,
+      "sugarsG": 0,
+      "sodiumMg": 392,
+      "cholesterolMg": 24,
+      "potassiumMg": 205,
+      "calciumMg": 6,
+      "ironMg": 0.38
+    },
+    "nutrientSource": "CNF 3213 Mollusks, scallop, mixed species, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 90
@@ -269,6 +418,19 @@
     "unitWeightG": 15,
     "proteinPer100g": 11.9,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 86,
+      "fatG": 2.24,
+      "satFatG": 0.42,
+      "carbG": 3.69,
+      "sugarsG": 0,
+      "sodiumMg": 286,
+      "cholesterolMg": 28,
+      "potassiumMg": 320,
+      "calciumMg": 26,
+      "ironMg": 3.95
+    },
+    "nutrientSource": "CNF 3115 Mollusks, mussel, blue, raw",
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 90

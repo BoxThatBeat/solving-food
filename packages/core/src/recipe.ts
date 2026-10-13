@@ -6,6 +6,7 @@ import { CUISINES, MAIN_PROTEINS, MEAL_TYPES } from "./taxonomy";
 import { recipeIngredientSchema, recipeStepSchema, prepTaskSchema, type RecipeDoc } from "./types";
 import { formatRecipeAmount, fahrenheitOnly, toCanonical, unitDef, type ConvertibleIngredient } from "./units";
 import { slugify } from "./names";
+import { NUTRITION_KEYS, type NutritionKey, type Nutrients } from "./nutrition";
 
 export type RecipeIngredient = z.infer<typeof recipeIngredientSchema>;
 export type RecipeStep = z.infer<typeof recipeStepSchema>;
@@ -16,6 +17,8 @@ export interface RecipeIngredientInfo extends ConvertibleIngredient {
   name: string;
   proteinPer100g?: number | undefined;
   fibrePer100g?: number | undefined;
+  /** Per 100 g, for the Nutrition Facts panel (M10). */
+  nutrients?: Nutrients | undefined;
   freeUse?: boolean;
 }
 export type IngredientLookup = (ingredientId: string) => RecipeIngredientInfo | undefined;
@@ -57,6 +60,10 @@ export interface DerivedFields {
   proteinApproximate: boolean;
   fibrePerServingG?: number;
   fibreApproximate: boolean;
+  /** Per serving (M10, R4.30); absent when no ingredient has nutrition data. */
+  nutrition?: Nutrients;
+  /** The `nutrition` keys some non-optional ingredient lacked ("~"); absent when none. */
+  nutritionApproximate?: NutritionKey[];
   sourceUrlCanonical?: string;
 }
 
@@ -76,6 +83,9 @@ export function deriveRecipe(content: RecipeContent, lookup: IngredientLookup): 
   };
   if (protein.grams !== null) out.proteinPerServingG = Math.round(protein.grams * 10) / 10;
   if (fibre.grams !== null) out.fibrePerServingG = Math.round(fibre.grams * 10) / 10;
+  const facts = nutritionPerServing(withCanon, lookup);
+  if (facts.nutrition) out.nutrition = facts.nutrition;
+  if (facts.approximate.length) out.nutritionApproximate = facts.approximate;
   if (content.sourceUrl) out.sourceUrlCanonical = canonicalUrl(content.sourceUrl);
   return out;
 }
@@ -101,9 +111,17 @@ export interface ProteinResult {
   missing: string[];
 }
 
-/** A nutrient tracked per 100 g on ingredients (protein since M1, fibre since M9). */
-export type Nutrient = "protein" | "fibre";
-const PER_100G = { protein: "proteinPer100g", fibre: "fibrePer100g" } as const;
+/**
+ * A nutrient known per 100 g on ingredients: protein (M1) and fibre (M9) are top-level fields; the Nutrition Facts
+ * nutrients (M10) live in `nutrients`.
+ */
+export type Nutrient = "protein" | "fibre" | NutritionKey;
+
+/** An ingredient's amount of `nutrient` per 100 g, or undefined when unknown. */
+export function per100g(ing: RecipeIngredientInfo, nutrient: Nutrient): number | undefined {
+  const v = nutrient === "protein" ? ing.proteinPer100g : nutrient === "fibre" ? ing.fibrePer100g : ing.nutrients?.[nutrient];
+  return v === null ? undefined : v;
+}
 
 /**
  * `nutrientPerServing(recipe, ingredients, nutrient)` = Σ(canonical g × <nutrient>Per100g / 100) ÷ servings (§5).
@@ -122,8 +140,8 @@ export function nutrientPerServing(
     const ing = lookup(l.ingredientId);
     const vague = unitDef(l.measure).kind === "vague" || l.amount <= 0;
     if (l.optional || vague) continue;
-    const per = ing?.[PER_100G[nutrient]];
-    if (!ing || per === undefined || per === null) {
+    const per = ing ? per100g(ing, nutrient) : undefined;
+    if (!ing || per === undefined) {
       missing.add(l.ingredientId);
       continue;
     }
@@ -146,6 +164,28 @@ export function nutrientPerServing(
     approximate: missing.size > 0,
     missing: [...missing],
   };
+}
+
+/** Rounding of stored per-serving values: energy and milligrams to 1 decimal, grams to 2. */
+function roundNutrient(key: NutritionKey, v: number): number {
+  return key === "kcal" || key.endsWith("Mg") ? Math.round(v * 10) / 10 : Math.round(v * 100) / 100;
+}
+
+/**
+ * The Nutrition Facts numbers per serving (M10, R4.30): `nutrientPerServing` for every `NUTRITION_KEYS` entry. A key no
+ * ingredient has a value for is left out; `approximate` lists the keys some non-optional ingredient lacked.
+ */
+export function nutritionPerServing(recipe: Pick<RecipeContent, "servings" | "ingredients">, lookup: IngredientLookup): { nutrition: Nutrients | null; approximate: NutritionKey[] } {
+  const nutrition: Nutrients = {};
+  const approximate: NutritionKey[] = [];
+  for (const key of NUTRITION_KEYS) {
+    const r = nutrientPerServing(recipe, lookup, key);
+    // Nothing counted and something missing → unknown (left out). No countable lines at all → 0, like protein.
+    if (r.grams === null) continue;
+    nutrition[key] = roundNutrient(key, r.grams);
+    if (r.approximate) approximate.push(key);
+  }
+  return { nutrition: Object.keys(nutrition).length ? nutrition : null, approximate };
 }
 
 /** `proteinPerServing(recipe, ingredients)` (§5): see `nutrientPerServing`. */

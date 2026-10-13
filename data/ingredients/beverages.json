@@ -19,6 +19,20 @@
     "densityGPerMl": 1,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 0,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 0,
+      "cholesterolMg": 0,
+      "potassiumMg": 0,
+      "calciumMg": 0,
+      "ironMg": 0
+    },
+    "nutrientSource": "estimate: water, zero nutrition",
     "shelfLifeDays": {
       "pantry": null
     },
@@ -40,6 +54,19 @@
     "densityGPerMl": 1.04,
     "proteinPer100g": 0.7,
     "fibrePer100g": 0.2,
+    "nutrients": {
+      "kcal": 49,
+      "fatG": 0.12,
+      "satFatG": 0.01,
+      "carbG": 11.54,
+      "sugarsG": 8.31,
+      "sodiumMg": 2,
+      "cholesterolMg": 0,
+      "potassiumMg": 178,
+      "calciumMg": 11,
+      "ironMg": 0.13
+    },
+    "nutrientSource": "CNF 1620 Orange juice, chilled, includes from concentrate",
     "shelfLifeDays": {
       "fridge": 7
     },
@@ -61,6 +88,19 @@
     "densityGPerMl": 1.04,
     "proteinPer100g": 0.1,
     "fibrePer100g": 0.2,
+    "nutrients": {
+      "kcal": 46,
+      "fatG": 0.13,
+      "satFatG": 0.02,
+      "carbG": 11.3,
+      "sugarsG": 9.62,
+      "sodiumMg": 4,
+      "cholesterolMg": 0,
+      "potassiumMg": 101,
+      "calciumMg": 8,
+      "ironMg": 0.12
+    },
+    "nutrientSource": "CNF 1495 Apple juice, canned or bottled, without added vitamin C",
     "shelfLifeDays": {
       "pantry": 365,
       "fridge": 10
@@ -83,6 +123,20 @@
     "densityGPerMl": 0.34,
     "proteinPer100g": 12,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 330,
+      "fatG": 13,
+      "satFatG": 5.5,
+      "transFatG": 0,
+      "carbG": 40,
+      "sugarsG": 0.5,
+      "sodiumMg": 5,
+      "cholesterolMg": 0,
+      "potassiumMg": 1800,
+      "calciumMg": 120,
+      "ironMg": 4
+    },
+    "nutrientSource": "estimate: roasted ground coffee, dry grounds (literature composition ~13% fat, ~12% protein, carbs mostly fibre); grounds are not eaten when brewed",
     "shelfLifeDays": {
       "pantry": 150
     },
@@ -105,6 +159,20 @@
     "densityGPerMl": 0.36,
     "proteinPer100g": 12,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 330,
+      "fatG": 13,
+      "satFatG": 5.5,
+      "transFatG": 0,
+      "carbG": 40,
+      "sugarsG": 0.5,
+      "sodiumMg": 5,
+      "cholesterolMg": 0,
+      "potassiumMg": 1800,
+      "calciumMg": 120,
+      "ironMg": 4
+    },
+    "nutrientSource": "estimate: roasted whole coffee beans (literature composition ~13% fat, ~12% protein, carbs mostly fibre); grounds are not eaten when brewed",
     "shelfLifeDays": {
       "pantry": 180
     },
@@ -126,6 +194,19 @@
     "densityGPerMl": 0.12,
     "proteinPer100g": 12.2,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 353,
+      "fatG": 0.5,
+      "satFatG": 0.2,
+      "carbG": 75.4,
+      "sugarsG": 0,
+      "sodiumMg": 37,
+      "cholesterolMg": 0,
+      "potassiumMg": 3535,
+      "calciumMg": 141,
+      "ironMg": 4.41
+    },
+    "nutrientSource": "CNF 2874 Coffee, instant, regular, powder",
     "shelfLifeDays": {
       "pantry": 730
     },
@@ -147,6 +228,20 @@
     "unitWeightG": 2.5,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 1,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0.3,
+      "sugarsG": 0,
+      "sodiumMg": 3,
+      "cholesterolMg": 0,
+      "potassiumMg": 37,
+      "calciumMg": 0,
+      "ironMg": 0.02
+    },
+    "nutrientSource": "CNF 2909 Tea, brewed",
     "shelfLifeDays": {
       "pantry": 730
     },
@@ -169,6 +264,20 @@
     "unitWeightG": 2,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 1,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0.3,
+      "sugarsG": 0,
+      "sodiumMg": 3,
+      "cholesterolMg": 0,
+      "potassiumMg": 37,
+      "calciumMg": 0,
+      "ironMg": 0.02
+    },
+    "nutrientSource": "CNF 2909 Tea, brewed",
     "shelfLifeDays": {
       "pantry": 730
     },
@@ -190,6 +299,20 @@
     "unitWeightG": 2,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 1,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0.2,
+      "sugarsG": 0,
+      "sodiumMg": 1,
+      "cholesterolMg": 0,
+      "potassiumMg": 9,
+      "calciumMg": 2,
+      "ironMg": 0.08
+    },
+    "nutrientSource": "CNF 2916 Tea, brewed, herb",
     "shelfLifeDays": {
       "pantry": 730
     },
@@ -212,6 +335,20 @@
     "unitWeightG": 355,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 0,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 13,
+      "cholesterolMg": 0,
+      "potassiumMg": 2,
+      "calciumMg": 33,
+      "ironMg": 0
+    },
+    "nutrientSource": "CNF 2918 Water, mineral, carbonated, bottled",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -233,6 +370,20 @@
     "densityGPerMl": 0.99,
     "proteinPer100g": 0.1,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 82,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 2.6,
+      "sugarsG": 0.96,
+      "sodiumMg": 5,
+      "cholesterolMg": 0,
+      "potassiumMg": 71,
+      "calciumMg": 9,
+      "ironMg": 0.27
+    },
+    "nutrientSource": "CNF 2852 Alcohol, table wine, white (11.5% alcohol by volume)",
     "shelfLifeDays": {
       "pantry": 730,
       "fridge": 5
@@ -255,6 +406,20 @@
     "densityGPerMl": 0.99,
     "proteinPer100g": 0.1,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 85,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 2.61,
+      "sugarsG": 0.62,
+      "sodiumMg": 4,
+      "cholesterolMg": 0,
+      "potassiumMg": 127,
+      "calciumMg": 8,
+      "ironMg": 0.46
+    },
+    "nutrientSource": "CNF 2850 Alcohol, table wine, red (11.5% alcohol by volume)",
     "shelfLifeDays": {
       "pantry": 730,
       "fridge": 5
@@ -278,6 +443,20 @@
     "unitWeightG": 355,
     "proteinPer100g": 0.5,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 43,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 3.55,
+      "sugarsG": 0,
+      "sodiumMg": 4,
+      "cholesterolMg": 0,
+      "potassiumMg": 27,
+      "calciumMg": 4,
+      "ironMg": 0.02
+    },
+    "nutrientSource": "CNF 2943 Alcohol, beer, regular, (5% alcohol by volume)",
     "shelfLifeDays": {
       "pantry": 180
     },
@@ -300,6 +479,20 @@
     "unitWeightG": 355,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 34,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 8.77,
+      "sugarsG": 8.7,
+      "sodiumMg": 7,
+      "cholesterolMg": 0,
+      "potassiumMg": 1,
+      "calciumMg": 3,
+      "ironMg": 0.18
+    },
+    "nutrientSource": "CNF 2855 Carbonated drinks, ginger ale",
     "shelfLifeDays": {
       "pantry": 270
     },

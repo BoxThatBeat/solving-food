@@ -135,6 +135,13 @@ describe("recipes: create", () => {
     await assertFails(saveBatch(db, "r2", recipe(ALICE.uid, { owner: "me" }), ALICE.uid).commit());
   });
 
+  it("nutrition per serving is a derived field the save path may write (M10, R4.30)", async () => {
+    const ok = recipe(ALICE.uid, { nutrition: { kcal: 563, fatG: 15.2, sodiumMg: 690 }, nutritionApproximate: ["sodiumMg"] });
+    await assertSucceeds(saveBatch(dbAs(ALICE), "rn1", ok, ALICE.uid).commit());
+    await assertFails(saveBatch(dbAs(ALICE), "rn2", recipe(ALICE.uid, { nutrition: { kcal: -5 } }), ALICE.uid).commit());
+    await assertFails(saveBatch(dbAs(ALICE), "rn3", recipe(ALICE.uid, { nutrition: { magic: 1 } }), ALICE.uid).commit());
+  });
+
   it("clients can't assign the index chunk or create pending/trashed recipes", async () => {
     const db = dbAs(ALICE);
     await assertFails(saveBatch(db, "r2", recipe(ALICE.uid, { indexChunk: 0 }), ALICE.uid).commit());
@@ -271,6 +278,11 @@ describe("ingredients (§5, R8.3)", () => {
     await assertSucceeds(setDoc(doc(dbAs(ALICE), "ingredients", "fries"), ing(ALICE.uid, { side: { portion: 150 } })));
     await assertFails(setDoc(doc(dbAs(ALICE), "ingredients", "fries2"), ing(ALICE.uid, { side: { portion: 0 } })));
     await assertFails(setDoc(doc(dbAs(ALICE), "ingredients", "fries3"), ing(ALICE.uid, { side: { portion: 150, extra: 1 } })));
+    // M10 (R4.30): nutrients per 100 g, known keys and non-negative numbers only, plus a source note.
+    await assertSucceeds(setDoc(doc(dbAs(ALICE), "ingredients", "n1"), ing(ALICE.uid, { nutrients: { kcal: 120, fatG: 2.6, sodiumMg: 45 }, nutrientSource: "CNF 841" })));
+    await assertFails(setDoc(doc(dbAs(ALICE), "ingredients", "n2"), ing(ALICE.uid, { nutrients: { kcal: -1 } })));
+    await assertFails(setDoc(doc(dbAs(ALICE), "ingredients", "n3"), ing(ALICE.uid, { nutrients: { vitaminZ: 1 } })));
+    await assertFails(setDoc(doc(dbAs(ALICE), "ingredients", "n4"), ing(ALICE.uid, { nutrients: { kcal: "lots" } })));
     // M8: only the mergeIngredient function marks a merged duplicate; clients can't set or keep `mergedInto`.
     await assertFails(setDoc(doc(dbAs(ALICE), "ingredients", "dup"), ing(ALICE.uid, { mergedInto: "garlic" })));
     await assertFails(updateDoc(doc(dbAs(BOB), "ingredients", "garlic"), { mergedInto: "onion", updatedBy: BOB.uid, updatedAt: serverTimestamp() }));

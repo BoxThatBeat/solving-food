@@ -18,6 +18,20 @@
     "unitWeightG": 32,
     "proteinPer100g": 12.5,
     "fibrePer100g": 6.8,
+    "nutrients": {
+      "kcal": 257,
+      "fatG": 3.03,
+      "satFatG": 0.79,
+      "transFatG": 0,
+      "carbG": 45.64,
+      "sugarsG": 3.24,
+      "sodiumMg": 593,
+      "cholesterolMg": 0,
+      "potassiumMg": 205,
+      "calciumMg": 73,
+      "ironMg": 2.42
+    },
+    "nutrientSource": "CNF 4067 Bread, whole wheat, commercial",
     "shelfLifeDays": {
       "pantry": 5,
       "freezer": 90
@@ -41,6 +55,20 @@
     "unitWeightG": 28,
     "proteinPer100g": 9,
     "fibrePer100g": 2.7,
+    "nutrients": {
+      "kcal": 261,
+      "fatG": 2.66,
+      "satFatG": 0.64,
+      "transFatG": 0.01,
+      "carbG": 49.21,
+      "sugarsG": 7.62,
+      "sodiumMg": 513,
+      "cholesterolMg": 0,
+      "potassiumMg": 110,
+      "calciumMg": 79,
+      "ironMg": 3.63
+    },
+    "nutrientSource": "CNF 4066 Bread, white, commercial",
     "shelfLifeDays": {
       "pantry": 5,
       "freezer": 90
@@ -63,6 +91,20 @@
     "unitWeightG": 35,
     "proteinPer100g": 13.4,
     "fibrePer100g": 6.9,
+    "nutrients": {
+      "kcal": 267,
+      "fatG": 3.49,
+      "satFatG": 0.73,
+      "transFatG": 0,
+      "carbG": 46.88,
+      "sugarsG": 4.56,
+      "sodiumMg": 421,
+      "cholesterolMg": 0,
+      "potassiumMg": 199,
+      "calciumMg": 97,
+      "ironMg": 3.03
+    },
+    "nutrientSource": "CNF 3702 Bread, multigrain, commercial",
     "shelfLifeDays": {
       "pantry": 5,
       "freezer": 90
@@ -88,6 +130,20 @@
     "unitWeightG": 40,
     "proteinPer100g": 9.4,
     "fibrePer100g": 2.4,
+    "nutrients": {
+      "kcal": 272,
+      "fatG": 2.42,
+      "satFatG": 0.53,
+      "transFatG": 0.01,
+      "carbG": 51.88,
+      "sugarsG": 4.62,
+      "sodiumMg": 602,
+      "cholesterolMg": 0,
+      "potassiumMg": 117,
+      "calciumMg": 52,
+      "ironMg": 3.91
+    },
+    "nutrientSource": "CNF 4063 Bread, French or Vienna (also sourdough)",
     "shelfLifeDays": {
       "pantry": 4,
       "freezer": 90
@@ -113,6 +169,20 @@
     "unitWeightG": 280,
     "proteinPer100g": 10.7,
     "fibrePer100g": 2.4,
+    "nutrients": {
+      "kcal": 272,
+      "fatG": 2.42,
+      "satFatG": 0.53,
+      "transFatG": 0.01,
+      "carbG": 51.88,
+      "sugarsG": 4.62,
+      "sodiumMg": 602,
+      "cholesterolMg": 0,
+      "potassiumMg": 117,
+      "calciumMg": 52,
+      "ironMg": 3.91
+    },
+    "nutrientSource": "CNF 4063 Bread, French or Vienna (also sourdough)",
     "shelfLifeDays": {
       "pantry": 2,
       "freezer": 90
@@ -138,6 +208,19 @@
     "unitWeightG": 55,
     "proteinPer100g": 9.4,
     "fibrePer100g": 2.4,
+    "nutrients": {
+      "kcal": 278,
+      "fatG": 3.76,
+      "satFatG": 0.89,
+      "carbG": 50.15,
+      "sugarsG": 6.37,
+      "sodiumMg": 500,
+      "cholesterolMg": 0,
+      "potassiumMg": 127,
+      "calciumMg": 173,
+      "ironMg": 3.43
+    },
+    "nutrientSource": "CNF 3985 Roll, hamburger / hot dog, plain",
     "shelfLifeDays": {
       "pantry": 5,
       "freezer": 90
@@ -163,6 +246,19 @@
     "unitWeightG": 45,
     "proteinPer100g": 9.4,
     "fibrePer100g": 2.4,
+    "nutrients": {
+      "kcal": 278,
+      "fatG": 3.76,
+      "satFatG": 0.89,
+      "carbG": 50.15,
+      "sugarsG": 6.37,
+      "sodiumMg": 500,
+      "cholesterolMg": 0,
+      "potassiumMg": 127,
+      "calciumMg": 173,
+      "ironMg": 3.43
+    },
+    "nutrientSource": "CNF 3985 Roll, hamburger / hot dog, plain",
     "shelfLifeDays": {
       "pantry": 5,
       "freezer": 90
@@ -188,6 +284,20 @@
     "unitWeightG": 35,
     "proteinPer100g": 9.8,
     "fibrePer100g": 2.3,
+    "nutrients": {
+      "kcal": 310,
+      "fatG": 6.47,
+      "satFatG": 1.38,
+      "transFatG": 0,
+      "carbG": 52.04,
+      "sugarsG": 5.55,
+      "sodiumMg": 467,
+      "cholesterolMg": 4,
+      "potassiumMg": 139,
+      "calciumMg": 178,
+      "ironMg": 3.72
+    },
+    "nutrientSource": "CNF 4073 Roll, dinner, plain (also brown and serve), commercial",
     "shelfLifeDays": {
       "pantry": 4,
       "freezer": 90
@@ -221,6 +331,19 @@
     "unitWeightG": 50,
     "proteinPer100g": 8.5,
     "fibrePer100g": 2.4,
+    "nutrients": {
+      "kcal": 325,
+      "fatG": 7.1,
+      "satFatG": 1.75,
+      "carbG": 55.6,
+      "sugarsG": 2.6,
+      "sodiumMg": 478,
+      "cholesterolMg": 0,
+      "potassiumMg": 131,
+      "calciumMg": 39,
+      "ironMg": 3.3
+    },
+    "nutrientSource": "CNF 4049 Tortilla, ready-to-bake / fry, flour; sugarsG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "pantry": 7,
       "freezer": 180
@@ -246,6 +369,20 @@
     "unitWeightG": 50,
     "proteinPer100g": 9.5,
     "fibrePer100g": 6.5,
+    "nutrients": {
+      "kcal": 310,
+      "fatG": 9.76,
+      "satFatG": 4.88,
+      "transFatG": 0,
+      "carbG": 45.89,
+      "sugarsG": 2.44,
+      "sodiumMg": 512,
+      "cholesterolMg": 0,
+      "potassiumMg": 262,
+      "calciumMg": 244,
+      "ironMg": 2.63
+    },
+    "nutrientSource": "CNF 7258 Tortilla, ready-to-bake / fry, whole-wheat",
     "shelfLifeDays": {
       "pantry": 7,
       "freezer": 180
@@ -268,6 +405,19 @@
     "unitWeightG": 26,
     "proteinPer100g": 5.7,
     "fibrePer100g": 6.3,
+    "nutrients": {
+      "kcal": 218,
+      "fatG": 2.85,
+      "satFatG": 0.45,
+      "carbG": 44.64,
+      "sugarsG": 0.88,
+      "sodiumMg": 45,
+      "cholesterolMg": 0,
+      "potassiumMg": 186,
+      "calciumMg": 81,
+      "ironMg": 1.23
+    },
+    "nutrientSource": "CNF 3997 Tortilla, ready-to-bake / fry, corn",
     "shelfLifeDays": {
       "pantry": 7,
       "freezer": 180
@@ -293,6 +443,19 @@
     "unitWeightG": 60,
     "proteinPer100g": 9.1,
     "fibrePer100g": 2.2,
+    "nutrients": {
+      "kcal": 275,
+      "fatG": 1.2,
+      "satFatG": 0.17,
+      "carbG": 55.7,
+      "sugarsG": 1.3,
+      "sodiumMg": 536,
+      "cholesterolMg": 0,
+      "potassiumMg": 120,
+      "calciumMg": 86,
+      "ironMg": 2.62
+    },
+    "nutrientSource": "CNF 3708 Bread, pita, white",
     "shelfLifeDays": {
       "pantry": 5,
       "freezer": 90
@@ -318,6 +481,20 @@
     "unitWeightG": 90,
     "proteinPer100g": 9,
     "fibrePer100g": 2.2,
+    "nutrients": {
+      "kcal": 291,
+      "fatG": 5.65,
+      "satFatG": 1.39,
+      "transFatG": 0.04,
+      "carbG": 50.43,
+      "sugarsG": 3.55,
+      "sodiumMg": 465,
+      "cholesterolMg": 0,
+      "potassiumMg": 125,
+      "calciumMg": 84,
+      "ironMg": 3.25
+    },
+    "nutrientSource": "CNF 6606 Indian, bread, naan",
     "shelfLifeDays": {
       "pantry": 5,
       "freezer": 90
@@ -343,6 +520,20 @@
     "unitWeightG": 57,
     "proteinPer100g": 8.9,
     "fibrePer100g": 2,
+    "nutrients": {
+      "kcal": 227,
+      "fatG": 1.69,
+      "satFatG": 0.73,
+      "transFatG": 0,
+      "carbG": 44.17,
+      "sugarsG": 3.53,
+      "sodiumMg": 425,
+      "cholesterolMg": 0,
+      "potassiumMg": 109,
+      "calciumMg": 163,
+      "ironMg": 4
+    },
+    "nutrientSource": "CNF 3900 English muffin, plain (also sourdough)",
     "shelfLifeDays": {
       "pantry": 5,
       "freezer": 90
@@ -365,6 +556,20 @@
     "unitWeightG": 95,
     "proteinPer100g": 10,
     "fibrePer100g": 2.3,
+    "nutrients": {
+      "kcal": 264,
+      "fatG": 1.32,
+      "satFatG": 0.36,
+      "transFatG": 0.02,
+      "carbG": 52.38,
+      "sugarsG": 8.43,
+      "sodiumMg": 422,
+      "cholesterolMg": 0,
+      "potassiumMg": 107,
+      "calciumMg": 219,
+      "ironMg": 3.57
+    },
+    "nutrientSource": "CNF 3671 Bagel, plain (with onion, poppy seed and/or sesame seed)",
     "shelfLifeDays": {
       "pantry": 5,
       "freezer": 90
@@ -387,6 +592,19 @@
     "unitWeightG": 57,
     "proteinPer100g": 8.2,
     "fibrePer100g": 2.6,
+    "nutrients": {
+      "kcal": 406,
+      "fatG": 21,
+      "satFatG": 11.66,
+      "carbG": 45.8,
+      "sugarsG": 11.26,
+      "sodiumMg": 467,
+      "cholesterolMg": 67,
+      "potassiumMg": 118,
+      "calciumMg": 37,
+      "ironMg": 2.03
+    },
+    "nutrientSource": "CNF 3882 Croissant, butter, commercial",
     "shelfLifeDays": {
       "pantry": 2,
       "freezer": 90
@@ -408,6 +626,17 @@
     "canonicalUnit": "g",
     "proteinPer100g": 7.7,
     "fibrePer100g": 1.6,
+    "nutrients": {
+      "kcal": 260,
+      "fatG": 3.5,
+      "satFatG": 0.6,
+      "transFatG": 0,
+      "carbG": 48,
+      "sugarsG": 2.5,
+      "sodiumMg": 520,
+      "cholesterolMg": 0
+    },
+    "nutrientSource": "estimate: typical raw store-bought pizza dough (flour, water, oil, yeast, salt), per 100 g",
     "shelfLifeDays": {
       "fridge": 5,
       "freezer": 90
@@ -430,6 +659,17 @@
     "unitWeightG": 340,
     "proteinPer100g": 9,
     "fibrePer100g": 2.2,
+    "nutrients": {
+      "kcal": 263,
+      "fatG": 5.3,
+      "satFatG": 1.8,
+      "transFatG": 0,
+      "carbG": 43.9,
+      "sugarsG": 1.8,
+      "sodiumMg": 509,
+      "cholesterolMg": 0
+    },
+    "nutrientSource": "estimate: prebaked pizza crust label (Boboli-style, 57 g: 150 kcal, 3 g fat, 1 g sat, 25 g carb, 1 g sugars, 290 mg sodium) scaled to 100 g",
     "shelfLifeDays": {
       "pantry": 7,
       "freezer": 90

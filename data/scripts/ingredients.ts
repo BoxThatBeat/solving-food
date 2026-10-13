@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import {
   buildIngredientIndex,
+  CORE_NUTRITION_KEYS,
   cooklangToRecipe,
   ingredientSchema,
   ingredientSlug,
@@ -67,6 +68,9 @@ export function validateIngredients(items: SeedIngredient[]): string[] {
     if (i.needsReview !== reasons.length > 0) problems.push(`${where}: needsReview should be ${reasons.length > 0}`);
     // M9 (R6.26): every shipped ingredient carries fibre (a missing value only makes recipes "~", so it isn't a review reason).
     if (i.fibrePer100g === undefined) problems.push(`${where}: fibrePer100g missing`);
+    // M10 (R4.30): nutrition facts from the Canadian Nutrient File (pnpm nutrition:write), the core label values at least.
+    if (!i.nutrients || !i.nutrientSource) problems.push(`${where}: nutrients missing (pnpm nutrition:write)`);
+    else for (const k of CORE_NUTRITION_KEYS) if (i.nutrients[k] === undefined) problems.push(`${where}: nutrients.${k} missing`);
     if (i.freeUse && !i.isStaple && id !== "water") problems.push(`${where}: free-use items are staples`);
     if (i.isStaple && !i.defaultCadenceDays) problems.push(`${where}: staples need defaultCadenceDays`);
     if (i.defaultPackMeasure && !i.allowedMeasures.includes(i.defaultPackMeasure)) problems.push(`${where}: pack measure not allowed`);

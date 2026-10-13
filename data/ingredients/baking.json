@@ -17,6 +17,19 @@
     "densityGPerMl": 0.53,
     "proteinPer100g": 10.3,
     "fibrePer100g": 2.7,
+    "nutrients": {
+      "kcal": 364,
+      "fatG": 0.98,
+      "satFatG": 0.15,
+      "carbG": 76.31,
+      "sugarsG": 0.27,
+      "sodiumMg": 2,
+      "cholesterolMg": 0,
+      "potassiumMg": 107,
+      "calciumMg": 110,
+      "ironMg": 4.4
+    },
+    "nutrientSource": "CNF 4484 Grains, wheat flour, white, all purpose, enriched, calcium fortified; sugarsG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "pantry": 240,
       "freezer": 730
@@ -40,6 +53,20 @@
     "densityGPerMl": 0.51,
     "proteinPer100g": 13.2,
     "fibrePer100g": 10.7,
+    "nutrients": {
+      "kcal": 369,
+      "fatG": 3.24,
+      "satFatG": 0.52,
+      "transFatG": 0,
+      "carbG": 68.51,
+      "sugarsG": 1.02,
+      "sodiumMg": 0.8,
+      "cholesterolMg": 0,
+      "potassiumMg": 292.1,
+      "calciumMg": 26.4,
+      "ironMg": 3.4
+    },
+    "nutrientSource": "CNF 4500 Grains, wheat flour, whole-wheat",
     "shelfLifeDays": {
       "pantry": 90,
       "fridge": 180,
@@ -64,6 +91,20 @@
     "densityGPerMl": 0.54,
     "proteinPer100g": 12,
     "fibrePer100g": 2.4,
+    "nutrients": {
+      "kcal": 362,
+      "fatG": 2.34,
+      "satFatG": 0.41,
+      "transFatG": 0,
+      "carbG": 69.41,
+      "sugarsG": 0.58,
+      "sodiumMg": 0.5,
+      "cholesterolMg": 0,
+      "potassiumMg": 126.3,
+      "calciumMg": 18.5,
+      "ironMg": 5.09
+    },
+    "nutrientSource": "CNF 4445 Grains, wheat flour, white, bread flour",
     "shelfLifeDays": {
       "pantry": 240,
       "freezer": 730
@@ -86,6 +127,20 @@
     "densityGPerMl": 0.45,
     "proteinPer100g": 8.2,
     "fibrePer100g": 1.7,
+    "nutrients": {
+      "kcal": 368,
+      "fatG": 2.55,
+      "satFatG": 0.36,
+      "transFatG": 0,
+      "carbG": 74.79,
+      "sugarsG": 0.61,
+      "sodiumMg": 0.5,
+      "cholesterolMg": 0,
+      "potassiumMg": 130.4,
+      "calciumMg": 20.8,
+      "ironMg": 5.16
+    },
+    "nutrientSource": "CNF 4446 Grains, wheat flour, white, cake flour",
     "shelfLifeDays": {
       "pantry": 240,
       "freezer": 730
@@ -108,6 +163,20 @@
     "densityGPerMl": 0.39,
     "proteinPer100g": 13.6,
     "fibrePer100g": 6.5,
+    "nutrients": {
+      "kcal": 393,
+      "fatG": 7.83,
+      "satFatG": 1.61,
+      "transFatG": 0,
+      "carbG": 65.8,
+      "sugarsG": 1.2,
+      "sodiumMg": 15.8,
+      "cholesterolMg": 0,
+      "potassiumMg": 362,
+      "calciumMg": 54.8,
+      "ironMg": 6.4
+    },
+    "nutrientSource": "CNF 6275 Grains, oat flour, whole-grain",
     "shelfLifeDays": {
       "pantry": 90,
       "freezer": 365
@@ -130,6 +199,20 @@
     "densityGPerMl": 0.41,
     "proteinPer100g": 21.4,
     "fibrePer100g": 10.4,
+    "nutrients": {
+      "kcal": 590,
+      "fatG": 52.52,
+      "satFatG": 3.95,
+      "transFatG": 0.02,
+      "carbG": 18.67,
+      "sugarsG": 4.63,
+      "sodiumMg": 19,
+      "cholesterolMg": 0,
+      "potassiumMg": 659,
+      "calciumMg": 236,
+      "ironMg": 3.28
+    },
+    "nutrientSource": "CNF 2535 Nuts, almonds, dried, blanched, unroasted",
     "shelfLifeDays": {
       "pantry": 90,
       "fridge": 180,
@@ -159,6 +242,20 @@
     "densityGPerMl": 0.85,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 387,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 99.98,
+      "sugarsG": 99.8,
+      "sodiumMg": 1,
+      "cholesterolMg": 0,
+      "potassiumMg": 2,
+      "calciumMg": 1,
+      "ironMg": 0.05
+    },
+    "nutrientSource": "CNF 4318 Sweets, sugars, granulated",
     "shelfLifeDays": {
       "pantry": null
     },
@@ -188,6 +285,20 @@
     "densityGPerMl": 0.93,
     "proteinPer100g": 0.1,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 380,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 98.09,
+      "sugarsG": 97.02,
+      "sodiumMg": 28,
+      "cholesterolMg": 0,
+      "potassiumMg": 133,
+      "calciumMg": 83,
+      "ironMg": 0.71
+    },
+    "nutrientSource": "CNF 4317 Sweets, sugar, brown",
     "shelfLifeDays": {
       "pantry": null
     },
@@ -210,6 +321,20 @@
     "densityGPerMl": 0.51,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 389,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 99.77,
+      "sugarsG": 97.81,
+      "sodiumMg": 2,
+      "cholesterolMg": 0,
+      "potassiumMg": 2,
+      "calciumMg": 1,
+      "ironMg": 0.06
+    },
+    "nutrientSource": "CNF 4319 Sweets, sugars, icing (powdered)",
     "shelfLifeDays": {
       "pantry": null
     },
@@ -232,6 +357,20 @@
     "densityGPerMl": 0.93,
     "proteinPer100g": 0,
     "fibrePer100g": 0.2,
+    "nutrients": {
+      "kcal": 53,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 27.7,
+      "sugarsG": 0,
+      "sodiumMg": 10600,
+      "cholesterolMg": 0,
+      "potassiumMg": 20,
+      "calciumMg": 5876,
+      "ironMg": 11.02
+    },
+    "nutrientSource": "CNF 4002 Leavening agent, baking powder, double acting, sodium, aluminium sulfate",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -254,6 +393,20 @@
     "densityGPerMl": 0.95,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 0,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 27360,
+      "cholesterolMg": 0,
+      "potassiumMg": 0,
+      "calciumMg": 0,
+      "ironMg": 0
+    },
+    "nutrientSource": "CNF 4005 Leavening agent, baking soda",
     "shelfLifeDays": {
       "pantry": 540
     },
@@ -276,6 +429,19 @@
     "densityGPerMl": 0.54,
     "proteinPer100g": 0.3,
     "fibrePer100g": 0.9,
+    "nutrients": {
+      "kcal": 381,
+      "fatG": 0.05,
+      "satFatG": 0.01,
+      "carbG": 91.27,
+      "sugarsG": 0,
+      "sodiumMg": 9,
+      "cholesterolMg": 0,
+      "potassiumMg": 3,
+      "calciumMg": 2,
+      "ironMg": 0.47
+    },
+    "nutrientSource": "CNF 4419 Grains, cornstarch",
     "shelfLifeDays": {
       "pantry": null
     },
@@ -298,6 +464,20 @@
     "densityGPerMl": 0.61,
     "proteinPer100g": 0,
     "fibrePer100g": 0.2,
+    "nutrients": {
+      "kcal": 258,
+      "fatG": 0,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 61.5,
+      "sugarsG": 0,
+      "sodiumMg": 52,
+      "cholesterolMg": 0,
+      "potassiumMg": 16500,
+      "calciumMg": 8,
+      "ironMg": 3.72
+    },
+    "nutrientSource": "CNF 4006 Leavening agent, cream of tartar",
     "shelfLifeDays": {
       "pantry": null
     },
@@ -325,6 +505,19 @@
     "densityGPerMl": 0.88,
     "proteinPer100g": 0.1,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 288,
+      "fatG": 0.06,
+      "satFatG": 0.01,
+      "carbG": 12.65,
+      "sugarsG": 12.65,
+      "sodiumMg": 9,
+      "cholesterolMg": 0,
+      "potassiumMg": 148,
+      "calciumMg": 11,
+      "ironMg": 0.12
+    },
+    "nutrientSource": "CNF 216 Vanilla extract",
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -347,6 +540,15 @@
     "densityGPerMl": 0.88,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 250,
+      "fatG": 0,
+      "satFatG": 0,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 0
+    },
+    "nutrientSource": "estimate: pure almond extract (~35% alcohol, McCormick label ~10 kcal/tsp); energy from alcohol only",
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -368,6 +570,15 @@
     "densityGPerMl": 0.88,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 290,
+      "fatG": 0,
+      "satFatG": 0,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 0
+    },
+    "nutrientSource": "estimate: pure peppermint extract (~89% alcohol, oil of peppermint); energy from alcohol only",
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -396,6 +607,19 @@
     "densityGPerMl": 0.37,
     "proteinPer100g": 19.6,
     "fibrePer100g": 37,
+    "nutrients": {
+      "kcal": 228,
+      "fatG": 13.7,
+      "satFatG": 8.07,
+      "carbG": 57.9,
+      "sugarsG": 1.75,
+      "sodiumMg": 21,
+      "cholesterolMg": 0,
+      "potassiumMg": 1524,
+      "calciumMg": 128,
+      "ironMg": 13.86
+    },
+    "nutrientSource": "CNF 4223 Sweets, cocoa, powder, unsweetened",
     "shelfLifeDays": {
       "pantry": 730
     },
@@ -424,6 +648,19 @@
     "densityGPerMl": 0.72,
     "proteinPer100g": 4.9,
     "fibrePer100g": 5.9,
+    "nutrients": {
+      "kcal": 480,
+      "fatG": 30,
+      "satFatG": 17.75,
+      "carbG": 63.9,
+      "sugarsG": 54.5,
+      "sodiumMg": 11,
+      "cholesterolMg": 0,
+      "potassiumMg": 365,
+      "calciumMg": 32,
+      "ironMg": 3.13
+    },
+    "nutrientSource": "CNF 4148 Candies, bars / chips, semisweet chocolate",
     "shelfLifeDays": {
       "pantry": 540
     },
@@ -446,6 +683,20 @@
     "densityGPerMl": 0.72,
     "proteinPer100g": 5.5,
     "fibrePer100g": 7,
+    "nutrients": {
+      "kcal": 579,
+      "fatG": 38.31,
+      "satFatG": 22.03,
+      "transFatG": 0.07,
+      "carbG": 52.42,
+      "sugarsG": 36.71,
+      "sodiumMg": 10,
+      "cholesterolMg": 6,
+      "potassiumMg": 567,
+      "calciumMg": 62,
+      "ironMg": 6.32
+    },
+    "nutrientSource": "CNF 6671 Candies, chocolate, dark, 60-69% cacao solids",
     "shelfLifeDays": {
       "pantry": 540
     },
@@ -471,6 +722,19 @@
     "densityGPerMl": 0.72,
     "proteinPer100g": 4.9,
     "fibrePer100g": 5.9,
+    "nutrients": {
+      "kcal": 480,
+      "fatG": 30,
+      "satFatG": 17.75,
+      "carbG": 63.9,
+      "sugarsG": 54.5,
+      "sodiumMg": 11,
+      "cholesterolMg": 0,
+      "potassiumMg": 365,
+      "calciumMg": 32,
+      "ironMg": 3.13
+    },
+    "nutrientSource": "CNF 4148 Candies, bars / chips, semisweet chocolate",
     "shelfLifeDays": {
       "pantry": 540
     },
@@ -492,6 +756,20 @@
     "densityGPerMl": 0.72,
     "proteinPer100g": 5.9,
     "fibrePer100g": 0.2,
+    "nutrients": {
+      "kcal": 539,
+      "fatG": 32.09,
+      "satFatG": 19.41,
+      "transFatG": 0,
+      "carbG": 59.24,
+      "sugarsG": 59,
+      "sodiumMg": 90,
+      "cholesterolMg": 21,
+      "potassiumMg": 286,
+      "calciumMg": 199,
+      "ironMg": 0.24
+    },
+    "nutrientSource": "CNF 4155 Sweets, confectioner's coating / chips, white chocolate",
     "shelfLifeDays": {
       "pantry": 540
     },
@@ -513,6 +791,19 @@
     "densityGPerMl": 0.72,
     "proteinPer100g": 7,
     "fibrePer100g": 3.4,
+    "nutrients": {
+      "kcal": 535,
+      "fatG": 29.66,
+      "satFatG": 18.51,
+      "carbG": 59.4,
+      "sugarsG": 51.5,
+      "sodiumMg": 79,
+      "cholesterolMg": 23,
+      "potassiumMg": 372,
+      "calciumMg": 189,
+      "ironMg": 2.35
+    },
+    "nutrientSource": "CNF 4186 Candies, bars / chips, milk chocolate, plain",
     "shelfLifeDays": {
       "pantry": 540
     },
@@ -540,6 +831,19 @@
     "unitWeightG": 28,
     "proteinPer100g": 4.9,
     "fibrePer100g": 5.9,
+    "nutrients": {
+      "kcal": 480,
+      "fatG": 30,
+      "satFatG": 17.75,
+      "carbG": 63.9,
+      "sugarsG": 54.5,
+      "sodiumMg": 11,
+      "cholesterolMg": 0,
+      "potassiumMg": 365,
+      "calciumMg": 32,
+      "ironMg": 3.13
+    },
+    "nutrientSource": "CNF 4148 Candies, bars / chips, semisweet chocolate",
     "shelfLifeDays": {
       "pantry": 540
     },
@@ -561,6 +865,20 @@
     "unitWeightG": 4.5,
     "proteinPer100g": 2.4,
     "fibrePer100g": 0.4,
+    "nutrients": {
+      "kcal": 539,
+      "fatG": 32.09,
+      "satFatG": 19.41,
+      "transFatG": 0,
+      "carbG": 59.24,
+      "sugarsG": 59,
+      "sodiumMg": 90,
+      "cholesterolMg": 21,
+      "potassiumMg": 286,
+      "calciumMg": 199,
+      "ironMg": 0.24
+    },
+    "nutrientSource": "CNF 4155 Sweets, confectioner's coating / chips, white chocolate",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -582,6 +900,19 @@
     "unitWeightG": 4.6,
     "proteinPer100g": 7,
     "fibrePer100g": 3.4,
+    "nutrients": {
+      "kcal": 535,
+      "fatG": 29.66,
+      "satFatG": 18.51,
+      "carbG": 59.4,
+      "sugarsG": 51.5,
+      "sodiumMg": 79,
+      "cholesterolMg": 23,
+      "potassiumMg": 372,
+      "calciumMg": 189,
+      "ironMg": 2.35
+    },
+    "nutrientSource": "CNF 4186 Candies, bars / chips, milk chocolate, plain",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -604,6 +935,19 @@
     "unitWeightG": 432,
     "proteinPer100g": 5.3,
     "fibrePer100g": 2.8,
+    "nutrients": {
+      "kcal": 428,
+      "fatG": 15.6,
+      "satFatG": 3.26,
+      "carbG": 73,
+      "sugarsG": 38.3,
+      "sodiumMg": 825,
+      "cholesterolMg": 0,
+      "potassiumMg": 330,
+      "calciumMg": 150,
+      "ironMg": 4.5
+    },
+    "nutrientSource": "CNF 3757 Cake mix, chocolate (devil's food, fudge), regular, dry, unprepared",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -626,6 +970,20 @@
     "unitWeightG": 432,
     "proteinPer100g": 4.5,
     "fibrePer100g": 0.9,
+    "nutrients": {
+      "kcal": 372,
+      "fatG": 3.69,
+      "satFatG": 1.95,
+      "transFatG": 0.43,
+      "carbG": 81.34,
+      "sugarsG": 42.08,
+      "sodiumMg": 693,
+      "cholesterolMg": 0,
+      "potassiumMg": 62,
+      "calciumMg": 219,
+      "ironMg": 1.95
+    },
+    "nutrientSource": "CNF 3790 Cake, white, regular, dry mix, unprepared",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -648,6 +1006,19 @@
     "unitWeightG": 500,
     "proteinPer100g": 4.5,
     "fibrePer100g": 2.5,
+    "nutrients": {
+      "kcal": 434,
+      "fatG": 14.9,
+      "satFatG": 2.52,
+      "carbG": 76.6,
+      "sugarsG": 47,
+      "sodiumMg": 303,
+      "cholesterolMg": 0,
+      "potassiumMg": 219,
+      "calciumMg": 19,
+      "ironMg": 1.99
+    },
+    "nutrientSource": "CNF 3805 Cookie, brownie, regular, dry mix, unprepared; sugarsG: USDA FoodData Central SR Legacy (approx.)",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -675,6 +1046,20 @@
     "densityGPerMl": 0.53,
     "proteinPer100g": 9.5,
     "fibrePer100g": 2.4,
+    "nutrients": {
+      "kcal": 368,
+      "fatG": 3.1,
+      "satFatG": 0.82,
+      "transFatG": 0.38,
+      "carbG": 73.65,
+      "sugarsG": 16.03,
+      "sodiumMg": 1082,
+      "cholesterolMg": 2,
+      "potassiumMg": 191,
+      "calciumMg": 244,
+      "ironMg": 3.6
+    },
+    "nutrientSource": "CNF 3931 Pancake, plain (includes buttermilk), dry mix, complete, unprepared",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -702,6 +1087,19 @@
     "densityGPerMl": 0.33,
     "proteinPer100g": 6.9,
     "fibrePer100g": 16.3,
+    "nutrients": {
+      "kcal": 660,
+      "fatG": 64.53,
+      "satFatG": 57.22,
+      "carbG": 23.65,
+      "sugarsG": 7.35,
+      "sodiumMg": 37,
+      "cholesterolMg": 0,
+      "potassiumMg": 543,
+      "calciumMg": 26,
+      "ironMg": 3.32
+    },
+    "nutrientSource": "CNF 2559 Nuts, coconut meat, desiccated, unsweetened",
     "shelfLifeDays": {
       "pantry": 180,
       "freezer": 365
@@ -730,6 +1128,19 @@
     "densityGPerMl": 0.39,
     "proteinPer100g": 2.9,
     "fibrePer100g": 10.4,
+    "nutrients": {
+      "kcal": 501,
+      "fatG": 35.49,
+      "satFatG": 31.47,
+      "carbG": 47.67,
+      "sugarsG": 43.17,
+      "sodiumMg": 262,
+      "cholesterolMg": 0,
+      "potassiumMg": 337,
+      "calciumMg": 15,
+      "ironMg": 1.92
+    },
+    "nutrientSource": "CNF 2603 Nuts, coconut meat, desiccated, sweetened, shredded",
     "shelfLifeDays": {
       "pantry": 180,
       "freezer": 365
@@ -752,6 +1163,19 @@
     "densityGPerMl": 0.63,
     "proteinPer100g": 40.4,
     "fibrePer100g": 26.9,
+    "nutrients": {
+      "kcal": 325,
+      "fatG": 7.61,
+      "satFatG": 1,
+      "carbG": 41.22,
+      "sugarsG": 0,
+      "sodiumMg": 51,
+      "cholesterolMg": 0,
+      "potassiumMg": 955,
+      "calciumMg": 30,
+      "ironMg": 2.17
+    },
+    "nutrientSource": "CNF 4008 Leavening agent, yeast, baker's, active, dry",
     "shelfLifeDays": {
       "pantry": 365,
       "fridge": 120
@@ -774,6 +1198,19 @@
     "densityGPerMl": 0.63,
     "proteinPer100g": 40.4,
     "fibrePer100g": 26.9,
+    "nutrients": {
+      "kcal": 325,
+      "fatG": 7.61,
+      "satFatG": 1,
+      "carbG": 41.22,
+      "sugarsG": 0,
+      "sodiumMg": 51,
+      "cholesterolMg": 0,
+      "potassiumMg": 955,
+      "calciumMg": 30,
+      "ironMg": 2.17
+    },
+    "nutrientSource": "CNF 4008 Leavening agent, yeast, baker's, active, dry",
     "shelfLifeDays": {
       "pantry": 365,
       "fridge": 120
@@ -796,6 +1233,19 @@
     "densityGPerMl": 1.29,
     "proteinPer100g": 7.9,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 321,
+      "fatG": 8.7,
+      "satFatG": 5.49,
+      "carbG": 54.4,
+      "sugarsG": 54.4,
+      "sodiumMg": 127,
+      "cholesterolMg": 34,
+      "potassiumMg": 371,
+      "calciumMg": 284,
+      "ironMg": 0.19
+    },
+    "nutrientSource": "CNF 68 Milk, condensed, sweetened, canned",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -817,6 +1267,19 @@
     "densityGPerMl": 1.06,
     "proteinPer100g": 6.8,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 134,
+      "fatG": 7.8,
+      "satFatG": 4.74,
+      "carbG": 10.04,
+      "sugarsG": 10.04,
+      "sodiumMg": 106,
+      "cholesterolMg": 29,
+      "potassiumMg": 303,
+      "calciumMg": 261,
+      "ironMg": 0.19
+    },
+    "nutrientSource": "CNF 140 Milk, evaporated, whole, canned, undiluted, 7.8% M.F.",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -838,6 +1301,19 @@
     "densityGPerMl": 1.42,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 290,
+      "fatG": 0.1,
+      "satFatG": 0.02,
+      "carbG": 74.73,
+      "sugarsG": 74.72,
+      "sodiumMg": 37,
+      "cholesterolMg": 0,
+      "potassiumMg": 1464,
+      "calciumMg": 205,
+      "ironMg": 4.72
+    },
+    "nutrientSource": "CNF 4299 Sweets, fancy molasses",
     "shelfLifeDays": {
       "pantry": 365
     },
@@ -859,6 +1335,20 @@
     "densityGPerMl": 1.38,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 283,
+      "fatG": 0.2,
+      "satFatG": 0,
+      "transFatG": 0,
+      "carbG": 76.79,
+      "sugarsG": 76.77,
+      "sodiumMg": 62,
+      "cholesterolMg": 0,
+      "potassiumMg": 1,
+      "calciumMg": 13,
+      "ironMg": 0
+    },
+    "nutrientSource": "CNF 4323 Sweets, syrups, corn light",
     "shelfLifeDays": {
       "pantry": null
     },
@@ -880,6 +1370,19 @@
     "densityGPerMl": 0.64,
     "proteinPer100g": 85.6,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 335,
+      "fatG": 0.1,
+      "satFatG": 0.07,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 196,
+      "cholesterolMg": 0,
+      "potassiumMg": 16,
+      "calciumMg": 55,
+      "ironMg": 1.11
+    },
+    "nutrientSource": "CNF 4234 Sweets, gelatin, dry powder, unsweetened",
     "shelfLifeDays": {
       "pantry": 1095
     },
@@ -901,6 +1404,15 @@
     "densityGPerMl": 0.8,
     "proteinPer100g": 1.5,
     "fibrePer100g": 0.5,
+    "nutrients": {
+      "kcal": 420,
+      "fatG": 10,
+      "satFatG": 8,
+      "carbG": 83,
+      "sugarsG": 78,
+      "sodiumMg": 10
+    },
+    "nutrientSource": "estimate: rainbow jimmies/nonpareils labels (Wilton: 4 g = 15-20 kcal, 0.5 g fat, 3-4 g sugar)",
     "shelfLifeDays": {
       "pantry": 1095
     },
@@ -923,6 +1435,19 @@
     "unitWeightG": 7,
     "proteinPer100g": 1.8,
     "fibrePer100g": 0.1,
+    "nutrients": {
+      "kcal": 318,
+      "fatG": 0.2,
+      "satFatG": 0.06,
+      "carbG": 81.3,
+      "sugarsG": 57.56,
+      "sodiumMg": 80,
+      "cholesterolMg": 0,
+      "potassiumMg": 5,
+      "calciumMg": 3,
+      "ironMg": 0.23
+    },
+    "nutrientSource": "CNF 4183 Candies, marshmallow",
     "shelfLifeDays": {
       "pantry": 180
     },
@@ -944,6 +1469,20 @@
     "densityGPerMl": 0.36,
     "proteinPer100g": 6.9,
     "fibrePer100g": 3.4,
+    "nutrients": {
+      "kcal": 430,
+      "fatG": 10.6,
+      "satFatG": 1.63,
+      "transFatG": 0.06,
+      "carbG": 77.66,
+      "sugarsG": 24.85,
+      "sodiumMg": 459,
+      "cholesterolMg": 0,
+      "potassiumMg": 170,
+      "calciumMg": 77,
+      "ironMg": 3.78
+    },
+    "nutrientSource": "CNF 3826 Cookie, graham cracker, plain or honey (includes cinnamon)",
     "shelfLifeDays": {
       "pantry": 180
     },
@@ -965,6 +1504,19 @@
     "densityGPerMl": 0.66,
     "proteinPer100g": 7.1,
     "fibrePer100g": 7.3,
+    "nutrients": {
+      "kcal": 362,
+      "fatG": 3.59,
+      "satFatG": 0.51,
+      "carbG": 76.89,
+      "sugarsG": 0.64,
+      "sodiumMg": 35,
+      "cholesterolMg": 0,
+      "potassiumMg": 287,
+      "calciumMg": 6,
+      "ironMg": 3.45
+    },
+    "nutrientSource": "CNF 4418 Grains, cornmeal (yellow), whole-grain",
     "shelfLifeDays": {
       "pantry": 365,
       "freezer": 730
@@ -987,6 +1539,19 @@
     "densityGPerMl": 0.87,
     "proteinPer100g": 0,
     "fibrePer100g": 0,
+    "nutrients": {
+      "kcal": 885,
+      "fatG": 100,
+      "satFatG": 25.02,
+      "carbG": 0,
+      "sugarsG": 0,
+      "sodiumMg": 0,
+      "cholesterolMg": 0,
+      "potassiumMg": 0,
+      "calciumMg": 0,
+      "ironMg": 0
+    },
+    "nutrientSource": "CNF 446 Shortening, household, soybean (hydrogenated) and palm",
     "shelfLifeDays": {
       "pantry": 365
     },

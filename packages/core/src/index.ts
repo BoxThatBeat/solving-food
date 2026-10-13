@@ -10,6 +10,7 @@ export * from "./units";
 export * from "./ingredient";
 export * from "./ingredientMerge";
 export * from "./recipe";
+export * from "./nutrition";
 export * from "./dedupe";
 export * from "./cooklang";
 export * from "./collection";
