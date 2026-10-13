@@ -7,6 +7,7 @@
 import * as React from "react";
 import { Check, ChevronDown } from "lucide-react";
 import {
+  ingredientSpeech,
   formatClock,
   formatDuration,
   lineText,
@@ -23,12 +24,25 @@ import { cn } from "@/lib/utils";
 import type { StoredRecipe } from "@/data/recipes";
 import type { useCookTimers } from "./useCookTimers";
 import { layoutFor, prepList, timerId } from "./helpers";
+import { useVoiceScript } from "@/voice/handsFree";
 
 type Timers = ReturnType<typeof useCookTimers>;
 
-export function MiseEnPlace({ recipe, lookup, factor, missingTools, onStart }: { recipe: StoredRecipe; lookup: IngredientLookup; factor: number; missingTools: string[]; onStart: () => void }) {
+export function MiseEnPlace({ recipe, recipeId, lookup, factor, missingTools, onStart }: { recipe: StoredRecipe; recipeId: string; lookup: IngredientLookup; factor: number; missingTools: string[]; onStart: () => void }) {
   const items = prepList(recipe, lookup, factor);
   const [done, setDone] = React.useState<Set<number>>(new Set());
+  // Hands-free (R4.33): mise en place reads its prep list; "next" starts step mode.
+  const prep = items.map((it) => (it.amount ? `${it.text}, ${it.amount}.` : `${it.text}.`));
+  useVoiceScript({
+    id: `mise:${recipeId}`,
+    intro: prep,
+    ingredients: recipe.ingredients.map((l) => {
+      const t = lineText(l, lookup, factor);
+      return `${ingredientSpeech(t.amount, t.name)}.`;
+    }),
+    steps: prep,
+    next: onStart,
+  });
   return (
     <div className="mx-auto flex w-full max-w-[60rem] flex-1 flex-col gap-3 px-4 pt-4 pb-4">
       <div className="flex flex-col gap-1">
@@ -127,6 +141,26 @@ export function StepMode({
   const next = recipe.steps[i + 1];
   const go = React.useCallback((d: number) => onStep(Math.min(Math.max(0, i + d), Math.max(0, n - 1))), [i, n, onStep]);
   const [checked, setChecked] = React.useState<Set<string>>(new Set());
+
+  // Hands-free (R4.33): entering a step reads its ingredients, then its instructions (names only: the amounts were
+  // just read); "next" / "previous" move like the buttons, but never past the last step (finishing stays a tap).
+  const voiceLines = s ? s.ingredientRefs.map((id) => recipe.ingredients.find((l) => l.id === id)).filter((l): l is RecipeIngredient => !!l) : [];
+  const voiceIngredients = voiceLines.length
+    ? [`For step ${i + 1}:`, ...voiceLines.map((l) => { const t = lineText(l, lookup, factor); return `${ingredientSpeech(t.amount, t.name)}.`; })]
+    : [];
+  const voiceSteps = s ? [`Step ${i + 1}.`, renderStep(s.text, recipe.ingredients, lookup, factor).map((seg) => (seg.kind === "text" ? seg.text : seg.name)).join("")] : [];
+  useVoiceScript(
+    s
+      ? {
+          id: `step:${recipeId}:${i}`,
+          intro: [...voiceIngredients, ...voiceSteps],
+          ingredients: voiceIngredients.length ? voiceIngredients : [`No ingredients in step ${i + 1}.`],
+          steps: voiceSteps,
+          next: () => i < n - 1 && go(1),
+          previous: () => i > 0 && go(-1),
+        }
+      : null,
+  );
 
   React.useEffect(() => {
     const key = (e: KeyboardEvent) => {

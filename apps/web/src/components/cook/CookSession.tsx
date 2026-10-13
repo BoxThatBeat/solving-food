@@ -23,6 +23,7 @@ import { useInstallPrompt, isStandalone } from "@/pwa/install";
 import { setUpdateDeferred } from "@/pwa/update";
 import { isIos } from "@/pwa/push";
 import { cn } from "@/lib/utils";
+import { HandsFreeToggle } from "@/voice/HandsFreeToggle";
 import { MiseEnPlace, StepMode } from "./StepMode";
 import { useWakeLock } from "./helpers";
 import { useCookTimers } from "./useCookTimers";
@@ -221,10 +222,12 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
         </span>
         {awake ? (
           <span className="rounded-ui border-2 border-line bg-yellow px-1.5 py-0.5 font-mono text-[0.5625rem] font-bold text-onc" title="The screen stays on while you cook" data-testid="awake">
-            ☀ AWAKE
+            ☀<span className="max-sm:sr-only"> AWAKE</span>
           </span>
         ) : null}
         {!online ? <span className="rounded-ui border-2 border-line bg-peach-soft px-1.5 py-0.5 font-mono text-[0.5625rem] font-bold text-onc">OFFLINE</span> : null}
+        {/* M11 (R4.31): hands-free from mise en place on; not on a meal's order list. */}
+        {phase.kind !== "order" ? <HandsFreeToggle /> : null}
         <Button variant="ink" size="sm" onClick={finish} disabled={finished}>
           Done cooking
         </Button>
@@ -273,7 +276,7 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
             <p className="m-0 text-[0.8125rem] font-semibold text-sub">The review opens once every recipe is checked off, or when you tap Done cooking.</p>
           </div>
         ) : phase.kind === "mise" && current ? (
-          <MiseEnPlace recipe={current} lookup={lookup} factor={factorFor(order[phase.recipe]!)} missingTools={tools.length ? missingTools(current.tools, tools) : []} onStart={() => go({ kind: "steps", recipe: phase.recipe, step: 0 })} />
+          <MiseEnPlace recipe={current} recipeId={order[phase.recipe]!} lookup={lookup} factor={factorFor(order[phase.recipe]!)} missingTools={tools.length ? missingTools(current.tools, tools) : []} onStart={() => go({ kind: "steps", recipe: phase.recipe, step: 0 })} />
         ) : phase.kind === "steps" && current ? (
           <StepMode
             recipe={current}

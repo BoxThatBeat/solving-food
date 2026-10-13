@@ -4,6 +4,22 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import { VitePWA } from "vite-plugin-pwa";
+import type { Plugin } from "vite";
+
+/**
+ * Hands-free mode (M11): onnxruntime-web references its 27 MB WASM binary with `new URL(…, import.meta.url)`, so the
+ * build would copy it into dist and Hosting would serve it. Transformers.js loads ONNX Runtime's WASM from the jsDelivr
+ * CDN instead (and caches it in the browser), so the copy is never requested: drop it to keep it off Hosting.
+ */
+function dropOrtWasm(): Plugin {
+  return {
+    name: "sf-drop-ort-wasm",
+    apply: "build",
+    generateBundle(_opts, bundle) {
+      for (const name of Object.keys(bundle)) if (/ort-wasm[^/]*\.wasm$/.test(name)) delete bundle[name];
+    },
+  };
+}
 
 // The splash and install chrome match the app icon's navy (apps/web/public/icons) rather than a Latte
 // surface, so no light-grey field shows behind the icon; the runtime theme still updates
@@ -18,6 +34,7 @@ export default defineConfig({
     tanstackRouter({ target: "react", autoCodeSplitting: true }),
     react(),
     tailwindcss(),
+    dropOrtWasm(),
     VitePWA({
       registerType: "prompt",
       injectRegister: false,
@@ -43,6 +60,9 @@ export default defineConfig({
       workbox: {
         // App shell: everything the build emits, so the shell loads offline after the first visit.
         globPatterns: ["**/*.{js,css,html,woff2,png,svg,webmanifest}"],
+        // The speech recognition worker (M11, ~550 kB with ONNX Runtime) is downloaded only by those who switch
+        // hands-free on, then cached at runtime below.
+        globIgnores: ["**/stt.worker-*.js"],
         navigateFallback: "/index.html",
         // Firebase reserved paths (auth handler) must reach the network.
         navigateFallbackDenylist: [/^\/__\//],
@@ -56,6 +76,11 @@ export default defineConfig({
             urlPattern: ({ url }) => url.hostname === "firebasestorage.googleapis.com" && url.pathname.includes("/o/recipes%2F"),
             handler: "CacheFirst",
             options: { cacheName: "recipe-images", expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 60 }, cacheableResponse: { statuses: [0, 200] } },
+          },
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith("/assets/stt.worker-"),
+            handler: "CacheFirst",
+            options: { cacheName: "hands-free", expiration: { maxEntries: 4 } },
           },
           {
             urlPattern: ({ url }) => url.pathname.startsWith("/fonts/"),

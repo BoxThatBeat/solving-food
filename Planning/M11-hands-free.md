@@ -52,25 +52,25 @@ on-device audio, nothing recorded while off).
       empty and garbage transcripts and Whisper's `[BLANK_AUDIO]`, echo stripping, the segmenter's 1.5 s rule and cap.
 
 ### 2. Voice engine, lazy and on-device (R4.32–R4.34)
-- [ ] `apps/web/src/voice/handsFree.ts` (main bundle, small): the device setting (`localStorage sf.handsFree`), the
+- [x] `apps/web/src/voice/handsFree.ts` (main bundle, small): the device setting (`localStorage sf.handsFree`), the
       state the toggle shows, the page's reading script, and a dynamic `import()` of the engine on first use.
-- [ ] `voice/engine.ts` (lazy chunk): wires the mic, the worker and the speaker; commands → actions.
-- [ ] `voice/mic.ts`: `getUserMedia({ audio: { echoCancellation, noiseSuppression, autoGainControl } })`, an
+- [x] `voice/engine.ts` (lazy chunk): wires the mic, the worker and the speaker; commands → actions.
+- [x] `voice/mic.ts`: `getUserMedia({ audio: { echoCancellation, noiseSuppression, autoGainControl } })`, an
       AudioWorklet (blob module; ScriptProcessor fallback) at the device rate, downsampled to 16 kHz, segmented by
       `SpeechSegmenter`; `stop()` stops every track and closes the AudioContext.
-- [ ] `voice/stt.worker.ts`: Transformers.js `pipeline("automatic-speech-recognition", "onnx-community/whisper-tiny.en")`,
+- [x] `voice/stt.worker.ts`: Transformers.js `pipeline("automatic-speech-recognition", "onnx-community/whisper-tiny.en")`,
       WebGPU when available, else WASM (single thread, q8); receives Float32 PCM, returns text; nothing else.
-- [ ] `voice/speaker.ts`: `SpeechSynthesisUtterance` (`lang = "en-CA"`), one utterance per sentence, `cancel()` at
+- [x] `voice/speaker.ts`: `SpeechSynthesisUtterance` (`lang = "en-CA"`), one utterance per sentence, `cancel()` at
       once, remembers what it said for the echo filter.
-- [ ] e2e seam `voice/fake.ts`: only in emulator builds and only when a test sets `window.__handsFreeFake`; a fake mic
+- [x] e2e seam `voice/fake.ts`: only in emulator builds and only when a test sets `window.__handsFreeFake`; a fake mic
       (reports on/off) and a fake recogniser (`window.__handsFree.hear(text)`). Not in the production bundle.
 
 ### 3. The toggle on every cooking page (R4.31, R4.33)
-- [ ] `<HandsFreeToggle>`: icon + switch, `role="switch"`, accessible name "Hands-free", ≥ 44 px; states off, loading,
+- [x] `<HandsFreeToggle>`: icon + switch, `role="switch"`, accessible name "Hands-free", ≥ 44 px; states off, loading,
       listening, speaking, muted, error; no text explaining the commands anywhere.
-- [ ] In the cook header on mise en place and step mode, and on the review; the mise en place, step mode pages register
+- [x] In the cook header on mise en place and step mode, and on the review; the mise en place, step mode pages register
       what to read (mise: the prep list; a step: its ingredients then its instructions) and next / previous.
-- [ ] Errors (microphone blocked, no speech synthesis, no audio worklet, model failed) → an error banner, the toggle
+- [x] Errors (microphone blocked, no speech synthesis, no audio worklet, model failed) → an error banner, the toggle
       switches itself off; the cook carries on.
 
 ### 4. Build, documents, tests

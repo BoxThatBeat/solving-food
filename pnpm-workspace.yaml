@@ -10,3 +10,5 @@ allowBuilds:
   esbuild: true
   protobufjs: true
   "@firebase/util": true
+  # Pulled in by @huggingface/transformers for Node only; the web app uses onnxruntime-web (M11).
+  onnxruntime-node: false

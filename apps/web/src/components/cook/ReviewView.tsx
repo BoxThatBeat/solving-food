@@ -26,6 +26,7 @@ import { saveMealFromReview, useRecipeDocs } from "@/data/plan";
 import { sendCommand, useCookEvent, usePendingCommands, useRatings, useSupply } from "@/data/supply";
 import { useMemberNames } from "@/data/households";
 import { cn } from "@/lib/utils";
+import { HandsFreeToggle } from "@/voice/HandsFreeToggle";
 
 interface Source {
   title: string;
@@ -106,6 +107,7 @@ function Shell({ title, kicker = "Review", onClose, children }: { title: string;
           <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem] uppercase">{kicker}</span>
           <span className="truncate text-[0.9375rem] font-extrabold">{title}</span>
         </span>
+        <HandsFreeToggle />
       </header>
       {children}
     </div>
