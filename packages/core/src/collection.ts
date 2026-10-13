@@ -6,7 +6,9 @@ import { z } from "zod";
 import { CUISINES, MAIN_PROTEINS, RECIPE_COURSES } from "./taxonomy";
 import type { RecipeSummary } from "./recipe";
 
-export const SORTS = ["suggested", "expiry", "newest", "name", "quickest", "protein", "cheapest", "rating", "made", "recent"] as const;
+export const SORTS = ["suggested", "expiry", "newest", "name", "quickest", "protein", "fibre", "cheapest", "rating", "made", "recent"] as const;
+/** Sorts that need nutrition tracking on (M9, R6.27). */
+export const NUTRITION_SORTS: readonly CollectionSort[] = ["protein", "fibre"];
 export type CollectionSort = (typeof SORTS)[number];
 
 export const SORT_LABELS: Record<CollectionSort, string> = {
@@ -16,6 +18,7 @@ export const SORT_LABELS: Record<CollectionSort, string> = {
   name: "Name",
   quickest: "Quickest",
   protein: "Most protein",
+  fibre: "Most fibre",
   cheapest: "Cheapest",
   rating: "Top rated",
   made: "Most made",
@@ -25,6 +28,8 @@ export const SORT_LABELS: Record<CollectionSort, string> = {
 export const TOTAL_TIME_STEPS = [20, 30, 45, 60] as const;
 export const ACTIVE_TIME_STEPS = [10, 15, 20, 30] as const;
 export const PROTEIN_STEPS = [15, 25, 35] as const;
+/** Fibre per serving steps (M9, R6.26), grams. */
+export const FIBRE_STEPS = [4, 6, 8] as const;
 export const RATING_STEPS = [8, 9] as const;
 /** Cost per serving steps, in cents ("≤ $2", "≤ $4", "≤ $6"). */
 export const COST_STEPS = [200, 400, 600] as const;
@@ -51,6 +56,8 @@ export const collectionSearchSchema = z.object({
   meal: csv(RECIPE_COURSES).catch(undefined).optional(),
   tags: csv().catch(undefined).optional(),
   minProtein: num,
+  /** Min fibre per serving, g (M9). */
+  minFibre: num,
   maxTotal: num,
   maxActive: num,
   minRating: num,
@@ -104,7 +111,7 @@ export { missingTools } from "./tools";
 
 export type FactsOf = (id: string) => HouseholdFacts;
 
-export type FilterKey = "cuisine" | "protein" | "meal" | "tags" | "minProtein" | "maxTotal" | "maxActive" | "minRating" | "cooked" | "fav" | "tools" | "maxCost" | "supply" | "exp";
+export type FilterKey = "cuisine" | "protein" | "meal" | "tags" | "minProtein" | "minFibre" | "maxTotal" | "maxActive" | "minRating" | "cooked" | "fav" | "tools" | "maxCost" | "supply" | "exp";
 
 /** "Use what's left" (R4.4): covered fully or nearly fully by what's left after the plan. */
 export const USE_WHATS_LEFT = 0.85;
@@ -135,6 +142,7 @@ export function passes(r: RecipeSummary, s: CollectionSearch, facts: HouseholdFa
     if (!s.tags.every((t) => tags.has(t.toLowerCase()))) return false;
   }
   if (skip !== "minProtein" && s.minProtein && (r.proteinPerServingG ?? 0) < s.minProtein) return false;
+  if (skip !== "minFibre" && s.minFibre && (r.fibrePerServingG ?? 0) < s.minFibre) return false;
   if (skip !== "maxTotal" && s.maxTotal && r.totalMin > s.maxTotal) return false;
   if (skip !== "maxActive" && s.maxActive && r.activeMin > s.maxActive) return false;
   if (skip !== "minRating" && s.minRating && (facts.rating ?? 0) < s.minRating) return false;
@@ -163,6 +171,8 @@ function compare(sort: CollectionSort, a: RecipeSummary, b: RecipeSummary, fa: H
       return a.totalMin - b.totalMin;
     case "protein":
       return (b.proteinPerServingG ?? -1) - (a.proteinPerServingG ?? -1);
+    case "fibre":
+      return (b.fibrePerServingG ?? -1) - (a.fibrePerServingG ?? -1);
     case "cheapest":
       return (fa.costPerServingCents ?? Number.MAX_SAFE_INTEGER) - (fb.costPerServingCents ?? Number.MAX_SAFE_INTEGER);
     case "rating":
@@ -227,7 +237,7 @@ export function optionCount(
 export function activeFilterCount(s: CollectionSearch): number {
   let n = 0;
   for (const k of ["cuisine", "protein", "meal", "tags"] as const) n += s[k]?.length ?? 0;
-  for (const k of ["minProtein", "maxTotal", "maxActive", "minRating", "cooked", "fav", "tools", "maxCost", "supply", "exp"] as const) if (s[k]) n++;
+  for (const k of ["minProtein", "minFibre", "maxTotal", "maxActive", "minRating", "cooked", "fav", "tools", "maxCost", "supply", "exp"] as const) if (s[k]) n++;
   return n;
 }
 
@@ -244,4 +254,15 @@ export function taxonomyLabel(v: string): string {
     .split("-")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
+}
+
+/**
+ * The search with every nutrition filter and sort dropped (M9, R6.27: tracking off). A URL that still names them
+ * (an old link) then shows the list as if they weren't there.
+ */
+export function withoutNutrition(s: CollectionSearch): CollectionSearch {
+  const { minProtein: _p, minFibre: _f, ...rest } = s;
+  void _p;
+  void _f;
+  return rest.sort && NUTRITION_SORTS.includes(rest.sort) ? { ...rest, sort: undefined } : rest;
 }

@@ -72,6 +72,8 @@ const OPTIONAL_KEYS = [
   "leftoverMealType",
   "proteinPerServingG",
   "proteinApproximate",
+  "fibrePerServingG",
+  "fibreApproximate",
   "notes",
   "sourceUrl",
   "sourceUrlCanonical",

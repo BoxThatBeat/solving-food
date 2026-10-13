@@ -3,6 +3,7 @@
 // edited). Stored in households/{hid}.settings.scoreWeights. The prototype draws each weight as five blocks; here
 // each row is a radio group of six (0 = off) so it works with a keyboard and a screen reader.
 import { createFileRoute } from "@tanstack/react-router";
+import { useNutrition } from "@/data/nutrition";
 import { FACTORS, PRESET_NAMES, PRESETS, presetOf, resolveWeights, WEIGHT_MAX, type FactorKey, type Weights } from "@solving-food/core";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,9 @@ function WeightsPage() {
   const preset = presetOf(w);
   const write = (next: Weights) => void saveWeights(hh.id, { ...next }).catch((e) => notify({ kind: "error", message: `Couldn't save the weights: ${(e as Error).message}` }));
   const set = (k: FactorKey, v: number) => write({ ...w, [k]: v });
+  // Nutrition tracking off (M9, R6.27): the goal factors don't act, so their weights aren't shown (they're kept).
+  const nutrition = useNutrition();
+  const shown = (k: FactorKey) => nutrition.on || (k !== "proteinGoal" && k !== "fibreGoal");
 
   return (
     <SettingsPage title="Suggestion weights">
@@ -51,7 +55,7 @@ function WeightsPage() {
         ] as const).map(([title, sign]) => (
           <div key={title} className="flex flex-col gap-[0.4375rem]">
             <span className="mt-1 font-mono text-[0.625rem] font-bold tracking-[0.09rem]">{title}</span>
-            {FACTORS.filter((f) => f.sign === sign).map((f) => (
+            {FACTORS.filter((f) => f.sign === sign && shown(f.key)).map((f) => (
               <div key={f.key} role="radiogroup" aria-label={`${f.label} weight`} className="flex items-center gap-2.5" data-testid={`weight-${f.key}`}>
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="text-[0.8125rem] font-bold">{f.label}</span>

@@ -22,7 +22,7 @@ The name **Solving Food** is final.
 
 - Placing grocery orders directly. The app hands off a list; an external LLM agent places the order.
 - Reconciling the order confirmation or a receipt against the list automatically.
-- Full nutrition tracking or calorie counting. **Protein is the only nutrient the app tracks** (§6.4).
+- Full nutrition tracking or calorie counting. **Protein and fibre are the only nutrients the app tracks** (§6.4), and a household can turn even that off (R6.27).
 - Non-food household items (cleaning supplies, toilet paper) on the grocery list.
 - Weighing ingredients with scales or sensors. Supply is inferred, not measured.
 - Importing recipes from URLs or photos inside the app. An external LLM does this and drops the result into the app (§4.3).
@@ -194,12 +194,14 @@ flowchart LR
 - **R6.13** **Expiry alerts.** If supply will expire during the period (e.g. salmon), the app shows it prominently and suggests recipes that use more of it.
 - **R6.25** **Use it up before ordering.** Before the grocery list is ordered, the Plan page has a **Use it up** section for food the next order would bring that no planned meal uses and that won't keep (it would expire within the period, or within a few days of its end, after its usual shelf life where it's stored): typically the rest of a pack. Each entry shows how much would be spare, how much is being bought, roughly how long it keeps, and up to two recipes that use it, each one tap from Create meal, so meals can be added before ordering instead of rescuing the food after it arrives. It uses the same rule as the expiry alerts (R6.13), can be dismissed for the period, and disappears once the list is ordered.
 
-### 6.4 Protein Goal
+### 6.4 Protein and Fibre Goals
 
 - **R6.14** The household sets a **protein goal per serving** for each meal type (e.g. dinner ≥ 35 g). Each goal can be turned off.
 - **R6.15** Recipe cards and the recipe page show **protein per serving**.
 - **R6.16** Suggestions favour recipes that meet the goal (weighted like the other factors), and the optimiser can be told to only propose recipes that meet it.
 - **R6.17** The Plan page shows the **average protein per serving** for each meal type in the current plan, next to the goal, at the bottom of the page directly above the budget optimiser.
+- **R6.26** **Fibre.** Fibre works the same way as protein (M9): recipes show **fibre per serving** (from the ingredients' fibre per 100 g, approximate "~" when an ingredient has no value) on cards and the recipe page; the household sets a **fibre goal per serving** for each meal type, each of which can be turned off; suggestions favour recipes that meet it; the optimiser's goal filter includes it; the Plan page shows the average fibre per serving next to the goal; and lists can be filtered by fibre per serving and sorted by most fibre.
+- **R6.27** **Nutrition tracking switch.** One household setting, **Track protein and fibre**, turns every protein and fibre feature on or off: numbers on recipes, meals and plan rows; the goals and the Plan page's summary; the protein and fibre filters and sorts; the optimiser's goal filter; and the goals' effect on suggestions. Turning it off only hides them: the goals and recipe data are kept, and turning it back on restores everything as it was.
 
 ### 6.5 Budget Optimiser
 
@@ -282,7 +284,7 @@ Everything here belongs to the household except the theme, which is per user.
 - **R11.1** **Kitchen tools.** The household lists the equipment it owns (instant pot, food processor, sous vide…). Recipes that need missing tools are flagged or filtered out. Tool names are shown lower-case everywhere, and tools are matched by meaning rather than spelling: owning a skillet covers a recipe's "frying pan" or "large skillet", and the suggestions offer one chip per tool with its other spellings as a hint.
 - **R11.2** **Food preferences.** Favourite foods and cuisines, dislikes, and dietary restrictions, set once for the whole household and used in scoring.
 - **R11.3** **Suggestion weights** (R6.12).
-- **R11.4** **Protein goals** per meal type (R6.14).
+- **R11.4** **Protein and fibre goals** per meal type (R6.14, R6.26), and the switch that turns protein and fibre tracking on or off (R6.27).
 - **R11.5** **Plan period** length in days, and **Restart period** (R3.1).
 - **R11.6** **Budget** for planned meals per period.
 - **R11.7** **Brand mappings** and **stores** (dedicated page, §7).

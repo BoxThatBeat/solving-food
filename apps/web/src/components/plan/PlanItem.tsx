@@ -11,6 +11,7 @@ import {
   defaultMealName,
   formatCents,
   formatMinutes,
+  formatFibre,
   formatProtein,
   PLANNABLE_MEAL_TYPES,
   SERVINGS_MAX,
@@ -33,6 +34,7 @@ import { SidePicker } from "./SidePicker";
 import type { StoredRecipe } from "@/data/recipes";
 import { cn } from "@/lib/utils";
 import { MEAL_LABEL } from "./plan-sheet-context";
+import { useNutrition } from "@/data/nutrition";
 
 export interface PlanItemView {
   id: string;
@@ -51,13 +53,14 @@ export interface PlanItemView {
   leftover?: { useBy: string | null; expired: boolean } | undefined;
 }
 
-/** Uppercased by CSS; the duration stays lower case ("45m", not "45M"). */
-function recipeMeta(r: StoredRecipe | undefined): React.ReactNode {
-  if (!r) return "Loading…";
+/** Uppercased by CSS; the duration stays lower case ("45m", not "45M"). Protein and fibre only while tracked (R6.27). */
+function RecipeMeta({ r }: { r: StoredRecipe | undefined }) {
+  const nutrition = useNutrition();
+  if (!r) return <>Loading…</>;
   return (
     <>
-      <span className="normal-case">{formatMinutes(r.prepMin + r.cookMin)}</span> · {taxonomyLabel(r.cuisine).toUpperCase()} ·{" "}
-      {formatProtein(r.proteinPerServingG, r.proteinApproximate)} PROTEIN
+      <span className="normal-case">{formatMinutes(r.prepMin + r.cookMin)}</span> · {taxonomyLabel(r.cuisine).toUpperCase()}
+      {nutrition.on ? ` · ${formatProtein(r.proteinPerServingG, r.proteinApproximate)} PROTEIN · ${formatFibre(r.fibrePerServingG, r.fibreApproximate)} FIBRE` : null}
     </>
   );
 }
@@ -125,7 +128,7 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
         ) : out ? (
           <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">{MEAL_LABEL[it.mealType]} · covered, nothing to buy</span>
         ) : !multi ? (
-          <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">{recipeMeta(recipes.get(it.recipes[0]?.recipeId ?? ""))}</span>
+          <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase"><RecipeMeta r={recipes.get(it.recipes[0]?.recipeId ?? "")} /></span>
         ) : null}
         <div className="flex flex-wrap gap-1">
           {leftover || out ? null : <Badge className="bg-s0 uppercase">{it.servings} serving{it.servings === 1 ? "" : "s"}</Badge>}
@@ -157,7 +160,7 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
                       {rec?.title ?? "Recipe"}
                       {r.servingsMultiplier !== 1 ? ` ×${r.servingsMultiplier}` : ""}
                     </span>
-                    <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">{recipeMeta(rec)}</span>
+                    <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase"><RecipeMeta r={rec} /></span>
                   </span>
                   <span aria-hidden className="text-sub">
                     →

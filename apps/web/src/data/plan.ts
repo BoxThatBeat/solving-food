@@ -405,6 +405,17 @@ export function saveProteinGoals(hid: string, goals: Partial<Record<string, numb
   return updateDoc(doc(db, "households", hid), { "settings.proteinGoals": clean });
 }
 
+/** Fibre goals per meal type (M9, R6.26): as protein; a missing type is "off". */
+export function saveFibreGoals(hid: string, goals: Partial<Record<string, number>>) {
+  const clean = Object.fromEntries(Object.entries(goals).filter(([, v]) => typeof v === "number" && v > 0));
+  return updateDoc(doc(db, "households", hid), { "settings.fibreGoals": clean });
+}
+
+/** Nutrition tracking on/off (M9, R6.27): only the switch; goals and recipe data stay. */
+export function saveNutrition(hid: string, on: boolean) {
+  return updateDoc(doc(db, "households", hid), { "settings.nutrition": on });
+}
+
 /** The household's PC Express store (R6.22). */
 export function savePcxStore(hid: string, pcxStoreId: string, pcxStoreName: string) {
   return updateDoc(doc(db, "households", hid), { pcxStoreId, pcxStoreName: pcxStoreName.slice(0, 120) });

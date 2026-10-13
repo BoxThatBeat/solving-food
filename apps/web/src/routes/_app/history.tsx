@@ -39,6 +39,7 @@ import { useIngredientsById } from "@/data/ingredients";
 import { useRecipeIndex } from "@/search/useRecipeSearch";
 import { useReadySession } from "@/session/useSession";
 import { cn } from "@/lib/utils";
+import { useNutritionSearch } from "@/data/nutrition";
 
 export const Route = createFileRoute("/_app/history")({
   validateSearch: (s) => collectionSearchSchema.parse(s),
@@ -101,7 +102,8 @@ function HistoryPage() {
   }, [rows, search.q]);
   // History defaults to newest first ("Recently cooked"); Suggested makes no sense here.
   const effective = React.useMemo(() => ({ ...search, sort: search.sort && search.sort !== "suggested" ? search.sort : ("recent" as const) }), [search]);
-  const result = React.useMemo(() => applyCollection(rows, effective, factsOf, matches), [rows, effective, factsOf, matches]);
+  const nut = useNutritionSearch();
+  const result = React.useMemo(() => applyCollection(rows, nut(effective), factsOf, matches), [rows, effective, factsOf, matches, nut]);
   const tags = React.useMemo(() => tagCounts(rows), [rows]);
   const onSearchChange = React.useCallback((next: CollectionSearch, opts?: { replace?: boolean }) => void navigate({ to: "/history", search: toSearchParams(next) as never, replace: opts?.replace ?? false }), [navigate]);
 

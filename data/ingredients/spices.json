@@ -18,6 +18,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 1.2,
     "proteinPer100g": 0,
+    "fibrePer100g": 0,
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -39,6 +40,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.6,
     "proteinPer100g": 0,
+    "fibrePer100g": 0,
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -60,6 +62,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 1.05,
     "proteinPer100g": 0,
+    "fibrePer100g": 0,
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -81,6 +84,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.5,
     "proteinPer100g": 0,
+    "fibrePer100g": 0,
     "shelfLifeDays": {
       "cupboard": null
     },
@@ -112,6 +116,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.47,
     "proteinPer100g": 10.4,
+    "fibrePer100g": 25.3,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -133,6 +138,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.58,
     "proteinPer100g": 10.4,
+    "fibrePer100g": 25.3,
     "shelfLifeDays": {
       "cupboard": 1460
     },
@@ -154,6 +160,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.5,
     "proteinPer100g": 10.4,
+    "fibrePer100g": 26.2,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -174,6 +181,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.63,
     "proteinPer100g": 16.6,
+    "fibrePer100g": 9,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -195,6 +203,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.49,
     "proteinPer100g": 10.4,
+    "fibrePer100g": 15.2,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -223,6 +232,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.34,
     "proteinPer100g": 8.9,
+    "fibrePer100g": 9.2,
     "shelfLifeDays": {
       "cupboard": 730
     },
@@ -244,6 +254,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.46,
     "proteinPer100g": 14.1,
+    "fibrePer100g": 34.9,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -265,6 +276,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.46,
     "proteinPer100g": 14.1,
+    "fibrePer100g": 34.9,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -286,6 +298,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.54,
     "proteinPer100g": 13.5,
+    "fibrePer100g": 34.8,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -307,6 +320,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.36,
     "proteinPer100g": 12,
+    "fibrePer100g": 27.2,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -337,6 +351,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.3,
     "proteinPer100g": 12,
+    "fibrePer100g": 27.2,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -358,6 +373,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.42,
     "proteinPer100g": 17.8,
+    "fibrePer100g": 10.5,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -379,6 +395,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.42,
     "proteinPer100g": 17.8,
+    "fibrePer100g": 10.5,
     "shelfLifeDays": {
       "cupboard": 1460
     },
@@ -399,6 +416,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.36,
     "proteinPer100g": 12.4,
+    "fibrePer100g": 41.9,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -420,6 +438,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.6,
     "proteinPer100g": 9.7,
+    "fibrePer100g": 22.7,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -441,6 +460,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.36,
     "proteinPer100g": 9,
+    "fibrePer100g": 14.1,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -462,6 +482,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.53,
     "proteinPer100g": 4,
+    "fibrePer100g": 53.1,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -483,6 +504,7 @@
     "canonicalUnit": "g",
     "unitWeightG": 3,
     "proteinPer100g": 4,
+    "fibrePer100g": 53.1,
     "shelfLifeDays": {
       "cupboard": 1460
     },
@@ -503,6 +525,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.45,
     "proteinPer100g": 5.8,
+    "fibrePer100g": 20.8,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -524,6 +547,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.43,
     "proteinPer100g": 6,
+    "fibrePer100g": 33.9,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -545,6 +569,7 @@
     "canonicalUnit": "g",
     "unitWeightG": 0.1,
     "proteinPer100g": 6,
+    "fibrePer100g": 33.9,
     "shelfLifeDays": {
       "cupboard": 1460
     },
@@ -565,6 +590,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.4,
     "proteinPer100g": 10.8,
+    "fibrePer100g": 28,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -586,6 +612,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.39,
     "proteinPer100g": 6.1,
+    "fibrePer100g": 21.6,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -606,6 +633,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.35,
     "proteinPer100g": 5.8,
+    "fibrePer100g": 35,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -627,6 +655,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.2,
     "proteinPer100g": 9,
+    "fibrePer100g": 42.5,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -648,6 +677,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.14,
     "proteinPer100g": 23,
+    "fibrePer100g": 37.7,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -669,6 +699,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.2,
     "proteinPer100g": 9.1,
+    "fibrePer100g": 37,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -690,6 +721,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.25,
     "proteinPer100g": 4.9,
+    "fibrePer100g": 42.6,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -710,6 +742,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.1,
     "proteinPer100g": 26.6,
+    "fibrePer100g": 26.7,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -730,6 +763,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.2,
     "proteinPer100g": 20,
+    "fibrePer100g": 13.6,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -750,6 +784,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.14,
     "proteinPer100g": 10.6,
+    "fibrePer100g": 40.3,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -769,6 +804,7 @@
     "allowedMeasures": ["count"],
     "canonicalUnit": "count",
     "proteinPer100g": 7.6,
+    "fibrePer100g": 26.3,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -789,6 +825,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.2,
     "proteinPer100g": 13,
+    "fibrePer100g": 38,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -810,6 +847,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.2,
     "proteinPer100g": 10,
+    "fibrePer100g": 38,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -830,6 +868,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.3,
     "proteinPer100g": 9.6,
+    "fibrePer100g": 11.3,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -850,6 +889,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.45,
     "proteinPer100g": 26,
+    "fibrePer100g": 12.2,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -871,6 +911,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.42,
     "proteinPer100g": 14.3,
+    "fibrePer100g": 33.2,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -892,6 +933,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.4,
     "proteinPer100g": 13,
+    "fibrePer100g": 28,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -912,6 +954,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.55,
     "proteinPer100g": 9,
+    "fibrePer100g": 10,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -932,6 +975,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.65,
     "proteinPer100g": 7,
+    "fibrePer100g": 6,
     "shelfLifeDays": {
       "cupboard": 1095
     },
@@ -953,6 +997,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.55,
     "proteinPer100g": 6,
+    "fibrePer100g": 8,
     "shelfLifeDays": {
       "cupboard": 730
     },
@@ -974,6 +1019,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.55,
     "proteinPer100g": 10,
+    "fibrePer100g": 9,
     "shelfLifeDays": {
       "cupboard": 730
     },
@@ -994,6 +1040,7 @@
     "canonicalUnit": "g",
     "densityGPerMl": 0.45,
     "proteinPer100g": 10,
+    "fibrePer100g": 25,
     "shelfLifeDays": {
       "cupboard": 1095
     },

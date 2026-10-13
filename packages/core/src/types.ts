@@ -87,6 +87,8 @@ export const ingredientSchema = z.object({
   densityGPerMl: z.number().positive().optional(),
   unitWeightG: z.number().positive().optional(),
   proteinPer100g: z.number().min(0).optional(),
+  /** Total dietary fibre, g per 100 g (M9, R6.26). Optional: a missing value makes a recipe's fibre approximate. */
+  fibrePer100g: z.number().min(0).optional(),
   shelfLifeDays: shelfLifeSchema,
   defaultPackAmount: z.number().positive().optional(),
   defaultPackMeasure: z.enum(MEASURES).optional(),
@@ -160,6 +162,9 @@ export const recipeSchema = z.object({
   proteinPerServingG: z.number().min(0).optional(),
   /** True when a non-optional ingredient has no protein value or conversion, so the figure is "~" (§5). */
   proteinApproximate: z.boolean().optional(),
+  /** Fibre per serving (M9, R6.26), derived like protein; "~" when an ingredient has no fibre value. */
+  fibrePerServingG: z.number().min(0).optional(),
+  fibreApproximate: z.boolean().optional(),
   /** Free-text notes that came with the recipe (Cooklang comments); household notes live in households/{hid}/notes. */
   notes: z.string().optional(),
   sourceUrl: z.url().optional(),
@@ -246,6 +251,9 @@ export const proteinGoalsSchema = z.object({
   snack: z.number().min(0).optional(),
 });
 
+/** Fibre goals per meal type (M9, R6.26), g per serving; a missing type is "off". */
+export const fibreGoalsSchema = proteinGoalsSchema;
+
 export const householdSettingsSchema = z.object({
   scoreWeights: z.record(z.string(), z.number()),
   tools: z.array(z.string()),
@@ -255,6 +263,10 @@ export const householdSettingsSchema = z.object({
     diets: z.array(z.string()),
   }),
   proteinGoals: proteinGoalsSchema,
+  fibreGoals: fibreGoalsSchema.optional(),
+  /** Nutrition tracking (M9, R6.27): false hides every protein and fibre number, goal, and filter; absent = on. Goals and
+   * recipe data are kept either way. */
+  nutrition: z.boolean().optional(),
   /** Sides the household flagged and/or portion overrides (R11.14), keyed by ingredient ID; portion canonical. */
   sides: z.record(id, z.object({ portion: z.number().positive() })).optional(),
 });

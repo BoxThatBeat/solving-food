@@ -7,6 +7,7 @@ import { doc } from "firebase/firestore";
 import { ArrowLeft, X } from "lucide-react";
 import {
   unexpiredByIngredient,
+  formatFibre,
   formatProtein,
   lineText,
   renderStep,
@@ -31,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { useNutrition } from "@/data/nutrition";
 import { RecipeImage } from "./RecipeImage";
 import { useCreateMeal } from "@/components/plan/plan-sheet-context";
 import { useSupply } from "@/data/supply";
@@ -88,6 +90,7 @@ export function RecipeDetail({
   const factor = scaleFactor(recipe, servings);
   const factsOf = useHouseholdFacts(ctx?.hid ?? null);
   const facts = factsOf(id);
+  const nutrition = useNutrition();
   const editor = useDisplayName(recipe.updatedBy, !!ctx);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [historyOpen, setHistoryOpen] = React.useState(false);
@@ -251,23 +254,31 @@ export function RecipeDetail({
           ))}
         </div>
 
-        <dl className="m-0 grid grid-cols-4 gap-2">
+        {/* Protein and fibre (R6.15, R6.26) only while the household tracks nutrition (R6.27). */}
+        <dl className={cn("m-0 grid gap-2", nutrition.on ? "grid-cols-5 gap-1.5 sm:gap-2" : "grid-cols-3")}>
           {[
             ["Total", formatMinutes(total)],
             ["Active", formatMinutes(recipe.prepMin)],
             ["Cook", formatMinutes(recipe.cookMin)],
-            ["Protein", formatProtein(recipe.proteinPerServingG, recipe.proteinApproximate)],
+            ...(nutrition.on
+              ? [
+                  ["Protein", formatProtein(recipe.proteinPerServingG, recipe.proteinApproximate)],
+                  ["Fibre", formatFibre(recipe.fibrePerServingG, recipe.fibreApproximate)],
+                ]
+              : []),
           ].map(([k, v]) => (
             <div key={k} className="flex flex-col-reverse gap-[0.1875rem] rounded-ui border-2 border-line bg-base px-1 pt-[0.5625rem] pb-[0.4375rem] text-center">
-              <dt className="font-mono text-[0.5625rem] font-bold tracking-[0.03rem] text-sub uppercase">{k === "Protein" ? "Protein / serv" : k}</dt>
+              <dt className="font-mono text-[0.5625rem] font-bold tracking-[0.03rem] text-sub uppercase">{k === "Protein" || k === "Fibre" ? `${k} / serv` : k}</dt>
               <dd className="m-0 font-mono text-[1rem] font-extrabold" data-testid={`meta-${k!.toLowerCase()}`}>
                 {v}
               </dd>
             </div>
           ))}
         </dl>
-        {recipe.proteinApproximate ? (
-          <p className="-mt-2 m-0 font-mono text-[0.625rem] font-semibold text-sub">~ Some ingredients have no protein data yet, so this is approximate.</p>
+        {nutrition.on && (recipe.proteinApproximate || recipe.fibreApproximate) ? (
+          <p className="-mt-2 m-0 font-mono text-[0.625rem] font-semibold text-sub">
+            ~ Some ingredients have no {recipe.proteinApproximate && recipe.fibreApproximate ? "protein or fibre" : recipe.proteinApproximate ? "protein" : "fibre"} data yet, so this is approximate.
+          </p>
         ) : null}
 
         {/* Only real history shows (M7 review): a never-cooked recipe has no stats row at all. */}

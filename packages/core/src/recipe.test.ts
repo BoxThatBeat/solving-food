@@ -8,6 +8,7 @@ import {
   lookupFrom,
   nextLineId,
   proteinPerServing,
+  fibrePerServing,
   recipeSummary,
   refsIn,
   renderStep,
@@ -208,5 +209,27 @@ describe("index summary (§9)", () => {
       ingredientNames: ["chicken breasts", "rice", "the butter", "salt"],
       createdAtMs: 1000,
     });
+  });
+});
+
+describe("fibre per serving (M9, R6.26)", () => {
+  const FIB: Record<string, RecipeIngredientInfo> = {
+    ...ING,
+    chicken: { ...ING.chicken!, fibrePer100g: 0 },
+    rice: { ...ING.rice!, fibrePer100g: 1.3 },
+    butter: { ...ING.butter!, fibrePer100g: 0 },
+  };
+  it("is derived like protein: Σ grams × fibre ÷ servings, approximate when a value is missing", () => {
+    const f = fibrePerServing(content(), lookupFrom(FIB));
+    expect(f.approximate).toBe(false);
+    expect(f.grams).toBeCloseTo((400 * 0.013) / 4, 2);
+    const d = deriveRecipe(content(), lookupFrom(FIB));
+    expect(d.fibrePerServingG).toBeCloseTo(1.3, 1);
+    expect(d.fibreApproximate).toBe(false);
+    // The protein-only catalogue: fibre unknown for every line → approximate and no figure.
+    const old = deriveRecipe(content(), lookup);
+    expect(old.fibreApproximate).toBe(true);
+    expect(old.fibrePerServingG).toBeUndefined();
+    expect(old.proteinPerServingG).toBeGreaterThan(60);
   });
 });

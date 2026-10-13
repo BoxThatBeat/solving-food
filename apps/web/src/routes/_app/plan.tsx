@@ -57,6 +57,7 @@ import { PendingReviews } from "@/components/cook/PendingReviews";
 import { usePendingReviews } from "@/components/cook/helpers";
 import { useOnline } from "@/hooks/useOnline";
 import { useReadySession } from "@/session/useSession";
+import { useNutrition, useNutritionSearch } from "@/data/nutrition";
 
 /** M9 (owner review, R6.24): planned meals whose ingredients expire soonest first; ties by Suggested. */
 const PLAN_DEFAULT_SORT = "expiry" as const;
@@ -141,11 +142,12 @@ function PlanPage() {
     },
     [views, suggestions.byId],
   );
+  const nut = useNutritionSearch();
   const result = React.useMemo(() => {
     const q = (search.q ?? "").trim().toLowerCase();
     const matches = q ? new Map(listRows.filter((r) => [r.title, ...r.ingredientNames, ...r.tags].some((t) => t.toLowerCase().includes(q))).map((r) => [r.id, 1])) : null;
-    return applyCollection(listRows, { ...search, sort: search.sort ?? PLAN_DEFAULT_SORT }, factsOf, matches);
-  }, [listRows, search, factsOf]);
+    return applyCollection(listRows, nut({ ...search, sort: search.sort ?? PLAN_DEFAULT_SORT }), factsOf, matches);
+  }, [listRows, search, factsOf, nut]);
   const viewById = new Map(views.map((v) => [v.id, v]));
   const groups = MEAL_TYPES.map((t) => ({ type: t, items: result.items.map((r) => viewById.get(r.id)!).filter((v) => v && v.item.mealType === t) })).filter((g) => g.items.length);
 
@@ -159,12 +161,17 @@ function PlanPage() {
     m.items.map((i) => i.data),
     (id) => m.recipes.get(id)?.proteinPerServingG ?? null,
   );
+  const fibre = proteinSummary(
+    m.items.map((i) => i.data),
+    (id) => m.recipes.get(id)?.fibrePerServingG ?? null,
+  );
+  const nutrition = useNutrition();
   const open = openItem ? (views.find((v) => v.id === openItem) ?? null) : null;
   const notify = useNotify();
   const wide = useMediaQuery("(min-width: 80rem)");
   const snapshot = useScoringSnapshot(m);
   const plannedIds = React.useMemo(() => new Set(m.items.filter((i) => i.data.status === "planned" || i.data.status === "cooked").flatMap((i) => i.data.recipes.map((r) => r.recipeId))), [m.items]);
-  const goals = (m.household?.settings?.proteinGoals ?? {}) as Partial<Record<MealType, number>>;
+  const goals = nutrition.proteinGoals;
   const dismissed = React.useMemo(() => new Set(m.period?.dismissedLots ?? []), [m.period?.dismissedLots]);
 
   // Offline (§12): warm the service worker's image cache with the planned recipes' photos.
@@ -250,7 +257,7 @@ function PlanPage() {
         <div className="flex min-w-0 flex-col gap-3.5 [grid-area:b]">
           <SuggestedSection ranked={suggestions.ranked} summaries={byId} plannedIds={plannedIds} weights={m.household?.settings?.scoreWeights} wide={wide} onAdd={(id) => openCreateMeal({ recipeIds: [id] })} />
           {/* M7: the protein summary sits at the bottom, directly above the optimiser, at every width. */}
-          <ProteinCard protein={protein} plannedTypes={m.household?.plannedMealTypes ?? []} goals={goals} />
+          {nutrition.on ? <ProteinCard protein={protein} fibre={fibre} plannedTypes={m.household?.plannedMealTypes ?? []} goals={goals} fibreGoals={nutrition.fibreGoals} /> : null}
           <OptimiserCard snapshot={snapshot} summaries={byId} hid={m.hid} periodId={m.periodId} uid={s.user.uid} servings={m.household?.defaultServings ?? 4} remainingCents={m.budget.remainingCents} goals={goals} />
         </div>
 
@@ -302,40 +309,57 @@ function PlanPage() {
 }
 
 /**
- * <ProteinSummary> (R6.17, R6.14): average protein per serving of the planned meals per meal type, next to the goal,
- * with a bar (green at or above the goal, peach below). Goals are set in Settings → Preferences.
+ * <ProteinSummary> (R6.17, R6.14; M9: R6.26 fibre): average protein and fibre per serving of the planned meals per meal
+ * type, each next to its goal, with a bar (green at or above the goal, peach below). Goals are set in Settings →
+ * Preferences. Not rendered while nutrition tracking is off (R6.27).
  */
-function ProteinCard({ protein, plannedTypes, goals }: { protein: Partial<Record<MealType, { avg: number; items: number }>>; plannedTypes: readonly string[]; goals: Partial<Record<MealType, number>> }) {
-  const types = MEAL_TYPES.filter((t) => plannedTypes.includes(t) || protein[t]);
+function ProteinCard({
+  protein,
+  fibre,
+  plannedTypes,
+  goals,
+  fibreGoals,
+}: {
+  protein: Partial<Record<MealType, { avg: number; items: number }>>;
+  fibre: Partial<Record<MealType, { avg: number; items: number }>>;
+  plannedTypes: readonly string[];
+  goals: Partial<Record<MealType, number>>;
+  fibreGoals: Partial<Record<MealType, number>>;
+}) {
+  const types = MEAL_TYPES.filter((t) => plannedTypes.includes(t) || protein[t] || fibre[t]);
+  const bar = (key: string, label: string, p: { avg: number } | undefined, goal: number | undefined) => {
+    const avg = p ? Math.round(p.avg) : null;
+    const met = goal !== undefined && avg !== null && avg >= goal;
+    const pct = goal !== undefined ? (avg !== null ? Math.min(100, (avg / goal) * 100) : 0) : avg !== null ? 100 : 0;
+    return (
+      <div className="flex flex-col gap-1" data-testid={key}>
+        <div className="flex justify-between gap-2 font-mono text-[0.6875rem] font-bold uppercase">
+          <span>{label}</span>
+          <span>
+            {avg !== null ? `${avg} g` : "—"} · {goal !== undefined ? `goal ${goal} g` : "no goal"}
+            {goal !== undefined && avg !== null ? (met ? " ✓" : " ↓") : ""}
+          </span>
+        </div>
+        <div className="h-2.5 overflow-hidden rounded-[0.1875rem] border-2 border-line bg-pg" aria-hidden>
+          <div className={goal === undefined ? "h-full bg-s0" : met ? "h-full bg-acc" : "h-full bg-peach"} style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+    );
+  };
   return (
-    <section aria-label="Protein per serving" data-testid="protein-summary" className="flex flex-col gap-2.5 rounded-ui border-bw bg-base px-3.5 py-3 shadow-hard">
+    <section aria-label="Protein and fibre per serving" data-testid="protein-summary" className="flex flex-col gap-2.5 rounded-ui border-bw bg-base px-3.5 py-3 shadow-hard">
       <div className="flex justify-between font-mono text-[0.65625rem] font-bold tracking-[0.09rem] uppercase">
-        <span>Protein / serving</span>
+        <span>Protein &amp; fibre / serving</span>
         <span className="text-sub">Plan avg</span>
       </div>
-      {types.map((t) => {
-        const p = protein[t];
-        const goal = goals[t];
-        const avg = p ? Math.round(p.avg) : null;
-        const met = goal !== undefined && avg !== null && avg >= goal;
-        const pct = goal !== undefined ? (avg !== null ? Math.min(100, (avg / goal) * 100) : 0) : avg !== null ? 100 : 0;
-        return (
-          <div key={t} className="flex flex-col gap-1" data-testid={`protein-${t}`}>
-            <div className="flex justify-between gap-2 font-mono text-[0.6875rem] font-bold uppercase">
-              <span>{MEAL_LABEL[t]}</span>
-              <span>
-                {avg !== null ? `${avg} g` : "—"} · {goal !== undefined ? `goal ${goal} g` : "no goal"}
-                {goal !== undefined && avg !== null ? (met ? " ✓" : " ↓") : ""}
-              </span>
-            </div>
-            <div className="h-2.5 overflow-hidden rounded-[0.1875rem] border-2 border-line bg-pg" aria-hidden>
-              <div className={goal === undefined ? "h-full bg-s0" : met ? "h-full bg-acc" : "h-full bg-peach"} style={{ width: `${pct}%` }} />
-            </div>
-          </div>
-        );
-      })}
+      {types.map((t) => (
+        <div key={t} className="flex flex-col gap-1.5">
+          {bar(`protein-${t}`, `${MEAL_LABEL[t]} · protein`, protein[t], goals[t])}
+          {bar(`fibre-${t}`, `${MEAL_LABEL[t]} · fibre`, fibre[t], fibreGoals[t])}
+        </div>
+      ))}
       <Link to="/settings/preferences" className="text-[0.75rem] font-bold text-ink underline">
-        Protein goals
+        Protein and fibre goals
       </Link>
     </section>
   );

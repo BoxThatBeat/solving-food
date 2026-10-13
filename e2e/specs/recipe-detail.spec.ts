@@ -5,7 +5,7 @@ import { makeRecipe, seedRecipeId, uniqueTitle } from "../fixtures/recipes";
 import { expect, test } from "../fixtures/test";
 import { detail } from "../pages/recipes";
 
-test("shows image, servings, times, ingredients, steps, tools, source, notes, and protein", { tag: ["@R4.8", "@R6.15", "@R4.18"] }, async ({ page, household: _ }) => {
+test("shows image, servings, times, ingredients, steps, tools, source, notes, protein, and fibre", { tag: ["@R4.8", "@R6.15", "@R4.18", "@R6.26"] }, async ({ page, household: _ }) => {
   const id = await seedRecipeId("Garlic Rice and Chicken");
   await page.goto(`/recipes/${id}`);
   const d = detail(page);
@@ -17,6 +17,7 @@ test("shows image, servings, times, ingredients, steps, tools, source, notes, an
   await expect(d.getByTestId("meta-active")).toHaveText("15m");
   await expect(d.getByTestId("meta-cook")).toHaveText("25m");
   await expect(d.getByTestId("meta-protein")).toHaveText("60 g");
+  await expect(d.getByTestId("meta-fibre")).toHaveText(/^~?\d+ g$/); // M9 (R6.26): fibre per serving, derived like protein
   await expect(d.getByLabel("Servings", { exact: true })).toHaveText("2");
 
   const ingredients = d.locator("section[aria-labelledby=ing-h]");

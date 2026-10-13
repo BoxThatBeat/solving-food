@@ -16,6 +16,7 @@
     "canonicalUnit": "g",
     "unitWeightG": 170,
     "proteinPer100g": 20.4,
+    "fibrePer100g": 0,
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 90
@@ -48,6 +49,7 @@
     "canonicalUnit": "g",
     "unitWeightG": 14,
     "proteinPer100g": 20.1,
+    "fibrePer100g": 0,
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 180
@@ -69,6 +71,7 @@
     "canonicalUnit": "g",
     "unitWeightG": 10,
     "proteinPer100g": 24,
+    "fibrePer100g": 0,
     "shelfLifeDays": {
       "fridge": 3,
       "freezer": 180
@@ -90,6 +93,7 @@
     "canonicalUnit": "g",
     "unitWeightG": 150,
     "proteinPer100g": 17.8,
+    "fibrePer100g": 0,
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 240
@@ -111,6 +115,7 @@
     "canonicalUnit": "g",
     "unitWeightG": 150,
     "proteinPer100g": 16.3,
+    "fibrePer100g": 0,
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 240
@@ -132,6 +137,7 @@
     "canonicalUnit": "g",
     "unitWeightG": 115,
     "proteinPer100g": 20.1,
+    "fibrePer100g": 0,
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 240
@@ -153,6 +159,7 @@
     "canonicalUnit": "g",
     "unitWeightG": 170,
     "proteinPer100g": 18.6,
+    "fibrePer100g": 0,
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 240
@@ -174,6 +181,7 @@
     "canonicalUnit": "g",
     "unitWeightG": 100,
     "proteinPer100g": 12.4,
+    "fibrePer100g": 0,
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 240
@@ -195,6 +203,7 @@
     "canonicalUnit": "g",
     "unitWeightG": 150,
     "proteinPer100g": 20.5,
+    "fibrePer100g": 0,
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 90
@@ -215,6 +224,7 @@
     "allowedMeasures": ["weight"],
     "canonicalUnit": "g",
     "proteinPer100g": 18.3,
+    "fibrePer100g": 0,
     "shelfLifeDays": {
       "fridge": 14,
       "freezer": 60
@@ -236,6 +246,7 @@
     "canonicalUnit": "g",
     "unitWeightG": 30,
     "proteinPer100g": 12,
+    "fibrePer100g": 0,
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 90
@@ -257,6 +268,7 @@
     "canonicalUnit": "g",
     "unitWeightG": 15,
     "proteinPer100g": 11.9,
+    "fibrePer100g": 0,
     "shelfLifeDays": {
       "fridge": 2,
       "freezer": 90

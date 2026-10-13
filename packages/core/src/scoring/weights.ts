@@ -10,6 +10,7 @@ export const FACTOR_KEYS = [
   "variety",
   "preferences",
   "proteinGoal",
+  "fibreGoal",
   "missingIngredients",
   "cost",
   "sameProtein",
@@ -35,6 +36,7 @@ export const FACTORS: readonly FactorInfo[] = [
   { key: "variety", label: "Variety", sign: 1, hint: "Not cooked lately; a cuisine and protein you haven't had much" },
   { key: "preferences", label: "Food preferences", sign: 1, hint: "Matches your likes" },
   { key: "proteinGoal", label: "Meets protein goal", sign: 1, hint: "Protein per serving at or above the goal" },
+  { key: "fibreGoal", label: "Meets fibre goal", sign: 1, hint: "Fibre per serving at or above the goal" },
   { key: "missingIngredients", label: "Missing ingredients", sign: -1, hint: "Share of ingredients supply doesn't cover" },
   { key: "cost", label: "Cost", sign: -1, hint: "What it adds to the next order" },
   { key: "sameProtein", label: "Same protein as plan", sign: -1, hint: "Main protein already planned this period" },
@@ -51,10 +53,10 @@ export type PresetName = (typeof PRESET_NAMES)[number];
 
 /** From the prototype's PRESETS table (its "tools" weight is a hard filter here). */
 export const PRESETS: Readonly<Record<PresetName, Weights>> = {
-  Balanced: { expiryUrgency: 4, supplyUtilisation: 3, rating: 3, historicalPref: 2, variety: 3, preferences: 2, proteinGoal: 3, missingIngredients: 3, cost: 2, sameProtein: 2, sameCuisine: 2, recentlyCooked: 2 },
-  "Use it up": { expiryUrgency: 5, supplyUtilisation: 5, rating: 2, historicalPref: 1, variety: 1, preferences: 1, proteinGoal: 2, missingIngredients: 4, cost: 2, sameProtein: 1, sameCuisine: 1, recentlyCooked: 1 },
-  "Cheap week": { expiryUrgency: 3, supplyUtilisation: 4, rating: 2, historicalPref: 2, variety: 1, preferences: 1, proteinGoal: 2, missingIngredients: 4, cost: 5, sameProtein: 1, sameCuisine: 1, recentlyCooked: 1 },
-  Adventurous: { expiryUrgency: 2, supplyUtilisation: 1, rating: 2, historicalPref: 0, variety: 5, preferences: 2, proteinGoal: 2, missingIngredients: 1, cost: 1, sameProtein: 4, sameCuisine: 5, recentlyCooked: 5 },
+  Balanced: { expiryUrgency: 4, supplyUtilisation: 3, rating: 3, historicalPref: 2, variety: 3, preferences: 2, proteinGoal: 3, fibreGoal: 2, missingIngredients: 3, cost: 2, sameProtein: 2, sameCuisine: 2, recentlyCooked: 2 },
+  "Use it up": { expiryUrgency: 5, supplyUtilisation: 5, rating: 2, historicalPref: 1, variety: 1, preferences: 1, proteinGoal: 2, fibreGoal: 1, missingIngredients: 4, cost: 2, sameProtein: 1, sameCuisine: 1, recentlyCooked: 1 },
+  "Cheap week": { expiryUrgency: 3, supplyUtilisation: 4, rating: 2, historicalPref: 2, variety: 1, preferences: 1, proteinGoal: 2, fibreGoal: 1, missingIngredients: 4, cost: 5, sameProtein: 1, sameCuisine: 1, recentlyCooked: 1 },
+  Adventurous: { expiryUrgency: 2, supplyUtilisation: 1, rating: 2, historicalPref: 0, variety: 5, preferences: 2, proteinGoal: 2, fibreGoal: 1, missingIngredients: 1, cost: 1, sameProtein: 4, sameCuisine: 5, recentlyCooked: 5 },
 };
 
 export const DEFAULT_WEIGHTS: Weights = PRESETS.Balanced;

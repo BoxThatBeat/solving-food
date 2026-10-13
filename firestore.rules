@@ -153,7 +153,7 @@ service cloud.firestore {
 
     function validIngredient(d) {
       return d.keys().hasOnly(['name', 'aliases', 'category', 'defaultLocation', 'allowedMeasures', 'canonicalUnit',
-                               'densityGPerMl', 'unitWeightG', 'proteinPer100g', 'shelfLifeDays', 'defaultPackAmount',
+                               'densityGPerMl', 'unitWeightG', 'proteinPer100g', 'fibrePer100g', 'shelfLifeDays', 'defaultPackAmount',
                                'defaultPackMeasure', 'defaultCadenceDays', 'freezable', 'isStaple', 'freeUse',
                                'needsReview', 'side', 'createdBy', 'updatedBy', 'updatedAt'])
         && d.keys().hasAll(['name', 'aliases', 'category', 'defaultLocation', 'allowedMeasures', 'canonicalUnit',
@@ -165,7 +165,7 @@ service cloud.firestore {
         && d.allowedMeasures is list && d.allowedMeasures.size() >= 1
         && d.allowedMeasures.hasOnly(['weight', 'volume', 'count'])
         && d.canonicalUnit in ['g', 'count']
-        && optNum(d, 'densityGPerMl') && optNum(d, 'unitWeightG') && optNum(d, 'proteinPer100g')
+        && optNum(d, 'densityGPerMl') && optNum(d, 'unitWeightG') && optNum(d, 'proteinPer100g') && optNum(d, 'fibrePer100g')
         && optNum(d, 'defaultPackAmount') && optNum(d, 'defaultCadenceDays')
         && (!('defaultPackMeasure' in d) || d.defaultPackMeasure in ['weight', 'volume', 'count'])
         && d.shelfLifeDays is map
@@ -188,7 +188,7 @@ service cloud.firestore {
     function validRecipe(d) {
       return d.keys().hasOnly(['title', 'slug', 'servings', 'prepMin', 'cookMin', 'cuisine', 'mainProtein', 'tags',
                                'tools', 'ingredients', 'steps', 'prepTasks', 'defaultLeftoverPortions',
-                               'leftoverMealType', 'proteinPerServingG', 'proteinApproximate', 'notes', 'sourceUrl',
+                               'leftoverMealType', 'proteinPerServingG', 'proteinApproximate', 'fibrePerServingG', 'fibreApproximate', 'notes', 'sourceUrl',
                                'sourceUrlCanonical', 'fingerprint', 'ingredientIds', 'imagePaths', 'indexChunk',
                                'status', 'possibleDuplicateOf', 'trashedAt', 'trashedBy', 'createdBy', 'updatedBy',
                                'version', 'createdAt', 'updatedAt'])

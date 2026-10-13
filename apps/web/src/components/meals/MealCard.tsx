@@ -2,10 +2,11 @@
 // recipes, badges, title, meta, its recipes with times, and favourite / copy link / plan actions.
 import { Link } from "@tanstack/react-router";
 import { Star } from "lucide-react";
-import { formatCents, formatMinutes, formatProtein, type HouseholdFacts, type MealRow, type RecipeSummary } from "@solving-food/core";
+import { formatCents, formatMinutes, type HouseholdFacts, type MealRow, type RecipeSummary } from "@solving-food/core";
 import { Badge } from "@/components/ui/chip";
 import { RecipeImage } from "@/components/recipes/RecipeImage";
 import { cn } from "@/lib/utils";
+import { NutritionText } from "@/components/NutritionText";
 
 export function MealCard({
   row,
@@ -53,7 +54,8 @@ export function MealCard({
         </h3>
         <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
           {row.recipeIds.length} recipe{row.recipeIds.length === 1 ? "" : "s"}
-          {facts.costPerServingCents != null ? ` · ${formatCents(facts.costPerServingCents)}/serv` : ""} · {formatProtein(row.proteinPerServingG, row.proteinApproximate)} protein
+          {facts.costPerServingCents != null ? ` · ${formatCents(facts.costPerServingCents)}/serv` : ""}
+          <NutritionText r={row} />
           {facts.timesCooked ? ` · made ${facts.timesCooked}×` : ""}
         </span>
         {sides ? (

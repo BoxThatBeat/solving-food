@@ -7,6 +7,8 @@ import {
   emptyScoreContext,
   expiringSpare,
   expiryUrgency,
+  fibreGoal,
+  meetsGoals,
   FACTOR_KEYS,
   FACTORS,
   historicalPref,
@@ -370,5 +372,20 @@ describe("side recipes are never suggested as a meal (M9, R4.28)", () => {
     const byId = new Map([main, side].map((r) => [r.id, score(r, c, DEFAULT_WEIGHTS)]));
     expect(combinedSuggestion(["main", "pilaf"], byId)!.blocked).toBe(false);
     expect(combinedSuggestion(["pilaf"], byId)!.blocked).toBe(true);
+  });
+});
+
+describe("fibre goal (M9, R6.26)", () => {
+  it("raises recipes at or above the goal; skipped when off; the optimiser filter needs both goals", () => {
+    const hi = recipe("hi", { fibrePerServingG: 9 });
+    const lo = recipe("lo", { fibrePerServingG: 3 });
+    const c = ctx({ fibreGoals: { dinner: 8 } });
+    expect(fibreGoal(hi, c)).toBe(1);
+    expect(fibreGoal(lo, c)).toBeCloseTo(3 / 8);
+    expect(fibreGoal(hi, ctx())).toBeNull();
+    expect(score(hi, c, DEFAULT_WEIGHTS).raw).toBeGreaterThan(score(lo, c, DEFAULT_WEIGHTS).raw);
+    expect(meetsGoals(hi, c)).toBe(true);
+    expect(meetsGoals(lo, c)).toBe(false);
+    expect(meetsGoals(hi, ctx({ fibreGoals: { dinner: 8 }, proteinGoals: { dinner: 50 } }))).toBe(false);
   });
 });

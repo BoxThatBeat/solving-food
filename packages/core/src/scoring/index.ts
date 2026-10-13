@@ -17,6 +17,7 @@ import {
   daysSince,
   expiringUses,
   expiryUrgency,
+  fibreGoal,
   historicalPref,
   missingIds,
   missingIngredients,
@@ -88,6 +89,8 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
   };
   const pg = proteinGoal(r, ctx);
   if (pg !== null) f.proteinGoal = pg;
+  const fg = fibreGoal(r, ctx);
+  if (fg !== null) f.fibreGoal = fg;
 
   let raw = 0;
   let max = 0;
@@ -129,6 +132,8 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
       }
       case "proteinGoal":
         return `${Math.round(r.proteinPerServingG ?? 0)} g protein`;
+      case "fibreGoal":
+        return `${Math.round(r.fibrePerServingG ?? 0)} g fibre`;
       case "missingIngredients": {
         const m = missingIds(needs, ctx).slice(0, 2).map((id) => short(ctx, id));
         return m.length ? `Missing ${m.join(", ")}` : "Missing some";
@@ -260,6 +265,7 @@ export function emptyScoreContext(overrides: Partial<ScoreContext> = {}): ScoreC
     preferences: { likes: [], dislikes: [], diets: [] },
     tools: [],
     proteinGoals: {},
+    fibreGoals: {},
     ingredient: () => undefined,
     costOf: () => null,
     remainingBudgetCents: 0,

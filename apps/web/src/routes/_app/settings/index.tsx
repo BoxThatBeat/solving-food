@@ -21,7 +21,7 @@ const SECTIONS = [
   { to: "/settings/sides", label: "Sides", sub: "Fries, rice, buns, chips… portion per person" },
   { to: "/ingredients", label: "Ingredients", sub: "Catalogue, aliases, new names from imports to review" },
   { to: "/settings/tools", label: "Kitchen tools", sub: "Equipment the household owns" },
-  { to: "/settings/preferences", label: "Preferences", sub: "Likes, dislikes, dietary restrictions, protein goals" },
+  { to: "/settings/preferences", label: "Preferences", sub: "Likes, dislikes, dietary restrictions, protein and fibre" },
   { to: "/settings/weights", label: "Suggestion weights", sub: "What raises or lowers a suggestion" },
   { to: "/settings/theme", label: "Theme", sub: "Accent colour · just you" },
   { to: "/settings/data", label: "Data", sub: "Download or import household data" },

@@ -17,6 +17,7 @@ import { useRecipeIndex } from "@/search/useRecipeSearch";
 import { useSuggestions } from "@/data/suggestions";
 import { useSettling } from "@/lib/useSettling";
 import { MealCardSkeleton, SettlingGrid } from "@/components/SettlingGrid";
+import { useNutritionSearch } from "@/data/nutrition";
 
 export const Route = createFileRoute("/_app/meals/")({
   validateSearch: (s) => collectionSearchSchema.parse(s),
@@ -46,7 +47,8 @@ function MealsPage() {
     if (!q) return null;
     return new Map(rows.filter((r) => [r.title, ...r.ingredientNames, ...r.tags, ...r.recipeIds.map((id) => byId.get(id)?.title ?? "")].some((t) => t.toLowerCase().includes(q))).map((r) => [r.id, 1]));
   }, [rows, search.q, byId]);
-  const result = React.useMemo(() => applyCollection(rows, search, factsOf, matches), [rows, search, factsOf, matches]);
+  const nut = useNutritionSearch();
+  const result = React.useMemo(() => applyCollection(rows, nut(search), factsOf, matches), [rows, search, factsOf, matches, nut]);
   const tags = React.useMemo(() => tagCounts(rows), [rows]);
   // Skeleton cards while a re-sort settles (M7), as on Recipes.
   const scoreSort = (!search.sort && !search.q) || search.sort === "expiry";

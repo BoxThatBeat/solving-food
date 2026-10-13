@@ -146,6 +146,7 @@ function IngredientForm({ id, initial }: { id: string; initial: IngredientDoc })
   const [density, setDensity] = React.useState(numStr(initial.densityGPerMl));
   const [unitWeight, setUnitWeight] = React.useState(numStr(initial.unitWeightG));
   const [protein, setProtein] = React.useState(numStr(initial.proteinPer100g));
+  const [fibre, setFibre] = React.useState(numStr(initial.fibrePer100g));
   const [shelf, setShelf] = React.useState<Record<StorageLocation, string>>({
     pantry: numStr(initial.shelfLifeDays.pantry),
     cupboard: numStr(initial.shelfLifeDays.cupboard),
@@ -167,6 +168,7 @@ function IngredientForm({ id, initial }: { id: string; initial: IngredientDoc })
     densityGPerMl: toNum(density),
     unitWeightG: toNum(unitWeight),
     proteinPer100g: toNum(protein),
+    fibrePer100g: toNum(fibre),
   };
   const reasons = reviewReasons(draft);
 
@@ -250,6 +252,7 @@ function IngredientForm({ id, initial }: { id: string; initial: IngredientDoc })
           <F label="Density g/ml" value={density} onChange={setDensity} numeric disabled={!measures.includes("volume")} />
           <F label="Grams per piece" value={unitWeight} onChange={setUnitWeight} numeric disabled={!measures.includes("count")} />
           <F label="Protein g/100 g" value={protein} onChange={setProtein} numeric />
+          <F label="Fibre g/100 g" value={fibre} onChange={setFibre} numeric />
         </div>
       </Card>
       <Card>

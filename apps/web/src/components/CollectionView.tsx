@@ -10,6 +10,9 @@ import {
   MAIN_PROTEINS,
   RECIPE_COURSES,
   PROTEIN_STEPS,
+  FIBRE_STEPS,
+  NUTRITION_SORTS,
+  withoutNutrition,
   RATING_STEPS,
   SORT_LABELS,
   SORTS,
@@ -23,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { SectionLabel, ToggleChip } from "./ui/chip";
 import { Sheet, SheetContent } from "./ui/sheet";
 import { Input } from "./ui/input";
+import { useNutrition } from "@/data/nutrition";
 
 export interface CollectionViewProps {
   search: CollectionSearch;
@@ -65,6 +69,7 @@ function appliedChips(s: CollectionSearch): Array<{ key: string; label: string; 
   if (s.fav) out.push({ key: "fav", label: "★ Favourites", remove: (x) => ({ ...x, fav: undefined }) });
   if (s.cooked) out.push({ key: "cooked", label: s.cooked === "before" ? "Cooked before" : "Never cooked", remove: (x) => ({ ...x, cooked: undefined }) });
   if (s.minProtein) out.push({ key: "minProtein", label: `≥ ${s.minProtein} g protein`, remove: (x) => ({ ...x, minProtein: undefined }) });
+  if (s.minFibre) out.push({ key: "minFibre", label: `≥ ${s.minFibre} g fibre`, remove: (x) => ({ ...x, minFibre: undefined }) });
   if (s.maxTotal) out.push({ key: "maxTotal", label: `≤ ${s.maxTotal} min total`, remove: (x) => ({ ...x, maxTotal: undefined }) });
   if (s.maxActive) out.push({ key: "maxActive", label: `≤ ${s.maxActive} min active`, remove: (x) => ({ ...x, maxActive: undefined }) });
   if (s.minRating) out.push({ key: "minRating", label: `★ ${s.minRating}+`, remove: (x) => ({ ...x, minRating: undefined }) });
@@ -111,8 +116,11 @@ export function CollectionView(p: CollectionViewProps) {
     return () => clearTimeout(t);
   }, [q, urlQ, search, onSearchChange]);
 
-  const n = activeFilterCount(search);
-  const chips = appliedChips(search);
+  // Nutrition tracking off (M9, R6.27): no protein or fibre filters, sorts, or chips.
+  const nutrition = useNutrition();
+  const shown = nutrition.on ? search : withoutNutrition(search);
+  const n = activeFilterCount(shown);
+  const chips = appliedChips(shown);
   const openSheet = () => {
     setDraft(search);
     setOpen(true);
@@ -214,7 +222,7 @@ export function CollectionView(p: CollectionViewProps) {
               <SectionLabel>Sort by</SectionLabel>
             </legend>
             <div className="grid grid-cols-2 gap-2">
-              {SORTS.map((s: CollectionSort) => (
+              {SORTS.filter((s) => nutrition.on || !NUTRITION_SORTS.includes(s)).map((s: CollectionSort) => (
                 <button
                   key={s}
                   type="button"
@@ -278,13 +286,24 @@ export function CollectionView(p: CollectionViewProps) {
             ))}
           </Group>
 
-          <Group title="Protein per serving" hint={draft.minProtein ? `≥ ${draft.minProtein} g` : "Any"}>
-            {PROTEIN_STEPS.map((g) => (
-              <ToggleChip key={g} pressed={draft.minProtein === g} onClick={() => setDraft((d) => ({ ...d, minProtein: d.minProtein === g ? undefined : g }))} count={count("minProtein", g)}>
-                ≥ {g} g
-              </ToggleChip>
-            ))}
-          </Group>
+          {nutrition.on ? (
+            <>
+              <Group title="Protein per serving" hint={draft.minProtein ? `≥ ${draft.minProtein} g` : "Any"}>
+                {PROTEIN_STEPS.map((g) => (
+                  <ToggleChip key={g} pressed={draft.minProtein === g} onClick={() => setDraft((d) => ({ ...d, minProtein: d.minProtein === g ? undefined : g }))} count={count("minProtein", g)}>
+                    ≥ {g} g
+                  </ToggleChip>
+                ))}
+              </Group>
+              <Group title="Fibre per serving" hint={draft.minFibre ? `≥ ${draft.minFibre} g` : "Any"}>
+                {FIBRE_STEPS.map((g) => (
+                  <ToggleChip key={g} pressed={draft.minFibre === g} onClick={() => setDraft((d) => ({ ...d, minFibre: d.minFibre === g ? undefined : g }))} count={count("minFibre", g)}>
+                    ≥ {g} g
+                  </ToggleChip>
+                ))}
+              </Group>
+            </>
+          ) : null}
 
           {p.hide?.includes("cost") ? null : (
             <Group title="Cost per serving" hint={draft.maxCost ? `≤ $${draft.maxCost / 100} · estimates` : "Any · estimates"}>

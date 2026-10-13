@@ -2,6 +2,7 @@
 // snapshot of the household's plan, supply, stats, preferences, and weights, debounced 300 ms after any change. Pages
 // that need scores (the Plan page's Suggested row, the Suggested sort in every <CollectionView>, expiry alerts, the
 // optimiser) call `useSuggestions()`; the engine only runs while at least one of them is mounted.
+import { activeGoals, nutritionOf } from "./nutrition";
 import * as React from "react";
 import { addLocalDays, VARIETY_PERIODS, type MealType, type RecipeLines, type ScoreResult } from "@solving-food/core";
 import { useFavourites, useStats } from "./householdRecipes";
@@ -58,8 +59,8 @@ export function useScoringSnapshot(m: PlanModel, mealType: MealType | null = nul
     for (const [id, r] of m.recipes) if (!indexed.has(id)) extraLines.push([id, { servings: r.servings, ingredients: r.ingredients.map((l) => ({ ingredientId: l.ingredientId, canonicalAmount: l.canonicalAmount, optional: l.optional })) }]);
     const ingredients: Array<[string, SnapshotIngredient]> = [...m.ingredients.values()].map((i) => [i.id, i as SnapshotIngredient]);
     const settings = household.settings;
-    const goals: Partial<Record<MealType, number>> = {};
-    for (const [k, v] of Object.entries(settings?.proteinGoals ?? {})) if (typeof v === "number") goals[k as MealType] = v;
+    // Nutrition tracking off (M9, R6.27): no goal acts on the scores.
+    const { proteinGoals, fibreGoals } = activeGoals(nutritionOf(settings));
     return {
       nowMs: now,
       servings: household.defaultServings,
@@ -78,7 +79,8 @@ export function useScoringSnapshot(m: PlanModel, mealType: MealType | null = nul
       recentRecipeIds: recent,
       preferences: { likes: settings?.preferences?.likes ?? [], dislikes: settings?.preferences?.dislikes ?? [], diets: settings?.preferences?.diets ?? [] },
       tools: settings?.tools ?? [],
-      proteinGoals: goals,
+      proteinGoals,
+      fibreGoals,
       weights: settings?.scoreWeights ?? {},
       budgetCents: m.period?.budgetCents ?? household.budgetCents,
       ingredients,

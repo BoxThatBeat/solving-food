@@ -3,7 +3,7 @@
 // version of the existing recipe, then is discarded), or Keep both.
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
-import { describeMatch, findDuplicates, formatMinutes, formatProtein, taxonomyLabel, type RecipeDoc } from "@solving-food/core";
+import { describeMatch, findDuplicates, formatMinutes, taxonomyLabel, type RecipeDoc } from "@solving-food/core";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/chip";
@@ -12,6 +12,7 @@ import { useNotify } from "@/components/notifications-context";
 import { keepBoth, keepExisting, keepNew, useRecipe, useRecipesWithStatus, type StoredRecipe } from "@/data/recipes";
 import { lookupFromMap, useAllIngredients } from "@/data/ingredients";
 import { useReadySession } from "@/session/useSession";
+import { NutritionText } from "@/components/NutritionText";
 
 const DATE = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
@@ -23,7 +24,8 @@ function Side({ label, r }: { label: string; r: RecipeDoc | null | undefined }) 
         <>
           <span className="text-[0.9375rem] leading-tight font-extrabold">{r.title}</span>
           <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
-            {formatMinutes(r.prepMin + r.cookMin)} · serves {r.servings} · {taxonomyLabel(r.cuisine)} · {formatProtein(r.proteinPerServingG, r.proteinApproximate)} protein
+            {formatMinutes(r.prepMin + r.cookMin)} · serves {r.servings} · {taxonomyLabel(r.cuisine)}
+            <NutritionText r={r} />
           </span>
           <ul className="m-0 list-disc pl-4 text-xs leading-snug font-semibold">
             {r.ingredients.map((l) => (

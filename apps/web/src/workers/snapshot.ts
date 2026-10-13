@@ -56,6 +56,7 @@ export interface ScoringSnapshot {
   preferences: { likes: string[]; dislikes: string[]; diets: string[] };
   tools: string[];
   proteinGoals: Partial<Record<MealType, number>>;
+  fibreGoals: Partial<Record<MealType, number>>;
   weights: Record<string, number>;
   budgetCents: number;
   ingredients: Array<[string, SnapshotIngredient]>;
@@ -136,6 +137,7 @@ export function buildContexts(s: ScoringSnapshot, seed: ReadonlyMap<string, Snap
     preferences: s.preferences,
     tools: s.tools,
     proteinGoals: s.proteinGoals,
+    fibreGoals: s.fibreGoals,
     ingredient: (id) => {
       const i = ingredients.get(id);
       return i ? { category: i.category, name: i.name, freeUse: i.freeUse } : undefined;

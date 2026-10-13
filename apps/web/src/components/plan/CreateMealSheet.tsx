@@ -16,7 +16,6 @@ import {
   EATING_OUT_NOTE_MAX,
   formatCents,
   formatMinutes,
-  formatProtein,
   mealRow,
   optionCount,
   PLANNABLE_MEAL_TYPES,
@@ -45,6 +44,8 @@ import { useRecipeIndex, useRecipeSearch } from "@/search/useRecipeSearch";
 import { useReadySession } from "@/session/useSession";
 import { cn } from "@/lib/utils";
 import { MEAL_LABEL, type CreateMealRequest } from "./plan-sheet-context";
+import { NutritionText } from "@/components/NutritionText";
+import { useNutritionSearch } from "@/data/nutrition";
 
 type Step = "pick" | "details";
 type Tab = "recipes" | "meals" | "out";
@@ -121,7 +122,8 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
   const suggestions = useSuggestions();
   const factsOf = useHouseholdFacts(model.hid, all, model.supply.loading ? undefined : model.projected, suggestions.byId);
   const matches = useRecipeSearch(all, notes, search.q ?? "");
-  const result = React.useMemo(() => applyCollection(all, search, factsOf, matches), [all, search, factsOf, matches]);
+  const nut = useNutritionSearch();
+  const result = React.useMemo(() => applyCollection(all, nut(search), factsOf, matches), [all, search, factsOf, matches, nut]);
   const tags = React.useMemo(() => tagCounts(all), [all]);
   const isSelected = (id: string) => selected.some((r) => r.recipeId === id);
   const toggle = (id: string) => {
@@ -308,7 +310,8 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                           <span className="text-sm leading-tight font-extrabold">{r.title}</span>
                           <span className="font-mono text-[0.625rem] font-semibold uppercase opacity-80">
-                            {formatMinutes(r.totalMin)} · {taxonomyLabel(r.cuisine)} · {formatProtein(r.proteinPerServingG, r.proteinApproximate)} protein
+                            {formatMinutes(r.totalMin)} · {taxonomyLabel(r.cuisine)}
+                            <NutritionText r={r} />
                           </span>
                         </span>
                       </button>

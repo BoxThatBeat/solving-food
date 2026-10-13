@@ -4,7 +4,7 @@
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Star, X } from "lucide-react";
-import { formatMinutes, formatPortion, formatProtein, MEAL_RECIPES_MAX, taxonomyLabel, type MealSide, type RecipeRef } from "@solving-food/core";
+import { formatMinutes, formatPortion, MEAL_RECIPES_MAX, taxonomyLabel, type MealSide, type RecipeRef } from "@solving-food/core";
 import { EmptyState, PageBody } from "@/components/AppShell";
 import { useNotify } from "@/components/notifications-context";
 import { useCreateMeal } from "@/components/plan/plan-sheet-context";
@@ -21,6 +21,7 @@ import { useIngredientsById } from "@/data/ingredients";
 import { useSides } from "@/data/sides";
 import { SidePicker } from "@/components/plan/SidePicker";
 import { cn } from "@/lib/utils";
+import { NutritionText } from "@/components/NutritionText";
 
 export const Route = createFileRoute("/_app/meals/$id/")({
   component: MealPage,
@@ -145,7 +146,8 @@ function MealPage() {
                   </span>
                   {rec ? (
                     <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
-                      {formatMinutes(rec.prepMin + rec.cookMin)} total · {formatMinutes(rec.prepMin)} active · {taxonomyLabel(rec.cuisine)} · {formatProtein(rec.proteinPerServingG, rec.proteinApproximate)}
+                      {formatMinutes(rec.prepMin + rec.cookMin)} total · {formatMinutes(rec.prepMin)} active · {taxonomyLabel(rec.cuisine)}
+                      <NutritionText r={rec} />
                     </span>
                   ) : null}
                 </span>

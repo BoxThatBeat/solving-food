@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activeFilterCount, applyCollection, collectionSearchSchema, isSideOnly, mealTypesOf, NO_FACTS, optionCount, passes, tagCounts, taxonomyLabel, toSearchParams, type HouseholdFacts } from "./collection";
+import { activeFilterCount, applyCollection, withoutNutrition, collectionSearchSchema, isSideOnly, mealTypesOf, NO_FACTS, optionCount, passes, tagCounts, taxonomyLabel, toSearchParams, type HouseholdFacts } from "./collection";
 import type { RecipeSummary } from "./recipe";
 
 function r(id: string, over: Partial<RecipeSummary> = {}): RecipeSummary {
@@ -140,5 +140,20 @@ describe("meal type (course) tags, side recipes (M9: R4.2, R4.28)", () => {
     expect(isSideOnly({ tags: ["lunch", "side"] })).toBe(false);
     expect(isSideOnly({ tags: ["dinner"] })).toBe(false);
     expect(isSideOnly({ tags: [] })).toBe(false);
+  });
+});
+
+describe("fibre filter and sort; nutrition off (M9, R6.26, R6.27)", () => {
+  const rows = [r("Lo", { fibrePerServingG: 2 }), r("Hi", { fibrePerServingG: 9 }), r("None", { fibrePerServingG: null })];
+  const idsOf = (s: object) => applyCollection(rows, collectionSearchSchema.parse(s), () => NO_FACTS, null).items.map((x) => x.id);
+  it("filters by minimum fibre and sorts by most fibre", () => {
+    expect(idsOf({ minFibre: 6 })).toEqual(["Hi"]);
+    expect(idsOf({ sort: "fibre" })).toEqual(["Hi", "Lo", "None"]);
+    expect(activeFilterCount(collectionSearchSchema.parse({ minFibre: 6, minProtein: 20 }))).toBe(2);
+  });
+  it("tracking off drops protein and fibre filters and sorts", () => {
+    const s = collectionSearchSchema.parse({ minFibre: 6, minProtein: 20, sort: "fibre", cuisine: "greek" });
+    expect(withoutNutrition(s)).toEqual({ cuisine: ["greek"], sort: undefined });
+    expect(withoutNutrition(collectionSearchSchema.parse({ sort: "name" })).sort).toBe("name");
   });
 });

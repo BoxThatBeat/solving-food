@@ -11,6 +11,7 @@ import { Stepper } from "@/components/ui/stepper";
 import { Button } from "@/components/ui/button";
 import { useNotify } from "@/components/notifications-context";
 import { cn } from "@/lib/utils";
+import { useNutrition } from "@/data/nutrition";
 import { addOptimiserSet } from "@/data/plan";
 import type { ScoringSnapshot } from "@/workers/snapshot";
 import type { OptimiserRequest, OptimiserResponse } from "@/workers/optimiser.worker";
@@ -55,6 +56,11 @@ export function OptimiserCard({
   const worker = React.useRef<Worker | null>(null);
   const seq = React.useRef(0);
   const goal = goals[mealType];
+  // M9: the fibre goal joins the filter (R6.26); with tracking off neither goal shows (R6.27).
+  const nutrition = useNutrition();
+  const fibreGoal = nutrition.fibreGoals[mealType];
+  const anyGoal = goal !== undefined || fibreGoal !== undefined;
+  const goalText = [goal !== undefined ? `protein goal (${goal} g)` : null, fibreGoal !== undefined ? `fibre goal (${fibreGoal} g)` : null].filter(Boolean).join(" and ");
 
   React.useEffect(() => () => worker.current?.terminate(), []);
 
@@ -168,13 +174,15 @@ export function OptimiserCard({
             reset();
           }} min={10} max={1000} step={5} format={(v) => `$${v}`} label="Budget for the set" decLabel="Lower the budget" incLabel="Raise the budget" />
       </div>
-      <label className={cn("flex cursor-pointer items-center gap-2.5 text-[0.8125rem] font-bold", goal === undefined && "opacity-60")}>
-        <input type="checkbox" checked={proteinOnly} onChange={(e) => {
-            setProteinOnly(e.target.checked);
-            reset();
-          }} className="size-[1.375rem] accent-[var(--ink)]" disabled={goal === undefined} />
-        Only recipes that meet the protein goal{goal !== undefined ? ` (${goal} g)` : " (no goal set)"}
-      </label>
+      {nutrition.on ? (
+        <label className={cn("flex cursor-pointer items-center gap-2.5 text-[0.8125rem] font-bold", !anyGoal && "opacity-60")}>
+          <input type="checkbox" checked={proteinOnly} onChange={(e) => {
+              setProteinOnly(e.target.checked);
+              reset();
+            }} className="size-[1.375rem] accent-[var(--ink)]" disabled={!anyGoal} />
+          {anyGoal ? `Only recipes that meet the ${goalText}` : "Only recipes that meet the protein goal (no goal set)"}
+        </label>
+      ) : null}
 
       {state === "idle" || state === "searching" ? (
         <Button onClick={() => void find()} disabled={!snapshot || state === "searching"} className="w-full">

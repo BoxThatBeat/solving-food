@@ -110,7 +110,8 @@ meal eaten), R6.23 (new: eating out), R6.24 (new: expiring meals first), R6.25 (
 - [ ] Switch off: every protein and fibre number, goal, bar, filter, sort, optimiser toggle and the goal scoring
       factors are hidden/inactive; goals and recipe data are kept, and switching back restores them.
 - [ ] Skill and `.cook`: nothing to add (protein and fibre are derived from the ingredient list, never written in the
-      file); the skill's ingredient reference notes that new ingredients need protein and fibre values.
+      file; checked `solving-food-skill` and `functions/src/dropFolder.ts`: neither reads protein). `pnpm gen:skill` up
+      to date.
 - [ ] Unit tests (recipe, scoring, plan summary); e2e `settings.spec.ts` @R6.27, `recipe-detail.spec.ts` /
       `plan.spec.ts` @R6.26.
 

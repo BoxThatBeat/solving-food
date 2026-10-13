@@ -65,6 +65,8 @@ export function validateIngredients(items: SeedIngredient[]): string[] {
     const reasons = reviewReasons(i);
     if (reasons.length) problems.push(`${where}: incomplete (${reasons.join(", ")})`);
     if (i.needsReview !== reasons.length > 0) problems.push(`${where}: needsReview should be ${reasons.length > 0}`);
+    // M9 (R6.26): every shipped ingredient carries fibre (a missing value only makes recipes "~", so it isn't a review reason).
+    if (i.fibrePer100g === undefined) problems.push(`${where}: fibrePer100g missing`);
     if (i.freeUse && !i.isStaple && id !== "water") problems.push(`${where}: free-use items are staples`);
     if (i.isStaple && !i.defaultCadenceDays) problems.push(`${where}: staples need defaultCadenceDays`);
     if (i.defaultPackMeasure && !i.allowedMeasures.includes(i.defaultPackMeasure)) problems.push(`${where}: pack measure not allowed`);

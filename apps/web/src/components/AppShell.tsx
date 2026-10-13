@@ -24,6 +24,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose } from "./ui/sheet";
 import { Wordmark } from "./Wordmark";
 import { PlanSheetProvider } from "./plan/PlanSheetProvider";
 import { SuggestionsProvider } from "./SuggestionsProvider";
+import { NutritionContext, nutritionOf } from "@/data/nutrition";
 import { useMeals, usePlanItems } from "@/data/plan";
 import { usePendingReviews } from "./cook/helpers";
 import { useSupply } from "@/data/supply";
@@ -366,10 +367,19 @@ function RemovalNotice() {
   return null;
 }
 
+/** Nutrition tracking (M9, R6.27) and goals from the active household, for every page in the shell. */
+function NutritionProvider({ children }: { children: React.ReactNode }) {
+  const hh = useActiveHousehold();
+  const settings = hh.data?.settings;
+  const value = React.useMemo(() => nutritionOf(settings), [settings]);
+  return <NutritionContext.Provider value={value}>{children}</NutritionContext.Provider>;
+}
+
 function ReadyShell({ children, uid }: { children: React.ReactNode; uid: string }) {
   const s = useReadySession();
   const pathname = usePathname();
   return (
+    <NutritionProvider>
     <SuggestionsProvider>
     <PlanSheetProvider>
     <div className="flex min-h-dvh bg-pg text-ink">
@@ -392,6 +402,7 @@ function ReadyShell({ children, uid }: { children: React.ReactNode; uid: string 
     </div>
     </PlanSheetProvider>
     </SuggestionsProvider>
+    </NutritionProvider>
   );
 }
 

@@ -2,9 +2,10 @@
 // ingredient lacks protein data), favourite toggle, the household's cook stats ("made n times", R4.5; nothing when never cooked), and the
 // "can make" mark when supply left after the plan covers it (R4.3).
 // The card is a link; the favourite toggle sits beside it, not inside (no nested interactive elements).
+import { useNutrition } from "@/data/nutrition";
 import { Link } from "@tanstack/react-router";
 import { Plus, Star } from "lucide-react";
-import { formatMinutes, formatProtein, taxonomyLabel, type HouseholdFacts, type RecipeSummary } from "@solving-food/core";
+import { formatFibre, formatMinutes, formatProtein, taxonomyLabel, type HouseholdFacts, type RecipeSummary } from "@solving-food/core";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/chip";
 import { RecipeImage } from "./RecipeImage";
@@ -29,6 +30,8 @@ export function RecipeCard({
 }) {
   const family = r.tags.some((t) => /^family( recipe)?$/i.test(t));
   const protein = formatProtein(r.proteinPerServingG, r.proteinApproximate);
+  const fibre = formatFibre(r.fibrePerServingG, r.fibreApproximate);
+  const nutrition = useNutrition();
   return (
     <article
       className={cn(
@@ -65,7 +68,14 @@ export function RecipeCard({
         </div>
         <div className={cn("flex flex-col gap-[0.3125rem] px-2.5 pt-[0.5625rem] pb-[0.6875rem]", onPlan && "pr-12")}>
           <span className="font-mono text-[0.625rem] leading-[1.35] font-semibold text-sub uppercase">
-            <span className="normal-case">{formatMinutes(r.totalMin)}</span> · {taxonomyLabel(r.cuisine)} · {protein === "—" ? "PROTEIN —" : `${protein} PROTEIN`}
+            <span className="normal-case">{formatMinutes(r.totalMin)}</span> · {taxonomyLabel(r.cuisine)}
+            {/* Nutrition (R6.15, R6.26), hidden when the household turned tracking off (R6.27). */}
+            {nutrition.on ? (
+              <>
+                {" "}
+                · {protein === "—" ? "PROTEIN —" : `${protein} PROTEIN`} · {fibre === "—" ? "FIBRE —" : `${fibre} FIBRE`}
+              </>
+            ) : null}
           </span>
           <h3 className="m-0 text-[0.9375rem] leading-[1.15] font-extrabold text-pretty @[16rem]:text-[1.0625rem]">{r.title}</h3>
           {facts.timesCooked ? <span className="font-mono text-[0.625rem] font-semibold">{madeLine(facts)}</span> : null}

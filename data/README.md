@@ -19,7 +19,7 @@ file name). Each is an array of ingredient documents in the shape of `ingredient
 Field rules:
 
 - `densityGPerMl` whenever `volume` is allowed; `unitWeightG` whenever `count` is allowed on a gram-canonical item
-  (one clove of garlic, one egg, one lemon). `proteinPer100g` on everything. `needsReview` is derived and must match.
+  (one clove of garlic, one egg, one lemon). `proteinPer100g` and `fibrePer100g` (M9, total dietary fibre, USDA FoodData Central) on everything. `needsReview` is derived and must match (fibre isn't a review reason: a missing value only makes recipes' fibre approximate).
 - `shelfLifeDays` per storage location in days; `null` everywhere = never expires.
 - `defaultPackAmount` is in grams (weight), millilitres (volume), or pieces (count), per `defaultPackMeasure`.
 - `freeUse` (oils, salt, pepper, butter, sugar, condiments, water; PRD R8.14) items are staples with a

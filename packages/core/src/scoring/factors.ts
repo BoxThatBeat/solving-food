@@ -15,6 +15,8 @@ export interface ScoreRecipe extends PrefRecipe {
   id: string;
   servings: number;
   proteinPerServingG: number | null;
+  /** Fibre per serving (M9); absent on older index summaries. */
+  fibrePerServingG?: number | null | undefined;
   tools?: readonly string[] | undefined;
   /** Canonical amount per serving by ingredient ID (non-optional lines). */
   lines?: Readonly<Record<string, number>> | undefined;
@@ -59,6 +61,8 @@ export interface ScoreContext {
   preferences: Preferences;
   tools: readonly string[];
   proteinGoals: Partial<Record<MealType, number>>;
+  /** Fibre goals per meal type (M9, R6.26); empty when off or when nutrition tracking is off (R6.27). */
+  fibreGoals: Partial<Record<MealType, number>>;
   ingredient: IngredientMetaOf;
   /** What adding the recipe (at the household's servings) adds to the next order, cents; null when unknown. */
   costOf: (recipe: ScoreRecipe) => number | null;
@@ -187,11 +191,11 @@ export function preferencesFactor(r: ScoreRecipe, ctx: Pick<ScoreContext, "prefe
 }
 
 /** The meal type a recipe is scored for: the context's, else its first meal tag with a goal, else dinner. */
-export function goalMealType(r: ScoreRecipe, ctx: Pick<ScoreContext, "mealType" | "proteinGoals">): MealType {
+export function goalMealType(r: ScoreRecipe, ctx: Pick<ScoreContext, "mealType"> & { proteinGoals?: ScoreContext["proteinGoals"]; fibreGoals?: ScoreContext["fibreGoals"] }, goals: Partial<Record<MealType, number>> = ctx.proteinGoals ?? ctx.fibreGoals ?? {}): MealType {
   if (ctx.mealType) return ctx.mealType;
   const tags = r.tags.map((t) => t.toLowerCase());
   const tagged = MEAL_TYPES.filter((t) => tags.includes(t));
-  return tagged.find((t) => typeof ctx.proteinGoals[t] === "number") ?? tagged[0] ?? "dinner";
+  return tagged.find((t) => typeof goals[t] === "number") ?? tagged[0] ?? "dinner";
 }
 
 /** The protein goal (g per serving) that applies, or null when it's off. */
@@ -211,6 +215,25 @@ export function proteinGoal(r: ScoreRecipe, ctx: Pick<ScoreContext, "mealType" |
 export function meetsProteinGoal(r: ScoreRecipe, ctx: Pick<ScoreContext, "mealType" | "proteinGoals">): boolean {
   const goal = proteinGoalFor(r, ctx);
   return goal === null || (r.proteinPerServingG ?? 0) >= goal;
+}
+
+/** The fibre goal (g per serving) that applies, or null when it's off (M9, R6.26). */
+export function fibreGoalFor(r: ScoreRecipe, ctx: Pick<ScoreContext, "mealType" | "fibreGoals">): number | null {
+  const g = ctx.fibreGoals[goalMealType(r, ctx, ctx.fibreGoals)];
+  return typeof g === "number" && g > 0 ? g : null;
+}
+
+/** fibreGoal: as proteinGoal, for fibre per serving (M9). */
+export function fibreGoal(r: ScoreRecipe, ctx: Pick<ScoreContext, "mealType" | "fibreGoals">): number | null {
+  const goal = fibreGoalFor(r, ctx);
+  if (goal === null) return null;
+  return clamp01((r.fibrePerServingG ?? 0) / goal);
+}
+
+/** The optimiser's "meets the goals" filter (M9): protein and fibre, each when its goal is on. */
+export function meetsGoals(r: ScoreRecipe, ctx: Pick<ScoreContext, "mealType" | "proteinGoals" | "fibreGoals">): boolean {
+  const fg = fibreGoalFor(r, ctx);
+  return meetsProteinGoal(r, ctx) && (fg === null || (r.fibrePerServingG ?? 0) >= fg);
 }
 
 /**

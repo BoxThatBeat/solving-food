@@ -27,6 +27,7 @@ import { useCreateMeal } from "@/components/plan/plan-sheet-context";
 import { useSuggestions } from "@/data/suggestions";
 import { useSettling } from "@/lib/useSettling";
 import { RecipeCardSkeleton, SettlingGrid } from "@/components/SettlingGrid";
+import { useNutritionSearch } from "@/data/nutrition";
 
 export function RecipeBrowser({
   search,
@@ -52,7 +53,8 @@ export function RecipeBrowser({
   const openCreateMeal = useCreateMeal();
   const all = React.useMemo(() => summaries ?? [], [summaries]);
   const matches = useRecipeSearch(all, notes, search.q ?? "");
-  const result = React.useMemo(() => applyCollection(all, search, factsOf, matches), [all, search, factsOf, matches]);
+  const nut = useNutritionSearch();
+  const result = React.useMemo(() => applyCollection(all, nut(search), factsOf, matches), [all, search, factsOf, matches, nut]);
   const tags = React.useMemo(() => tagCounts(all), [all]);
   const params = toSearchParams(search);
 

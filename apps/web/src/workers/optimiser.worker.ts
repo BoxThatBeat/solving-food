@@ -1,7 +1,7 @@
 // "n dinners under $x" off the main thread (TECHNICAL_SPECS §7 "Optimiser"). `start` builds the candidates from a
 // snapshot (scored, not blocked, not already planned, of the meal type, optionally meeting the protein goal) and
 // returns the first good set; `next` continues the same search lazily.
-import { meetsProteinGoal, mealTypesOf, Optimiser, rank, type MealType, type OptimiserSet } from "@solving-food/core";
+import { meetsGoals, mealTypesOf, Optimiser, rank, type MealType, type OptimiserSet } from "@solving-food/core";
 import { PRICE_ESTIMATES } from "@/data/prices";
 import { buildContexts, type ScoringSnapshot } from "./snapshot";
 import { SEED_INGREDIENTS } from "./seed";
@@ -42,7 +42,7 @@ self.onmessage = (e: MessageEvent<OptimiserRequest>) => {
       const types = mealTypesOf(r);
       // Untagged recipes count as dinners.
       if (types.length ? !types.includes(m.mealType) : m.mealType !== "dinner") return false;
-      return !m.proteinOnly || meetsProteinGoal(r, ctx);
+      return !m.proteinOnly || meetsGoals(r, ctx);
     });
     // Recipes that alone cost more than the whole budget can't be in any set: leave them out before taking the best 80.
     const ranked = rank(pool, ctx, c.weights, { dropBlocked: true })

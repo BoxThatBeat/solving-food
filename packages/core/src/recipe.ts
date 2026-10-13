@@ -15,6 +15,7 @@ export type PrepTask = z.infer<typeof prepTaskSchema>;
 export interface RecipeIngredientInfo extends ConvertibleIngredient {
   name: string;
   proteinPer100g?: number | undefined;
+  fibrePer100g?: number | undefined;
   freeUse?: boolean;
 }
 export type IngredientLookup = (ingredientId: string) => RecipeIngredientInfo | undefined;
@@ -54,6 +55,8 @@ export interface DerivedFields {
   fingerprint: string;
   proteinPerServingG?: number;
   proteinApproximate: boolean;
+  fibrePerServingG?: number;
+  fibreApproximate: boolean;
   sourceUrlCanonical?: string;
 }
 
@@ -62,14 +65,17 @@ export function deriveRecipe(content: RecipeContent, lookup: IngredientLookup): 
   const ingredients = content.ingredients.map((l) => ({ ...l, canonicalAmount: lineCanonical(l, lookup) }));
   const withCanon = { ...content, ingredients };
   const protein = proteinPerServing(withCanon, lookup);
+  const fibre = fibrePerServing(withCanon, lookup);
   const out: DerivedFields = {
     slug: slugify(content.title),
     ingredients,
     ingredientIds: [...new Set(ingredients.map((l) => l.ingredientId))].sort(),
     fingerprint: fingerprint(withCanon),
     proteinApproximate: protein.approximate,
+    fibreApproximate: fibre.approximate,
   };
   if (protein.grams !== null) out.proteinPerServingG = Math.round(protein.grams * 10) / 10;
+  if (fibre.grams !== null) out.fibrePerServingG = Math.round(fibre.grams * 10) / 10;
   if (content.sourceUrl) out.sourceUrlCanonical = canonicalUrl(content.sourceUrl);
   return out;
 }
@@ -95,13 +101,19 @@ export interface ProteinResult {
   missing: string[];
 }
 
+/** A nutrient tracked per 100 g on ingredients (protein since M1, fibre since M9). */
+export type Nutrient = "protein" | "fibre";
+const PER_100G = { protein: "proteinPer100g", fibre: "fibrePer100g" } as const;
+
 /**
- * `proteinPerServing(recipe, ingredients)` = Σ(canonical g × proteinPer100g / 100) ÷ servings (§5). Count-canonical
- * ingredients use their unit weight. Optional and vague lines are skipped without making the result approximate.
+ * `nutrientPerServing(recipe, ingredients, nutrient)` = Σ(canonical g × <nutrient>Per100g / 100) ÷ servings (§5).
+ * Count-canonical ingredients use their unit weight. Optional and vague lines are skipped without making the result
+ * approximate.
  */
-export function proteinPerServing(
+export function nutrientPerServing(
   recipe: Pick<RecipeContent, "servings" | "ingredients">,
   lookup: IngredientLookup,
+  nutrient: Nutrient,
 ): ProteinResult {
   let total = 0;
   let counted = 0;
@@ -110,7 +122,8 @@ export function proteinPerServing(
     const ing = lookup(l.ingredientId);
     const vague = unitDef(l.measure).kind === "vague" || l.amount <= 0;
     if (l.optional || vague) continue;
-    if (!ing || ing.proteinPer100g === undefined || ing.proteinPer100g === null) {
+    const per = ing?.[PER_100G[nutrient]];
+    if (!ing || per === undefined || per === null) {
       missing.add(l.ingredientId);
       continue;
     }
@@ -124,7 +137,7 @@ export function proteinPerServing(
       missing.add(l.ingredientId);
       continue;
     }
-    total += (grams * ing.proteinPer100g) / 100;
+    total += (grams * per) / 100;
     counted++;
   }
   const servings = Math.max(1, recipe.servings);
@@ -135,11 +148,24 @@ export function proteinPerServing(
   };
 }
 
+/** `proteinPerServing(recipe, ingredients)` (§5): see `nutrientPerServing`. */
+export function proteinPerServing(recipe: Pick<RecipeContent, "servings" | "ingredients">, lookup: IngredientLookup): ProteinResult {
+  return nutrientPerServing(recipe, lookup, "protein");
+}
+
+/** Fibre per serving (M9, R6.26): see `nutrientPerServing`. */
+export function fibrePerServing(recipe: Pick<RecipeContent, "servings" | "ingredients">, lookup: IngredientLookup): ProteinResult {
+  return nutrientPerServing(recipe, lookup, "fibre");
+}
+
 /** "32 g" or "~32 g" (approximate), "—" when unknown. */
 export function formatProtein(grams: number | undefined | null, approximate?: boolean): string {
   if (grams === undefined || grams === null) return "—";
   return `${approximate ? "~" : ""}${Math.round(grams)} g`;
 }
+
+/** Fibre per serving, as protein: "6 g", "~6 g", "—" (M9). */
+export const formatFibre = formatProtein;
 
 // ---------- scaling
 
@@ -306,6 +332,9 @@ export interface RecipeSummary {
   mainProtein: RecipeDoc["mainProtein"];
   proteinPerServingG: number | null;
   proteinApproximate: boolean;
+  /** Fibre per serving (M9); absent on summaries written before M9. */
+  fibrePerServingG?: number | null;
+  fibreApproximate?: boolean;
   ingredientIds: string[];
   /** The recipe's own wording of each ingredient, for full-text search without loading ingredient docs. */
   ingredientNames: string[];
@@ -349,6 +378,8 @@ export function recipeSummary(id: string, r: RecipeDoc): RecipeSummary {
     mainProtein: r.mainProtein,
     proteinPerServingG: r.proteinPerServingG ?? null,
     proteinApproximate: r.proteinApproximate ?? false,
+    fibrePerServingG: r.fibrePerServingG ?? null,
+    fibreApproximate: r.fibreApproximate ?? false,
     ingredientIds: r.ingredientIds,
     ingredientNames: [...new Set(r.ingredients.map((l) => l.displayText.toLowerCase()))],
     totalMin: r.prepMin + r.cookMin,

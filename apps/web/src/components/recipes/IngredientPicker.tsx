@@ -210,6 +210,7 @@ export function NewIngredientForm({
   const [density, setDensity] = React.useState("");
   const [unitWeight, setUnitWeight] = React.useState("");
   const [protein, setProtein] = React.useState("");
+  const [fibre, setFibre] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const id = ingredientSlug(name);
   const taken = existing.some((i) => i.id === id);
@@ -228,6 +229,7 @@ export function NewIngredientForm({
       densityGPerMl: measures.includes("volume") ? num(density) : undefined,
       unitWeightG: measures.includes("count") ? num(unitWeight) : undefined,
       proteinPer100g: protein.trim() === "" ? undefined : Math.max(0, Number(protein)),
+      fibrePer100g: fibre.trim() === "" || !Number.isFinite(Number(fibre)) ? undefined : Math.max(0, Number(fibre)),
       shelfLifeDays: d.shelfLifeDays,
       freezable: d.freezable,
       isStaple: false,
@@ -289,6 +291,10 @@ export function NewIngredientForm({
         <div className="flex flex-col gap-1">
           <Label htmlFor="new-ing-protein">Protein g/100 g</Label>
           <Input id="new-ing-protein" inputMode="decimal" value={protein} onChange={(e) => setProtein(e.target.value)} placeholder="e.g. 10" className="py-2.5 shadow-hard-sm" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="new-ing-fibre">Fibre g/100 g</Label>
+          <Input id="new-ing-fibre" inputMode="decimal" value={fibre} onChange={(e) => setFibre(e.target.value)} placeholder="e.g. 2.5" className="py-2.5 shadow-hard-sm" />
         </div>
       </div>
       <p className="m-0 text-xs font-semibold text-sub">Leave a conversion blank if you don't know it; the ingredient is flagged for review and amounts in it won't convert yet.</p>

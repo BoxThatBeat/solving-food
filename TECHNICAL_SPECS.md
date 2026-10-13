@@ -247,6 +247,10 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
                                  currentPeriodId, settings: { scoreWeights{}, tools[],
                                  preferences: { likes[], dislikes[], diets[] },
                                  proteinGoals: { breakfast?, lunch?, dinner?, snack? },    // g per serving; absent = off
+                                 fibreGoals?: { breakfast?, lunch?, dinner?, snack? },     // (M9, R6.26) g per serving; absent = off
+                                 nutrition?: boolean,                       // (M9, R6.27) false hides protein and fibre
+                                                                           // everywhere and turns the goal factors off;
+                                                                           // absent = on; goals are kept either way
                                  sides?: { [ingredientId]: { portion } } }  // (M6) household-flagged sides and portion
                                                                            // overrides (R11.14); effective portion =
                                                                            // settings.sides[id] ?? ingredient.side
@@ -385,6 +389,7 @@ Each ingredient declares the **measurements it allows** (R8.3) and one **canonic
 - **Ingredient picker:** a typeahead over `name` + `aliases` ("chicken" → chicken breast, chicken thighs, whole chicken…). Creating a new ingredient asks for a category, its allowed measurements, and the conversions it needs. Anything incomplete is flagged `needsReview`.
 - **Seed data:** about 500 common ingredients with densities, unit weights, **protein per 100 g**, and shelf lives, prepared once from USDA FoodData Central (portion weights and nutrients) and the USDA FoodKeeper dataset, and shipped in `data/`.
 - **Protein per serving** = Σ (canonical grams × `proteinPer100g` / 100) ÷ servings, recomputed whenever a recipe or one of its ingredients changes. Ingredients stored by count use `unitWeightG`. If any non-optional ingredient has no protein value, the recipe shows the protein as approximate ("~32 g"), and the missing ingredient is flagged `needsReview`.
+- **Fibre per serving** (M9, R6.26) is derived the same way from `fibrePer100g` (total dietary fibre, USDA FoodData Central, on all 480 seed ingredients) by `nutrientPerServing()` into `fibrePerServingG` / `fibreApproximate`, and recomputed with protein (`conversionChanged` includes `fibrePer100g`). A missing fibre value only makes the figure approximate; it is not a review reason (in-app ingredients created before M9 would otherwise all need review). Fibre comes from the ingredient list, so the `.cook` format and the Claude skill need nothing new. After deploy, `pnpm ingredients:upload` writes the seed's fibre values (in-app-edited ingredients are kept) and the ingredient trigger recomputes every recipe's fibre.
 - **Display (R8.13, rule v3).** Recipe pages show one unit system per amount via `formatRecipeAmount()`: imperial weights convert to metric only ("2 lb" → "900 g", "8 oz" → "225 g"; 250 g–1 kg rounded to 25 g, otherwise `formatGrams()` rounding, so "4 lb" → "1.8 kg"); fl oz / pints / quarts / gallons convert to ml or L only (`formatMl()`: "2 pints" → "950 ml"); cups, tbsp and tsp read as written with no conversion ("1 cup", "2 tbsp"); counts, metric and vague amounts as written. `fahrenheitOnly()` rewrites step, prep and note text so temperatures are Fahrenheit only: "220°C" → "430°F" (rounded to 5), "350°F (175°C)" → "350°F", "180°C (350°F)" → "350°F". Everything else (supply, grocery, receive, History, notifications, cook review, the Copy text) is metric only via `formatGrams()` / `formatMl()` / `formatAmount()` / `formatCanonical()`: "Rice 2.0 kg (1.2 kg)", "3 (640 g)". Imperial units, cups and spoons remain valid input (Cooklang files, pack sizes, the supply pickers' oz/lb/cup) and are stored canonically through `toCanonical()`, so Supply deduction and the grocery builder still convert them. All formatting lives in `packages/core`.
 
 ### Free-use ingredients
@@ -526,6 +531,7 @@ score(r) = Σ wᵢ · fᵢ(r, plan, supply)     each fᵢ ∈ [0, 1]
 | variety | novelty vs. the last N periods | + |
 | preferences | likes matched; dislikes/diets act as a strong penalty or filter | ± |
 | proteinGoal | 1 if `proteinPerServingG` ≥ the goal for the meal type, scaled down linearly below it; skipped when the goal is off | + |
+| fibreGoal (M9) | the same for `fibrePerServingG` and the fibre goal; both goal factors are skipped while nutrition tracking is off (R6.27) | + |
 | missingIngredients | share not covered by supply | − |
 | cost | marginal cost / remaining budget | − |
 | sameProtein / sameCuisine | already present in the plan | − |
@@ -601,7 +607,11 @@ Accept writes one plan item per recipe in a batch.
 
 ### Protein summary
 
-The Plan page shows, for each meal type, the average `proteinPerServingG` of the planned items next to the household goal (R6.17). This is computed on the client. As built (M5): a bar per meal type (accent at or above the goal, peach below); goals are set in Settings → Preferences with an on/off switch each (a missing key is "off"). M7: the card sits at the bottom of the page, directly above the optimiser.
+The Plan page shows, for each meal type, the average `proteinPerServingG` of the planned items next to the household goal (R6.17). This is computed on the client. As built (M5): a bar per meal type (accent at or above the goal, peach below); goals are set in Settings → Preferences with an on/off switch each (a missing key is "off"). M7: the card sits at the bottom of the page, directly above the optimiser. M9: the card is "Protein & fibre / serving" with a fibre bar under each protein bar (`fibre-<type>`), against `settings.fibreGoals` (R6.26).
+
+### Nutrition tracking switch (M9, R6.27)
+
+One household switch, `settings.nutrition` (absent = on), Settings → Preferences → *Protein and fibre* → **Track protein and fibre**. The web app reads it through `NutritionContext` (`apps/web/src/data/nutrition.ts`, one provider in the signed-in shell; signed-out share pages show nutrition). Off hides: protein and fibre on recipe cards, the recipe page tiles, plan rows, Create meal rows, Suggested, saved meals and duplicate review (`<NutritionText>`); the Plan page's summary card; the optimiser's goal filter; the protein and fibre filter groups, the "Most protein" / "Most fibre" sorts and their chips (`withoutNutrition()` also drops them from an old URL before `applyCollection`); the goal cards in Settings and the two goal weights on the Weights page. The scoring snapshot sends no goals while off (`activeGoals()`), so the goal factors are skipped. Nothing is deleted: goals, weights and recipe numbers stay and come back when it's switched on. One switch for both nutrients was chosen over two (the owner asked for "all features related to protein tracking" and for fibre "in the same way").
 
 ---
 
@@ -1213,7 +1223,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | `review.spec.ts` | Done cooking deducts recipe defaults and adds estimated leftovers immediately; review opens when all recipes are checked off and on early "Done cooking"; per-user ratings; adjusting used ingredients posts corrections for the difference; pending reviews completed later by another member (R9.1–R9.4) |
 | `history.spec.ts` | Cooked list, filters, stats (R10.1–R10.3) |
 | `sides.spec.ts` | (M6) Sides from the Create meal search dropdown, plan row title and budget impact, plan item sheet edits; grocery line = portion × servings rounded to packs, covered by supply; Done cooking deducts the portions and the review corrects them; saved meals keep sides; Settings → Sides portion override for later meals, flagging an ingredient, free-use refused; History lists sides (R5.9, R5.10, R7.11, R11.14) |
-| `settings.spec.ts` | Tools, preferences, weights, protein goals, plan period, budget, timezone, default servings, planned meal types, brand mappings, stores and sourcing rules; theme accent persists per user only (Latte only, M9) (R11.1–R11.9, R11.11–R11.13) |
+| `settings.spec.ts` | Tools, preferences, weights, protein goals, (M9: fibre goals and the nutrition switch are in `preferences.spec.ts`, R6.26, R6.27), plan period, budget, timezone, default servings, planned meal types, brand mappings, stores and sourcing rules; theme accent persists per user only (Latte only, M9) (R11.1–R11.9, R11.11–R11.13) |
 | `data-transfer.spec.ts` | Download produces a valid zip; import into another household after the replace warning reproduces supply, plan, history, and favourites; members unchanged; invalid file rejected with an error banner (R11.10) |
 | `live-sync.spec.ts` | Two browser contexts as two members: plan, supply, and grocery ticks appear on the other device without reload; simultaneous grocery ticks both survive (NFR5) |
 | `offline.spec.ts` | `context.setOffline(true)`: finish a meal, adjust supply, tick groceries; go back online and the changes apply and sync (§12 Offline) |

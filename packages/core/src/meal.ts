@@ -35,6 +35,8 @@ export function combineSummaries(id: string, title: string, refs: readonly Recip
   const first = found[0];
   const proteins = found.map((r) => r.proteinPerServingG);
   const hasProtein = found.length > 0 && proteins.every((p) => typeof p === "number");
+  const fibres = found.map((r) => r.fibrePerServingG);
+  const hasFibre = found.length > 0 && fibres.every((p) => typeof p === "number");
   return {
     id,
     title,
@@ -43,6 +45,8 @@ export function combineSummaries(id: string, title: string, refs: readonly Recip
     mainProtein: first?.mainProtein ?? "none",
     proteinPerServingG: hasProtein ? proteins.reduce<number>((a, b) => a + (b ?? 0), 0) : null,
     proteinApproximate: found.some((r) => r.proteinApproximate),
+    fibrePerServingG: hasFibre ? fibres.reduce<number>((a, b) => a + (b ?? 0), 0) : null,
+    fibreApproximate: found.some((r) => r.fibreApproximate),
     ingredientIds: [...new Set([...found.flatMap((r) => r.ingredientIds), ...sideIds])],
     ingredientNames: [...new Set([...found.flatMap((r) => r.ingredientNames), ...sideNames])],
     totalMin: found.reduce((a, r) => a + r.totalMin, 0),
