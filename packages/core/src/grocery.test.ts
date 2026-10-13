@@ -362,6 +362,12 @@ describe("staples on the list (M10, R7.12)", () => {
     expect(dueStaples({ items: [], cadence, onList: new Set(), dismissed: { milk: NOW - DAY }, nowMs: NOW }, sctx())).toEqual([{ ingredientId: "milk", reason: "cadence" }]);
   });
 
+  it("water (free-use, not a staple) is never added", () => {
+    const water = { id: "water", name: "water", category: "beverages", freeUse: true, isStaple: false, allowedMeasures: ["volume" as const], canonicalUnit: "g" as const, densityGPerMl: 1 };
+    const R2 = { ...RECIPES, soup: { servings: 2, ingredients: [{ ingredientId: "water", canonicalAmount: 500, optional: false }] } };
+    expect(dueStaples({ items: [plan("a", "soup")], cadence: [], onList: new Set(), nowMs: NOW }, { ...sctx(), recipes: (id: string) => R2[id as keyof typeof R2], ingredients: (id: string) => (id === "water" ? water : SING[id]) })).toEqual([]);
+  });
+
   it("is not in the budget: buildList stays plan lines only", () => {
     expect(Object.keys(buildList([plan("a", "pasta")], ctx()).items)).not.toContain("oil");
   });

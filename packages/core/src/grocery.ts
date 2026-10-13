@@ -413,8 +413,8 @@ export function freeUseNeeded(items: readonly PlanItemInput[], ctx: { recipes: B
 }
 
 /**
- * The staples the list adds by itself (R7.12), most overdue first, then by name. A staple (free-use or marked staple)
- * is due when:
+ * The staples the list adds by itself (R7.12), most overdue first, then by name. A staple (marked `isStaple`, which every
+ * free-use ingredient but water is) is due when:
  *   - cadence: bought before and 85 % of its interval has passed (the R7.7 rule; a snooze is respected);
  *   - plan:    free-use, a planned meal uses it, and the household has never bought it (or the cadence says it's due);
  *   - out:     a tracked staple bought before with no unexpired Supply left.
@@ -427,7 +427,8 @@ export function dueStaples(input: StapleInput, ctx: { recipes: BuildContext["rec
   const out: Array<{ ingredientId: string; reason: StapleReason; rank: number }> = [];
   for (const id of ids) {
     const ing = ctx.ingredients(id);
-    if (!ing || !(ing.isStaple || ing.freeUse)) continue;
+    // Marked staple (every free-use ingredient is one, except water, which nobody buys).
+    if (!ing || !ing.isStaple) continue;
     if (input.onList.has(id)) continue;
     if ((input.dismissed?.[id] ?? 0) > input.nowMs) continue;
     const c = cadence.get(id) ?? null;
