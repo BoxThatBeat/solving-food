@@ -83,6 +83,14 @@ export default defineConfig({
             options: { cacheName: "hands-free", expiration: { maxEntries: 4 } },
           },
           {
+            // ONNX Runtime's WASM and its loader (M12), fetched by the speech worker from jsDelivr. The library's own
+            // Cache API copy can fail to store ("Cache.put() encountered a network error"), which meant a 5.5 MB
+            // download every visit; the service worker keeps it too. Versioned URLs, so CacheFirst is safe.
+            urlPattern: ({ url }) => url.hostname === "cdn.jsdelivr.net" && /^\/npm\/onnxruntime-web@[^/]+\/dist\//.test(url.pathname),
+            handler: "CacheFirst",
+            options: { cacheName: "hands-free-runtime", expiration: { maxEntries: 6, maxAgeSeconds: 60 * 60 * 24 * 365 }, cacheableResponse: { statuses: [200] } },
+          },
+          {
             urlPattern: ({ url }) => url.pathname.startsWith("/fonts/"),
             handler: "CacheFirst",
             options: { cacheName: "fonts", expiration: { maxEntries: 16, maxAgeSeconds: 60 * 60 * 24 * 365 } },

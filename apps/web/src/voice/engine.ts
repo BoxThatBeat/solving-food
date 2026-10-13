@@ -4,7 +4,6 @@
 // Worker). A transcript becomes a command by `parseVoiceCommand()` after `stripEcho()` removes what the app itself said.
 import { parseVoiceCommand, stripEcho, type VoiceCommand } from "@solving-food/core";
 import { Speaker } from "./speaker";
-import { VoiceError } from "./errors";
 
 export interface VoiceInput {
   /** Opens the microphone and loads the model; transcripts go to `onText`. Resolves once both are ready. */
@@ -23,11 +22,34 @@ export interface Engine {
   dispose(): void;
 }
 
-export async function createEngine(cb: { onCommand: (c: VoiceCommand) => void; onSpeaking: (s: boolean) => void; onError: (e: unknown) => void }): Promise<Engine> {
-  if (typeof window.speechSynthesis === "undefined" || typeof window.SpeechSynthesisUtterance !== "function") {
-    throw new VoiceError("This browser can't read aloud, so hands-free mode is off.");
-  }
-  const speaker = new Speaker(cb.onSpeaking);
+export interface EngineCallbacks {
+  onCommand: (c: VoiceCommand) => void;
+  onSpeaking: (s: boolean) => void;
+  /** The microphone or the model failed: hands-free switches off. */
+  onError: (e: unknown) => void;
+  /** Reading aloud doesn't work here (M12): hands-free stays on and keeps listening. */
+  onSpeechUnavailable: (reason: string) => void;
+}
+
+/** A speaker for a browser without speech synthesis: says nothing, reports itself unavailable on first use. */
+function silentSpeaker(onUnavailable: (reason: string) => void): Pick<Speaker, "say" | "cancel" | "reset" | "recent"> {
+  let told = false;
+  return {
+    say: () => {
+      if (!told) onUnavailable("no speechSynthesis in this browser");
+      told = true;
+    },
+    cancel: () => undefined,
+    reset: () => {
+      told = false;
+    },
+    recent: () => [],
+  };
+}
+
+export async function createEngine(cb: EngineCallbacks): Promise<Engine> {
+  const canSpeak = typeof window.speechSynthesis !== "undefined" && typeof window.SpeechSynthesisUtterance === "function";
+  const speaker = canSpeak ? new Speaker({ onSpeaking: cb.onSpeaking, onUnavailable: cb.onSpeechUnavailable }) : silentSpeaker(cb.onSpeechUnavailable);
   // The e2e seam (emulator builds only, and only when a test asks for it): a fake mic and recogniser. In a production
   // build the condition is the constant `false`, so the fake isn't bundled.
   const fake = import.meta.env.VITE_USE_EMULATORS === "true" && (window as { __handsFreeFake?: boolean }).__handsFreeFake === true;
@@ -58,7 +80,7 @@ export async function createEngine(cb: { onCommand: (c: VoiceCommand) => void; o
     },
     stop() {
       listening = false;
-      speaker.cancel();
+      speaker.reset();
       input.stop();
     },
     dispose() {
