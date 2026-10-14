@@ -18,6 +18,7 @@ ordered, checkable tasks with the files they touch, the tests that prove them, a
 | [M10-owner-review-3.md](M10-owner-review-3.md) | Owner review 3 | M9 | Skill splits long steps, more-text arrow in step mode, recipe thumbnails everywhere, staples on the grocery list, Nutrition Facts panel (Canadian Nutrient File) |
 | [M11-hands-free.md](M11-hands-free.md) | Hands-free mode | M10 | A voice assistant in the cooking views: read-aloud ingredients and steps, spoken commands (next, back, ingredients, steps, stop, mute), Whisper tiny.en on the device in a Web Worker, nothing recorded while off |
 | [M12-hands-free-fixes.md](M12-hands-free-fixes.md) | Hands-free fixes | M11 | Owner bug report: reading aloud actually heard (speaker browser rules, Safari unlock), a can't-read-aloud state that keeps listening, no start without a tap, crash-loop guard, CPU model on Safari/iOS, service-worker cache for the WASM |
+| [M13-hands-free-ios-latency.md](M13-hands-free-ios-latency.md) | Hands-free on iOS and latency | M12 | Owner report: listening recovers after reading on iPhone (context resume, track watch, mic re-acquire, iOS pauses listening while speaking), bounded echo filter, 0.7 s silence wait, Moonshine base instead of Whisper (benchmarked), heard look, hidden `?voicedebug=1` diagnostics |
 
 ## How to use these plans
 

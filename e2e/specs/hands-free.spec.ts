@@ -369,6 +369,7 @@ test("M13: the toggle shows a heard look from the end of speech until the comman
   const sw = toggle(page);
   await sw.click();
   await expect.poll(() => mic(page)).toBe("on");
+  await expect.poll(async () => (await tts(page)).spoken.at(-1)).toBe("Sear chicken thigh in olive oil for 10 minutes.");
   await expect(sw).not.toHaveAttribute("data-heard");
 
   // Speech went to the recogniser: the heard look until the transcript's command has been applied.
@@ -424,6 +425,7 @@ test("M13: the voice diagnostics exist only after ?voicedebug=1: the last events
   await expect(diagButton).toBeVisible();
   await toggle(page).click();
   await expect.poll(() => mic(page)).toBe("on");
+  await expect.poll(async () => (await tts(page)).spoken.at(-1)).toBe("Sear chicken thigh in olive oil for 10 minutes.");
   await hear(page, "next");
   await expect(page.getByTestId("step-card")).toContainText("Step 2 of 3", { ignoreCase: true });
   await diagButton.click();
