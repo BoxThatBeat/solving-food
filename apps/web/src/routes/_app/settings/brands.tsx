@@ -3,6 +3,7 @@
 // M5: the PC Express product search (R7.10) fills the mapping with an exact product (code, name, pack) and its live
 // price; manual entry stays for anything else. Rows show the live price when one is fresh.
 import * as React from "react";
+import { FromPcx } from "@/components/FromPcx";
 import { createFileRoute } from "@tanstack/react-router";
 import { enterableMeasures, formatCents, LIVE_PRICE_MAX_AGE_DAYS, packLabel, type BrandMappingDoc, type Measure, type PcxProduct } from "@solving-food/core";
 import { PcxProductSearch } from "@/components/settings/PcxProductSearch";
@@ -66,8 +67,11 @@ function BrandsPage() {
                     {packLabel(r.m.packAmount, r.m.packMeasure)} · {storeName(r.m.storeId)}
                   </span>
                   {priceLine(r.m) ? (
-                    <span className="font-mono text-[0.625rem] font-bold uppercase" data-testid="brand-price">
-                      {priceLine(r.m)}
+                    <span className="flex flex-wrap items-center justify-end gap-1.5">
+                      <FromPcx />
+                      <span className="font-mono text-[0.625rem] font-bold uppercase" data-testid="brand-price">
+                        {priceLine(r.m)}
+                      </span>
                     </span>
                   ) : r.m.productCode ? (
                     <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">PC Express product · estimate until priced</span>
@@ -176,7 +180,8 @@ function MappingForm({
       {initial?.m ? null : <IngredientPicker ingredients={ingredients} value={ingredient ?? undefined} onPick={(i) => setIngredient(i)} uid={uid} label="Ingredient" />}
       {pcxStoreId ? <PcxProductSearch hid={hid} pcxStoreId={pcxStoreId} initialQuery={initial?.ingredient.name ?? ingredient?.name ?? ""} key={ingredient?.id ?? "none"} onPick={pick} /> : null}
       {code ? (
-        <p className="m-0 font-mono text-[0.625rem] font-bold uppercase" data-testid="linked-product">
+        <p className="m-0 flex flex-wrap items-center gap-1.5 font-mono text-[0.625rem] font-bold uppercase" data-testid="linked-product">
+          <FromPcx />
           Linked to PC Express product {code}
           {pcxStoreName ? ` at ${pcxStoreName}` : ""} ·{" "}
           <button type="button" onClick={() => setCode(undefined)} className="cursor-pointer bg-transparent p-0 font-mono text-[0.625rem] font-bold text-ink uppercase underline">

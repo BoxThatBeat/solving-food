@@ -9,6 +9,7 @@ export * from "./names";
 export * from "./units";
 export * from "./ingredient";
 export * from "./ingredientMerge";
+export * from "./ingredientJudge";
 export * from "./recipe";
 export * from "./nutrition";
 export * from "./dedupe";

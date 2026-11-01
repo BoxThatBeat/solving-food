@@ -17,6 +17,7 @@ import { cleanupIfEmpty } from "./households";
 import { cancelTimer as cancelTimerLogic, fireTimer, scheduleTimer as scheduleTimerLogic, type TimerTask } from "./timers";
 import { defineString } from "firebase-functions/params";
 import { CallError, pcxStatus as pcxStatusLogic, searchProducts, searchStores, setKey } from "./pcx";
+import { aiSetKey as aiSetKeyLogic, aiStatus as aiStatusLogic, checkIngredientNames as checkNamesLogic } from "./ai";
 import { MergeError, mergeIngredient as mergeIngredientLogic, requireAllowed } from "./ingredients";
 
 // Keep every function small and cheap: free tier is a hard requirement (PRD NFR2).
@@ -89,6 +90,10 @@ export const pcxSearchStores = onCall({ cors: true }, (req) => pcxCall(() => sea
 export const pcxSearchProducts = onCall({ cors: true }, (req) => pcxCall(() => searchProducts(memberUid(req.auth), req.data)));
 /** Whether PC Express is connected (Settings). */
 export const pcxStatus = onCall({ cors: true }, (req) => pcxCall(() => pcxStatusLogic(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
+/** Gemini for the ingredient judge (R4.27, R4.36): status, the owner's key, and Check names (5 minutes: merges). */
+export const aiStatus = onCall({ cors: true }, (req) => pcxCall(() => aiStatusLogic(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
+export const aiSetKey = onCall({ cors: true }, (req) => pcxCall(() => aiSetKeyLogic(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
+export const checkIngredientNames = onCall({ cors: true, timeoutSeconds: 300 }, (req) => pcxCall(() => checkNamesLogic(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
 /** Saves the PC Express API key (owner only, R6.28). */
 export const pcxSetKey = onCall({ cors: true }, (req) => pcxCall(() => setKey(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
 

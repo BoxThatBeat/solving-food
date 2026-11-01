@@ -107,6 +107,9 @@ export const ingredientSchema = z.object({
   /** (M8) A duplicate merged into another ingredient by the `mergeIngredient` function: hidden from pickers; its names
    * resolve to the target. Written only by that function. */
   mergedInto: z.string().optional(),
+  /** (M15) What the LLM judge made of a household-made name: "new" (no existing ingredient is the same) or "unsure"
+   * (waiting for Check names or the Claude fallback, R4.35). Absent on the catalogue and on ingredients made by hand. */
+  nameCheck: z.enum(["new", "unsure"]).optional(),
   // Set when a person creates or edits an ingredient in the app (absent on seed data).
   createdBy: z.string().optional(),
   updatedBy: z.string().optional(),

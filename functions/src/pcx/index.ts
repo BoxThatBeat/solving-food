@@ -18,7 +18,8 @@ import { logger } from "firebase-functions";
 import { priceDocId, PCX_KEY_PATTERN, pcxKeyHint, pcxKeyInput, pcxProductSearchInput, pcxStoreSearchInput, type PcxProduct, type PcxProductSearchResult, type PcxStatus, type PcxStoreSearchResult } from "@solving-food/core";
 import { db } from "../admin";
 import { notify } from "../notify";
-import { configDoc, isPcxOwner, NOT_CONNECTED, NOT_CONNECTED_OWNER, PcxClient, pcxDeps, recordStatus, SESSION_DOC, storedKey } from "./client";
+import { isOwner } from "../owner";
+import { configDoc, NOT_CONNECTED, NOT_CONNECTED_OWNER, PcxClient, pcxDeps, recordStatus, SESSION_DOC, storedKey } from "./client";
 
 export class CallError extends Error {
   constructor(
@@ -34,7 +35,7 @@ export const RATE_LIMIT_PER_HOUR = 30;
 /** Price docs not refreshed for this long are deleted by the weekly job. */
 export const PRICE_KEEP_DAYS = 60;
 
-async function requireMember(uid: string, hid: string): Promise<void> {
+export async function requireMember(uid: string, hid: string): Promise<void> {
   const m = await db.doc(`households/${hid}/members/${uid}`).get();
   if (!m.exists) throw new CallError("permission-denied", "Not a member of that household");
 }
@@ -53,7 +54,7 @@ export async function rateLimit(uid: string, now = Date.now()): Promise<void> {
   if (!ok) throw new CallError("resource-exhausted", "Too many PC Express searches this hour; try again later");
 }
 
-function parse<T>(schema: { safeParse(v: unknown): { success: true; data: T } | { success: false } }, v: unknown): T {
+export function parse<T>(schema: { safeParse(v: unknown): { success: true; data: T } | { success: false } }, v: unknown): T {
   const r = schema.safeParse(v);
   if (!r.success) throw new CallError("invalid-argument", "Bad request");
   return r.data;
@@ -62,7 +63,7 @@ function parse<T>(schema: { safeParse(v: unknown): { success: true; data: T } | 
 export async function pcxStatus(uid: string, data: unknown, ownerUid: string | null = null): Promise<PcxStatus> {
   const hid = String((data as { hid?: unknown })?.hid ?? "");
   await requireMember(uid, hid);
-  const owner = await isPcxOwner(uid, hid, ownerUid);
+  const owner = await isOwner(uid, hid, ownerUid);
   const key = owner ? await storedKey(hid) : "";
   const extra: Partial<PcxStatus> = owner ? { canEditKey: true, ...(key ? { keyHint: pcxKeyHint(key) } : {}) } : {};
   const deps = await pcxDeps(hid);
@@ -77,7 +78,7 @@ export async function setKey(uid: string, data: unknown, ownerUid: string | null
   const input = parse(pcxKeyInput, data);
   if (!PCX_KEY_PATTERN.test(input.apiKey)) throw new CallError("invalid-argument", "That doesn't look like the key: paste only the x-apikey value (letters, digits, - and _)");
   await requireMember(uid, input.hid);
-  if (!(await isPcxOwner(uid, input.hid, ownerUid))) throw new CallError("permission-denied", "Only the app's owner can change the PC Express key");
+  if (!(await isOwner(uid, input.hid, ownerUid))) throw new CallError("permission-denied", "Only the app's owner can change the PC Express key");
   await rateLimit(uid);
   const doc = db.doc(configDoc(input.hid));
   if (!input.apiKey) {

@@ -6,7 +6,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { DEFAULT_PCX_STORE_ID, isDefaultPcxStore, parsePackageSize, PCX_DEFAULT_STORE_MATCH, type PcxProduct, type PcxStore } from "@solving-food/core";
 import { db } from "../admin";
 import { headers, parseProduct, parseSearch, parseStores, pcxConfig, searchBody, urls, type PcxConfig, type RawProduct } from "./endpoints";
-import { STUB_CONFIG, stubFetchFor, stubMode, stubOwner } from "./stub";
+import { STUB_CONFIG, stubFetchFor, stubMode } from "./stub";
 
 export type Fetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 
@@ -34,12 +34,6 @@ export function isEmulator(): boolean {
 export async function storedKey(hid?: string): Promise<string> {
   const k = (await db.doc(configDoc(hid)).get()).data()?.apiKey;
   return typeof k === "string" ? k : "";
-}
-
-/** The project owner (OWNER_UID) may change the key; under the emulator a test names its owner in `_stubPcx/{hid}`. */
-export async function isPcxOwner(uid: string, hid: string, ownerUid: string | null): Promise<boolean> {
-  if (ownerUid && uid === ownerUid) return true;
-  return isEmulator() && (await stubOwner(hid)) === uid;
 }
 
 /**

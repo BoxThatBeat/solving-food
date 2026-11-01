@@ -291,6 +291,10 @@ describe("ingredients (§5, R8.3)", () => {
       await setDoc(doc(db, "ingredients", "merged"), { ...plain, name: "merged", mergedInto: "garlic" });
     });
     await assertFails(updateDoc(doc(dbAs(ALICE), "ingredients", "merged"), { name: "revived", updatedBy: ALICE.uid, updatedAt: serverTimestamp() }));
+    // M15 (R4.35): a waiting name can be marked new by a person (Claude's answer); only "new" / "unsure" are valid.
+    await assertSucceeds(setDoc(doc(dbAs(ALICE), "ingredients", "w1"), ing(ALICE.uid, { nameCheck: "unsure" })));
+    await assertSucceeds(updateDoc(doc(dbAs(ALICE), "ingredients", "w1"), { nameCheck: "new", updatedBy: ALICE.uid, updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(dbAs(ALICE), "ingredients", "w1"), { nameCheck: "merged", updatedBy: ALICE.uid, updatedAt: serverTimestamp() }));
   });
 });
 

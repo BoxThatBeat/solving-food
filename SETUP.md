@@ -192,6 +192,19 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   categories, conversions, and pack sizes; ingredients created in the app are known to them once a planned recipe or
   supply loads them.
 
+## M15 ingredient names by Gemini (2026-11-01)
+
+- **Gemini key (owner, PRD R4.36):** https://aistudio.google.com/apikey → *Create API key* in a **new project with no
+  billing** (never `solvingfood`: it is on Blaze, so a key there is billed). Paste it on the Ingredients page (Settings →
+  Ingredients, owner only); saving tries it. Stored in the function-only `aiSession/config`. Free tier: requests may be
+  used by Google to improve its products (only ingredient names are sent); at the free limit a call fails and the
+  names wait under Names to decide. `GEMINI_MODEL` in `functions/.env` overrides `gemini-2.5-flash-lite`.
+- **New callables:** `aiStatus`, `aiSetKey`, `checkIngredientNames` (owner only, merges). New ingredient field
+  `nameCheck` (rules allow `new` / `unsure`). No new indexes.
+- **The waiting names from before M15** (needs review, never checked): press **Check with Gemini** once the key is saved.
+- **Emulators:** the judge always uses the stub: `_stubLlm/config` `{ answers: { "<lower-case name>": "<id>" | "new" |
+  "unsure" }, mode?: "down" | "off" }`.
+
 ## M11 hands-free mode (2026-10-13)
 
 - **No Firebase or GCP change.** Speech recognition runs in the browser: `@huggingface/transformers` (pinned 4.3.1) in

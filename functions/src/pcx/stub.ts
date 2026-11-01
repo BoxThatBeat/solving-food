@@ -34,12 +34,6 @@ export function setStubMode(m: StubMode | null) {
   modeOverride = m;
 }
 
-/** The uid a test made the owner for this household (`_stubPcx/{hid}` { ownerUid }), for the API key setting (R6.28). */
-export async function stubOwner(hid: string): Promise<string | null> {
-  const o = (await db.doc(`_stubPcx/${hid}`).get().catch(() => null))?.data()?.ownerUid;
-  return typeof o === "string" ? o : null;
-}
-
 /** The mode: a test's override, else `_stubPcx/{hid}` for that household (e2e runs in parallel), else `_stubPcx/config`. */
 export async function stubMode(hid?: string): Promise<StubMode> {
   if (modeOverride) return modeOverride;

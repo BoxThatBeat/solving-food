@@ -20,6 +20,7 @@ ordered, checkable tasks with the files they touch, the tests that prove them, a
 | [M12-hands-free-fixes.md](M12-hands-free-fixes.md) | Hands-free fixes | M11 | Owner bug report: reading aloud actually heard (speaker browser rules, Safari unlock), a can't-read-aloud state that keeps listening, no start without a tap, crash-loop guard, CPU model on Safari/iOS, service-worker cache for the WASM |
 | [M13-hands-free-ios-latency.md](M13-hands-free-ios-latency.md) | Hands-free on iOS and latency | M12 | Owner report: listening recovers after reading on iPhone (context resume, track watch, mic re-acquire, iOS pauses listening while speaking), bounded echo filter, 0.7 s silence wait, Moonshine base instead of Whisper (benchmarked), heard look, hidden `?voicedebug=1` diagnostics |
 | [M14-pcx-key.md](M14-pcx-key.md) | PC Express key | M5 | Owner question: no PC Express account (sign-in and secrets removed), the public API key as an owner setting in Settings → Stores, tried on save, no redeploy when Loblaw rotates it |
+| [M15-llm-ingredients.md](M15-llm-ingredients.md) | LLM ingredients | M14 | Owner request: Gemini (free tier) decides imported names before anything is created, Check with Gemini merges waiting names, Copy for Claude fallback, review/merge UI removed, "From PC Express" labels |
 
 ## How to use these plans
 

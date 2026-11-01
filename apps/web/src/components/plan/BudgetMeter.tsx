@@ -58,10 +58,10 @@ export function BudgetMeterCard({ b, className }: { b: BudgetState; className?: 
   );
 }
 
-/** "3 live · 9 estimated · 1 unknown": where the meter's prices come from (R6.21). Nothing when nothing is priced. */
+/** "3 live from PC Express · 9 estimated · 1 unknown" (R6.29): where the meter's prices come from (R6.21). Nothing when nothing is priced. */
 function sourceMixText(b: Pick<BudgetState, "livePrices" | "estimatedPrices" | "unknownPrices">): string {
   const parts: string[] = [];
-  if (b.livePrices) parts.push(`${b.livePrices} live`);
+  if (b.livePrices) parts.push(`${b.livePrices} live from PC Express`);
   if (b.estimatedPrices) parts.push(`${b.estimatedPrices} estimated`);
   if (b.unknownPrices) parts.push(`${b.unknownPrices} price${b.unknownPrices === 1 ? "" : "s"} unknown`);
   return parts.join(" · ");

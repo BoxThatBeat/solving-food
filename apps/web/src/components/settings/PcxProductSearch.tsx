@@ -2,6 +2,7 @@
 // (callable pcxSearchProducts) and shows each result's name, pack size, image, and current price. Picking one fills
 // the brand mapping (product name, code, pack); the callable has already written its price to prices/*.
 import * as React from "react";
+import { FromPcx } from "@/components/FromPcx";
 import { formatCents, type PcxProduct } from "@solving-food/core";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ export function PcxProductSearch({ hid, pcxStoreId, initialQuery, onPick }: { hi
       </div>
       {result && !result.connected ? <p className="m-0 text-[0.8125rem] font-bold">{result.message} Enter the product by hand below.</p> : null}
       {result?.connected && !result.products.length ? <p className="m-0 text-[0.8125rem] font-bold">Nothing found at your store.</p> : null}
+      {result?.products.length ? <FromPcx /> : null}
       {result?.products.length ? (
         <ul className="m-0 flex max-h-[24rem] list-none flex-col gap-1.5 overflow-y-auto p-0" aria-label="Products found">
           {result.products.map((p) => (

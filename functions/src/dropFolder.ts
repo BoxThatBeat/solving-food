@@ -17,11 +17,14 @@ import {
   CooklangError,
   deriveRecipe,
   findDuplicates,
+  judgeItems,
+  normalizeName,
   resolveIngredientName,
   type IngredientDoc,
   type IngredientIndex,
 } from "@solving-food/core";
 import { bucket, db } from "./admin";
+import { judgeWithGemini } from "./ai/gemini";
 import { downloadImage, storeRecipeImage } from "./images";
 import { notify } from "./notify";
 import { loadIndex } from "./recipeIndex";
@@ -135,13 +138,72 @@ export async function handleDropObject(objectName: string, generation: string | 
   return outcome;
 }
 
-/** Parses a .cook file into recipe content: unknown ingredients are created (needsReview) on the way (M1 pipeline). */
+/**
+ * Gemini's verdict on each wording the matcher couldn't place (M15, R4.27): normalised wording → the ingredient it means
+ * ("same"), or "new" / "unsure". No key, or Gemini failing, leaves them all unsure and says why.
+ */
+async function judgeUnknown(unknown: readonly string[], ing: NonNullable<typeof cache>, warnings: string[]): Promise<Map<string, string>> {
+  const verdicts = new Map<string, string>();
+  if (!unknown.length) return verdicts;
+  const items = judgeItems(
+    unknown.map((name) => ({ name })),
+    ing.index,
+    (id) => ing.byId.get(id),
+  );
+  try {
+    const v = await judgeWithGemini(items);
+    for (const it of items) {
+      const x = v.get(it.name) ?? { verdict: "unsure" as const };
+      verdicts.set(normalizeName(it.name), x.verdict === "same" ? `same:${x.id}` : x.verdict);
+    }
+  } catch (e) {
+    warnings.push(`names not checked (${(e as Error).message})`);
+  }
+  return verdicts;
+}
+
+/**
+ * Parses a .cook file into recipe content (M1 pipeline). Wordings the matcher can't place go to the LLM judge first
+ * (M15): one it says is an existing ingredient uses that ingredient and becomes one of its names; the rest are created,
+ * marked "new" or "unsure" (`nameCheck`).
+ */
 export async function prepareCookRecipe(uid: string, text: string) {
   const ing = await ingredientData();
-  const result = cooklangToRecipe(text, { resolve: (n) => resolveIngredientName(n, ing.index) });
-  const warnings = [...result.warnings];
+  const unknown = new Map<string, string>();
+  cooklangToRecipe(text, {
+    resolve: (n) => {
+      const id = resolveIngredientName(n, ing.index);
+      if (!id && normalizeName(n)) unknown.set(normalizeName(n), n);
+      return id;
+    },
+  });
+  const warnings: string[] = [];
+  const judged = await judgeUnknown([...unknown.values()], ing, warnings);
+  const sameAs = (n: string) => judged.get(normalizeName(n))?.replace(/^same:/, "");
+  const learned = new Map<string, string[]>();
+  const result = cooklangToRecipe(text, {
+    resolve: (n) => {
+      const id = resolveIngredientName(n, ing.index);
+      if (id) return id;
+      const v = judged.get(normalizeName(n));
+      if (!v?.startsWith("same:")) return null;
+      const into = sameAs(n)!;
+      learned.set(into, [...(learned.get(into) ?? []), n.trim().toLowerCase()]);
+      return into;
+    },
+  });
+  warnings.unshift(...result.warnings);
 
-  // Unknown ingredients: create them (needsReview) unless someone created them meanwhile.
+  // Wordings Gemini placed become names of the ingredient they mean, so the next import matches them directly.
+  for (const [id, words] of learned) {
+    const d = ing.byId.get(id);
+    if (!d) continue;
+    const add = [...new Set(words)].filter((w) => w !== d.name.toLowerCase() && !(d.aliases ?? []).includes(w));
+    if (add.length && (d.aliases ?? []).length + add.length <= 40) await db.doc(`ingredients/${id}`).update({ aliases: FieldValue.arrayUnion(...add) });
+  }
+  if (learned.size) warnings.push(`matched by Gemini: ${[...learned].map(([id, w]) => `${[...new Set(w)].join(", ")} → ${ing.byId.get(id)?.name ?? id}`).join("; ")}`);
+
+  // Unknown ingredients: create them unless someone created them meanwhile, with what Gemini made of the name.
   const lookupMap = new Map(ing.byId);
   for (const n of result.newIngredients) {
     const ref = db.collection("ingredients").doc(n.id);
@@ -150,13 +212,19 @@ export async function prepareCookRecipe(uid: string, text: string) {
       lookupMap.set(n.id, snap.data() as IngredientDoc);
       continue;
     }
-    const doc = { ...n.doc, createdBy: uid, updatedBy: uid, updatedAt: FieldValue.serverTimestamp() };
+    const wording = n.doc.aliases[0] ?? n.doc.name;
+    const nameCheck = judged.get(normalizeName(wording)) === "new" || judged.get(normalizeName(n.doc.name)) === "new" ? "new" : "unsure";
+    const doc = { ...n.doc, nameCheck, createdBy: uid, updatedBy: uid, updatedAt: FieldValue.serverTimestamp() };
     await ref.set(doc);
-    lookupMap.set(n.id, n.doc);
+    lookupMap.set(n.id, { ...n.doc, nameCheck });
   }
+  if (learned.size || result.newIngredients.length) cache = null; // the next import sees them
   if (result.newIngredients.length) {
-    cache = null; // the next import sees them
-    warnings.push(`${result.newIngredients.length} new ingredient${result.newIngredients.length > 1 ? "s" : ""} to review: ${result.newIngredients.map((n) => n.doc.name).join(", ")}`);
+    const made = result.newIngredients.map((n) => lookupMap.get(n.id)!);
+    const sure = made.filter((d) => d.nameCheck === "new").map((d) => d.name);
+    const unsure = made.filter((d) => d.nameCheck !== "new").map((d) => d.name);
+    if (sure.length) warnings.push(`new ingredient${sure.length > 1 ? "s" : ""}: ${sure.join(", ")}`);
+    if (unsure.length) warnings.push(`not sure whether ${unsure.join(", ")} ${unsure.length > 1 ? "are ingredients" : "is an ingredient"} you already have (Ingredients page)`);
   }
 
   const content = result.content;
@@ -243,17 +311,14 @@ async function importCook(uid: string, fileName: string, text: string, opts: Dro
   await batch.commit();
 
   const extra = warnings.length ? ` Note: ${warnings.join("; ")}.` : "";
-  // New ingredients split Supply and grocery lines until someone merges or completes them (M8, R4.27).
-  const review = prepared.newIngredients ? { link2: { to: "/ingredients?view=review", label: "Review ingredients" } } : {};
   if (duplicate) {
     await notify(uid, {
       kind: "info",
       message: `"${content.title}" looks like a duplicate of "${duplicate.title}". It's waiting for review on the Recipes page.${extra}`,
       link: "/recipes?review=1",
-      ...review,
     });
   } else {
-    await notify(uid, { kind: "success", message: `Imported "${content.title}" from ${fileName}.${extra}`, link: `/recipes/${id}`, ...review });
+    await notify(uid, { kind: "success", message: `Imported "${content.title}" from ${fileName}.${extra}`, link: `/recipes/${id}` });
   }
   return { status: duplicate ? "pendingDuplicateReview" : "imported", recipeId: id, warnings };
 }

@@ -5,7 +5,7 @@ import { adminDb } from "../fixtures/admin";
 import { expect, test } from "../fixtures/test";
 import { makePlanRecipe, PlanPage, seedPeriod, seedPlanItem } from "../pages/plan";
 
-test("store picker: default Greenbank Road, in-app store search, pick another (R6.22)", { tag: ["@R6.22"] }, async ({ page, household }) => {
+test("store picker: default Greenbank Road, in-app store search, pick another; PC Express data is tagged (R6.22, R6.29)", { tag: ["@R6.22", "@R6.29"] }, async ({ page, household }) => {
   await page.goto("/settings/stores");
   const picker = page.getByTestId("pcx-store-picker");
   await expect(picker.getByTestId("pcx-current-store")).toHaveText("Loblaws Greenbank Road (default)");
@@ -14,12 +14,14 @@ test("store picker: default Greenbank Road, in-app store search, pick another (R
   await picker.getByRole("button", { name: "Search" }).click();
   const found = picker.getByRole("list", { name: "Stores found" });
   await expect(found).toContainText("Loblaws Rideau Centre", { timeout: 20_000 });
+  await expect(picker.getByTestId("from-pcx").first()).toHaveText("From PC Express");
   await found.getByRole("button", { name: "Use this store" }).click();
   await expect(picker.getByTestId("pcx-current-store")).toHaveText("Loblaws Rideau Centre");
+  await expect(picker.getByTestId("from-pcx")).not.toHaveCount(0);
   await expect.poll(async () => (await adminDb.doc(`households/${household.hid}`).get()).data()?.pcxStoreId).toBe("STUB-1009");
 });
 
-test("product search links a brand to a PC Express product; the budget uses its live price (R7.10, R6.21)", { tag: ["@R7.10", "@R6.21", "@R7.3"] }, async ({ page, household }) => {
+test("product search links a brand to a PC Express product; the budget uses its live price, tagged From PC Express (R7.10, R6.21, R6.29)", { tag: ["@R7.10", "@R6.21", "@R7.3", "@R6.29"] }, async ({ page, household }) => {
   const r = await makePlanRecipe("Live price stew", { lines: "Simmer @canned diced tomato{400%ml} with @chicken thigh{600%g}." });
   const pid = await seedPeriod(household.hid);
   await seedPlanItem(household.hid, pid, [r.id]);
@@ -31,6 +33,7 @@ test("product search links a brand to a PC Express product; the budget uses its 
   await search.getByRole("button", { name: "Search" }).click();
   const result = search.getByRole("button", { name: "Use No Name Diced Tomatoes" });
   await expect(result).toBeVisible({ timeout: 20_000 });
+  await expect(search.getByTestId("from-pcx")).toBeVisible();
   await expect(result).toContainText("796 mL");
   await expect(result).toContainText("$1.99");
   await result.click();
@@ -39,6 +42,7 @@ test("product search links a brand to a PC Express product; the budget uses its 
   await page.getByRole("button", { name: "Save brand" }).click();
   await expect(page.getByTestId("brand-row")).toContainText("No Name Diced Tomatoes");
   await expect(page.getByTestId("brand-price")).toContainText(/\$1\.99 · live today/i);
+  await expect(page.getByTestId("brand-row").getByTestId("from-pcx")).toBeVisible();
   await expect
     .poll(async () => (await adminDb.doc(`households/${household.hid}/brandMappings/canned-diced-tomato`).get()).data())
     .toMatchObject({ productCode: "STUB-TOM-796", packAmount: 796, packMeasure: "volume" });
@@ -46,7 +50,7 @@ test("product search links a brand to a PC Express product; the budget uses its 
   // The meter prices the tomatoes live and the chicken from the estimates.
   const plan = new PlanPage(page);
   await plan.goto();
-  await expect(page.locator('[data-testid="price-sources"]:visible')).toContainText(/1 live · 1 estimated/i, { timeout: 20_000 });
+  await expect(page.locator('[data-testid="price-sources"]:visible')).toContainText(/1 live from PC Express · 1 estimated/i, { timeout: 20_000 });
 });
 
 test("not connected: the store page says so and prices come from the estimates (R6.21)", { tag: ["@R6.21"] }, async ({ page, household }) => {

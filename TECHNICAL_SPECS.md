@@ -105,7 +105,8 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Household download (M4) | in the 50,000 reads / day | one read per document (the page shows the estimate first, from count queries: one read per 1,000 entries); a year-old household is ~5,000 reads. Rare | 10× |
 | Commands function memory (M4) | Cloud Run 360k GiB-s / month | raised to 512 MiB / 300 s for imports; other commands still finish in ~1 s: ~60 / day × 0.5 GiB-s ≈ 1,000 GiB-s / month | 300× |
 | Ingredient merge callable (`mergeIngredient`, M8) | counted in the 2M above | one per **Merge into…** (plus one dry run when the confirm opens): rare, < 100 / month after the one-off cleanup. Each reads the recipes and version snapshots that use the duplicate (array-contains queries), the saved meals, and per household ~6 small reads (supply rows, planned items, open grocery lists, keyed docs); writes one per changed doc plus the copied Supply history: < 200 reads and < 100 writes per merge at the design scale. 256 MiB, ≤ 300 s | — |
-| Needs-review listener (M8) | in the 50,000 reads / day | `ingredients where needsReview == true` (Settings count, Recipes banner, More sheet, Drop page): one read per flagged ingredient per session, ~60 now and falling as they're reviewed; the full ingredient list is read only on the Ingredients page and in pickers, as before | — |
+| Ingredients page names to decide (M15) | in the 50,000 reads / day | none extra: the waiting names come from the full ingredient list the Ingredients page already reads; `aiStatus` reads the household-made ingredients (~100) once per page view. The M8 needs-review listener (Settings count, Recipes banner, More sheet, Drop page) was removed | — |
+| Gemini (M15, R4.27) | outside Firebase: the Gemini API free tier, key from a Google project **without billing** (so it can't be charged; at the limit a call fails and names wait) | one request per import with unknown names (≤ 20 names each) and per 20 names on Check with Gemini: < 100 / month. Callables `aiStatus`, `aiSetKey`, `checkIngredientNames` counted in the 2M above; outbound requests in the egress row below | — |
 | Nutrition facts (M10, R4.30) | in the 1 GiB storage, 20,000 writes and 50,000 reads / day | ingredients gain `nutrients` (~250 bytes × 480) and recipes `nutrition` (~250 bytes each); the recipe index summaries are unchanged (the panel isn't on cards). The one-off `pnpm ingredients:upload` after deploy writes ≤ 480 ingredients; each fires `ingredientRecipes`, which re-derives the recipes using it (one query + one ingredient `getAll` per recipe): about recipes × ingredients-per-recipe × 11 reads, < 10,000 reads and one write per recipe at today's library (~50 recipes), done once | 5× on that day |
 | Timer callables (`scheduleTimer`, `cancelTimer`, M3) | counted in the 2M above | one per timer start, pause, adjust, cancel: < 3,000 / month | — |
 | Cloud Tasks (queue `timers`, created by the `timers` task function's deploy, M3) | 1M operations / month | < 2,000 (cooking timers: enqueue + delete) | 500× |
@@ -187,6 +188,9 @@ ingredients/{ingredientId}
   side?: { portion }                              // (M6) a side (R5.9): eaten as is; portion per person, canonical
                                                   // (g, or count for count-canonical items). Seeded or set in the
                                                   // ingredient editor; never on a freeUse ingredient
+  nameCheck?: "new" | "unsure"                    // (M15, R4.27) what the LLM judge made of a household-made name:
+                                                  // "unsure" waits under Names to decide (R4.35); absent on the
+                                                  // catalogue and on ingredients made by hand
   mergedInto?                                     // (M8) a duplicate merged by the mergeIngredient function (§6
                                                   // "Merging ingredients"): a tombstone, needsReview false, hidden
                                                   // from pickers and the Ingredients list; its names resolve to the
@@ -224,6 +228,8 @@ prices/{pcxStoreId}_{productCode}                 // PC Express price at one sto
                                                   // as built (M5): keyed by the store ID the household stores (the
                                                   // default placeholder included), written by the product search and the
                                                   // weekly refresh; deleted after 60 days without a refresh
+aiSession/config                                  // function-only (R4.36): { apiKey, updatedAt, updatedBy }, the
+                                                  // Gemini API key the owner saved
 pcxSession/config                                 // function-only (R6.28): { apiKey, updatedAt, updatedBy }, the
                                                   // PC Express public API key the owner saved
 pcxSession/state                                  // function-only (M5): resolved default store ID, last
@@ -781,14 +787,29 @@ flowchart TD
   onto meat or fish. "Cooked" is not a state word ("cooked rice" ≠ rice). Matching never strips words from catalogue
   names, only from the recipe's wording. When two ingredients claim a name, a reviewed one beats one that needs
   review; merged ones resolve to their target.
-- **Unknown ingredients** found in a dropped file are created with `needsReview: true` and defaults inferred from the
-  category. The new ingredient's name drops pure preparation words (`cleanIngredientName`: "diced green chilies" →
-  "green chilies", the wording kept as an alias) and its ID is the variant key (`newIngredientId`), so spelling variants
-  of one new name create one ingredient (`green-chile`). The import's notification links to the review page as well as
-  the recipe (`link2`).
-- **Review** (R4.27): `suggestIngredients(name, index, max)` ranks candidates for the review page: the matcher's hit,
-  then shared words (Jaccard ≥ 0.3 on normalised, preparation-free words; the same words reordered score 0.9) and
-  prefixes. **Merge into…** is the `mergeIngredient` function (§6 "Merging ingredients").
+- **LLM judge** (M15, R4.27): `prepareCookRecipe` parses the file once to collect the wordings the matcher can't
+  place, and sends them in one request (`packages/core/src/ingredientJudge.ts`: each name with its candidates,
+  `suggestIngredients` top 6, and the rules: same product, recipe could use either; different forms differ) to Gemini
+  (`functions/src/ai/gemini.ts`: `generateContent` on `gemini-2.5-flash-lite` or `GEMINI_MODEL`, temperature 0, JSON
+  response schema, 20 s timeout; the key from `aiSession/config`). Each answer is `same` + a candidate ID, `new`, or
+  `unsure`; an ID that wasn't a candidate, a missing name, or an unreadable answer reads as `unsure`, so a bad answer
+  never merges anything. Then it parses again: `same` wordings resolve to that ingredient and are added to its aliases
+  (≤ 40); the rest are created (below) with `nameCheck` `new` or `unsure`. No key or a failed call: all unsure, and the
+  notification says the names weren't checked. Not Firebase AI Logic: it's a client SDK and bills through this Blaze
+  project; the key must come from a Google project without billing. Under the emulator the stub answers from
+  `_stubLlm/config` (`answers` by lower-cased name, `mode: "down" | "off"`).
+- **Unknown ingredients** found in a dropped file are created with defaults inferred from the category (`needsReview`
+  when conversions or protein are missing) and `nameCheck`. The new ingredient's name drops pure preparation words
+  (`cleanIngredientName`: "diced green chilies" → "green chilies", the wording kept as an alias) and its ID is the
+  variant key (`newIngredientId`), so spelling variants of one new name create one ingredient (`green-chile`). The
+  import's notification lists what Gemini matched, the new ingredients, and the names it wasn't sure about.
+- **Names to decide** (R4.27, R4.35): household-made ingredients with `nameCheck: "unsure"`, or flagged `needsReview`
+  before M15 with no `nameCheck` (`isNameWaiting`). The owner's **Check with Gemini** is the `checkIngredientNames`
+  callable (owner only, 40 per call, 5 minutes): `same` → the `mergeIngredient` code (§6 "Merging ingredients"),
+  following merges made earlier in the run; a refused merge stays unsure; `new` → `nameCheck: "new"`. **Copy for
+  Claude** builds the same prompt client-side (`claudePrompt`) and **Paste Claude's answer** reads the first JSON in the
+  reply (`parseClaudeAnswer`), then applies merges with the `mergeIngredient` callable and `new` with a client write
+  of `nameCheck` (rules allow only `new` / `unsure`).
 - **Images** referenced in front matter are always **downloaded into Storage** (never hot-linked) and resized to the three standard sizes. If the download fails, the recipe is still imported without an image, and the notification says so.
 - **Results** are reported through the notification system (§12): a success or error banner appears at the bottom of **whatever page the uploader is on**, linking to the new recipe or describing the error.
 
@@ -1076,14 +1097,14 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 - **`<LedgerList>`**: paginated transaction history.
 - **`<IngredientPicker>`**: typeahead with allowed-measurement selector. M8: matches spelling variants
   (`variantKey`), never offers merged ingredients, and takes `allowCreate={false}` and `exclude` for Merge into….
-- **Ingredients page** (M8, R4.27): toggle *Needs review (n)* / *All* plus search. A review card shows the name,
-  category and missing conversions, the recipes that use it (from the recipe index, no extra reads), "Looks like:" (the
-  top three `suggestIngredients`, each opening the merge sheet with it picked), **Merge into…** and **Keep as new** (the
-  editor). **`<MergeSheet>`**: suggestion chips, an `<IngredientPicker>` without create, a dry-run preview ("Moves 1
-  recipe, 1 Supply row to strawberry jam. Adds “x” to its names."), then *Merge into X* → success banner. Needs a
-  connection. Reached from Settings (Ingredients entry with a live count badge), the phone's More sheet, the Recipes
-  page's **review banner** (`<IngredientReviewBanner>`, dashed like the duplicate banner; × hides it for the session via
-  sessionStorage), the Drop page, and the import notification's second link.
+- **Ingredients page** (M15, R4.27, R4.35, R4.36): search and the list (an ingredient opens its editor; "incomplete"
+  when conversions or protein are missing); **Names to decide** (`<WaitingNames>`: the names, Check with Gemini for
+  the owner, Copy for Claude, Paste Claude's answer with its plan and Apply); the owner's **Gemini API key**
+  (`<ApiKeyCard>`, shared with the PC Express key). Reached from Settings and the phone's More sheet. M8's review cards,
+  `<MergeSheet>`, the Recipes review banner, counts and the notification's review link were removed in M15; the merged
+  notice on a merged ingredient's page stays.
+- **`<FromPcx>`** (R6.29): the "From PC Express" tag on store and product search results, the current store, a brand's
+  linked product and live price; the budget meter says "N live from PC Express".
 - **`<NotificationBanners>`**: the app-wide notification system. Banners stack at the bottom of every page, above the bottom tab bar on phones. Fed by a live listener on `users/{uid}/notifications` (undismissed) plus local, client-only messages. Success and info banners auto-dismiss after ~6 s; errors stay until dismissed. Each can link to the related page. At most three show at once, with a "+N more · Dismiss all" row for the rest (a bulk drop reports one per file). The stack is always mounted as an `aria-live` region above sheets, so banners stay visible and announced while a sheet is open.
 - **`<PcxProductSearch>`** / **`<PcxStorePicker>`**: PC Express search on the brand mapping and stores pages.
 - **`<DataTransfer>`**: Settings → Data, with the Download and Import household data buttons (§13).
@@ -1414,7 +1435,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | `hands-free.spec.ts` | (M11) The toggle on mise en place, every step and the review (not a meal's order list); on reads the prep list, a new step reads its ingredients then instructions; next / previous / before, last keyword wins, ingredients, instructions, stop, shut up, unmute; off closes the mic and silences at once; leaving the cook view closes the mic; a refused mic switches it off with a banner; axe and a 44 px toggle; (M12) no start on load even with M11's remembered setting, a reload starts off, the crash-loop guard, a device that can't read aloud keeps taking commands; (M13) the heard look appears and clears and the mic is told when reading starts and ends, the diagnostics only with `?voicedebug=1` and Copy (R4.31–R4.34) |
 | `recipe-edit.spec.ts` | Manual create and edit with fixed cuisine/protein lists; version history and restore; concurrent-edit warning; offline draft saved when online; delete with all-users warning moves to Trash and hides from search and plans; restore from Trash; purge after 30 days (clock) cleans up plans, meals, and favourites (R4.15, R4.19, R4.25–R4.26) |
 | `drop-folder.spec.ts` | Upload `.cook` files → recipes appear with downloaded images; invalid file shows an error banner on whatever page is open; file deleted after processing; duplicate goes to the review list; keep existing / keep new / keep both; wording with preparation words, qualifiers and spelling variants resolves to the catalogue with no new ingredient (M8) (R4.16–R4.17, R4.20) |
-| `ingredients.spec.ts` | (M8) An import with a new name: notification with Open recipe + Review ingredients, Recipes banner (session dismiss), Settings count, review card with its recipe, Merge into… preview and confirm repoint the recipe and move a seeded Supply lot with Σ transactions == amount, alias learned, merged page notice; More sheet link on phones (R4.27, R8.16) |
+| `ingredients.spec.ts` | (M15) An import asks the Gemini stub first: a known ingredient reused and taught the wording, new and unsure names created and named in the notification, no review banner or counts, the unsure name under Names to decide (R4.27, R4.16); the owner's Gemini key (wrong key reported) and Check with Gemini merging a waiting name with its Supply, Σ transactions == amount, merged page notice (R4.36, R8.16); Copy for Claude and a pasted answer applied (R4.35); More sheet link on phones |
 | `notifications.spec.ts` | Banners appear at the bottom of any page, stack, auto-dismiss (success) or persist (error), link to their target, and stay dismissed across devices (R12.1) |
 | `sharing.spec.ts` | Copy link; signed-out visitor sees the recipe/meal page without household data; no `.cook` download on the recipe page (R4.21; R4.22 withdrawn in M7) |
 | `meals.spec.ts` | Saved meals list: edit, favourite, share; "Save as meal" from Create meal and from the review flow; saved meal picked in Create meal; choose recipe order with durations shown; meal and recipe ratings (R5.1–R5.4, R5.6, R5.8) |
@@ -1475,6 +1496,8 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | M11 | Hands-free mode | A voice assistant in the cooking views: reads ingredients and steps aloud (`speechSynthesis`, en-CA), spoken commands by keyword (last wins), Whisper tiny.en via Transformers.js in a Web Worker, mic capture and VAD on the main thread, nothing recorded while off, model cached in the browser |
 | M12 | Hands-free fixes | Owner bug report (no reading heard; iPhone crash loop): speaker browser rules and a speech-unavailable state that keeps listening, tap-only start with a Safari unlock utterance, crash-loop guard, WASM on WebKit, remembered no-GPU, worker crash handling, service-worker cache for ONNX Runtime's WASM |
 | M13 | Hands-free on iOS and latency | Owner report (commands dead after the first read on iPhone; the wait too long): microphone recovery (context resume, track watch, re-acquire after reading, iOS pauses listening while speaking), bounded echo filter, 0.7 s silence wait with trimmed segments, short greedy decoding with a warm-up pass, model benchmark, heard look, hidden `?voicedebug=1` diagnostics |
+| M14 | PC Express key | No PC Express account (sign-in and secrets removed); the public API key as an owner setting in Settings → Stores, tried on save |
+| M15 | LLM ingredients | Gemini (free tier) decides whether an imported name is an existing ingredient before anything is created; Check with Gemini merges waiting names; Copy for Claude fallback; the review/merge UI removed; "From PC Express" labels |
 
 Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix. The detailed, task-level plan for each milestone lives in `Planning/`.
 

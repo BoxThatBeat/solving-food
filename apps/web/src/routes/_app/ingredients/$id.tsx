@@ -1,4 +1,4 @@
-// Ingredient editor (Planning/M1 §1, PRD R8.3, R8.14; spec §5): allowed measurements and the conversions they need,
+// Ingredient editor (Planning/M1 §1, PRD R8.3, R8.14, R4.27; spec §5): allowed measurements and the conversions they need,
 // protein, shelf lives, pack size, cadence, and the free-use / staple flags. Saving recomputes `needsReview`; recipes
 // that use the ingredient pick up new conversions through the ingredientRecipes function.
 import { NutrientInputs } from "@/components/ingredients/NutrientInputs";
@@ -23,9 +23,7 @@ import { Input, Select } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SectionLabel, ToggleChip } from "@/components/ui/chip";
 import { useNotify } from "@/components/notifications-context";
-import { saveIngredient, useAllIngredients, useIngredientsById, type IngredientEntry } from "@/data/ingredients";
-import { MergeSheet } from "@/components/ingredients/MergeSheet";
-import { useSuggestions } from "@/components/ingredients/merge";
+import { saveIngredient, useIngredientsById } from "@/data/ingredients";
 import { useReadySession } from "@/session/useSession";
 
 export const Route = createFileRoute("/_app/ingredients/$id")({
@@ -51,10 +49,7 @@ function IngredientPage() {
       {ing?.mergedInto ? (
         <MergedNotice into={ing.mergedInto} />
       ) : ing ? (
-        <>
-          {ing.needsReview ? <MergePanel ing={{ ...ing, id }} /> : null}
-          <IngredientForm key={id} id={id} initial={ing} />
-        </>
+        <IngredientForm key={id} id={id} initial={ing} />
       ) : loaded ? (
         <EmptyState>No such ingredient.</EmptyState>
       ) : (
@@ -77,57 +72,6 @@ function MergedNotice({ into }: { into: string }) {
         . Recipes, Supply and grocery lines that used it moved there, and its names now find {target?.name ?? "that ingredient"}.
       </span>
     </div>
-  );
-}
-
-/** Needs review: merge it into what it means, or complete the form below to keep it (R4.27). */
-function MergePanel({ ing }: { ing: IngredientEntry }) {
-  const all = useAllIngredients();
-  const navigate = Route.useNavigate();
-  const suggestions = useSuggestions(ing, all.index, 3);
-  const [merging, setMerging] = React.useState<{ target?: string } | null>(null);
-  return (
-    <Card>
-      <SectionLabel hint="R4.27">Is this a duplicate?</SectionLabel>
-      <p className="m-0 text-sm leading-normal font-semibold">
-        {suggestions.length ? (
-          <>
-            Looks like:{" "}
-            {suggestions.map((sug, k) => (
-              <React.Fragment key={sug.id}>
-                {k ? " · " : ""}
-                <button
-                  type="button"
-                  onClick={() => setMerging({ target: sug.id })}
-                  aria-label={`Merge ${ing.name} into ${all.byId.get(sug.id)?.name ?? sug.id}`}
-                  className="cursor-pointer bg-transparent p-0 font-extrabold text-ink underline underline-offset-2"
-                >
-                  {all.byId.get(sug.id)?.name ?? sug.id}
-                </button>
-              </React.Fragment>
-            ))}
-            . Merge it if it means the same thing; otherwise fill in the fields below to keep it as a new ingredient.
-          </>
-        ) : (
-          "Merge it into an ingredient that means the same thing, or fill in the fields below to keep it as a new ingredient."
-        )}
-      </p>
-      <Button size="sm" className="self-start" onClick={() => setMerging({})} disabled={!all.list}>
-        Merge into…
-      </Button>
-      {merging && all.list ? (
-        <MergeSheet
-          open
-          onOpenChange={(o) => !o && setMerging(null)}
-          from={ing}
-          all={all.list}
-          byId={all.byId}
-          index={all.index}
-          initialTarget={merging.target}
-          onMerged={(r) => void navigate({ to: "/ingredients/$id", params: { id: r.intoId } })}
-        />
-      ) : null}
-    </Card>
   );
 }
 
@@ -202,7 +146,7 @@ function IngredientForm({ id, initial }: { id: string; initial: IngredientDoc })
         s.user.uid,
         false,
       );
-      notify({ kind: "success", message: `Saved ${name.trim()}${reasons.length ? " (still needs review)" : ""}` });
+      notify({ kind: "success", message: `Saved ${name.trim()}${reasons.length ? " (still missing some data)" : ""}` });
     } catch (e) {
       notify({ kind: "error", message: `Couldn't save: ${(e as Error).message}` });
     } finally {

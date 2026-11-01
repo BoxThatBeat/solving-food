@@ -2,6 +2,7 @@
 // in-app store search (callable pcxSearchStores). The default is Loblaws Greenbank Road. Says plainly when PC Express
 // isn't connected (prices then come from the estimates).
 import * as React from "react";
+import { FromPcx } from "@/components/FromPcx";
 import { isDefaultPcxStore, type PcxStore } from "@solving-food/core";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -44,7 +45,10 @@ export function PcxStorePicker({ hid, storeId, storeName }: { hid: string; store
       <CardTitle>PC Express store</CardTitle>
       <p className="m-0 text-[0.8125rem] font-semibold">Live prices come from this store. Without PC Express, the estimated price list is used.</p>
       <div className="flex flex-col gap-0.5 rounded-ui border-2 border-line bg-mantle px-2.5 py-2">
-        <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">CURRENT STORE</span>
+        <span className="flex items-center justify-between gap-2 font-mono text-[0.625rem] font-bold tracking-[0.09rem]">
+          CURRENT STORE
+          {storeName ? <FromPcx /> : null}
+        </span>
         <span className="text-[0.9375rem] font-extrabold" data-testid="pcx-current-store">
           {current}
         </span>
@@ -64,6 +68,7 @@ export function PcxStorePicker({ hid, storeId, storeName }: { hid: string; store
       </form>
       {result && !result.connected ? <p className="m-0 text-[0.8125rem] font-bold">{result.message}</p> : null}
       {result?.connected && !result.stores.length ? <p className="m-0 text-[0.8125rem] font-bold">No stores match.</p> : null}
+      {result?.stores.length ? <FromPcx /> : null}
       {result?.stores.length ? (
         <ul className="m-0 flex list-none flex-col gap-1.5 p-0" aria-label="Stores found">
           {result.stores.map((st) => (

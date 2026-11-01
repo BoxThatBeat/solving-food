@@ -1,7 +1,9 @@
-// Ingredient review and "Merge into…" (Planning/M8, PRD R4.27, R8.16): an import with a name nothing in the catalogue
-// means creates an ingredient that needs review; the import's banner links to the review, the Recipes page shows a
-// banner, Settings shows the count, and Merge into… repoints the recipe and moves the household's Supply (with
-// Σ transactions == amount) through the mergeIngredient function, teaching the target the new name.
+// Ingredient names decided by an LLM (Planning/M15, PRD R4.27, R4.35, R4.36, R8.16, R4.16): an import asks Gemini
+// (the functions' stub here, `_stubLlm/config`) about names the matcher can't place, before creating anything: one it
+// places uses the existing ingredient and teaches it the wording; new and unsure ones are created and say so. The owner
+// sets the Gemini key and runs Check names, which merges the waiting names Gemini is sure about (Supply moves); anyone
+// can Copy for Claude and paste its answer. No review cards, banners or counts. Test runs share the stub doc, so each
+// test merges in answers for its own unique names.
 import type { Page } from "@playwright/test";
 import { newIngredientId } from "../../packages/core/src/index";
 import { adminDb } from "../fixtures/admin";
@@ -15,96 +17,123 @@ async function dropFiles(page: Page, files: Array<{ name: string; body: string; 
 }
 
 const statusBanner = (page: Page, text: string | RegExp) => page.getByTestId("notifications").getByRole("status").filter({ hasText: text });
+const word = () => `quandong${Math.random().toString(36).slice(2, 7)}`;
 
-test("a new name from an import is reviewed and merged: banner, Settings count, Merge into… moves the recipe and Supply", { tag: ["@R4.27", "@R8.16", "@R4.16"] }, async ({ page, household }) => {
-  test.setTimeout(150_000);
-  const word = `quandong${Math.random().toString(36).slice(2, 7)}`;
-  const name = `${word} relish`;
-  const newId = newIngredientId(name);
-  const title = uniqueTitle("Relish Toast");
-  const cook = [
-    "---",
-    `title: ${title}`,
-    "servings: 2",
-    "cuisine: other",
-    "main_protein: none",
-    "prep_time: 5 minutes",
-    "cook_time: 5 minutes",
-    "tags: [snack]",
-    "---",
-    `Spread @diced ${name}{3%tbsp} over @butter{1%tbsp} and rinse with @water{${1000 + 100 * Math.floor(Math.random() * 400)}%ml}.`,
-    "",
-  ].join("\n");
-  await dropFiles(page, [{ name: "relish.cook", body: cook, mimeType: "text/plain" }]);
+/** What the stub Gemini answers for these names (merged into the shared doc). */
+async function geminiSays(answers: Record<string, string>) {
+  await adminDb.doc("_stubLlm/config").set({ answers }, { merge: true });
+}
 
-  // The import's banner says so and links to the review as well as the recipe.
+/** A household-made ingredient waiting for a decision (flagged before M15, never checked). */
+async function waitingIngredient(name: string): Promise<string> {
+  const id = newIngredientId(name);
+  await adminDb.doc(`ingredients/${id}`).set({
+    name,
+    aliases: [],
+    category: "condiments",
+    defaultLocation: "fridge",
+    allowedMeasures: ["weight", "volume"],
+    canonicalUnit: "g",
+    densityGPerMl: 1.3,
+    shelfLifeDays: { fridge: 180 },
+    freezable: false,
+    isStaple: false,
+    freeUse: false,
+    needsReview: true,
+    createdBy: "e2e-importer",
+  });
+  return id;
+}
+
+test("an import asks Gemini first: a known ingredient is reused and learns the name; new and unsure names are created and say so", { tag: ["@R4.27", "@R4.16"] }, async ({ page, household: _ }) => {
+  test.setTimeout(120_000);
+  const w = word();
+  const [same, fresh, unsure] = [`strawberry jam ${w}`, `${w} fruit`, `${w} dust`];
+  await geminiSays({ [same]: "strawberry-jam", [fresh]: "new" });
+  const title = uniqueTitle("Gemini Toast");
+  const cook = ["---", `title: ${title}`, "servings: 2", "cuisine: other", "main_protein: none", "prep_time: 5 minutes", "cook_time: 5 minutes", "tags: [snack]", "---", `Spread @${same}{3%tbsp} with @${fresh}{2} and @${unsure}{1%tsp}.`, ""].join("\n");
+  await dropFiles(page, [{ name: "gemini.cook", body: cook, mimeType: "text/plain" }]);
+
   const ok = statusBanner(page, `Imported "${title}"`);
   await expect(ok).toBeVisible({ timeout: 45_000 });
-  await expect(ok).toContainText(`1 new ingredient to review: ${name}`); // "diced" dropped from the new name
-  await expect(ok.getByRole("link", { name: "Open recipe" })).toBeVisible();
-  await expect(ok.getByRole("link", { name: "Review ingredients" })).toBeVisible();
-  const ing = (await adminDb.doc(`ingredients/${newId}`).get()).data()!;
-  expect(ing).toMatchObject({ name, aliases: [`diced ${name}`], needsReview: true });
-  const recipeId = (await adminDb.collection("recipes").where("title", "==", title).get()).docs[0]!.id;
-  // Some of it is already in the household's Supply.
-  await seedSupply(household.hid, newId, [{ amount: 250, expiresInDays: 30 }], { label: name });
+  await expect(ok).toContainText(`matched by Gemini: ${same} → strawberry jam`);
+  await expect(ok).toContainText(`new ingredient: ${fresh}`);
+  await expect(ok).toContainText(`not sure whether ${unsure}`);
+  await expect(ok.getByRole("link", { name: "Review ingredients" })).toHaveCount(0);
 
-  // The Recipes page shows the banner; dismissing it hides it for this session only.
-  await page.goto("/recipes");
-  const recipesBanner = page.getByTestId("ingredient-review-banner");
-  await expect(recipesBanner).toBeVisible();
-  await expect(recipesBanner).toContainText(/ingredients? from imports needs? review/);
-  await recipesBanner.getByRole("button", { name: "Hide until next time" }).click();
-  await expect(recipesBanner).toBeHidden();
-  await page.reload();
-  await expect(page.getByTestId("recipe-count")).toBeVisible();
-  await expect(page.getByTestId("ingredient-review-banner")).toBeHidden();
-
-  // Settings → Ingredients carries the live count and opens the review list.
-  await page.goto("/settings");
-  const entry = page.getByRole("navigation", { name: "Settings sections" }).getByRole("link", { name: /Ingredients/ });
-  await expect(entry).toContainText(/need(s)? review/);
-  await expect(entry.getByTestId("review-count")).toHaveText(/^\d+$/);
-  await entry.click();
-  await expect(page).toHaveURL(/\/ingredients/);
-  await expect(page.getByRole("button", { name: "Needs review" })).toHaveAttribute("aria-pressed", "true");
-
-  // The card: the recipe that uses it, then Merge into… strawberry jam.
-  const card = page.getByRole("article", { name });
-  await expect(card).toBeVisible({ timeout: 20_000 });
-  await expect(card.getByRole("link", { name: title })).toBeVisible({ timeout: 30_000 });
-  await card.getByRole("button", { name: "Merge into…" }).click();
-  const sheet = page.getByRole("dialog", { name: `Merge “${name}”` });
-  await expect(sheet).toBeVisible();
-  await sheet.getByRole("combobox", { name: "Merge into" }).fill("strawberry jam");
-  await sheet.getByRole("option", { name: /^strawberry jam/ }).click();
-  await expect(sheet.getByTestId("merge-preview")).toContainText("Moves 1 recipe, 1 Supply row to strawberry jam", { timeout: 30_000 });
-  await expect(sheet.getByTestId("merge-preview")).toContainText(`“${name}”`);
-  await sheet.getByRole("button", { name: "Merge into strawberry jam" }).click();
-  await expect(statusBanner(page, `Merged “${name}” into “strawberry jam”`)).toBeVisible({ timeout: 60_000 });
-  await expect(sheet).toBeHidden();
-  await expect(page.getByRole("article", { name })).toHaveCount(0);
-
-  // The recipe now uses strawberry jam (its wording unchanged), and the Supply moved with a consistent ledger.
-  const recipe = (await adminDb.doc(`recipes/${recipeId}`).get()).data()!;
+  const recipe = (await adminDb.collection("recipes").where("title", "==", title).get()).docs[0]!.data();
   expect(recipe.ingredientIds).toContain("strawberry-jam");
-  expect(recipe.ingredientIds).not.toContain(newId);
-  expect(recipe.version).toBe(1);
-  const into = await supplyDoc(household.hid, "strawberry-jam");
-  expect(into?.canonicalAmount).toBe(250);
+  expect((await adminDb.doc(`ingredients/${newIngredientId(same)}`).get()).exists).toBe(false);
+  expect((await adminDb.doc("ingredients/strawberry-jam").get()).data()!.aliases).toContain(same);
+  expect((await adminDb.doc(`ingredients/${newIngredientId(fresh)}`).get()).data()).toMatchObject({ nameCheck: "new" });
+  expect((await adminDb.doc(`ingredients/${newIngredientId(unsure)}`).get()).data()).toMatchObject({ nameCheck: "unsure" });
+
+  // No review banner or counts anywhere; the unsure name is listed on the Ingredients page.
+  await page.goto("/recipes");
+  await expect(page.getByTestId("recipe-count")).toBeVisible();
+  await expect(page.getByTestId("ingredient-review-banner")).toHaveCount(0);
+  await page.goto("/settings");
+  await expect(page.getByTestId("review-count")).toHaveCount(0);
+  await page.goto("/ingredients");
+  await expect(page.getByRole("list", { name: "Names to decide" }).getByRole("link", { name: unsure })).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("button", { name: "Merge into…" })).toHaveCount(0);
+});
+
+test("the owner saves the Gemini key and Check names merges what Gemini is sure about, moving Supply (R4.36, R8.16)", { tag: ["@R4.36", "@R8.16", "@R4.27"] }, async ({ page, household }) => {
+  test.setTimeout(150_000);
+  const name = `strawberry jam ${word()}`;
+  const id = await waitingIngredient(name);
+  await seedSupply(household.hid, id, [{ amount: 250, expiresInDays: 30 }], { label: name });
+  await geminiSays({ [name]: "strawberry-jam" });
+
+  // Not the owner: no key card, no Check with Gemini.
+  await page.goto("/ingredients");
+  await expect(page.getByTestId("waiting-names")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("ai-key")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Check with Gemini" })).toHaveCount(0);
+
+  await adminDb.doc(`_stubPcx/${household.hid}`).set({ ownerUid: household.uid });
+  await page.reload();
+  const card = page.getByTestId("ai-key");
+  await expect(card).toBeVisible({ timeout: 20_000 });
+  await card.getByLabel("Gemini API key").fill("AIza-not-the-key");
+  await card.getByRole("button", { name: "Save" }).click();
+  await expect(card.getByRole("alert")).toContainText(/didn't accept it.*400/);
+  await card.getByLabel("Gemini API key").fill("stub-gemini-key");
+  await card.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Gemini key saved and working")).toBeVisible();
+
+  await page.getByRole("button", { name: "Check with Gemini" }).click();
+  await expect(statusBanner(page, /Gemini checked \d+/)).toBeVisible({ timeout: 120_000 });
+  await expect.poll(async () => (await adminDb.doc(`ingredients/${id}`).get()).data()?.mergedInto, { timeout: 30_000 }).toBe("strawberry-jam");
+  expect((await supplyDoc(household.hid, "strawberry-jam"))?.canonicalAmount).toBe(250);
   const txs = await adminDb.collection(`households/${household.hid}/supply/strawberry-jam/transactions`).get();
   expect(txs.docs.reduce((s, d) => s + Number(d.data().delta), 0)).toBe(250);
-  expect((await supplyDoc(household.hid, newId))?.canonicalAmount).toBe(0);
-  expect((await adminDb.doc(`ingredients/${newId}`).get()).data()).toMatchObject({ mergedInto: "strawberry-jam", needsReview: false });
-  expect((await adminDb.doc("ingredients/strawberry-jam").get()).data()!.aliases).toEqual(expect.arrayContaining([name, `diced ${name}`]));
-
-  // The household sees it under strawberry jam; the merged name is gone from Supply.
-  await page.goto("/supply");
-  await expect(page.getByRole("main")).toContainText(/strawberry jam/i, { timeout: 20_000 });
-  await expect(page.getByRole("main")).not.toContainText(name);
   // The merged ingredient's page says where it went.
-  await page.goto(`/ingredients/${newId}`);
+  await page.goto(`/ingredients/${id}`);
   await expect(page.getByRole("status").filter({ hasText: "Merged into" })).toContainText("strawberry jam");
+});
+
+test("Copy for Claude, then paste its answer: sure answers are merged or kept, the rest wait (R4.35)", { tag: ["@R4.35"] }, async ({ page, household: _ }) => {
+  test.setTimeout(120_000);
+  const w = word();
+  const [dup, own] = [`strawberry jam ${w}`, `${w} leaf`];
+  const dupId = await waitingIngredient(dup);
+  const ownId = await waitingIngredient(own);
+  await page.goto("/ingredients");
+  const card = page.getByTestId("waiting-names");
+  await expect(card.getByRole("link", { name: dup })).toBeVisible({ timeout: 20_000 });
+  await expect(card.getByRole("button", { name: "Copy for Claude" })).toBeEnabled();
+  await card.getByRole("button", { name: "Paste Claude's answer" }).click();
+  const answer = `Here you go:\n\`\`\`json\n${JSON.stringify({ answers: [{ name: dup, verdict: "same", id: "strawberry-jam" }, { name: own, verdict: "new" }, { name: "something else", verdict: "same", id: "nope" }] })}\n\`\`\``;
+  await card.getByLabel("Claude's answer").fill(answer);
+  await expect(card.getByTestId("claude-plan")).toContainText(/Merge 1 · keep 1 as new/i);
+  await expect(card).toContainText(`${dup} → strawberry jam`);
+  await card.getByRole("button", { name: "Apply" }).click();
+  await expect(statusBanner(page, "1 merged, 1 kept as new")).toBeVisible({ timeout: 90_000 });
+  expect((await adminDb.doc(`ingredients/${dupId}`).get()).data()).toMatchObject({ mergedInto: "strawberry-jam" });
+  expect((await adminDb.doc(`ingredients/${ownId}`).get()).data()).toMatchObject({ nameCheck: "new" });
+  await expect(card.getByRole("link", { name: own })).toHaveCount(0);
 });
 
 test("the More sheet links to Ingredients on phones", { tag: ["@R4.27"] }, async ({ page, household: _ }) => {

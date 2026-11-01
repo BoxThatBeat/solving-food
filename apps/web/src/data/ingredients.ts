@@ -2,7 +2,7 @@
 // offline); recipe pages, which also render signed out, read the ingredients they need one by one (public `get`).
 
 import { useEffect, useMemo, useState } from "react";
-import { collection, deleteField, doc, onSnapshot, query, serverTimestamp, setDoc, where, type Unsubscribe } from "firebase/firestore";
+import { collection, deleteField, doc, onSnapshot, serverTimestamp, setDoc, updateDoc, type Unsubscribe } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import {
   buildIngredientIndex,
@@ -35,16 +35,13 @@ export function useAllIngredients(enabled = true): { list: IngredientEntry[] | u
   }, [q.docs]);
 }
 
-/**
- * Ingredients that need review (imports' new names, missing conversions), live. A query on the flag reads only those
- * documents, so the count badges and the Recipes banner don't pull the whole collection. Merged ones are never flagged.
- */
-export function useNeedsReview(enabled = true): IngredientEntry[] | undefined {
-  const q = useLiveQuery<IngredientDoc>(enabled ? query(collection(db, "ingredients"), where("needsReview", "==", true)) : null, enabled ? "ingredients?needsReview" : null);
-  return useMemo(() => q.docs?.map((d) => ({ id: d.id, ...d.data })).filter((i) => !i.mergedInto), [q.docs]);
+/** A waiting name is its own ingredient (R4.35: Claude said "new"): it stops waiting. */
+export async function markNameNew(id: string, uid: string): Promise<void> {
+  await updateDoc(doc(db, "ingredients", id), { nameCheck: "new", updatedBy: uid, updatedAt: serverTimestamp() });
 }
 
-/** "Merge into…" (M8, R4.27): the mergeIngredient function; `dryRun` returns what would move. Needs a connection. */
+/** Merges a duplicate into the ingredient it means (M8; since M15 used by the Claude answer, R4.35): the mergeIngredient
+ * function; `dryRun` returns what would move. Needs a connection. */
 export async function mergeIngredient(fromId: string, intoId: string, dryRun = false): Promise<MergeReport> {
   const fn = httpsCallable<{ fromId: string; intoId: string; dryRun: boolean }, MergeReport>(functions, "mergeIngredient");
   return (await fn({ fromId, intoId, dryRun })).data;

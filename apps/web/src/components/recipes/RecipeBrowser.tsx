@@ -22,7 +22,6 @@ import { cn } from "@/lib/utils";
 import { RecipeCard } from "./RecipeCard";
 import { usePlanModel } from "@/data/planModel";
 import { DuplicateReviewSheet } from "./DuplicateReview";
-import { IngredientReviewBanner } from "@/components/ingredients/ReviewBanner";
 import { useCreateMeal } from "@/components/plan/plan-sheet-context";
 import { useSuggestions } from "@/data/suggestions";
 import { useSettling } from "@/lib/useSettling";
@@ -125,7 +124,6 @@ export function RecipeBrowser({
           </span>
         </button>
       ) : null}
-      <IngredientReviewBanner />
 
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex flex-col gap-[0.1875rem]">

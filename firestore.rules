@@ -166,7 +166,7 @@ service cloud.firestore {
       return d.keys().hasOnly(['name', 'aliases', 'category', 'defaultLocation', 'allowedMeasures', 'canonicalUnit',
                                'densityGPerMl', 'unitWeightG', 'proteinPer100g', 'fibrePer100g', 'nutrients', 'nutrientSource', 'shelfLifeDays', 'defaultPackAmount',
                                'defaultPackMeasure', 'defaultCadenceDays', 'freezable', 'isStaple', 'freeUse',
-                               'needsReview', 'side', 'createdBy', 'updatedBy', 'updatedAt'])
+                               'needsReview', 'side', 'nameCheck', 'createdBy', 'updatedBy', 'updatedAt'])
         && d.keys().hasAll(['name', 'aliases', 'category', 'defaultLocation', 'allowedMeasures', 'canonicalUnit',
                             'shelfLifeDays', 'freezable', 'isStaple', 'freeUse', 'needsReview'])
         && str(d.name, 1, 80)
@@ -182,6 +182,7 @@ service cloud.firestore {
         && (!('defaultPackMeasure' in d) || d.defaultPackMeasure in ['weight', 'volume', 'count'])
         && d.shelfLifeDays is map
         && d.freezable is bool && d.isStaple is bool && d.freeUse is bool && d.needsReview is bool
+        && (!('nameCheck' in d) || d.nameCheck in ['new', 'unsure'])
         && (!('side' in d) || validSidePortion(d.side))
         && d.updatedBy == me() && d.updatedAt == request.time;
     }

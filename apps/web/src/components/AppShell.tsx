@@ -28,7 +28,6 @@ import { NutritionContext, nutritionOf } from "@/data/nutrition";
 import { useMeals, usePlanItems } from "@/data/plan";
 import { usePendingReviews } from "./cook/helpers";
 import { useSupply } from "@/data/supply";
-import { useNeedsReview } from "@/data/ingredients";
 import { itemExpiry } from "./supply/format";
 
 /** Supply items expiring soon or expired (the prototype's "3 SOON" beside Supply). */
@@ -46,7 +45,7 @@ function useSoonCount(hid: string, tz: string): number {
 const page = (to: NavPage["to"]) => PAGES.find((p) => p.to === to)!;
 const MORE_PAGES = [page("/meals"), page("/history"), page("/settings")];
 /** Not a main page (PRD §12): reached from More on phones and from Settings everywhere (M8). */
-const INGREDIENTS_PAGE = { to: "/ingredients", label: "Ingredients", sub: "Catalogue and names to review" } as const;
+const INGREDIENTS_PAGE = { to: "/ingredients", label: "Ingredients", sub: "Catalogue, names and conversions" } as const;
 
 function usePathname(): string {
   return useRouterState({ select: (s) => s.location.pathname });
@@ -109,7 +108,6 @@ const tabClass = (on: boolean) =>
 function TabBar() {
   const pathname = usePathname();
   const moreOn = ["/meals", "/history", "/settings", "/ingredients"].some((p) => isActive(pathname, p));
-  const toReview = useNeedsReview()?.length ?? 0;
   const tabs = [page("/plan"), page("/recipes"), page("/supply"), page("/grocery")];
   return (
     <nav
@@ -139,7 +137,7 @@ function TabBar() {
                 <span className="flex flex-col gap-1">
                   <span className="text-lg font-extrabold">{p.label}</span>
                   <span className="text-xs font-semibold text-sub">
-                    {p.to === "/ingredients" && toReview ? `${p.sub} · ${toReview} need${toReview === 1 ? "s" : ""} review` : p.sub}
+                    {p.sub}
                   </span>
                 </span>
                 <span aria-hidden className="text-lg font-extrabold">

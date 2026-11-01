@@ -35,9 +35,9 @@ recipe to the shared library. Your job: write that file correctly and deliver it
       courgette, scallion, mince…) and look again; then ask whether a listed name *means the same thing* ("yellow
       onion" is `onion`, "beef mince" is `ground beef`, "frozen tater tots" is `tater tots`). Use it if so.
    4. Only when nothing in the list means the same thing, keep the plain grocery name as a **new ingredient**. Then
-      the delivery message must list every new ingredient with a one-line reason (see below). A new name creates
-      an ingredient that has to be reviewed in the app before its Supply and grocery lines work, so new names
-      should be rare.
+      the delivery message must list every new ingredient with a one-line reason (see below). The app asks an LLM
+      about a name it doesn't know, but the list here is the reliable way: use a listed name whenever one fits, so
+      new names stay rare.
 7. **Check** with the list at the end of this file.
 8. **Deliver** the file: drop folder via `gcloud`, or save it for the user to drop in the app. See
    [references/delivery.md](references/delivery.md). Say where the file went and, when step 6 kept any new
