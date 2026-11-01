@@ -40,18 +40,22 @@ export async function requireMember(uid: string, hid: string): Promise<void> {
   if (!m.exists) throw new CallError("permission-denied", "Not a member of that household");
 }
 
-/** A fixed hourly window per uid in `pcxRate/{uid}` (function-only). */
-export async function rateLimit(uid: string, now = Date.now()): Promise<void> {
-  const ref = db.doc(`pcxRate/${uid}`);
+/**
+ * A fixed hourly window per uid in `pcxRate/{uid}` (function-only); Add with Gemini (M16) uses its own collection and
+ * limit through `opts`.
+ */
+export async function rateLimit(uid: string, now = Date.now(), opts: { collection?: string; limit?: number; message?: string } = {}): Promise<void> {
+  const limit = opts.limit ?? RATE_LIMIT_PER_HOUR;
+  const ref = db.doc(`${opts.collection ?? "pcxRate"}/${uid}`);
   const ok = await db.runTransaction(async (tx) => {
     const s = (await tx.get(ref)).data();
     const start = typeof s?.windowStart === "number" && now - s.windowStart < 3_600_000 ? s.windowStart : now;
     const count = start === s?.windowStart ? Number(s?.count ?? 0) : 0;
-    if (count >= RATE_LIMIT_PER_HOUR) return false;
+    if (count >= limit) return false;
     tx.set(ref, { windowStart: start, count: count + 1 });
     return true;
   });
-  if (!ok) throw new CallError("resource-exhausted", "Too many PC Express searches this hour; try again later");
+  if (!ok) throw new CallError("resource-exhausted", opts.message ?? "Too many PC Express searches this hour; try again later");
 }
 
 export function parse<T>(schema: { safeParse(v: unknown): { success: true; data: T } | { success: false } }, v: unknown): T {

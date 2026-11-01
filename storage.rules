@@ -5,6 +5,8 @@ rules_version = '2';
 //                                 browser can't encode WebP) ≤ 2 MB
 //   recipe-drop/{uid}/{file}      drop folder: the owner uploads .cook files (≤ 1 MB) and the images they
 //                                 reference (≤ 10 MB); only functions read and delete
+//   recipe-photos/{uid}/{file}    Add with Gemini (M16, R4.37): a person uploads a photo of a recipe (image, ≤ 10 MB);
+//                                 only the addRecipeWithGemini function reads it, then deletes it
 //   imports/{hid}/{file}          household data import (M4, §13): members of that household upload one zip
 //                                 (≤ 20 MB); nobody reads it but the importHousehold function, which deletes it
 // Everything else is denied.
@@ -31,6 +33,13 @@ service firebase.storage {
         && ((file.matches('.*\\.[cC][oO][oO][kK]$') && request.resource.size <= 1024 * 1024)
             || (request.resource.contentType.matches('image/(jpeg|png|webp|gif|heic|heif|avif)')
                 && request.resource.size <= 10 * 1024 * 1024));
+    }
+
+    match /recipe-photos/{uid}/{file} {
+      allow create: if request.auth != null && request.auth.uid == uid && allowed()
+        && file.matches('[A-Za-z0-9_-]{1,64}[.](jpe?g|png|webp|heic|heif|avif|gif)')
+        && request.resource.contentType.matches('image/(jpeg|png|webp|gif|heic|heif|avif)')
+        && request.resource.size <= 10 * 1024 * 1024;
     }
 
     match /imports/{hid}/{file} {

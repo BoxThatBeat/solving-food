@@ -53,6 +53,18 @@ describe("recipe images", () => {
   });
 });
 
+describe("recipe photos for Add with Gemini (R4.37)", () => {
+  it("a person uploads a photo (image, ≤ 10 MB, a plain file name) into their own folder; nobody reads it back", async () => {
+    await assertSucceeds(uploadBytes(ref(st(ALICE), "recipe-photos/alice/abc123.jpg"), bytes(2_000_000), { contentType: "image/jpeg" }));
+    await assertSucceeds(uploadBytes(ref(st(ALICE), "recipe-photos/alice/abc124.heic"), bytes(2_000), { contentType: "image/heic" }));
+    await assertFails(uploadBytes(ref(st(ALICE), "recipe-photos/bob/abc.jpg"), bytes(10), { contentType: "image/jpeg" }));
+    await assertFails(uploadBytes(ref(st(ALICE), "recipe-photos/alice/abc.pdf"), bytes(10), { contentType: "application/pdf" }));
+    await assertFails(uploadBytes(ref(st(ALICE), "recipe-photos/alice/abc.jpg"), bytes(10 * 1024 * 1024 + 1), { contentType: "image/jpeg" }));
+    await assertFails(uploadBytes(ref(st(EVE), "recipe-photos/eve/abc.jpg"), bytes(10), { contentType: "image/jpeg" }));
+    await assertFails(getBytes(ref(st(ALICE), "recipe-photos/alice/abc123.jpg")));
+  });
+});
+
 describe("drop folder (R4.16)", () => {
   it("the owner uploads .cook files ≤ 1 MB and images ≤ 10 MB into their own folder", async () => {
     await assertSucceeds(uploadString(ref(st(ALICE), "recipe-drop/alice/baked-feta-pasta.cook"), "---\ntitle: x\n---\n"));

@@ -20,9 +20,12 @@ export async function storedGeminiKey(): Promise<string> {
   return typeof k === "string" ? k : "";
 }
 
-/** Is there a judge to ask (a saved key, or the stub not switched off)? */
-export async function geminiReady(): Promise<boolean> {
-  if (isEmulator()) return (await stubConfig()).mode !== "off";
+/** Is Gemini there to ask (a saved key, or the stub not switched off; for `uid`, its own stub doc first)? */
+export async function geminiReady(uid?: string): Promise<boolean> {
+  if (isEmulator()) {
+    const own = uid ? (await db.doc(`_stubLlm/${uid}`).get().catch(() => null))?.data()?.mode : undefined;
+    return (own ?? (await stubConfig()).mode) !== "off";
+  }
   return !!(await storedGeminiKey());
 }
 
@@ -89,4 +92,61 @@ export async function judgeWithGemini(items: readonly JudgeItem[], apiKey?: stri
     for (const [k, x] of v) out.set(k, x);
   }
   return out;
+}
+
+// ---------- free-form generation (Add with Gemini, M16, R4.37)
+
+export type GeminiPart = { text: string } | { inlineData: { mimeType: string; data: string } };
+export interface GeminiTurn {
+  role: "user" | "model";
+  parts: GeminiPart[];
+}
+
+/** For tests: every request the stub answered (system instruction and turns). */
+export const stubGenerateRequests: Array<{ uid: string; system: string; contents: GeminiTurn[] }> = [];
+
+/**
+ * The stub's answer: `_stubLlm/{uid}` (falling back to `_stubLlm/config`) `recipe`, a string or a list answered turn by
+ * turn (the second is the answer to a repair request); `mode` "down" / "off" as for the judge.
+ */
+async function stubGenerate(uid: string, system: string, contents: GeminiTurn[]): Promise<string> {
+  const own = ((await db.doc(`_stubLlm/${uid}`).get().catch(() => null))?.data() ?? {}) as { mode?: string; recipe?: string | string[] };
+  const s = { ...(await stubConfig()), ...own } as { mode?: string; recipe?: string | string[] };
+  if (s.mode === "off") throw new AiError(AI_NOT_SET_UP);
+  if (s.mode === "down") throw new AiError("Gemini answered 503");
+  stubGenerateRequests.push({ uid, system, contents });
+  const answers = Array.isArray(s.recipe) ? s.recipe : [s.recipe ?? "NOT A RECIPE"];
+  const turn = contents.filter((c) => c.role === "user").length - 1;
+  return answers[Math.min(turn, answers.length - 1)] ?? "NOT A RECIPE";
+}
+
+/** Gemini's text answer to `contents` under `system`. Throws AiError when there's no key or Gemini fails. */
+export async function geminiGenerate(uid: string, system: string, contents: GeminiTurn[]): Promise<string> {
+  if (isEmulator()) return stubGenerate(uid, system, contents);
+  const key = await storedGeminiKey();
+  if (!key) throw new AiError(AI_NOT_SET_UP);
+  const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 90_000);
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, generationConfig: { temperature: 0.2 } }),
+      signal: ctl.signal,
+    });
+    const json: unknown = await res.json().catch(() => null);
+    if (!res.ok) {
+      const msg = (json as { error?: { message?: string } } | null)?.error?.message;
+      throw new AiError(`Gemini answered ${res.status}${msg ? `: ${msg.slice(0, 200)}` : ""}`);
+    }
+    const text = geminiText(json);
+    if (!text) throw new AiError("Gemini gave no answer");
+    return text;
+  } catch (e) {
+    if (e instanceof AiError) throw e;
+    throw new AiError(`Gemini didn't answer: ${(e as Error).message}`);
+  } finally {
+    clearTimeout(t);
+  }
 }

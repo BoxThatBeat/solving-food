@@ -257,7 +257,7 @@ export async function createRecipeFromCook(uid: string, id: string, text: string
   return { title: content.title, warnings };
 }
 
-async function importCook(uid: string, fileName: string, text: string, opts: DropOptions): Promise<DropOutcome> {
+export async function importCook(uid: string, fileName: string, text: string, opts: DropOptions): Promise<DropOutcome> {
   const prepared = await prepareCookRecipe(uid, text);
   const { content, derived } = prepared;
   const warnings = prepared.warnings;

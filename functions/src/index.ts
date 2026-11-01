@@ -18,6 +18,7 @@ import { cancelTimer as cancelTimerLogic, fireTimer, scheduleTimer as scheduleTi
 import { defineString } from "firebase-functions/params";
 import { CallError, pcxStatus as pcxStatusLogic, searchProducts, searchStores, setKey } from "./pcx";
 import { aiSetKey as aiSetKeyLogic, aiStatus as aiStatusLogic, checkIngredientNames as checkNamesLogic } from "./ai";
+import { addRecipeWithGemini as addRecipeLogic } from "./ai/addRecipe";
 import { MergeError, mergeIngredient as mergeIngredientLogic, requireAllowed } from "./ingredients";
 
 // Keep every function small and cheap: free tier is a hard requirement (PRD NFR2).
@@ -94,6 +95,17 @@ export const pcxStatus = onCall({ cors: true }, (req) => pcxCall(() => pcxStatus
 export const aiStatus = onCall({ cors: true }, (req) => pcxCall(() => aiStatusLogic(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
 export const aiSetKey = onCall({ cors: true }, (req) => pcxCall(() => aiSetKeyLogic(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
 export const checkIngredientNames = onCall({ cors: true, timeoutSeconds: 300 }, (req) => pcxCall(() => checkNamesLogic(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
+/** Add with Gemini (R4.37): a link or photo becomes a recipe. Allowlisted callers; Gemini can take a while, a photo is big. */
+export const addRecipeWithGemini = onCall({ cors: true, timeoutSeconds: 240, memory: "512MiB" }, async (req) => {
+  try {
+    const uid = await requireAllowed(req.auth);
+    return await addRecipeLogic(uid, req.data);
+  } catch (e) {
+    if (e instanceof MergeError) throw new HttpsError(e.code, e.message);
+    if (e instanceof CallError) throw new HttpsError(e.code, e.message);
+    throw e;
+  }
+});
 /** Saves the PC Express API key (owner only, R6.28). */
 export const pcxSetKey = onCall({ cors: true }, (req) => pcxCall(() => setKey(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
 
