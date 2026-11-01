@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { cooklangToRecipe } from "./cooklang";
 import { renderIngredients, renderTaxonomy } from "./skillDocs";
+import { renderSkillModule, SKILL_PROMPT_FILES } from "./recipeFromGemini";
 import { buildIngredientIndex, resolveIngredientName, type IngredientDoc } from "./ingredient";
 
 const root = fileURLToPath(new URL("../../../", import.meta.url));
@@ -29,6 +30,9 @@ describe("solving-food-skill skill", () => {
   it("generated references match packages/core and the seed (run pnpm gen:skill)", () => {
     expect(readFileSync(join(skill, "references/taxonomy.md"), "utf8")).toBe(renderTaxonomy());
     expect(readFileSync(join(skill, "references/ingredients.md"), "utf8")).toBe(renderIngredients(seed));
+    // Gemini's prompt for Add with Gemini (M16) is the skill itself.
+    const files = Object.fromEntries(SKILL_PROMPT_FILES.map((f) => [f, readFileSync(join(skill, f), "utf8")])) as Parameters<typeof renderSkillModule>[0];
+    expect(readFileSync(join(root, "functions/src/ai/skillText.generated.ts"), "utf8")).toBe(renderSkillModule(files));
   });
 
   const blocks = walk(skill).flatMap((f) =>
