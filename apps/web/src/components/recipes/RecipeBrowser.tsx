@@ -20,6 +20,7 @@ import { useRecipeIndex, useRecipeSearch } from "@/search/useRecipeSearch";
 import { useNotify } from "@/components/notifications-context";
 import { cn } from "@/lib/utils";
 import { RecipeCard } from "./RecipeCard";
+import { AddWithGemini } from "./AddWithGemini";
 import { usePlanModel } from "@/data/planModel";
 import { DuplicateReviewSheet } from "./DuplicateReview";
 import { useCreateMeal } from "@/components/plan/plan-sheet-context";
@@ -185,13 +186,23 @@ export function RecipeBrowser({
   );
 }
 
+/** Add recipe (R4.37): Gemini from a link or a photo, by hand, or a .cook file from the Claude skill. */
 function AddRecipeSheet() {
+  const [open, setOpen] = React.useState(false);
+  const navigate = useNavigate();
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger className="cursor-pointer rounded-ui border-2 border-line bg-base px-3 py-2.5 text-[0.8125rem] font-extrabold text-ink shadow-[3px_3px_0_var(--line)]">
         + Add recipe
       </SheetTrigger>
       <SheetContent title="Add recipe">
+        <AddWithGemini
+          onAdded={(r) => {
+            setOpen(false);
+            void navigate({ to: "/recipes/$id", params: { id: r.recipeId } });
+          }}
+        />
+        <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">OR</span>
         <SheetClose asChild>
           <Link to="/recipes/new" className="flex items-center justify-between rounded-ui border-bw bg-base p-3.5 text-ink no-underline shadow-hard">
             <span className="flex flex-col gap-1">
@@ -206,10 +217,10 @@ function AddRecipeSheet() {
         <SheetClose asChild>
           <Link to="/drop" className="flex items-center justify-between rounded-ui border-bw bg-base p-3.5 text-ink no-underline shadow-hard">
             <span className="flex flex-col gap-1">
-              <span className="text-lg font-extrabold">Let AI add for me</span>
+              <span className="text-lg font-extrabold">Drop a .cook file</span>
               <span className="text-xs font-semibold text-sub">
-                Download the Solving Food skill once, then paste a recipe link to your AI and say &ldquo;add this recipe&rdquo;. It writes the file; drop it
-                here and we import it.
+                From your own AI with the Solving Food skill: paste it a recipe link and say &ldquo;add this recipe&rdquo;. It writes the file; drop it here and we
+                import it.
               </span>
             </span>
             <span aria-hidden className="text-lg font-extrabold">

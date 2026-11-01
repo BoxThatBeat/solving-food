@@ -30,6 +30,7 @@ import { Route as AppReviewEventIdRouteImport } from './routes/_app/review/$even
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsBrandsRouteImport } from './routes/_app/settings/brands'
 import { Route as AppSettingsDataRouteImport } from './routes/_app/settings/data'
+import { Route as AppSettingsGeminiRouteImport } from './routes/_app/settings/gemini'
 import { Route as AppSettingsHouseholdRouteImport } from './routes/_app/settings/household'
 import { Route as AppSettingsMembersRouteImport } from './routes/_app/settings/members'
 import { Route as AppSettingsPreferencesRouteImport } from './routes/_app/settings/preferences'
@@ -151,6 +152,11 @@ const AppSettingsDataRoute = AppSettingsDataRouteImport.update({
   path: '/settings/data',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsGeminiRoute = AppSettingsGeminiRouteImport.update({
+  id: '/settings/gemini',
+  path: '/settings/gemini',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsHouseholdRoute = AppSettingsHouseholdRouteImport.update({
   id: '/settings/household',
   path: '/settings/household',
@@ -249,6 +255,7 @@ export interface FileRoutesByFullPath {
   '/review/$eventId': typeof AppReviewEventIdRoute
   '/settings/brands': typeof AppSettingsBrandsRoute
   '/settings/data': typeof AppSettingsDataRoute
+  '/settings/gemini': typeof AppSettingsGeminiRoute
   '/settings/household': typeof AppSettingsHouseholdRoute
   '/settings/members': typeof AppSettingsMembersRoute
   '/settings/preferences': typeof AppSettingsPreferencesRoute
@@ -287,6 +294,7 @@ export interface FileRoutesByTo {
   '/review/$eventId': typeof AppReviewEventIdRoute
   '/settings/brands': typeof AppSettingsBrandsRoute
   '/settings/data': typeof AppSettingsDataRoute
+  '/settings/gemini': typeof AppSettingsGeminiRoute
   '/settings/household': typeof AppSettingsHouseholdRoute
   '/settings/members': typeof AppSettingsMembersRoute
   '/settings/preferences': typeof AppSettingsPreferencesRoute
@@ -327,6 +335,7 @@ export interface FileRoutesById {
   '/_app/review/$eventId': typeof AppReviewEventIdRoute
   '/_app/settings/brands': typeof AppSettingsBrandsRoute
   '/_app/settings/data': typeof AppSettingsDataRoute
+  '/_app/settings/gemini': typeof AppSettingsGeminiRoute
   '/_app/settings/household': typeof AppSettingsHouseholdRoute
   '/_app/settings/members': typeof AppSettingsMembersRoute
   '/_app/settings/preferences': typeof AppSettingsPreferencesRoute
@@ -367,6 +376,7 @@ export interface FileRouteTypes {
     | '/review/$eventId'
     | '/settings/brands'
     | '/settings/data'
+    | '/settings/gemini'
     | '/settings/household'
     | '/settings/members'
     | '/settings/preferences'
@@ -405,6 +415,7 @@ export interface FileRouteTypes {
     | '/review/$eventId'
     | '/settings/brands'
     | '/settings/data'
+    | '/settings/gemini'
     | '/settings/household'
     | '/settings/members'
     | '/settings/preferences'
@@ -444,6 +455,7 @@ export interface FileRouteTypes {
     | '/_app/review/$eventId'
     | '/_app/settings/brands'
     | '/_app/settings/data'
+    | '/_app/settings/gemini'
     | '/_app/settings/household'
     | '/_app/settings/members'
     | '/_app/settings/preferences'
@@ -624,6 +636,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsDataRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/gemini': {
+      id: '/_app/settings/gemini'
+      path: '/settings/gemini'
+      fullPath: '/settings/gemini'
+      preLoaderRoute: typeof AppSettingsGeminiRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/household': {
       id: '/_app/settings/household'
       path: '/settings/household'
@@ -751,6 +770,7 @@ interface AppRouteChildren {
   AppReviewEventIdRoute: typeof AppReviewEventIdRoute
   AppSettingsBrandsRoute: typeof AppSettingsBrandsRoute
   AppSettingsDataRoute: typeof AppSettingsDataRoute
+  AppSettingsGeminiRoute: typeof AppSettingsGeminiRoute
   AppSettingsHouseholdRoute: typeof AppSettingsHouseholdRoute
   AppSettingsMembersRoute: typeof AppSettingsMembersRoute
   AppSettingsPreferencesRoute: typeof AppSettingsPreferencesRoute
@@ -785,6 +805,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppReviewEventIdRoute: AppReviewEventIdRoute,
   AppSettingsBrandsRoute: AppSettingsBrandsRoute,
   AppSettingsDataRoute: AppSettingsDataRoute,
+  AppSettingsGeminiRoute: AppSettingsGeminiRoute,
   AppSettingsHouseholdRoute: AppSettingsHouseholdRoute,
   AppSettingsMembersRoute: AppSettingsMembersRoute,
   AppSettingsPreferencesRoute: AppSettingsPreferencesRoute,

@@ -205,6 +205,16 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
 - **Emulators:** the judge always uses the stub: `_stubLlm/config` `{ answers: { "<lower-case name>": "<id>" | "new" |
   "unsure" }, mode?: "down" | "off" }`.
 
+## M16 Add with Gemini (2026-11-01)
+
+- **The Gemini key moved** to Settings → Gemini (owner only); the saved key is unchanged (`aiSession/config`).
+- **New callable** `addRecipeWithGemini` (240 s, 512 MiB). New Storage path `recipe-photos/{uid}/` (photos for one call,
+  deleted after; rules deploy needed). New function-only collection `aiRate/{uid}`. No new indexes.
+- **The prompt is the Claude skill:** `pnpm gen:skill` regenerates `functions/src/ai/skillText.generated.ts` from
+  `.claude/skills/solving-food-skill/`; edit the skill, regenerate, deploy functions.
+- **Emulators:** Gemini and the page fetch are stubs: `_stubLlm/{uid}` (or `config`) `{ pages: { "<url>": "<html>" |
+  "!404" }, recipe: "<answer>" | ["<first>", "<after repair>"], mode?: "down" | "off" }`.
+
 ## M11 hands-free mode (2026-10-13)
 
 - **No Firebase or GCP change.** Speech recognition runs in the browser: `@huggingface/transformers` (pinned 4.3.1) in

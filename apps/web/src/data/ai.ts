@@ -1,8 +1,10 @@
-// The LLM ingredient judge from the app (PRD R4.27, R4.35, R4.36): Gemini's status and the owner's key, and Check names.
+// Gemini from the app (PRD R4.27, R4.35, R4.36, R4.37): its status and the owner's key, Check names, and Add with
+// Gemini (a recipe from a link or a photo).
 import { useEffect, useState } from "react";
 import { httpsCallable } from "firebase/functions";
+import { ref, uploadBytes } from "firebase/storage";
 import type { PcxStatus } from "@solving-food/core";
-import { functions } from "@/firebase/app";
+import { functions, storage } from "@/firebase/app";
 
 export interface AiStatus extends PcxStatus {
   waiting: number;
@@ -53,4 +55,32 @@ export function useAiStatus(hid: string | null): AiStatus | null {
     };
   }, [hid, asked]);
   return s?.hid === hid ? s.status : null;
+}
+
+export interface AddRecipeResult {
+  status: "imported" | "pendingDuplicateReview";
+  recipeId: string;
+  title: string;
+  warnings: string[];
+}
+
+const addRecipe = (data: { source: "link"; url: string } | { source: "photo"; path: string }) =>
+  httpsCallable<typeof data, AddRecipeResult>(functions, "addRecipeWithGemini", { timeout: 240_000 })(data).then((r) => r.data);
+
+/** Add with Gemini from a web link (R4.37). */
+export function addRecipeFromLink(url: string): Promise<AddRecipeResult> {
+  return addRecipe({ source: "link", url });
+}
+
+const PHOTO_EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic", "image/heif": "heif", "image/avif": "avif", "image/gif": "gif" };
+
+/** Add with Gemini from a photo (R4.37): uploaded to recipe-photos/{uid}/ (the function deletes it), then read. */
+export async function addRecipeFromPhoto(uid: string, file: File): Promise<AddRecipeResult> {
+  const type = file.type || "image/jpeg";
+  const ext = PHOTO_EXT[type];
+  if (!ext) throw new Error("That isn't a photo the app can read (JPEG, PNG, WebP, HEIC)");
+  if (file.size > 10 * 1024 * 1024) throw new Error("That photo is over 10 MB");
+  const path = `recipe-photos/${uid}/${crypto.randomUUID().replace(/-/g, "")}.${ext}`;
+  await uploadBytes(ref(storage, path), file, { contentType: type });
+  return addRecipe({ source: "photo", path });
 }

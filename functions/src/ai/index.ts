@@ -36,7 +36,7 @@ export async function aiStatus(uid: string, data: unknown, ownerUid: string | nu
   const key = owner ? await storedGeminiKey() : "";
   const waiting = (await db.collection("ingredients").where("createdBy", "!=", null).get()).docs.filter((d) => isWaiting(d.data() as IngredientDoc)).length;
   const extra = owner ? { canEditKey: true, ...(key ? { keyHint: pcxKeyHint(key) } : {}) } : {};
-  return (await geminiReady()) ? { connected: true, waiting, ...extra } : { connected: false, message: AI_NOT_SET_UP, waiting, ...extra };
+  return (await geminiReady(uid)) ? { connected: true, waiting, ...extra } : { connected: false, message: AI_NOT_SET_UP, waiting, ...extra };
 }
 
 export async function aiSetKey(uid: string, data: unknown, ownerUid: string | null = null): Promise<PcxStatus> {

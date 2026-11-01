@@ -19,6 +19,7 @@ const SECTIONS = [
   { to: "/settings/stores", label: "Stores", sub: "PC Express store, Costco, sourcing rules" },
   { to: "/settings/sides", label: "Sides", sub: "Fries, rice, buns, chips… portion per person" },
   { to: "/ingredients", label: "Ingredients", sub: "Catalogue, names and conversions" },
+  { to: "/settings/gemini", label: "Gemini", sub: "AI for adding recipes and deciding new ingredient names" },
   { to: "/settings/tools", label: "Kitchen tools", sub: "Equipment the household owns" },
   { to: "/settings/preferences", label: "Preferences", sub: "Likes, dislikes, dietary restrictions, protein and fibre" },
   { to: "/settings/weights", label: "Suggestion weights", sub: "What raises or lowers a suggestion" },

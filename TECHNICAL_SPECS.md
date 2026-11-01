@@ -107,6 +107,7 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Ingredient merge callable (`mergeIngredient`, M8) | counted in the 2M above | one per **Merge into…** (plus one dry run when the confirm opens): rare, < 100 / month after the one-off cleanup. Each reads the recipes and version snapshots that use the duplicate (array-contains queries), the saved meals, and per household ~6 small reads (supply rows, planned items, open grocery lists, keyed docs); writes one per changed doc plus the copied Supply history: < 200 reads and < 100 writes per merge at the design scale. 256 MiB, ≤ 300 s | — |
 | Ingredients page names to decide (M15) | in the 50,000 reads / day | none extra: the waiting names come from the full ingredient list the Ingredients page already reads; `aiStatus` reads the household-made ingredients (~100) once per page view. The M8 needs-review listener (Settings count, Recipes banner, More sheet, Drop page) was removed | — |
 | Gemini (M15, R4.27) | outside Firebase: the Gemini API free tier, key from a Google project **without billing** (so it can't be charged; at the limit a call fails and names wait) | one request per import with unknown names (≤ 20 names each) and per 20 names on Check with Gemini: < 100 / month. Callables `aiStatus`, `aiSetKey`, `checkIngredientNames` counted in the 2M above; outbound requests in the egress row below | — |
+| Add with Gemini (M16, R4.37) | Gemini free tier as above; Storage 5 GB / 1 GB-day egress (us-east1); callable in the 2M invocations | one Gemini request per added recipe (plus one repair round when the file fails the checks), ~20 / month, each ~20k input tokens (the skill is the prompt); 10 per person per hour (`aiRate/{uid}`: 1 read + 1 write). Photos (≤ 10 MB) live in `recipe-photos/{uid}/` only for the call (deleted after): no lasting storage. The function's own page fetch is ≤ 3 MB: < 100 MB / month egress-in. `addRecipeWithGemini` runs at 512 MiB for up to 240 s: ~20 × 60 s × 0.5 GiB = 600 GiB-s / month of the 360k | — |
 | Nutrition facts (M10, R4.30) | in the 1 GiB storage, 20,000 writes and 50,000 reads / day | ingredients gain `nutrients` (~250 bytes × 480) and recipes `nutrition` (~250 bytes each); the recipe index summaries are unchanged (the panel isn't on cards). The one-off `pnpm ingredients:upload` after deploy writes ≤ 480 ingredients; each fires `ingredientRecipes`, which re-derives the recipes using it (one query + one ingredient `getAll` per recipe): about recipes × ingredients-per-recipe × 11 reads, < 10,000 reads and one write per recipe at today's library (~50 recipes), done once | 5× on that day |
 | Timer callables (`scheduleTimer`, `cancelTimer`, M3) | counted in the 2M above | one per timer start, pause, adjust, cancel: < 3,000 / month | — |
 | Cloud Tasks (queue `timers`, created by the `timers` task function's deploy, M3) | 1M operations / month | < 2,000 (cooking timers: enqueue + delete) | 500× |
@@ -228,6 +229,7 @@ prices/{pcxStoreId}_{productCode}                 // PC Express price at one sto
                                                   // as built (M5): keyed by the store ID the household stores (the
                                                   // default placeholder included), written by the product search and the
                                                   // weekly refresh; deleted after 60 days without a refresh
+aiRate/{uid}                                      // function-only (M16, R4.37): Add with Gemini this hour
 aiSession/config                                  // function-only (R4.36): { apiKey, updatedAt, updatedBy }, the
                                                   // Gemini API key the owner saved
 pcxSession/config                                 // function-only (R6.28): { apiKey, updatedAt, updatedBy }, the
@@ -810,6 +812,21 @@ flowchart TD
   Claude** builds the same prompt client-side (`claudePrompt`) and **Paste Claude's answer** reads the first JSON in the
   reply (`parseClaudeAnswer`), then applies merges with the `mergeIngredient` callable and `new` with a client write
   of `nameCheck` (rules allow only `new` / `unsure`).
+- **Add with Gemini** (M16, R4.37): callable `addRecipeWithGemini({ source: "link", url } | { source: "photo", path })`,
+  allowlisted callers, 10 per person per hour (`aiRate/{uid}`). A link must be a public http(s) address
+  (`safeRecipeUrl`: no localhost, private or link-local IPs, single-label or `.internal` hosts; a redirect is checked
+  again); the function fetches it (15 s, ≤ 3 MB, HTML) and sends Gemini the page's schema.org Recipe JSON-LD
+  (`extractRecipeJsonLd`, also inside `@graph`), or else its visible text (`htmlToText`, ≤ 30k chars). A photo is
+  uploaded by the client to `recipe-photos/{uid}/{random}.{ext}` (image, ≤ 10 MB), sent inline (`inlineData`) and
+  deleted after the call. The system instruction is the Claude skill itself (`SKILL_TEXT` in
+  `functions/src/ai/skillText.generated.ts`, written by `pnpm gen:skill` from SKILL.md and the syntax, conventions,
+  taxonomy and ingredients references; `skill.test.ts` fails when it's stale) with a frame (`recipeInstruction`: skip
+  the delivery step, answer with one ```cooklang block, or NOT A RECIPE; for a link use it as `source` and the page's
+  image URL as `image`; for a photo no `source` or `image`). The answer's file (`extractCook`) goes to `importCook`, the
+  drop folder's importer, under the link's host name or "your photo" as the file name; a `CooklangError` goes back to
+  Gemini once with the reason, then the call fails with it. The photo never becomes the recipe's image
+  (`dropLocalImage`). Under the emulator Gemini and the page fetch are stubs: `_stubLlm/{uid}` (or `config`)
+  `{ pages: { url: html | "!status" }, recipe: string | string[], mode }`.
 - **Images** referenced in front matter are always **downloaded into Storage** (never hot-linked) and resized to the three standard sizes. If the download fails, the recipe is still imported without an image, and the notification says so.
 - **Results** are reported through the notification system (§12): a success or error banner appears at the bottom of **whatever page the uploader is on**, linking to the new recipe or describing the error.
 
@@ -1022,7 +1039,7 @@ function-only, so the merge's Supply moves happen in the function.
 
 Share links work for both recipes and meals: `allow get: if true` on both, and a meal page reads its recipes the same way. Public `get` on single documents can't be enumerated, so the exposure is limited to someone who already has a link.
 
-Storage rules: `recipe-drop/{uid}/**` can only be written by that user, with a size limit of 1 MB and `.cook` files only. Image uploads under `recipes/{recipeId}/**` are capped at 2 MB per file and allowed for allowlisted users; **reads of recipe images are public**, so share-link pages render them. `imports/{hid}/**` can be written by household members, JSON or zip only, ≤ 20 MB, and read by nobody but functions.
+Storage rules: `recipe-drop/{uid}/**` can only be written by that user, with a size limit of 1 MB and `.cook` files only. Image uploads under `recipes/{recipeId}/**` are capped at 2 MB per file and allowed for allowlisted users; **reads of recipe images are public**, so share-link pages render them. `recipe-photos/{uid}/{file}` (M16) can be written by that allowlisted user, images only, ≤ 10 MB, a plain random file name, and read by nobody but functions. `imports/{hid}/**` can be written by household members, JSON or zip only, ≤ 20 MB, and read by nobody but functions.
 
 ---
 
@@ -1103,6 +1120,11 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
   (`<ApiKeyCard>`, shared with the PC Express key). Reached from Settings and the phone's More sheet. M8's review cards,
   `<MergeSheet>`, the Recipes review banner, counts and the notification's review link were removed in M15; the merged
   notice on a merged ingredient's page stays.
+- **Settings → Gemini** (M16, R11.15, R4.36): what Gemini does and whether it's set up for everyone; the owner's
+  `<ApiKeyCard>` for the Gemini key (moved off the Ingredients page, which now links here when Gemini is off).
+- **`<AddWithGemini>`** (M16, R4.37): in the Add recipe sheet, above Manual entry and Drop a .cook file: a link field,
+  **Upload a photo of a recipe** (`accept="image/*"`) and **Take a photo of a recipe** (`capture="environment"`), a
+  status line while Gemini works, the error in a dashed alert, then the new recipe opens.
 - **`<FromPcx>`** (R6.29): the "From PC Express" tag on store and product search results, the current store, a brand's
   linked product and live price; the budget meter says "N live from PC Express".
 - **`<NotificationBanners>`**: the app-wide notification system. Banners stack at the bottom of every page, above the bottom tab bar on phones. Fed by a live listener on `users/{uid}/notifications` (undismissed) plus local, client-only messages. Success and info banners auto-dismiss after ~6 s; errors stay until dismissed. Each can link to the related page. At most three show at once, with a "+N more · Dismiss all" row for the rest (a bulk drop reports one per file). The stack is always mounted as an `aria-live` region above sheets, so banners stay visible and announced while a sheet is open.
@@ -1498,6 +1520,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | M13 | Hands-free on iOS and latency | Owner report (commands dead after the first read on iPhone; the wait too long): microphone recovery (context resume, track watch, re-acquire after reading, iOS pauses listening while speaking), bounded echo filter, 0.7 s silence wait with trimmed segments, short greedy decoding with a warm-up pass, model benchmark, heard look, hidden `?voicedebug=1` diagnostics |
 | M14 | PC Express key | No PC Express account (sign-in and secrets removed); the public API key as an owner setting in Settings → Stores, tried on save |
 | M15 | LLM ingredients | Gemini (free tier) decides whether an imported name is an existing ingredient before anything is created; Check with Gemini merges waiting names; Copy for Claude fallback; the review/merge UI removed; "From PC Express" labels |
+| M16 | Add with Gemini | Settings → Gemini (status, the owner's key); Add recipe from a web link, an uploaded photo or the camera: Gemini follows the Claude skill (generated into the functions bundle) and the drop-folder importer imports its file |
 
 Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix. The detailed, task-level plan for each milestone lives in `Planning/`.
 

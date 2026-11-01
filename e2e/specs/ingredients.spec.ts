@@ -79,14 +79,14 @@ test("an import asks Gemini first: a known ingredient is reused and learns the n
   await expect(page.getByRole("button", { name: "Merge into…" })).toHaveCount(0);
 });
 
-test("the owner saves the Gemini key and Check names merges what Gemini is sure about, moving Supply (R4.36, R8.16)", { tag: ["@R4.36", "@R8.16", "@R4.27"] }, async ({ page, household }) => {
+test("Check with Gemini (owner only) merges what Gemini is sure about, moving Supply (R8.16)", { tag: ["@R8.16", "@R4.27"] }, async ({ page, household }) => {
   test.setTimeout(150_000);
   const name = `strawberry jam ${word()}`;
   const id = await waitingIngredient(name);
   await seedSupply(household.hid, id, [{ amount: 250, expiresInDays: 30 }], { label: name });
   await geminiSays({ [name]: "strawberry-jam" });
 
-  // Not the owner: no key card, no Check with Gemini.
+  // Not the owner: no Check with Gemini (the key lives in Settings → Gemini since M16).
   await page.goto("/ingredients");
   await expect(page.getByTestId("waiting-names")).toBeVisible({ timeout: 20_000 });
   await expect(page.getByTestId("ai-key")).toHaveCount(0);
@@ -94,16 +94,7 @@ test("the owner saves the Gemini key and Check names merges what Gemini is sure 
 
   await adminDb.doc(`_stubPcx/${household.hid}`).set({ ownerUid: household.uid });
   await page.reload();
-  const card = page.getByTestId("ai-key");
-  await expect(card).toBeVisible({ timeout: 20_000 });
-  await card.getByLabel("Gemini API key").fill("AIza-not-the-key");
-  await card.getByRole("button", { name: "Save" }).click();
-  await expect(card.getByRole("alert")).toContainText(/didn't accept it.*400/);
-  await card.getByLabel("Gemini API key").fill("stub-gemini-key");
-  await card.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByText("Gemini key saved and working")).toBeVisible();
-
-  await page.getByRole("button", { name: "Check with Gemini" }).click();
+  await page.getByRole("button", { name: "Check with Gemini" }).click({ timeout: 20_000 });
   await expect(statusBanner(page, /Gemini checked \d+/)).toBeVisible({ timeout: 120_000 });
   await expect.poll(async () => (await adminDb.doc(`ingredients/${id}`).get()).data()?.mergedInto, { timeout: 30_000 }).toBe("strawberry-jam");
   expect((await supplyDoc(household.hid, "strawberry-jam"))?.canonicalAmount).toBe(250);

@@ -1,4 +1,4 @@
-// Ingredients (PRD R4.27, R4.35, R4.36; Planning/M15): the shared catalogue, to search and open an ingredient to edit.
+// Ingredients (PRD R4.27, R4.35; Planning/M15; the Gemini key moved to Settings → Gemini in M16): the shared catalogue, to search and open an ingredient to edit.
 // Whether a new name from an import is an ingredient you already have is decided by Gemini (on import, or with the
 // owner's Check names); the names it wasn't sure about are listed with Copy for Claude and Paste Claude's answer. No
 // review cards or merging by hand (M15 removed them).
@@ -11,9 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/chip";
 import { useNotify } from "@/components/notifications-context";
-import { ApiKeyCard } from "@/components/settings/ApiKeyCard";
 import { markNameNew, mergeIngredient, searchIngredients, useAllIngredients, type IngredientEntry } from "@/data/ingredients";
-import { checkIngredientNames, setAiKey, useAiStatus, type AiStatus } from "@/data/ai";
+import { checkIngredientNames, useAiStatus, type AiStatus } from "@/data/ai";
 import { callError } from "@/data/pcx";
 import { useActiveHousehold } from "@/data/households";
 import { useReadySession } from "@/session/useSession";
@@ -41,19 +40,14 @@ function IngredientsPage() {
       {hh.id ? (
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
           {waiting.length ? <WaitingNames hid={hh.id} waiting={waiting} ing={ing} ai={ai} /> : null}
-          <ApiKeyCard status={ai} title="Gemini API key" service="Gemini" testId="ai-key" onSave={(k) => setAiKey(hh.id!, k)}>
-            <p className="m-0">
-              Gemini&apos;s free tier decides whether new ingredient names are ones you already have. Get a key at{" "}
-              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="font-extrabold text-ink underline">
-                aistudio.google.com/apikey
-              </a>{" "}
-              and paste it here.
+          {ai && !ai.connected ? (
+            <p className="m-0 self-start rounded-ui border-2 border-dashed border-line px-2.5 py-2 text-[0.8125rem] font-bold" data-testid="ai-not-set-up">
+              Gemini isn&apos;t set up, so new names wait here.{" "}
+              <Link to="/settings/gemini" className="font-extrabold text-ink underline">
+                Settings → Gemini
+              </Link>
             </p>
-            <p className="m-0 rounded-ui border-2 border-dashed border-line px-2.5 py-2 font-bold">
-              Create the key in a new Google Cloud project with no billing, never in the app&apos;s own project (it has billing on, so its key would be charged). On the
-              free tier Google may use what&apos;s sent (ingredient names only) to improve its products.
-            </p>
-          </ApiKeyCard>
+          ) : null}
         </div>
       ) : null}
       <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ingredients…" aria-label="Search ingredients" className="max-w-[30rem]" />
