@@ -110,6 +110,9 @@ describe("Gemini key (R4.36)", () => {
     expect(bad.message).toMatch(/didn't accept it.*400/);
     expect(await aiSetKey(OWNER, { hid: HID, apiKey: ` ${STUB_GEMINI_KEY} ` }, OWNER)).toEqual({ connected: true, canEditKey: true, keyHint: "…-key" });
     expect(await aiStatus(OWNER, { hid: HID }, OWNER)).toMatchObject({ connected: true, canEditKey: true, keyHint: "…-key" });
+    // Newer AI Studio keys have a dot ("AQ.Ab8…"): accepted (the stub then refuses it as not its own key).
+    expect(await aiSetKey(OWNER, { hid: HID, apiKey: "AQ.Ab8RN6Jx2" }, OWNER)).toMatchObject({ keyHint: "…6Jx2" });
+    await expect(aiSetKey(OWNER, { hid: HID, apiKey: "AQ Ab8 RN6" }, OWNER)).rejects.toMatchObject({ code: "invalid-argument" });
     expect(await aiSetKey(OWNER, { hid: HID, apiKey: "" }, OWNER)).toMatchObject({ connected: false, canEditKey: true });
     expect((await read("aiSession/config"))!.apiKey).toBeUndefined();
   });

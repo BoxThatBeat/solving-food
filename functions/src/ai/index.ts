@@ -41,7 +41,7 @@ export async function aiStatus(uid: string, data: unknown, ownerUid: string | nu
 
 export async function aiSetKey(uid: string, data: unknown, ownerUid: string | null = null): Promise<PcxStatus> {
   const input = parse(pcxKeyInput, data);
-  if (!PCX_KEY_PATTERN.test(input.apiKey)) throw new CallError("invalid-argument", "That doesn't look like a Gemini API key: paste only the key (letters, digits, - and _)");
+  if (!PCX_KEY_PATTERN.test(input.apiKey)) throw new CallError("invalid-argument", "That doesn't look like a Gemini API key: paste only the key (letters, digits, dots, - and _)");
   await requireMember(uid, input.hid);
   if (!(await isOwner(uid, input.hid, ownerUid))) throw new CallError("permission-denied", "Only the app's owner can change the Gemini key");
   await rateLimit(uid);

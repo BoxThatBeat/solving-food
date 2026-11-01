@@ -68,7 +68,8 @@ export function cleanPcxKey(raw: string): string {
     .replace(/^["'`]+|["'`]+$/g, "")
     .trim();
 }
-export const PCX_KEY_PATTERN = /^[A-Za-z0-9_-]{0,200}$/;
+/** A pasted API key after cleaning: letters, digits, "-", "_" and "." (newer Gemini keys look like "AQ.Ab8…", M15). */
+export const PCX_KEY_PATTERN = /^[A-Za-z0-9._-]{0,200}$/;
 
 /** The website's public x-apikey (R6.28), cleaned; empty clears it, which turns PC Express off. */
 export const pcxKeyInput = z.object({ hid: z.string().min(1).max(200), apiKey: z.string().max(1000).transform(cleanPcxKey) });

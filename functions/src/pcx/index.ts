@@ -76,7 +76,7 @@ export async function pcxStatus(uid: string, data: unknown, ownerUid: string | n
 /** Saves the public API key (owner only, R6.28) and tries it with a store lookup; "" clears it (PC Express off). */
 export async function setKey(uid: string, data: unknown, ownerUid: string | null = null): Promise<PcxStatus> {
   const input = parse(pcxKeyInput, data);
-  if (!PCX_KEY_PATTERN.test(input.apiKey)) throw new CallError("invalid-argument", "That doesn't look like the key: paste only the x-apikey value (letters, digits, - and _)");
+  if (!PCX_KEY_PATTERN.test(input.apiKey)) throw new CallError("invalid-argument", "That doesn't look like the key: paste only the x-apikey value (letters, digits, dots, - and _)");
   await requireMember(uid, input.hid);
   if (!(await isOwner(uid, input.hid, ownerUid))) throw new CallError("permission-denied", "Only the app's owner can change the PC Express key");
   await rateLimit(uid);

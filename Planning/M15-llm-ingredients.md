@@ -94,6 +94,11 @@ key), R4.16 (changed: the import's notification), R8.16 (a merge moves Supply, n
 - Ingredients made by hand in the recipe editor aren't judged: the picker already shows matches, and the person chose
   to create it.
 
+## Fixes after deploy
+
+- [x] (2026-11-01) The owner's AI Studio key was refused as "doesn't look like a Gemini API key": newer keys contain a
+      dot ("AQ.…"). Keys may now contain `.` (shared pattern, PC Express too); functions test added.
+
 ## Verification
 
 - Lint, typecheck: clean. Core + web unit 706 (ingredientJudge.test.ts 6 new). Rules 98 (nameCheck values). Functions
