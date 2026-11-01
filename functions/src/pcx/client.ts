@@ -1,11 +1,10 @@
-// The PC Express client (TECHNICAL_SPECS §8 "Prices"): sign-in with the owner's credentials from Secret Manager (exposed
-// to the function as PCX_EMAIL / PCX_PASSWORD env vars when the secrets are bound, see index.ts), a token cached in
-// memory and in `pcxSession/state` (function-only), and store search, product search, and price lookup. Under the
+// The PC Express client (TECHNICAL_SPECS §8 "Prices"): store search, product search, and price lookup, sent with the
+// website's public API key only (no account, no sign-in: the website shows all three to signed-out visitors). Under the
 // Functions emulator it always talks to the stub (./stub.ts), never to PC Express.
 import { FieldValue } from "firebase-admin/firestore";
 import { DEFAULT_PCX_STORE_ID, isDefaultPcxStore, parsePackageSize, PCX_DEFAULT_STORE_MATCH, type PcxProduct, type PcxStore } from "@solving-food/core";
 import { db } from "../admin";
-import { headers, parseProduct, parseSearch, parseSignIn, parseStores, pcxConfig, searchBody, urls, type PcxConfig, type RawProduct } from "./endpoints";
+import { headers, parseProduct, parseSearch, parseStores, pcxConfig, searchBody, urls, type PcxConfig, type RawProduct } from "./endpoints";
 import { STUB_CONFIG, stubFetchFor, stubMode } from "./stub";
 
 export type Fetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
@@ -13,7 +12,6 @@ export type Fetch = (input: string | URL | Request, init?: RequestInit) => Promi
 export interface PcxDeps {
   fetch: Fetch;
   config: PcxConfig;
-  credentials: { email: string; password: string };
   now: () => number;
 }
 
@@ -26,39 +24,31 @@ export function isEmulator(): boolean {
   return process.env.FUNCTIONS_EMULATOR === "true" || process.env.PCX_STUB === "1";
 }
 
-/** Is the module switched on (secrets bound and the public API key set)? */
+/** Is the module switched on (PCX_ENABLED and the public API key set in functions/.env)? */
 export function pcxEnabled(env: Record<string, string | undefined> = process.env): boolean {
-  return env.PCX_ENABLED === "true" && !!env.PCX_API_KEY && !!env.PCX_EMAIL && !!env.PCX_PASSWORD;
+  return env.PCX_ENABLED === "true" && !!env.PCX_API_KEY;
 }
 
 /** The live dependencies, the stub's under the emulator, or null when PC Express isn't connected (estimates only). */
 export async function pcxDeps(hid?: string): Promise<PcxDeps | null> {
   if (isEmulator()) {
     if ((await stubMode(hid)) === "notConfigured") return null;
-    return { fetch: stubFetchFor(hid), config: STUB_CONFIG, credentials: { email: "stub@example.com", password: "stub" }, now: Date.now };
+    return { fetch: stubFetchFor(hid), config: STUB_CONFIG, now: Date.now };
   }
   if (!pcxEnabled()) return null;
-  return { fetch: globalThis.fetch.bind(globalThis), config: pcxConfig(), credentials: { email: process.env.PCX_EMAIL!, password: process.env.PCX_PASSWORD! }, now: Date.now };
+  return { fetch: globalThis.fetch.bind(globalThis), config: pcxConfig(), now: Date.now };
 }
 
 export const NOT_CONNECTED = "PC Express isn't connected yet: prices come from the estimates.";
 
-let memo: { token: string; expiresAt: number } | null = null;
-/** Tests reset the in-memory token. */
-export function resetTokenCache() {
-  memo = null;
-}
-
 export class PcxClient {
-  /** Set when sign-in failed and requests went out with the API key only. */
-  signInError: string | null = null;
   constructor(private readonly d: PcxDeps) {}
 
-  private async call(url: string, init: RequestInit = {}, token?: string | null): Promise<unknown> {
+  private async call(url: string, init: RequestInit = {}): Promise<unknown> {
     const ctl = new AbortController();
     const t = setTimeout(() => ctl.abort(), TIMEOUT_MS);
     try {
-      const res = await this.d.fetch(url, { ...init, headers: { ...headers(this.d.config, token), ...(init.headers as Record<string, string> | undefined) }, signal: ctl.signal });
+      const res = await this.d.fetch(url, { ...init, headers: { ...headers(this.d.config), ...(init.headers as Record<string, string> | undefined) }, signal: ctl.signal });
       if (!res.ok) throw new PcxError(`PC Express answered ${res.status}`);
       return await res.json();
     } catch (e) {
@@ -69,38 +59,8 @@ export class PcxClient {
     }
   }
 
-  /** A bearer token: memory, then the session doc, then a fresh sign-in. Null when there's no sign-in URL. */
-  async token(): Promise<string | null> {
-    const now = this.d.now();
-    if (!this.d.config.signInUrl) return null;
-    if (memo && memo.expiresAt > now + 60_000) return memo.token;
-    const s = (await db.doc(SESSION_DOC).get()).data();
-    if (typeof s?.token === "string" && typeof s.tokenExpiresAt === "number" && s.tokenExpiresAt > now + 60_000) {
-      memo = { token: s.token, expiresAt: s.tokenExpiresAt };
-      return memo.token;
-    }
-    const json = await this.call(this.d.config.signInUrl, { method: "POST", body: JSON.stringify({ email: this.d.credentials.email, password: this.d.credentials.password }) }).catch((e: Error) => {
-      throw new PcxError(`Sign-in failed: ${e.message}`);
-    });
-    const parsed = parseSignIn(json);
-    if (!parsed) throw new PcxError("Sign-in failed: no token in the answer");
-    memo = { token: parsed.token, expiresAt: now + parsed.expiresInS * 1000 };
-    await db.doc(SESSION_DOC).set({ token: memo.token, tokenExpiresAt: memo.expiresAt, signedInAt: FieldValue.serverTimestamp() }, { merge: true });
-    return memo.token;
-  }
-
-  /** Sign in if possible; a failed sign-in is remembered and requests go out with the API key alone. */
-  private async auth(): Promise<string | null> {
-    try {
-      return await this.token();
-    } catch (e) {
-      this.signInError = (e as Error).message;
-      return null;
-    }
-  }
-
   async stores(): Promise<PcxStore[]> {
-    const json = await this.call(urls.stores(this.d.config), {}, await this.auth());
+    const json = await this.call(urls.stores(this.d.config), {});
     return parseStores(json);
   }
 
@@ -122,13 +82,13 @@ export class PcxClient {
 
   async searchProducts(query: string, pcxStoreId: string): Promise<PcxProduct[]> {
     const store = await this.resolveStoreId(pcxStoreId);
-    const json = await this.call(urls.search(this.d.config), { method: "POST", body: JSON.stringify(searchBody(this.d.config, query, store, this.d.now())) }, await this.auth());
+    const json = await this.call(urls.search(this.d.config), { method: "POST", body: JSON.stringify(searchBody(this.d.config, query, store, this.d.now())) });
     return parseSearch(json).map(toProduct);
   }
 
   async product(code: string, pcxStoreId: string): Promise<PcxProduct | null> {
     const store = await this.resolveStoreId(pcxStoreId);
-    const raw = parseProduct(await this.call(urls.product(this.d.config, code, store, this.d.now()), {}, await this.auth()));
+    const raw = parseProduct(await this.call(urls.product(this.d.config, code, store, this.d.now()), {}));
     return raw ? toProduct(raw) : null;
   }
 }

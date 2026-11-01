@@ -8,8 +8,8 @@
 //                                                  the households' brand mappings; failures keep old prices and notify
 //                                                  the owner; two failed weeks in a row log "pcx refresh failed twice"
 //
-// With no credentials (secrets not set) every callable answers { connected: false } and the refresh is skipped: the
-// app prices from the bundled estimates.
+// Until the module is switched on (functions/.env: PCX_ENABLED=true and PCX_API_KEY) every callable answers
+// { connected: false } and the refresh is skipped: the app prices from the bundled estimates.
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
 import { priceDocId, pcxProductSearchInput, pcxStoreSearchInput, type PcxProduct, type PcxProductSearchResult, type PcxStatus, type PcxStoreSearchResult } from "@solving-food/core";
@@ -76,7 +76,7 @@ export async function searchStores(uid: string, data: unknown): Promise<PcxStore
   try {
     const stores = await client.searchStores(input.query);
     await recordStatus(true);
-    return { connected: true, stores, ...(client.signInError ? { message: client.signInError } : {}) };
+    return { connected: true, stores };
   } catch (e) {
     await recordStatus(false, (e as Error).message);
     return { connected: false, message: (e as Error).message, stores: [] };
@@ -106,7 +106,7 @@ export async function searchProducts(uid: string, data: unknown): Promise<PcxPro
     }
     await b.commit();
     await recordStatus(true);
-    return { connected: true, products, ...(client.signInError ? { message: client.signInError } : {}) };
+    return { connected: true, products };
   } catch (e) {
     await recordStatus(false, (e as Error).message);
     return { connected: false, message: (e as Error).message, products: [] };

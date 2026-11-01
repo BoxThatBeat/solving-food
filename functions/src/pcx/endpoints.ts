@@ -2,15 +2,13 @@
 // API, so the module uses the JSON endpoints its website calls. If they change, this is the file to fix.
 //
 // UNVERIFIED: these paths and shapes follow the website as publicly documented by others; they were not called from
-// this project (tests use the stub in ./stub.ts). The public web API key and the sign-in URL are configuration
-// (functions/.env: PCX_API_KEY, PCX_SIGNIN_URL), read from the website by the owner; they are not secrets.
+// this project (tests use the stub in ./stub.ts). The public web API key is configuration (functions/.env: PCX_API_KEY),
+// read from the website by the owner; it is not a secret. No sign-in: every call here works for a signed-out visitor.
 
 export interface PcxConfig {
   base: string;
   apiKey: string;
   banner: string;
-  /** POST { email, password } → { access_token, expires_in }; empty = requests go without a bearer token. */
-  signInUrl: string;
 }
 
 export function pcxConfig(env: Record<string, string | undefined> = process.env): PcxConfig {
@@ -18,12 +16,11 @@ export function pcxConfig(env: Record<string, string | undefined> = process.env)
     base: env.PCX_BASE_URL || "https://api.pcexpress.ca/pcx-bff/api",
     apiKey: env.PCX_API_KEY || "",
     banner: env.PCX_BANNER || "loblaw",
-    signInUrl: env.PCX_SIGNIN_URL || "",
   };
 }
 
-export function headers(c: PcxConfig, token?: string | null): Record<string, string> {
-  const h: Record<string, string> = {
+export function headers(c: PcxConfig): Record<string, string> {
+  return {
     "x-apikey": c.apiKey,
     "x-application-type": "Web",
     "x-loblaw-tenant-id": "ONLINE_GROCERIES",
@@ -32,8 +29,6 @@ export function headers(c: PcxConfig, token?: string | null): Record<string, str
     "Content-Type": "application/json",
     Accept: "application/json",
   };
-  if (token) h.Authorization = `Bearer ${token}`;
-  return h;
 }
 
 /** DDMMYYYY, the date format the price endpoints take. */
@@ -117,11 +112,4 @@ export function parseSearch(json: unknown): RawProduct[] {
   const o = obj(json);
   const list = o.results ?? obj(o.data).products ?? o.products ?? [];
   return (Array.isArray(list) ? list : []).map(parseProduct).filter((p): p is RawProduct => !!p);
-}
-
-export function parseSignIn(json: unknown): { token: string; expiresInS: number } | null {
-  const o = obj(json);
-  const token = str(o.access_token) ?? str(o.accessToken) ?? str(o.token);
-  if (!token) return null;
-  return { token, expiresInS: num(o.expires_in) ?? num(o.expiresIn) ?? 1800 };
 }

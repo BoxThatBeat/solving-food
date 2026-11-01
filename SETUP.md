@@ -1,7 +1,7 @@
 # Solving Food — Project Setup
 
 > Everything here is **non-secret** (the Firebase web config is shipped to browsers by design).
-> Secrets (PC Express credentials) live only in Secret Manager; see "Secrets" below.
+> The project has no secrets of its own (PC Express needs only the website's public API key); see "Secrets" below.
 > Last verified: 2026-10-10 (M5)
 
 ## Decision: one project, no dev
@@ -49,7 +49,7 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
 | GitHub repo | https://github.com/BoxThatBeat/solving-food (**public**; Actions minutes are unlimited, so CI runs the Playwright suite too) |
 | First household name | **Silbrass Pvt** |
 | Owner's Firebase uid | `HBebN9sYntQG1Kbdx5Ggw611xyy1` (from `users/*` where `email == buitenwerfa@gmail.com`; used for the drop folder path) |
-| PC Express account email | `buitenwerfa@gmail.com` (password only in Secret Manager, never here) |
+| PC Express account | none needed: the module uses the website's public API key, signed out (2026-11-01) |
 
 ## Cloud setup done in M0 (2026-10-09)
 
@@ -163,18 +163,19 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   member per hour in `pcxRate/{uid}`). The weekly `maintenance` job gained the PC Express price refresh (still the one
   Cloud Scheduler job). New command type `snoozeCadence` ("Not yet" on an "Are you out of …?" prompt).
 - **Firestore:** `prices/{pcxStoreId}_{productCode}` (read by allowlisted users, written by functions), `pcxSession/state`
-  and `pcxRate/{uid}` (function-only: token cache, health, rate limits). Periods may carry `dismissedLots`; households may
+  and `pcxRate/{uid}` (function-only: resolved default store, health, rate limits). Periods may carry `dismissedLots`; households may
   carry `pcxStoreName`. No new indexes.
-- **PC Express is off until the owner switches it on** (the secrets did not exist when M5 was deployed; checked with
-  `firebase functions:secrets:get PCX_EMAIL`, which answered 404). Until then the store and product searches say
-  "PC Express not connected", the weekly refresh is skipped, and every price is the bundled estimate. To connect:
-  1. `firebase functions:secrets:set PCX_EMAIL --project solvingfood` and `… PCX_PASSWORD` (the PC Express account
-     `buitenwerfa@gmail.com`).
-  2. In `functions/.env` set `PCX_ENABLED=true` and `PCX_API_KEY=<the x-apikey header the PC Express website sends>`
+- **PC Express is off until the owner switches it on.** Until then the store and product searches say "PC Express not
+  connected", the weekly refresh is skipped, and every price is the bundled estimate. No account or secrets are
+  involved (2026-11-01: the sign-in path and the `PCX_EMAIL` / `PCX_PASSWORD` secrets were removed; the store list,
+  product search, and shelf prices are all public on the website, and its real sign-in is a PC iD browser flow a
+  function can't replay). To connect:
+  1. In `functions/.env` set `PCX_ENABLED=true` and `PCX_API_KEY=<the x-apikey header the PC Express website sends>`
      (public, not a secret: open https://www.loblaws.ca, search for anything, and copy the `x-apikey` request header of a
-     `pcx-bff` call from the browser dev tools). Optionally `PCX_SIGNIN_URL` for a token endpoint; without it requests
-     go with the API key only. Commit and deploy (`firebase deploy --only functions`). The deploy binds the two secrets
-     to `maintenance` and the three callables and grants their service account access.
+     `pcx-bff` call from the browser dev tools). Commit and deploy (`firebase deploy --only functions`).
+  2. The key is the website's own, shared by every visitor; Loblaw can rotate it without notice. When it changes the
+     weekly refresh fails (owner banner, then the alert below) and prices fall back to estimates: copy the new key the
+     same way and redeploy.
   3. Settings → Stores → PC Express store: search "Greenbank" and pick Loblaws Greenbank Road (the default is resolved by
      name at runtime and cached in `pcxSession/state.defaultStoreId`), then link products in Settings → Brands.
   The endpoints in `functions/src/pcx/endpoints.ts` follow the website as publicly documented and were never called from
@@ -242,8 +243,8 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   `roles/iam.serviceAccountUser` (run functions as the App Engine / compute accounts), `roles/eventarc.admin` (Storage
   and Firestore triggers), `roles/cloudscheduler.admin` (weekly maintenance), `roles/cloudtasks.queueAdmin` (the
   `timers` queue), `roles/firebasestorage.admin` (the Storage rules deploy first reads the default bucket:
-  `firebasestorage.defaultBucket.get`, the second CI failure) and, once PC Express is enabled,
-  `roles/secretmanager.admin` (binding `PCX_EMAIL` / `PCX_PASSWORD`):
+  `firebasestorage.defaultBucket.get`, the second CI failure) and `roles/secretmanager.admin` (granted for the
+  PC Express secrets, which were removed on 2026-11-01; harmless to keep):
   ```
   SA=serviceAccount:github-action-1409507284@solvingfood.iam.gserviceaccount.com
   for r in roles/iam.serviceAccountUser roles/eventarc.admin roles/cloudscheduler.admin roles/cloudtasks.queueAdmin roles/firebasestorage.admin roles/secretmanager.admin; do
@@ -282,14 +283,10 @@ gcloud in `~/.config/gcloud/`, GitHub CLI via `gh auth status`.
 
 ## Secrets
 
-Set directly in Secret Manager by the owner, never pasted into chat, files, or the repo:
-
-```sh
-firebase functions:secrets:set PCX_EMAIL    --project solvingfood
-firebase functions:secrets:set PCX_PASSWORD --project solvingfood
-```
-
-The functions code references them with `defineSecret("PCX_EMAIL")` etc. (TECHNICAL_SPECS §8).
+None. PC Express used to take the owner's account as `PCX_EMAIL` / `PCX_PASSWORD` secrets; since 2026-11-01 it runs
+signed out on the website's public API key (`functions/.env`, "M5 operations" above). Any future secret goes in Secret
+Manager (`firebase functions:secrets:set NAME --project solvingfood`, `defineSecret` in code), never in chat, files, or
+the repo.
 
 ## Public repo note
 

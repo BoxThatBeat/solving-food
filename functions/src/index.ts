@@ -15,7 +15,7 @@ import { runMaintenance } from "./maintenance";
 import { applyCommand } from "./commands";
 import { cleanupIfEmpty } from "./households";
 import { cancelTimer as cancelTimerLogic, fireTimer, scheduleTimer as scheduleTimerLogic, type TimerTask } from "./timers";
-import { defineSecret, defineString } from "firebase-functions/params";
+import { defineString } from "firebase-functions/params";
 import { CallError, pcxStatus as pcxStatusLogic, searchProducts, searchStores } from "./pcx";
 import { MergeError, mergeIngredient as mergeIngredientLogic, requireAllowed } from "./ingredients";
 
@@ -57,16 +57,14 @@ export const dropFolder = onObjectFinalized({ bucket: STORAGE_BUCKET, memory: "5
   logger.info("drop", { name, ...outcome });
 });
 
-// PC Express (§8): the credentials are Secret Manager secrets, bound only once the owner has set them and switched the
-// module on with PCX_ENABLED=true in functions/.env (a deploy that names a missing secret fails). Until then every
-// PC Express function answers "not connected" and the app prices from the bundled estimates.
-const PCX_ON = process.env.PCX_ENABLED === "true";
-const PCX_SECRETS = PCX_ON ? [defineSecret("PCX_EMAIL"), defineSecret("PCX_PASSWORD")] : [];
+// PC Express (§8): no account and no secrets, only the website's public API key. Until the owner switches the module on
+// with PCX_ENABLED=true and PCX_API_KEY in functions/.env, every PC Express function answers "not connected" and the
+// app prices from the bundled estimates.
 /** Who hears about failed price refreshes (SETUP.md: the owner's uid). */
 const OWNER_UID = defineString("OWNER_UID", { default: "HBebN9sYntQG1Kbdx5Ggw611xyy1" });
 
 /** Weekly maintenance (§13): Monday 04:00 Toronto time; trash purge, index refresh, and the PC Express price refresh. */
-export const maintenance = onSchedule({ schedule: "every monday 04:00", timeZone: "America/Toronto", timeoutSeconds: 540, secrets: PCX_SECRETS }, async () => {
+export const maintenance = onSchedule({ schedule: "every monday 04:00", timeZone: "America/Toronto", timeoutSeconds: 540 }, async () => {
   const report = await runMaintenance(Date.now(), { ownerUid: OWNER_UID.value() || null });
   logger.info("maintenance", report);
 });
@@ -86,11 +84,11 @@ async function pcxCall<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 /** PC Express store search for the store picker (R6.22). */
-export const pcxSearchStores = onCall({ cors: true, secrets: PCX_SECRETS }, (req) => pcxCall(() => searchStores(memberUid(req.auth), req.data)));
+export const pcxSearchStores = onCall({ cors: true }, (req) => pcxCall(() => searchStores(memberUid(req.auth), req.data)));
 /** PC Express product search for brand mappings (R7.10); writes the results' prices. */
-export const pcxSearchProducts = onCall({ cors: true, secrets: PCX_SECRETS }, (req) => pcxCall(() => searchProducts(memberUid(req.auth), req.data)));
+export const pcxSearchProducts = onCall({ cors: true }, (req) => pcxCall(() => searchProducts(memberUid(req.auth), req.data)));
 /** Whether PC Express is connected (Settings). */
-export const pcxStatus = onCall({ cors: true, secrets: PCX_SECRETS }, (req) => pcxCall(() => pcxStatusLogic(memberUid(req.auth), req.data)));
+export const pcxStatus = onCall({ cors: true }, (req) => pcxCall(() => pcxStatusLogic(memberUid(req.auth), req.data)));
 
 /**
  * "Merge into…" (§6 "Merging ingredients", R4.27, R8.16): moves a duplicate ingredient's recipes, meals, Supply, plan

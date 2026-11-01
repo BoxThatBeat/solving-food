@@ -1,14 +1,14 @@
 // The PC Express stub (TECHNICAL_SPECS §14 "weekly maintenance (price refresh against the stub)"): a fetch with canned
 // responses in the shapes endpoints.ts parses, used under the Functions emulator (e2e) and by the functions tests.
 // The real API is never called from tests. Failure modes come from `_stubPcx/config` { mode } in the emulator, so a
-// test can switch them (per household with `_stubPcx/{hid}`): "ok" (default), "notConfigured", "signInFails", "down" (every request 503), "priceFails"
+// test can switch them (per household with `_stubPcx/{hid}`): "ok" (default), "notConfigured", "down" (every request 503), "priceFails"
 // (product lookups 500, search works).
 import { db } from "../admin";
 import type { PcxConfig } from "./endpoints";
 
-export type StubMode = "ok" | "notConfigured" | "signInFails" | "down" | "priceFails";
+export type StubMode = "ok" | "notConfigured" | "down" | "priceFails";
 
-export const STUB_CONFIG: PcxConfig = { base: "https://pcx.stub/api", apiKey: "stub-key", banner: "loblaw", signInUrl: "https://pcx.stub/signin" };
+export const STUB_CONFIG: PcxConfig = { base: "https://pcx.stub/api", apiKey: "stub-key", banner: "loblaw" };
 
 /** Fixture stores. IDs are made up for the stub; the real Greenbank Road ID is looked up at runtime (store search). */
 export const STUB_STORES = [
@@ -41,7 +41,7 @@ export async function stubMode(hid?: string): Promise<StubMode> {
   const s = own?.exists ? own : await db.doc("_stubPcx/config").get().catch(() => null);
   const m = s?.data()?.mode;
   if (s?.exists && typeof s.data()?.prices === "object") for (const [k, v] of Object.entries(s.data()!.prices as Record<string, number>)) stubPriceOverride.set(k, v);
-  return m === "notConfigured" || m === "signInFails" || m === "down" || m === "priceFails" ? m : "ok";
+  return m === "notConfigured" || m === "down" || m === "priceFails" ? m : "ok";
 }
 
 export const stubCalls: string[] = [];
@@ -58,7 +58,6 @@ export async function stubFetch(input: string | URL | Request, init?: RequestIni
   const mode = await stubMode(hid);
   stubCalls.push(`${init?.method ?? "GET"} ${url.pathname}`);
   if (mode === "down") return json(503, { error: "unavailable" });
-  if (url.pathname === "/signin") return mode === "signInFails" ? json(401, { error: "invalid credentials" }) : json(200, { access_token: "stub-token", expires_in: 1800 });
   if (url.pathname.endsWith("/v1/pickup-locations")) return json(200, STUB_STORES);
   if (url.pathname.endsWith("/v1/products/search")) {
     const body = JSON.parse(String(init?.body ?? "{}")) as { term?: string };

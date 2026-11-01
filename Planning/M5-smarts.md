@@ -198,9 +198,14 @@ every function updated; `pcxSearchStores`, `pcxSearchProducts`, `pcxStatus` crea
 The first attempt failed in non-interactive mode for want of an `OWNER_UID` value (a param default isn't used
 non-interactively); it is now in `functions/.env`. https://solvingfood.web.app → 200; `healthcheck` → `{"ok":true}`.
 
+**Follow-up (2026-11-01): no PC Express account.** The sign-in path, the optional `PCX_SIGNIN_URL`, and the
+`PCX_EMAIL` / `PCX_PASSWORD` secrets are gone. Everything the app reads (stores, search, shelf prices) is public on the
+website, and its real sign-in is a PC iD browser flow a function can't replay, so the credentials were never used.
+`PCX_ENABLED=true` plus the public `PCX_API_KEY` in `functions/.env` is the whole switch. Step 1 below is now just that.
+
 ## What's left for the owner
 
-1. **Connect PC Express** (SETUP.md "M5 operations"): set the `PCX_EMAIL` and `PCX_PASSWORD` secrets, put
+1. **Connect PC Express** (SETUP.md "M5 operations"): put
    `PCX_ENABLED=true` and the website's public `PCX_API_KEY` in `functions/.env`, commit, deploy functions. Then pick
    Loblaws Greenbank Road in Settings → Stores and link products in Settings → Brands. If the first searches fail, the
    endpoints need fixing (`functions/src/pcx/endpoints.ts`).

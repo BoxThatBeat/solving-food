@@ -39,7 +39,7 @@ export const pcxProductSchema = z.object({
 });
 export type PcxProduct = z.infer<typeof pcxProductSchema>;
 
-/** Callable responses: `connected` false means the module isn't set up (no credentials) or PC Express failed. */
+/** Callable responses: `connected` false means the module isn't switched on or PC Express failed. */
 export interface PcxStatus {
   connected: boolean;
   message?: string;

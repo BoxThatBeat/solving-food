@@ -1,5 +1,5 @@
-// PC Express module against the stub (TECHNICAL_SPECS §14 "Functions"): sign-in and token cache, store and product
-// search, price lookup and the weekly refresh, failure modes (not connected, sign-in fails, PC Express down, price
+// PC Express module against the stub (TECHNICAL_SPECS §14 "Functions"): API key only (no sign-in), store and product
+// search, price lookup and the weekly refresh, failure modes (not connected, PC Express down, price
 // lookups failing: old prices kept, owner notified, the second failed week logged), membership and rate limits.
 process.env.PCX_STUB = "1";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -7,7 +7,7 @@ import { Timestamp } from "firebase-admin/firestore";
 import { DEFAULT_PCX_STORE_ID, priceDocId } from "@solving-food/core";
 import { clearFirestore, db } from "./helpers";
 import { CallError, pcxStatus, rateLimit, RATE_LIMIT_PER_HOUR, refreshPrices, searchProducts, searchStores } from "../src/pcx";
-import { PcxClient, pcxDeps, pcxEnabled, resetTokenCache, SESSION_DOC } from "../src/pcx/client";
+import { PcxClient, pcxDeps, pcxEnabled, SESSION_DOC } from "../src/pcx/client";
 import { setStubMode, stubCalls, stubPriceOverride } from "../src/pcx/stub";
 import { parseProduct, parseSearch, parseStores, pcxDate } from "../src/pcx/endpoints";
 import { runMaintenance } from "../src/maintenance";
@@ -23,7 +23,6 @@ async function seedHousehold(store = DEFAULT_PCX_STORE_ID) {
 
 beforeEach(async () => {
   await clearFirestore();
-  resetTokenCache();
   setStubMode("ok");
   stubPriceOverride.clear();
   stubCalls.length = 0;
@@ -42,22 +41,21 @@ describe("endpoint parsing", () => {
 });
 
 describe("client", () => {
-  it("is off without credentials outside the emulator", () => {
+  it("is on with PCX_ENABLED and the API key, no credentials", () => {
     expect(pcxEnabled({})).toBe(false);
-    expect(pcxEnabled({ PCX_ENABLED: "true", PCX_API_KEY: "k", PCX_EMAIL: "e", PCX_PASSWORD: "p" })).toBe(true);
-    expect(pcxEnabled({ PCX_ENABLED: "true", PCX_API_KEY: "k", PCX_EMAIL: "e" })).toBe(false);
+    expect(pcxEnabled({ PCX_ENABLED: "true", PCX_API_KEY: "k" })).toBe(true);
+    expect(pcxEnabled({ PCX_ENABLED: "true" })).toBe(false);
+    expect(pcxEnabled({ PCX_API_KEY: "k" })).toBe(false);
   });
 
-  it("signs in once and caches the token in memory and in the session doc", async () => {
-    const c = new PcxClient((await pcxDeps())!);
-    expect(await c.token()).toBe("stub-token");
-    expect(await c.token()).toBe("stub-token");
-    expect(stubCalls.filter((x) => x.endsWith("/signin"))).toHaveLength(1);
-    const s = (await db.doc(SESSION_DOC).get()).data()!;
-    expect(s.token).toBe("stub-token");
-    resetTokenCache();
-    await new PcxClient((await pcxDeps())!).token();
-    expect(stubCalls.filter((x) => x.endsWith("/signin"))).toHaveLength(1); // from the session doc
+  it("sends the public API key and no Authorization header", async () => {
+    const seen: Headers[] = [];
+    const deps = (await pcxDeps())!;
+    const c = new PcxClient({ ...deps, fetch: (u, init) => (seen.push(new Headers(init?.headers)), deps.fetch(u, init)) });
+    await c.searchStores("greenbank");
+    expect(seen[0]!.get("x-apikey")).toBe("stub-key");
+    expect(seen[0]!.has("authorization")).toBe(false);
+    expect(stubCalls.some((x) => x.includes("signin"))).toBe(false);
   });
 
   it("resolves the default store by name once", async () => {
@@ -99,13 +97,6 @@ describe("callables", () => {
     expect(r.connected).toBe(false);
     expect(r.message).toMatch(/503/);
     expect((await pcxStatus(UID, { hid: HID })).message).toMatch(/503/);
-  });
-
-  it("a failed sign-in still searches with the API key and says so", async () => {
-    setStubMode("signInFails");
-    const r = await searchStores(UID, { hid: HID, query: "loblaws" });
-    expect(r.connected).toBe(true);
-    expect(r.message).toMatch(/Sign-in failed/);
   });
 
   it("rate limits per member per hour", async () => {

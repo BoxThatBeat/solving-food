@@ -110,7 +110,7 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Timer callables (`scheduleTimer`, `cancelTimer`, M3) | counted in the 2M above | one per timer start, pause, adjust, cancel: < 3,000 / month | — |
 | Cloud Tasks (queue `timers`, created by the `timers` task function's deploy, M3) | 1M operations / month | < 2,000 (cooking timers: enqueue + delete) | 500× |
 | Cloud Messaging (web push) | free | < 2,000 pushes / month | — |
-| Secret Manager | 6 active secret versions, 10,000 accesses / month | 2 secrets (PC Express credentials), read when an instance of `maintenance` or a PC Express callable starts: < 500 accesses / month. Bound only once `PCX_ENABLED=true` (M5) | 20× |
+| Secret Manager | 6 active secret versions, 10,000 accesses / month | None (PC Express runs signed out on its public API key since 2026-11-01) | ∞ |
 | PC Express callables (`pcxSearchStores`, `pcxSearchProducts`, `pcxStatus`, M5) | counted in the 2M above | Settings → Stores / Brands only: < 300 / month; searches are capped at 30 per member per hour (`pcxRate/{uid}`: 1 read + 1 write each) | — |
 | Outbound requests from functions (PC Express, M5) | Cloud Run egress to the internet: 1 GiB / month free (North America) | one or two small JSON requests per search, plus one per mapped product per week (~50): < 2,000 requests, < 50 MB / month | 20× |
 | Price writes (M5) | in the 20,000 writes / day | ≤ 12 per product search (each result's price) + one per mapped product per week; prices nobody refreshed for 60 days are deleted weekly | — |
@@ -224,7 +224,7 @@ prices/{pcxStoreId}_{productCode}                 // PC Express price at one sto
                                                   // as built (M5): keyed by the store ID the household stores (the
                                                   // default placeholder included), written by the product search and the
                                                   // weekly refresh; deleted after 60 days without a refresh
-pcxSession/state                                  // function-only (M5): token cache, resolved default store ID, last
+pcxSession/state                                  // function-only (M5): resolved default store ID, last
                                                   // error, consecutive refresh failures
 pcxRate/{uid}                                     // function-only (M5): PC Express searches this hour
 
@@ -678,7 +678,7 @@ Substitutions: closest equivalent size; skip if unavailable.
 
 PC Express has **no official public API**. Third-party scrapers exist, but they're paid, which rules them out under NFR2. The app uses the **same undocumented JSON endpoints the PC Express website calls**. The owner accepts the risk that they may change or break, and that this may not be permitted by PC Express's terms.
 
-**Authentication:** requests are made as the owner's **PC Express account**. Its credentials (or refresh token) are stored in **Secret Manager** (`defineSecret`) and used only inside functions, never sent to clients. A module `functions/src/pcx/` wraps sign-in, token refresh, product search, store search, and price lookup. If the endpoints change, this is the only module to fix.
+**Authentication:** none. The store list, product search, and shelf prices are public on the website, so the functions call them signed out, with the website's public `x-apikey` (non-secret config in `functions/.env`, `PCX_API_KEY`). There is no PC Express account and no secret (2026-11-01: the account sign-in with `PCX_EMAIL` / `PCX_PASSWORD` in Secret Manager was removed; the website's real sign-in is a PC iD browser flow a function can't replay, and nothing the app reads needs it). Loblaw can rotate the key; a rotated key shows up as a failed refresh (owner notified) and the owner copies the new one from the website. A module `functions/src/pcx/` wraps product search, store search, and price lookup. If the endpoints change, this is the only module to fix.
 
 **Store selection:** each household picks its **PC Express store** in Settings → Stores, using an in-app store search (callable `pcxSearchStores`). The default is **Loblaws Greenbank Road** (Ottawa), which is set when the household is created (R6.22). Its PC Express store ID is looked up once with the store search and kept in `packages/core` config.
 
@@ -688,14 +688,13 @@ PC Express has **no official public API**. Third-party scrapers exist, but they'
 
 1. A **weekly scheduled maintenance function** (the project's one Cloud Scheduler job, shared with the trash purge in §4.4) collects every distinct `(pcxStoreId, productCode)` pair across households and refreshes `prices/{pcxStoreId}_{productCode}`.
 2. Prices are resolved in this order: **live price** for the household's store (fetched ≤ 14 days ago) → **`data/price-estimates.json`** (per-ingredient price of a pack: `priceCents`, `packAmount`, `packMeasure`, plus a derived `centsPerUnit`) → unknown. Unknown prices count as $0, and the item is marked "price unknown" on the meter. The estimates are bundled into the web app (no Firestore reads, works offline); `pnpm prices:check` keeps them complete for the seed.
-3. If a fetch or sign-in fails, the function logs it, leaves old prices in place, and posts an error notification to the **project owner**, whose uid is set in the function's config (`OWNER_UID` parameter). The app falls back to estimates automatically as prices age.
+3. If a fetch fails, the function logs it, leaves old prices in place, and posts an error notification to the **project owner**, whose uid is set in the function's config (`OWNER_UID` parameter). The app falls back to estimates automatically as prices age.
 
 **As built (M5):** `functions/src/pcx/`: `endpoints.ts` (URLs, headers, defensive response parsing; the public web API
-key and an optional sign-in URL are non-secret config in `functions/.env`), `client.ts` (sign-in → token in memory and
-`pcxSession/state`; a failed sign-in is reported and requests go with the API key alone; the default store placeholder
+key is non-secret config in `functions/.env`), `client.ts` (requests with the API key only; the default store placeholder
 is resolved by searching for "Greenbank" once and cached), `stub.ts` (fixtures and failure modes, used under the
-emulator and in tests), `index.ts` (callables and `refreshPrices`). The secrets are bound only when `PCX_ENABLED=true`
-(a deploy that names a missing secret fails); otherwise everything answers "not connected" and estimates are used.
+emulator and in tests), `index.ts` (callables and `refreshPrices`). The module is on only with `PCX_ENABLED=true` and
+`PCX_API_KEY`; otherwise everything answers "not connected" and estimates are used.
 The product search writes each result's price (with a readable pack) to `prices/*`, so a picked product is priced at
 once; the weekly refresh walks every household's mapped products, keeps old prices on failure, notifies the owner, and
 logs `pcx refresh failed twice` on a second bad week in a row (the log-based alert, SETUP.md). The Loblaws Greenbank
@@ -1341,7 +1340,7 @@ update applies by itself when the session ends. Hosting serves `/`, `index.html`
 - **Environments:** a **single Firebase project, `solvingfood`** (Blaze, budget alert, expected to cost $0), used as production. There is no dev project: the app is used by one family, and local development and every automated test run entirely on the **Emulator Suite**. Project facts and the web config are in `SETUP.md`.
 - **CI/CD:** GitHub Actions runs lint, type-check, unit, property, rules, and functions (emulator) tests, the requirement-tag coverage check, and the Playwright suite (§14.1) on every PR. The repo is public, so Actions minutes are unlimited. Merging to `master` deploys to the project. PRs get Hosting preview channels.
 - **Monitoring:** Cloud Functions logs and error reporting, the $1 budget alert, and an alert if the weekly maintenance job fails twice in a row.
-- **Secrets:** PC Express credentials are set by the owner with `firebase functions:secrets:set PCX_EMAIL` / `PCX_PASSWORD`. The emulators use the PC Express stub (§14.1), never real credentials.
+- **Secrets:** none. PC Express needs only its public web API key (`functions/.env`). The emulators use the PC Express stub (§14.1), never the real site.
 
 ### Household data download & import
 

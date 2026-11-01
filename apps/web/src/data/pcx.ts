@@ -1,5 +1,5 @@
 // PC Express from the app (PRD R6.21, R6.22, R7.10): the store and product search callables and the connection status.
-// The functions hold the credentials; with none set they answer { connected: false } and prices stay estimates.
+// The functions talk to PC Express; until it is switched on they answer { connected: false } and prices stay estimates.
 import { useEffect, useState } from "react";
 import { httpsCallable } from "firebase/functions";
 import type { PcxProductSearchResult, PcxStatus, PcxStoreSearchResult } from "@solving-food/core";
