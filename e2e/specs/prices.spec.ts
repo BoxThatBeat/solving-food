@@ -1,6 +1,6 @@
 // prices.spec.ts (TECHNICAL_SPECS §14.1, Planning/M5): the PC Express store picker (default Loblaws Greenbank Road),
 // product search on brand mappings (name, pack, image, price), live prices in the budget with the estimate fallback,
-// and the "not connected" state. Everything runs against the functions' PC Express stub, never the real API.
+// the "not connected" state, and the owner's API key setting (R6.28). Everything runs against the functions' PC Express stub, never the real API.
 import { adminDb } from "../fixtures/admin";
 import { expect, test } from "../fixtures/test";
 import { makePlanRecipe, PlanPage, seedPeriod, seedPlanItem } from "../pages/plan";
@@ -63,4 +63,30 @@ test("not connected: the store page says so and prices come from the estimates (
   await plan.goto();
   await expect(page.locator('[data-testid="price-sources"]:visible')).toContainText(/2 estimated/i, { timeout: 20_000 });
   await expect(page.locator('[data-testid="price-sources"]:visible')).not.toContainText("live");
+});
+
+test("API key: only the owner sees it; saving tries the key and a rotated one can be replaced (R6.28)", { tag: ["@R6.28"] }, async ({ page, household }) => {
+  await page.goto("/settings/stores");
+  await expect(page.getByTestId("pcx-status")).toContainText("PC Express connected", { timeout: 20_000 });
+  await expect(page.getByTestId("pcx-key")).toHaveCount(0);
+
+  // The stub's owner is named per household (the real one is OWNER_UID).
+  await adminDb.doc(`_stubPcx/${household.hid}`).set({ ownerUid: household.uid });
+  await page.reload();
+  const card = page.getByTestId("pcx-key");
+  await expect(card).toBeVisible({ timeout: 20_000 });
+  await card.getByLabel("PC Express API key").fill("an-old-rotated-key");
+  await card.getByRole("button", { name: "Save" }).click();
+  await expect(card.getByRole("alert")).toContainText(/didn't accept it.*403/);
+  await expect(card.getByTestId("pcx-key-hint")).toHaveText("…-key");
+
+  await card.getByLabel("PC Express API key").fill("stub-key");
+  await card.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("PC Express key saved and working")).toBeVisible();
+  await expect(card.getByRole("alert")).toHaveCount(0);
+  await expect(page.getByTestId("pcx-status")).toContainText("PC Express connected");
+  await expect.poll(async () => (await adminDb.doc(`pcxSession/config_${household.hid}`).get()).data()?.apiKey).toBe("stub-key");
+
+  await card.getByRole("button", { name: /Remove key/ }).click();
+  await expect(card.getByTestId("pcx-key-hint")).toHaveText("None: PC Express is off");
 });

@@ -16,7 +16,7 @@ import { applyCommand } from "./commands";
 import { cleanupIfEmpty } from "./households";
 import { cancelTimer as cancelTimerLogic, fireTimer, scheduleTimer as scheduleTimerLogic, type TimerTask } from "./timers";
 import { defineString } from "firebase-functions/params";
-import { CallError, pcxStatus as pcxStatusLogic, searchProducts, searchStores } from "./pcx";
+import { CallError, pcxStatus as pcxStatusLogic, searchProducts, searchStores, setKey } from "./pcx";
 import { MergeError, mergeIngredient as mergeIngredientLogic, requireAllowed } from "./ingredients";
 
 // Keep every function small and cheap: free tier is a hard requirement (PRD NFR2).
@@ -57,10 +57,10 @@ export const dropFolder = onObjectFinalized({ bucket: STORAGE_BUCKET, memory: "5
   logger.info("drop", { name, ...outcome });
 });
 
-// PC Express (§8): no account and no secrets, only the website's public API key. Until the owner switches the module on
-// with PCX_ENABLED=true and PCX_API_KEY in functions/.env, every PC Express function answers "not connected" and the
-// app prices from the bundled estimates.
-/** Who hears about failed price refreshes (SETUP.md: the owner's uid). */
+// PC Express (§8): no account and no secrets, only the website's public API key, which the owner saves in Settings →
+// Stores (R6.28, pcxSetKey). Until then every PC Express function answers "not connected" and the app prices from the
+// bundled estimates.
+/** Who hears about failed price refreshes and may change the PC Express key (SETUP.md: the owner's uid). */
 const OWNER_UID = defineString("OWNER_UID", { default: "HBebN9sYntQG1Kbdx5Ggw611xyy1" });
 
 /** Weekly maintenance (§13): Monday 04:00 Toronto time; trash purge, index refresh, and the PC Express price refresh. */
@@ -88,7 +88,9 @@ export const pcxSearchStores = onCall({ cors: true }, (req) => pcxCall(() => sea
 /** PC Express product search for brand mappings (R7.10); writes the results' prices. */
 export const pcxSearchProducts = onCall({ cors: true }, (req) => pcxCall(() => searchProducts(memberUid(req.auth), req.data)));
 /** Whether PC Express is connected (Settings). */
-export const pcxStatus = onCall({ cors: true }, (req) => pcxCall(() => pcxStatusLogic(memberUid(req.auth), req.data)));
+export const pcxStatus = onCall({ cors: true }, (req) => pcxCall(() => pcxStatusLogic(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
+/** Saves the PC Express API key (owner only, R6.28). */
+export const pcxSetKey = onCall({ cors: true }, (req) => pcxCall(() => setKey(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
 
 /**
  * "Merge into…" (§6 "Merging ingredients", R4.27, R8.16): moves a duplicate ingredient's recipes, meals, Supply, plan

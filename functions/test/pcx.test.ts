@@ -1,15 +1,15 @@
 // PC Express module against the stub (TECHNICAL_SPECS §14 "Functions"): API key only (no sign-in), store and product
-// search, price lookup and the weekly refresh, failure modes (not connected, PC Express down, price
+// search, price lookup and the weekly refresh, the owner's API key setting (R6.28), failure modes (not connected, PC Express down, price
 // lookups failing: old prices kept, owner notified, the second failed week logged), membership and rate limits.
 process.env.PCX_STUB = "1";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Timestamp } from "firebase-admin/firestore";
 import { DEFAULT_PCX_STORE_ID, priceDocId } from "@solving-food/core";
 import { clearFirestore, db } from "./helpers";
-import { CallError, pcxStatus, rateLimit, RATE_LIMIT_PER_HOUR, refreshPrices, searchProducts, searchStores } from "../src/pcx";
-import { PcxClient, pcxDeps, pcxEnabled, SESSION_DOC } from "../src/pcx/client";
+import { CallError, pcxStatus, rateLimit, RATE_LIMIT_PER_HOUR, refreshPrices, searchProducts, searchStores, setKey } from "../src/pcx";
+import { configDoc, PcxClient, pcxDeps, SESSION_DOC, storedKey } from "../src/pcx/client";
 import { setStubMode, stubCalls, stubPriceOverride } from "../src/pcx/stub";
-import { parseProduct, parseSearch, parseStores, pcxDate } from "../src/pcx/endpoints";
+import { parseProduct, parseSearch, parseStores, pcxConfig, pcxDate } from "../src/pcx/endpoints";
 import { runMaintenance } from "../src/maintenance";
 
 const UID = "pcx-member";
@@ -41,11 +41,8 @@ describe("endpoint parsing", () => {
 });
 
 describe("client", () => {
-  it("is on with PCX_ENABLED and the API key, no credentials", () => {
-    expect(pcxEnabled({})).toBe(false);
-    expect(pcxEnabled({ PCX_ENABLED: "true", PCX_API_KEY: "k" })).toBe(true);
-    expect(pcxEnabled({ PCX_ENABLED: "true" })).toBe(false);
-    expect(pcxEnabled({ PCX_API_KEY: "k" })).toBe(false);
+  it("takes the API key it is given (the saved one, R6.28), not functions/.env", () => {
+    expect(pcxConfig("saved-key", { PCX_API_KEY: "env-key" }).apiKey).toBe("saved-key");
   });
 
   it("sends the public API key and no Authorization header", async () => {
@@ -97,6 +94,34 @@ describe("callables", () => {
     expect(r.connected).toBe(false);
     expect(r.message).toMatch(/503/);
     expect((await pcxStatus(UID, { hid: HID })).message).toMatch(/503/);
+  });
+
+  it("API key (R6.28): owner only; saving tries it, a wrong one is kept but reported, empty clears it", async () => {
+    const OWNER_HID = HID;
+    await db.doc(`households/${OWNER_HID}/members/${OWNER}`).set({ uid: OWNER, displayName: "O", joinedAt: new Date() });
+    // Members who aren't the owner don't see the setting and can't save.
+    expect((await pcxStatus(UID, { hid: HID }, OWNER)).canEditKey).toBeUndefined();
+    await expect(setKey(UID, { hid: HID, apiKey: "stub-key" }, OWNER)).rejects.toMatchObject({ code: "permission-denied" });
+    await expect(setKey(OWNER, { hid: HID, apiKey: "not a key!" }, OWNER)).rejects.toMatchObject({ code: "invalid-argument" });
+
+    const bad = await setKey(OWNER, { hid: HID, apiKey: "wrong-key" }, OWNER);
+    expect(bad).toMatchObject({ connected: false, canEditKey: true, keyHint: "…-key" });
+    expect(bad.message).toMatch(/didn't accept it.*403/);
+    expect(await storedKey(HID)).toBe("wrong-key");
+
+    const good = await setKey(OWNER, { hid: HID, apiKey: " stub-key " }, OWNER);
+    expect(good).toEqual({ connected: true, canEditKey: true, keyHint: "…-key" });
+    expect(await storedKey(HID)).toBe("stub-key");
+    expect((await db.doc(SESSION_DOC).get()).data()?.lastError).toBeUndefined();
+    expect(await pcxStatus(OWNER, { hid: HID }, OWNER)).toEqual({ connected: true, canEditKey: true, keyHint: "…-key" });
+
+    expect(await setKey(OWNER, { hid: HID, apiKey: "" }, OWNER)).toMatchObject({ connected: false, canEditKey: true });
+    expect((await db.doc(configDoc(HID)).get()).data()?.apiKey).toBeUndefined();
+  });
+
+  it("under the emulator a test names the owner in _stubPcx/{hid}", async () => {
+    await db.doc(`_stubPcx/${HID}`).set({ ownerUid: UID });
+    expect((await pcxStatus(UID, { hid: HID }, "someone-else")).canEditKey).toBe(true);
   });
 
   it("rate limits per member per hour", async () => {

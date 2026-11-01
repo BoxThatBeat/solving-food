@@ -3,19 +3,22 @@
 // pcxSearchStores({ hid, query })                  members only, rate limited: the store picker (Settings → Stores)
 // pcxSearchProducts({ hid, query, pcxStoreId })    members only, rate limited: the product search (Settings → Brands);
 //                                                  results with a price and a readable pack are written to prices/*
-// pcxStatus({ hid })                               whether the module is connected, and its last error
+// pcxStatus({ hid })                               whether the module is connected, and its last error; for the
+//                                                  owner also canEditKey and the saved key's hint
+// pcxSetKey({ hid, apiKey })                       owner only (R6.28): saves the public API key ("" clears it) and
+//                                                  tries it with a store lookup
 // refreshPrices()                                  the maintenance job's step: every distinct (store, product code) of
 //                                                  the households' brand mappings; failures keep old prices and notify
 //                                                  the owner; two failed weeks in a row log "pcx refresh failed twice"
 //
-// Until the module is switched on (functions/.env: PCX_ENABLED=true and PCX_API_KEY) every callable answers
-// { connected: false } and the refresh is skipped: the app prices from the bundled estimates.
+// Until the owner saves the API key in Settings → Stores every callable answers { connected: false } and the refresh
+// is skipped: the app prices from the bundled estimates.
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
-import { priceDocId, pcxProductSearchInput, pcxStoreSearchInput, type PcxProduct, type PcxProductSearchResult, type PcxStatus, type PcxStoreSearchResult } from "@solving-food/core";
+import { priceDocId, pcxKeyHint, pcxKeyInput, pcxProductSearchInput, pcxStoreSearchInput, type PcxProduct, type PcxProductSearchResult, type PcxStatus, type PcxStoreSearchResult } from "@solving-food/core";
 import { db } from "../admin";
 import { notify } from "../notify";
-import { NOT_CONNECTED, PcxClient, pcxDeps, recordStatus, SESSION_DOC } from "./client";
+import { configDoc, isPcxOwner, NOT_CONNECTED, NOT_CONNECTED_OWNER, PcxClient, pcxDeps, recordStatus, SESSION_DOC, storedKey } from "./client";
 
 export class CallError extends Error {
   constructor(
@@ -56,14 +59,43 @@ function parse<T>(schema: { safeParse(v: unknown): { success: true; data: T } | 
   return r.data;
 }
 
-export async function pcxStatus(uid: string, data: unknown): Promise<PcxStatus> {
+export async function pcxStatus(uid: string, data: unknown, ownerUid: string | null = null): Promise<PcxStatus> {
   const hid = String((data as { hid?: unknown })?.hid ?? "");
   await requireMember(uid, hid);
+  const owner = await isPcxOwner(uid, hid, ownerUid);
+  const key = owner ? await storedKey(hid) : "";
+  const extra: Partial<PcxStatus> = owner ? { canEditKey: true, ...(key ? { keyHint: pcxKeyHint(key) } : {}) } : {};
   const deps = await pcxDeps(hid);
-  if (!deps) return { connected: false, message: NOT_CONNECTED };
+  if (!deps) return { connected: false, message: owner ? NOT_CONNECTED_OWNER : NOT_CONNECTED, ...extra };
   const s = (await db.doc(SESSION_DOC).get()).data();
   const err = typeof s?.lastError === "string" ? s.lastError : null;
-  return err ? { connected: true, message: `Last problem: ${err}` } : { connected: true };
+  return err ? { connected: true, message: `Last problem: ${err}`, ...extra } : { connected: true, ...extra };
+}
+
+/** Saves the public API key (owner only, R6.28) and tries it with a store lookup; "" clears it (PC Express off). */
+export async function setKey(uid: string, data: unknown, ownerUid: string | null = null): Promise<PcxStatus> {
+  const input = parse(pcxKeyInput, data);
+  await requireMember(uid, input.hid);
+  if (!(await isPcxOwner(uid, input.hid, ownerUid))) throw new CallError("permission-denied", "Only the app's owner can change the PC Express key");
+  await rateLimit(uid);
+  const doc = db.doc(configDoc(input.hid));
+  if (!input.apiKey) {
+    await doc.set({ apiKey: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp(), updatedBy: uid }, { merge: true });
+    return { connected: false, message: NOT_CONNECTED_OWNER, canEditKey: true };
+  }
+  await doc.set({ apiKey: input.apiKey, updatedAt: FieldValue.serverTimestamp(), updatedBy: uid }, { merge: true });
+  const saved = { canEditKey: true, keyHint: pcxKeyHint(input.apiKey) };
+  const deps = await pcxDeps(input.hid, input.apiKey);
+  if (!deps) return { connected: false, message: NOT_CONNECTED_OWNER, ...saved };
+  try {
+    await new PcxClient(deps).stores();
+    await recordStatus(true);
+    return { connected: true, ...saved };
+  } catch (e) {
+    const m = (e as Error).message;
+    await recordStatus(false, m);
+    return { connected: false, message: `Saved, but PC Express didn't accept it: ${m}`, ...saved };
+  }
 }
 
 export async function searchStores(uid: string, data: unknown): Promise<PcxStoreSearchResult> {
@@ -178,7 +210,7 @@ export async function refreshPrices(ownerUid: string | null, now = Date.now()): 
     // The log line the Cloud Monitoring alert matches (SETUP.md): a second bad week in a row.
     if (report.consecutiveFailures >= 2) logger.error("pcx refresh failed twice", { ...report, firstError: errors[0] });
     else logger.warn("pcx refresh failed", { ...report, firstError: errors[0] });
-    if (ownerUid) await notify(ownerUid, { kind: "error", message: `PC Express price refresh: ${report.failed} of ${report.pairs} prices failed (${errors[0]}). Old prices are kept; the app falls back to estimates as they age.`, link: "/settings/brands" }).catch(() => undefined);
+    if (ownerUid) await notify(ownerUid, { kind: "error", message: `PC Express price refresh: ${report.failed} of ${report.pairs} prices failed (${errors[0]}). Old prices are kept; the app falls back to estimates as they age. If PC Express changed its API key, save the new one in Settings → Stores.`, link: "/settings/stores" }).catch(() => undefined);
   } else if (pairs.length) await recordStatus(true);
   return report;
 }

@@ -49,7 +49,7 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
 | GitHub repo | https://github.com/BoxThatBeat/solving-food (**public**; Actions minutes are unlimited, so CI runs the Playwright suite too) |
 | First household name | **Silbrass Pvt** |
 | Owner's Firebase uid | `HBebN9sYntQG1Kbdx5Ggw611xyy1` (from `users/*` where `email == buitenwerfa@gmail.com`; used for the drop folder path) |
-| PC Express account | none needed: the module uses the website's public API key, signed out (2026-11-01) |
+| PC Express account | none needed: the module uses the website's public API key, signed out, which the owner saves in Settings → Stores (2026-11-01) |
 
 ## Cloud setup done in M0 (2026-10-09)
 
@@ -169,13 +169,14 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   connected", the weekly refresh is skipped, and every price is the bundled estimate. No account or secrets are
   involved (2026-11-01: the sign-in path and the `PCX_EMAIL` / `PCX_PASSWORD` secrets were removed; the store list,
   product search, and shelf prices are all public on the website, and its real sign-in is a PC iD browser flow a
-  function can't replay). To connect:
-  1. In `functions/.env` set `PCX_ENABLED=true` and `PCX_API_KEY=<the x-apikey header the PC Express website sends>`
-     (public, not a secret: open https://www.loblaws.ca, search for anything, and copy the `x-apikey` request header of a
-     `pcx-bff` call from the browser dev tools). Commit and deploy (`firebase deploy --only functions`).
+  function can't replay). To connect (PRD R6.28, no deploy):
+  1. Signed in as the owner (`OWNER_UID`; nobody else sees the field), open Settings → Stores → **PC Express API key**
+     and paste the `x-apikey` header the website sends (public, not a secret: open https://www.loblaws.ca, search for
+     anything, and copy the `x-apikey` request header of a `pcx-bff` call from the browser dev tools). Saving tries it
+     and says whether PC Express accepted it. It is stored in the function-only `pcxSession/config`.
   2. The key is the website's own, shared by every visitor; Loblaw can rotate it without notice. When it changes the
-     weekly refresh fails (owner banner, then the alert below) and prices fall back to estimates: copy the new key the
-     same way and redeploy.
+     weekly refresh fails (owner banner linking to Settings → Stores, then the alert below) and prices fall back to
+     estimates: paste the new key the same way. **Remove key** turns PC Express off.
   3. Settings → Stores → PC Express store: search "Greenbank" and pick Loblaws Greenbank Road (the default is resolved by
      name at runtime and cached in `pcxSession/state.defaultStoreId`), then link products in Settings → Brands.
   The endpoints in `functions/src/pcx/endpoints.ts` follow the website as publicly documented and were never called from
@@ -284,7 +285,7 @@ gcloud in `~/.config/gcloud/`, GitHub CLI via `gh auth status`.
 ## Secrets
 
 None. PC Express used to take the owner's account as `PCX_EMAIL` / `PCX_PASSWORD` secrets; since 2026-11-01 it runs
-signed out on the website's public API key (`functions/.env`, "M5 operations" above). Any future secret goes in Secret
+signed out on the website's public API key, an owner setting in the app ("M5 operations" above). Any future secret goes in Secret
 Manager (`firebase functions:secrets:set NAME --project solvingfood`, `defineSecret` in code), never in chat, files, or
 the repo.
 

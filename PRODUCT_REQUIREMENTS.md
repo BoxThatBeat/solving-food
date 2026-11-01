@@ -219,6 +219,7 @@ flowchart LR
 
 - **R6.21** Ingredient prices come from **live PC Express data** where available. A preconfigured **estimated price list** is the fallback when live prices can't be fetched.
 - **R6.22** Each household picks the **PC Express store** its prices come from, using an in-app store search. The default is **Loblaws Greenbank Road** (Ottawa).
+- **R6.28** **PC Express key in Settings.** Live prices need no PC Express account: they use the public key the PC Express website sends with every request. The app's owner (no one else sees it) pastes that key in Settings → Stores, with a short note on where to copy it from. Saving it tries it at once and says whether PC Express accepted it; the saved key shows only its last few characters. When PC Express changes its key, the owner pastes the new one there, with no redeploy. Removing the key turns live prices off (the estimates are used).
 
 ---
 

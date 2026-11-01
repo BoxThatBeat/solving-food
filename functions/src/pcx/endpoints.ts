@@ -2,8 +2,8 @@
 // API, so the module uses the JSON endpoints its website calls. If they change, this is the file to fix.
 //
 // UNVERIFIED: these paths and shapes follow the website as publicly documented by others; they were not called from
-// this project (tests use the stub in ./stub.ts). The public web API key is configuration (functions/.env: PCX_API_KEY),
-// read from the website by the owner; it is not a secret. No sign-in: every call here works for a signed-out visitor.
+// this project (tests use the stub in ./stub.ts). The public web API key is saved by the owner in Settings → Stores
+// (R6.28, `pcxSession/config`); it is not a secret. No sign-in: every call here works for a signed-out visitor.
 
 export interface PcxConfig {
   base: string;
@@ -11,10 +11,10 @@ export interface PcxConfig {
   banner: string;
 }
 
-export function pcxConfig(env: Record<string, string | undefined> = process.env): PcxConfig {
+export function pcxConfig(apiKey: string, env: Record<string, string | undefined> = process.env): PcxConfig {
   return {
     base: env.PCX_BASE_URL || "https://api.pcexpress.ca/pcx-bff/api",
-    apiKey: env.PCX_API_KEY || "",
+    apiKey,
     banner: env.PCX_BANNER || "loblaw",
   };
 }

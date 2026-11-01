@@ -1,4 +1,5 @@
-// PC Express from the app (PRD R6.21, R6.22, R7.10): the store and product search callables and the connection status.
+// PC Express from the app (PRD R6.21, R6.22, R6.28, R7.10): the store and product search callables, the connection
+// status, and the owner's API key setting.
 // The functions talk to PC Express; until it is switched on they answer { connected: false } and prices stay estimates.
 import { useEffect, useState } from "react";
 import { httpsCallable } from "firebase/functions";
@@ -13,9 +14,24 @@ export async function searchPcxProducts(hid: string, query: string, pcxStoreId: 
   return (await httpsCallable<{ hid: string; query: string; pcxStoreId: string }, PcxProductSearchResult>(functions, "pcxSearchProducts")({ hid, query, pcxStoreId })).data;
 }
 
-/** The module's status, asked once per page view (null while asking or when offline). */
+const STATUS_CHANGED = "pcx-status-changed";
+
+/** Saves the public API key (owner only, R6.28; "" turns PC Express off); every status on the page asks again. */
+export async function setPcxKey(hid: string, apiKey: string): Promise<PcxStatus> {
+  const r = (await httpsCallable<{ hid: string; apiKey: string }, PcxStatus>(functions, "pcxSetKey")({ hid, apiKey })).data;
+  window.dispatchEvent(new Event(STATUS_CHANGED));
+  return r;
+}
+
+/** The module's status, asked once per page view and again after the key changes (null while asking or offline). */
 export function usePcxStatus(hid: string | null): PcxStatus | null {
   const [s, setS] = useState<{ hid: string; status: PcxStatus } | null>(null);
+  const [asked, setAsked] = useState(0);
+  useEffect(() => {
+    const again = () => setAsked((n) => n + 1);
+    window.addEventListener(STATUS_CHANGED, again);
+    return () => window.removeEventListener(STATUS_CHANGED, again);
+  }, []);
   useEffect(() => {
     if (!hid) return;
     let live = true;
@@ -25,7 +41,7 @@ export function usePcxStatus(hid: string | null): PcxStatus | null {
     return () => {
       live = false;
     };
-  }, [hid]);
+  }, [hid, asked]);
   return s?.hid === hid ? s.status : null;
 }
 

@@ -1,4 +1,4 @@
-// PC Express shared shapes (PRD R6.21, R6.22, R7.10; TECHNICAL_SPECS §8 "Prices"): what the store and product search
+// PC Express shared shapes (PRD R6.21, R6.22, R6.28, R7.10; TECHNICAL_SPECS §8 "Prices"): what the store and product search
 // callables return, how a PC Express pack size reads ("400 g", "6x355 mL"), and the price document ID. The HTTP side
 // lives in functions/src/pcx/ only; nothing here talks to PC Express.
 
@@ -39,10 +39,14 @@ export const pcxProductSchema = z.object({
 });
 export type PcxProduct = z.infer<typeof pcxProductSchema>;
 
-/** Callable responses: `connected` false means the module isn't switched on or PC Express failed. */
+/** Callable responses: `connected` false means no API key is saved or PC Express failed. */
 export interface PcxStatus {
   connected: boolean;
   message?: string;
+  /** The caller may change the API key (the project owner, R6.28). */
+  canEditKey?: boolean;
+  /** The saved key's last characters, sent to the owner only. */
+  keyHint?: string;
 }
 export interface PcxStoreSearchResult extends PcxStatus {
   stores: PcxStore[];
@@ -52,6 +56,13 @@ export interface PcxProductSearchResult extends PcxStatus {
 }
 
 export const pcxStoreSearchInput = z.object({ hid: z.string().min(1).max(200), query: z.string().trim().min(2).max(60) });
+/** The website's public x-apikey (R6.28); empty clears it, which turns PC Express off. */
+export const pcxKeyInput = z.object({ hid: z.string().min(1).max(200), apiKey: z.string().trim().max(200).regex(/^[A-Za-z0-9_-]*$/) });
+
+/** "…KvZ1": enough of a saved key to tell which one it is. */
+export function pcxKeyHint(key: string): string {
+  return `…${key.slice(-4)}`;
+}
 export const pcxProductSearchInput = z.object({ hid: z.string().min(1).max(200), query: z.string().trim().min(2).max(80), pcxStoreId: z.string().min(1).max(100) });
 
 const UNITS: Record<string, { measure: Measure; factor: number }> = {

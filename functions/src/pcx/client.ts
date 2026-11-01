@@ -1,11 +1,12 @@
 // The PC Express client (TECHNICAL_SPECS §8 "Prices"): store search, product search, and price lookup, sent with the
-// website's public API key only (no account, no sign-in: the website shows all three to signed-out visitors). Under the
-// Functions emulator it always talks to the stub (./stub.ts), never to PC Express.
+// website's public API key only (no account, no sign-in: the website shows all three to signed-out visitors). The key
+// is saved by the owner in Settings → Stores (R6.28) in `pcxSession/config` and read on every call, so a rotated key
+// needs no deploy. Under the Functions emulator it always talks to the stub (./stub.ts), never to PC Express.
 import { FieldValue } from "firebase-admin/firestore";
 import { DEFAULT_PCX_STORE_ID, isDefaultPcxStore, parsePackageSize, PCX_DEFAULT_STORE_MATCH, type PcxProduct, type PcxStore } from "@solving-food/core";
 import { db } from "../admin";
 import { headers, parseProduct, parseSearch, parseStores, pcxConfig, searchBody, urls, type PcxConfig, type RawProduct } from "./endpoints";
-import { STUB_CONFIG, stubFetchFor, stubMode } from "./stub";
+import { STUB_CONFIG, stubFetchFor, stubMode, stubOwner } from "./stub";
 
 export type Fetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 
@@ -18,28 +19,46 @@ export interface PcxDeps {
 export class PcxError extends Error {}
 
 export const SESSION_DOC = "pcxSession/state";
+/** Function-only: { apiKey, updatedAt, updatedBy }, written by pcxSetKey. Under the emulator one per household, so
+ *  parallel e2e runs don't share it. */
+export function configDoc(hid?: string): string {
+  return isEmulator() && hid ? `pcxSession/config_${hid}` : "pcxSession/config";
+}
 const TIMEOUT_MS = 10_000;
 
 export function isEmulator(): boolean {
   return process.env.FUNCTIONS_EMULATOR === "true" || process.env.PCX_STUB === "1";
 }
 
-/** Is the module switched on (PCX_ENABLED and the public API key set in functions/.env)? */
-export function pcxEnabled(env: Record<string, string | undefined> = process.env): boolean {
-  return env.PCX_ENABLED === "true" && !!env.PCX_API_KEY;
+/** The saved public API key, or "" when none is saved (PC Express off). */
+export async function storedKey(hid?: string): Promise<string> {
+  const k = (await db.doc(configDoc(hid)).get()).data()?.apiKey;
+  return typeof k === "string" ? k : "";
 }
 
-/** The live dependencies, the stub's under the emulator, or null when PC Express isn't connected (estimates only). */
-export async function pcxDeps(hid?: string): Promise<PcxDeps | null> {
+/** The project owner (OWNER_UID) may change the key; under the emulator a test names its owner in `_stubPcx/{hid}`. */
+export async function isPcxOwner(uid: string, hid: string, ownerUid: string | null): Promise<boolean> {
+  if (ownerUid && uid === ownerUid) return true;
+  return isEmulator() && (await stubOwner(hid)) === uid;
+}
+
+/**
+ * The live dependencies, the stub's under the emulator, or null when PC Express isn't connected (estimates only).
+ * `apiKey` tries a key before it is in use (pcxSetKey); otherwise the saved one is used. The emulator never reads the
+ * saved key (the stub takes its own key unless one is being tried), so e2e tests of the setting can't break others.
+ */
+export async function pcxDeps(hid?: string, apiKey?: string): Promise<PcxDeps | null> {
   if (isEmulator()) {
     if ((await stubMode(hid)) === "notConfigured") return null;
-    return { fetch: stubFetchFor(hid), config: STUB_CONFIG, now: Date.now };
+    return { fetch: stubFetchFor(hid), config: { ...STUB_CONFIG, apiKey: apiKey ?? STUB_CONFIG.apiKey }, now: Date.now };
   }
-  if (!pcxEnabled()) return null;
-  return { fetch: globalThis.fetch.bind(globalThis), config: pcxConfig(), now: Date.now };
+  const key = apiKey ?? (await storedKey());
+  if (!key) return null;
+  return { fetch: globalThis.fetch.bind(globalThis), config: pcxConfig(key), now: Date.now };
 }
 
 export const NOT_CONNECTED = "PC Express isn't connected yet: prices come from the estimates.";
+export const NOT_CONNECTED_OWNER = "PC Express is off until its API key is saved below: prices come from the estimates.";
 
 export class PcxClient {
   constructor(private readonly d: PcxDeps) {}

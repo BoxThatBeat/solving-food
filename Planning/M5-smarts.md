@@ -1,6 +1,6 @@
 # M5 — Smarts
 
-Status: done (exit criteria 3 and 4 wait on the owner: PC Express secrets, two weekly refreshes, a month of billing)
+Status: done (exit criteria 3 and 4 wait on the owner: PC Express key (M14), two weekly refreshes, a month of billing)
 
 ## Goal
 

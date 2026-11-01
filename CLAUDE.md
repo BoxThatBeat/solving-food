@@ -92,7 +92,8 @@ URLs are blocked in the CLI; serve things over HTTP. Screenshots never go into t
   the **Emulator Suite** (`firebase emulators:start`). Never run tests against the live project.
 - Free tier is a hard requirement (PRD NFR2). Before adding any Firebase or GCP feature, check the §2 quota
   table in the spec and update it.
-- No secrets today: PC Express runs signed out on the website's public API key (`functions/.env`, SETUP.md). Any
+- No secrets today: PC Express runs signed out on the website's public API key, which the owner saves in Settings →
+  Stores (PRD R6.28, SETUP.md). Any
   future secret is set by the owner with `firebase functions:secrets:set`; never ask for it, never write it anywhere.
 - The Firebase CLI is already logged in as the owner. `firebase apps:sdkconfig web` re-fetches the web config.
 

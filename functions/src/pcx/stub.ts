@@ -34,6 +34,12 @@ export function setStubMode(m: StubMode | null) {
   modeOverride = m;
 }
 
+/** The uid a test made the owner for this household (`_stubPcx/{hid}` { ownerUid }), for the API key setting (R6.28). */
+export async function stubOwner(hid: string): Promise<string | null> {
+  const o = (await db.doc(`_stubPcx/${hid}`).get().catch(() => null))?.data()?.ownerUid;
+  return typeof o === "string" ? o : null;
+}
+
 /** The mode: a test's override, else `_stubPcx/{hid}` for that household (e2e runs in parallel), else `_stubPcx/config`. */
 export async function stubMode(hid?: string): Promise<StubMode> {
   if (modeOverride) return modeOverride;
@@ -58,6 +64,8 @@ export async function stubFetch(input: string | URL | Request, init?: RequestIni
   const mode = await stubMode(hid);
   stubCalls.push(`${init?.method ?? "GET"} ${url.pathname}`);
   if (mode === "down") return json(503, { error: "unavailable" });
+  // A wrong API key is refused, as the website's gateway would (R6.28).
+  if (new Headers(init?.headers).get("x-apikey") !== STUB_CONFIG.apiKey) return json(403, { error: "invalid api key" });
   if (url.pathname.endsWith("/v1/pickup-locations")) return json(200, STUB_STORES);
   if (url.pathname.endsWith("/v1/products/search")) {
     const body = JSON.parse(String(init?.body ?? "{}")) as { term?: string };

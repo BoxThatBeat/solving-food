@@ -1,12 +1,14 @@
 // Settings → Stores (PRD R7.4, R11.7; spec §8): stores with kind (PC Express or in store) and a bulk flag, the default
 // store, and sourcing rules by category or by ingredient. Resolution: brand mapping → ingredient rule → category rule
-// → default store. M5: the PC Express store picker (R6.22), where live prices come from.
+// → default store. M5: the PC Express store picker (R6.22), where live prices come from; the owner's PC Express API key
+// (R6.28).
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Trash2 } from "lucide-react";
 import { INGREDIENT_CATEGORIES, taxonomyLabel, type StoreDoc } from "@solving-food/core";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { PcxStorePicker } from "@/components/settings/PcxStorePicker";
+import { PcxKeyCard } from "@/components/settings/PcxKeyCard";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -46,6 +48,7 @@ function StoresPage() {
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <div className="flex min-w-0 flex-col gap-4">
         {hh.data ? <PcxStorePicker hid={hh.id} storeId={hh.data.pcxStoreId} storeName={hh.data.pcxStoreName} /> : null}
+        {hh.data ? <PcxKeyCard hid={hh.id} /> : null}
         <Card className="gap-3">
           <CardTitle>Stores</CardTitle>
           <p className="m-0 text-[0.8125rem] font-semibold">Only PC Express stores are copied to ChatGPT; others become in-store checklists. The default store gets anything no rule or brand sends elsewhere.</p>
