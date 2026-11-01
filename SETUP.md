@@ -198,7 +198,7 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   billing** (never `solvingfood`: it is on Blaze, so a key there is billed). Paste it on the Ingredients page (Settings →
   Ingredients, owner only); saving tries it. Stored in the function-only `aiSession/config`. Free tier: requests may be
   used by Google to improve its products (only ingredient names are sent); at the free limit a call fails and the
-  names wait under Names to decide. `GEMINI_MODEL` in `functions/.env` overrides `gemini-2.5-flash-lite`.
+  names wait under Names to decide. `GEMINI_MODEL` in `functions/.env` overrides `gemini-3.5-flash-lite`.
 - **New callables:** `aiStatus`, `aiSetKey`, `checkIngredientNames` (owner only, merges). New ingredient field
   `nameCheck` (rules allow `new` / `unsure`). No new indexes.
 - **The waiting names from before M15** (needs review, never checked): press **Check with Gemini** once the key is saved.

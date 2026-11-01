@@ -790,7 +790,7 @@ flowchart TD
 - **LLM judge** (M15, R4.27): `prepareCookRecipe` parses the file once to collect the wordings the matcher can't
   place, and sends them in one request (`packages/core/src/ingredientJudge.ts`: each name with its candidates,
   `suggestIngredients` top 6, and the rules: same product, recipe could use either; different forms differ) to Gemini
-  (`functions/src/ai/gemini.ts`: `generateContent` on `gemini-2.5-flash-lite` or `GEMINI_MODEL`, temperature 0, JSON
+  (`functions/src/ai/gemini.ts`: `generateContent` on `gemini-3.5-flash-lite` or `GEMINI_MODEL`, temperature 0, JSON
   response schema, 20 s timeout; the key from `aiSession/config`). Each answer is `same` + a candidate ID, `new`, or
   `unsure`; an ID that wasn't a candidate, a missing name, or an unreadable answer reads as `unsure`, so a bad answer
   never merges anything. Then it parses again: `same` wordings resolve to that ingredient and are added to its aliases

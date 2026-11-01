@@ -43,7 +43,7 @@ async function stubJudge(items: readonly JudgeItem[], apiKey?: string): Promise<
 }
 
 async function callGemini(items: readonly JudgeItem[], key: string): Promise<Map<string, Verdict>> {
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+  const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), TIMEOUT_MS);
   try {

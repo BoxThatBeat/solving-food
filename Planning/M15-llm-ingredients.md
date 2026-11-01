@@ -18,7 +18,7 @@ open an ingredient from the Ingredients list and edit it); the label reads **"Fr
   Firebase AI Logic (a client SDK; the judging runs in the drop-folder function, and it bills through `solvingfood`,
   which is on Blaze). The key must come from a **separate Google project without billing**, so it can never be
   charged; at the free limit a call just fails and the name waits. Free-tier prompts may be used by Google to improve
-  its products; only ingredient names and candidate names are sent. Model `gemini-2.5-flash-lite`
+  its products; only ingredient names and candidate names are sent. Model `gemini-3.5-flash-lite`
   (`GEMINI_MODEL` in `functions/.env` can change it), JSON output with a response schema, temperature 0.
 - **The judge (core, pure):** `packages/core/src/ingredientJudge.ts` builds one request for up to 20 names, each with
   its candidates (`suggestIngredients` top 6, catalogue and household-made, never itself or a tombstone), and reads
@@ -98,6 +98,8 @@ key), R4.16 (changed: the import's notification), R8.16 (a merge moves Supply, n
 
 - [x] (2026-11-01) The owner's AI Studio key was refused as "doesn't look like a Gemini API key": newer keys contain a
       dot ("AQ.…"). Keys may now contain `.` (shared pattern, PC Express too); functions test added.
+- [x] (2026-11-01) Gemini answered 404 "models/gemini-2.5-flash-lite is no longer available to new users": the default
+      model is now `gemini-3.5-flash-lite` (free tier per the pricing page). `GEMINI_MODEL` still overrides it.
 
 ## Verification
 
