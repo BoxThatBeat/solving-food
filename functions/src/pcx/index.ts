@@ -15,7 +15,7 @@
 // is skipped: the app prices from the bundled estimates.
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
-import { priceDocId, pcxKeyHint, pcxKeyInput, pcxProductSearchInput, pcxStoreSearchInput, type PcxProduct, type PcxProductSearchResult, type PcxStatus, type PcxStoreSearchResult } from "@solving-food/core";
+import { priceDocId, PCX_KEY_PATTERN, pcxKeyHint, pcxKeyInput, pcxProductSearchInput, pcxStoreSearchInput, type PcxProduct, type PcxProductSearchResult, type PcxStatus, type PcxStoreSearchResult } from "@solving-food/core";
 import { db } from "../admin";
 import { notify } from "../notify";
 import { configDoc, isPcxOwner, NOT_CONNECTED, NOT_CONNECTED_OWNER, PcxClient, pcxDeps, recordStatus, SESSION_DOC, storedKey } from "./client";
@@ -75,6 +75,7 @@ export async function pcxStatus(uid: string, data: unknown, ownerUid: string | n
 /** Saves the public API key (owner only, R6.28) and tries it with a store lookup; "" clears it (PC Express off). */
 export async function setKey(uid: string, data: unknown, ownerUid: string | null = null): Promise<PcxStatus> {
   const input = parse(pcxKeyInput, data);
+  if (!PCX_KEY_PATTERN.test(input.apiKey)) throw new CallError("invalid-argument", "That doesn't look like the key: paste only the x-apikey value (letters, digits, - and _)");
   await requireMember(uid, input.hid);
   if (!(await isPcxOwner(uid, input.hid, ownerUid))) throw new CallError("permission-denied", "Only the app's owner can change the PC Express key");
   await rateLimit(uid);

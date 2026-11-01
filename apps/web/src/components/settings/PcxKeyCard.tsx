@@ -2,6 +2,7 @@
 // x-apikey the loblaws.ca website sends, not tied to any account; Loblaw can change it, so it is set here (callable
 // pcxSetKey) instead of in a deploy. Saving tries it at once. Shown to the project owner only.
 import * as React from "react";
+import { cleanPcxKey } from "@solving-food/core";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -48,11 +49,11 @@ export function PcxKeyCard({ hid }: { hid: string }) {
         className="flex gap-2"
         onSubmit={(e) => {
           e.preventDefault();
-          if (key.trim()) void save(key.trim());
+          if (cleanPcxKey(key)) void save(cleanPcxKey(key));
         }}
       >
-        <Input aria-label="PC Express API key" placeholder="Paste x-apikey" value={key} maxLength={200} autoComplete="off" spellCheck={false} onChange={(e) => setKey(e.target.value)} className="min-w-0 flex-1 font-mono" />
-        <Button type="submit" variant="ink" disabled={busy || !key.trim()}>
+        <Input aria-label="PC Express API key" placeholder="Paste x-apikey" value={key} maxLength={300} autoComplete="off" spellCheck={false} onChange={(e) => setKey(e.target.value)} className="min-w-0 flex-1 font-mono" />
+        <Button type="submit" variant="ink" disabled={busy || !cleanPcxKey(key)}>
           {busy ? "…" : "Save"}
         </Button>
       </form>

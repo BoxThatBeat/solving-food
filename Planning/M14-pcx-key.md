@@ -25,7 +25,7 @@ R6.28.
 - [x] `pcxSession/config` (function-only, no rules change: default deny) holds `{ apiKey, updatedAt, updatedBy }`.
       `pcxDeps()` reads it on every call; no key = not connected. `PCX_ENABLED` / `PCX_API_KEY` leave `functions/.env`.
 - [x] Callable `pcxSetKey({ hid, apiKey })`: member of `hid` and the owner (`OWNER_UID`), rate limited with the
-      searches; saves (trimmed, `[A-Za-z0-9_-]`), tries a store lookup, reports "Saved, but PC Express didn't accept
+      searches; saves (cleaned of a pasted `x-apikey:` label, quotes and invisible characters, then `[A-Za-z0-9_-]`, with a plain message otherwise), tries a store lookup, reports "Saved, but PC Express didn't accept
       it: …" on failure; `""` clears. `pcxStatus` adds `canEditKey` and `keyHint` (last four characters) for the owner.
 - [x] The weekly refresh's failure banner says a changed key goes in Settings → Stores and links there.
 - [x] Emulator: the stub refuses any key but `stub-key` (403); the saved key is per household

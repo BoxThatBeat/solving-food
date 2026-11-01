@@ -56,8 +56,22 @@ export interface PcxProductSearchResult extends PcxStatus {
 }
 
 export const pcxStoreSearchInput = z.object({ hid: z.string().min(1).max(200), query: z.string().trim().min(2).max(60) });
-/** The website's public x-apikey (R6.28); empty clears it, which turns PC Express off. */
-export const pcxKeyInput = z.object({ hid: z.string().min(1).max(200), apiKey: z.string().trim().max(200).regex(/^[A-Za-z0-9_-]*$/) });
+/**
+ * A pasted key as it comes from the browser's dev tools or a chat: drops invisible characters, a leading "x-apikey:"
+ * (copying the whole header line), and surrounding quotes or whitespace.
+ */
+export function cleanPcxKey(raw: string): string {
+  return raw
+    .replace(/[\u200b-\u200d\u2060\ufeff]/g, "")
+    .trim()
+    .replace(/^x-apikey\s*:\s*/i, "")
+    .replace(/^["'`]+|["'`]+$/g, "")
+    .trim();
+}
+export const PCX_KEY_PATTERN = /^[A-Za-z0-9_-]{0,200}$/;
+
+/** The website's public x-apikey (R6.28), cleaned; empty clears it, which turns PC Express off. */
+export const pcxKeyInput = z.object({ hid: z.string().min(1).max(200), apiKey: z.string().max(1000).transform(cleanPcxKey) });
 
 /** "…KvZ1": enough of a saved key to tell which one it is. */
 export function pcxKeyHint(key: string): string {

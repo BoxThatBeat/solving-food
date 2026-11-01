@@ -102,7 +102,9 @@ describe("callables", () => {
     // Members who aren't the owner don't see the setting and can't save.
     expect((await pcxStatus(UID, { hid: HID }, OWNER)).canEditKey).toBeUndefined();
     await expect(setKey(UID, { hid: HID, apiKey: "stub-key" }, OWNER)).rejects.toMatchObject({ code: "permission-denied" });
-    await expect(setKey(OWNER, { hid: HID, apiKey: "not a key!" }, OWNER)).rejects.toMatchObject({ code: "invalid-argument" });
+    await expect(setKey(OWNER, { hid: HID, apiKey: "not a key!" }, OWNER)).rejects.toMatchObject({ code: "invalid-argument", message: expect.stringMatching(/x-apikey value/) });
+    // Pasted with the header name, quotes, or an invisible character: cleaned, not refused.
+    for (const pasted of ["x-apikey: stub-key", '"stub-key"', "\u200bstub-key\n"]) expect((await setKey(OWNER, { hid: HID, apiKey: pasted }, OWNER)).connected).toBe(true);
 
     const bad = await setKey(OWNER, { hid: HID, apiKey: "wrong-key" }, OWNER);
     expect(bad).toMatchObject({ connected: false, canEditKey: true, keyHint: "…-key" });
