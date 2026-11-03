@@ -9,9 +9,12 @@ import {
   htmlToText,
   notARecipe,
   pageContent,
+  photoIsDish,
   recipeInstruction,
   renderSkillPrompt,
   safeRecipeUrl,
+  siteRefusesApps,
+  cleanRecipeText,
   SKILL_PROMPT_FILES,
 } from "./recipeFromGemini";
 
@@ -85,5 +88,26 @@ describe("web pages", () => {
     for (const bad of ["ftp://x.com/a", "http://localhost:8080", "http://127.0.0.1/a", "http://10.0.0.5/", "http://192.168.1.1", "http://169.254.169.254/latest", "http://[::1]/", "http://metadata.google.internal/", "not a url", "http://intranet/"]) {
       expect(safeRecipeUrl(bad)).toBeNull();
     }
+  });
+});
+
+describe("a photo with the recipe's text", () => {
+  it("asks which the photo shows and reads the PHOTO line; NOT A RECIPE still counts after it", () => {
+    const sys = recipeInstruction("SKILL", { kind: "photo", withText: true });
+    expect(sys).toContain("PHOTO: dish");
+    expect(sys).toContain("except the PHOTO line");
+    expect(recipeInstruction("SKILL", { kind: "photo" })).not.toContain("PHOTO: dish");
+    expect(photoIsDish("PHOTO: dish\n```cooklang\n---\n```")).toBe(true);
+    expect(photoIsDish("PHOTO: recipe\n```cooklang")).toBe(false);
+    expect(photoIsDish("```cooklang\nPHOTO: dish")).toBe(false);
+    expect(notARecipe("PHOTO: dish\nNOT A RECIPE")).toBe(true);
+    expect(extractCook("PHOTO: dish\n```cooklang\n" + COOK + "```")).toBe(COOK.trim() + "\n");
+  });
+
+  it("cleans pasted text; knows a site refusing apps", () => {
+    expect(cleanRecipeText("  a  \r\n\r\n\r\n\nb\t\n", 100)).toBe("a\n\nb");
+    expect(cleanRecipeText("x".repeat(50), 10)).toHaveLength(10);
+    expect([401, 403, 429, 451].every(siteRefusesApps)).toBe(true);
+    expect(siteRefusesApps(404)).toBe(false);
   });
 });

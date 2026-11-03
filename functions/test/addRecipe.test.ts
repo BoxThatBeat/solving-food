@@ -2,8 +2,10 @@
 // (the prompt is the skill plus the page's recipe data), a page that won't open, a photo (sent inline, deleted
 // after, never the recipe's image), a file that fails the checks gets one repair round, not set up, the rate limit.
 process.env.PCX_STUB = "1";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
-import { bucket, clearFirestore, db, fileExists, seedIngredients } from "./helpers";
+import { ATTACHMENTS_DIR, bucket, clearFirestore, db, fileExists, seedIngredients } from "./helpers";
 import { addRecipeWithGemini, ADD_PER_HOUR } from "../src/ai/addRecipe";
 import { stubGenerateRequests } from "../src/ai/gemini";
 import { resetIngredientCache } from "../src/dropFolder";
@@ -52,9 +54,10 @@ describe("from a link", () => {
   });
 
   it("refuses private addresses, says when a page won't open or has no recipe", async () => {
-    await stub({ pages: { [URL1]: "!403", "https://x.example.com/empty": "<p>hi</p>" }, recipe: cook("Nope") });
+    await stub({ pages: { [URL1]: "!403", "https://x.example.com/gone": "!404", "https://x.example.com/empty": "<p>hi</p>" }, recipe: cook("Nope") });
     await expect(addRecipeWithGemini(UID, { source: "link", url: "http://localhost/r" })).rejects.toMatchObject({ code: "invalid-argument", message: expect.stringMatching(/public site/) });
-    await expect(addRecipeWithGemini(UID, { source: "link", url: URL1 })).rejects.toMatchObject({ message: "Couldn't open that page (HTTP 403)" });
+    await expect(addRecipeWithGemini(UID, { source: "link", url: URL1 })).rejects.toMatchObject({ message: expect.stringMatching(/doesn't let apps read its recipes \(HTTP 403\)\. Add a photo instead/) });
+    await expect(addRecipeWithGemini(UID, { source: "link", url: "https://x.example.com/gone" })).rejects.toMatchObject({ message: "Couldn't open that page (HTTP 404)" });
     await expect(addRecipeWithGemini(UID, { source: "link", url: "https://x.example.com/empty" })).rejects.toMatchObject({ message: "That page has no recipe the app can read" });
     expect(stubGenerateRequests).toHaveLength(0);
   });
@@ -84,6 +87,28 @@ describe("from a photo", () => {
     expect(part.inlineData.data).toBe(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]).toString("base64"));
     expect(await fileExists(path)).toBe(false);
     await expect(addRecipeWithGemini(UID, { source: "photo", path: "recipe-photos/someone/p.jpg" })).rejects.toMatchObject({ message: "That photo isn't yours" });
+  });
+});
+
+describe("a photo with the recipe's text", () => {
+  const png = () => readFileSync(join(ATTACHMENTS_DIR, "Pasted image 20240116181103.png"));
+  it("the text goes with the photo; a dish photo becomes the recipe's picture, a photo of the recipe doesn't", async () => {
+    const dishPath = `recipe-photos/${UID}/dish.png`;
+    await bucket().file(dishPath).save(png(), { contentType: "image/png", resumable: false });
+    await stub({ recipe: "PHOTO: dish\n```cooklang\n" + cook("Dish Toast") + "```" });
+    const r = await addRecipeWithGemini(UID, { source: "photo", path: dishPath, text: "Buttered toast\r\n\r\n\r\n1 tbsp butter, 2 slices bread  " });
+    expect(r.title).toBe("Dish Toast");
+    expect((await db.doc(`recipes/${r.recipeId}`).get()).data()!.imagePaths).toHaveLength(1);
+    expect(stubGenerateRequests[0]!.system).toContain("PHOTO: dish");
+    expect(JSON.stringify(stubGenerateRequests[0]!.contents)).toContain("The recipe's text:\\nButtered toast\\n\\n1 tbsp butter, 2 slices bread");
+    expect(await fileExists(dishPath)).toBe(false);
+
+    const pagePath = `recipe-photos/${UID}/page.png`;
+    await bucket().file(pagePath).save(png(), { contentType: "image/png", resumable: false });
+    await stub({ recipe: "PHOTO: recipe\n```cooklang\n" + cook("Page Toast") + "```" });
+    const p = await addRecipeWithGemini(UID, { source: "photo", path: pagePath, text: "Toast, butter." });
+    expect((await db.doc(`recipes/${p.recipeId}`).get()).data()!.imagePaths).toEqual([]);
+    await expect(addRecipeWithGemini(UID, { source: "photo", path: pagePath, text: 5 })).rejects.toMatchObject({ message: "Bad request" });
   });
 });
 

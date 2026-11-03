@@ -75,6 +75,20 @@ R11.15 (new: the Gemini section), R4.36 (changed: the key lives there), R4.37 (n
   1 skipped (phones only). `pnpm e2e:coverage`: M16 3/3 tagged.
 - Not tested against the real Gemini API or real recipe sites (stubs only).
 
+## Fixes after deploy
+
+- [x] (2026-11-03) thekitchn.com answered the function's fetch with **403** (it serves the page to a home connection but
+      refuses Google Cloud's addresses). The app won't disguise itself to get past bot protection. Instead:
+      - A chosen, taken or **pasted** photo now waits in the sheet with an optional **Recipe text** box and an Add
+        button (owner: "dont explain this behavior in the UI just make the controls"), so the dish picture and the
+        recipe's text copied from the page go together. Gemini says whether the photo is the dish (`PHOTO: dish`),
+        and then it becomes the recipe's picture; a photo of the recipe itself still never does.
+      - A 401/403/429/451 reads "That site doesn't let apps read its recipes (HTTP 403). Add a photo instead, with the
+        recipe's text copied from the page."
+      - Failures are logged (`add with Gemini failed`, no content) so they can be read from the function logs.
+      Tests: core 2, functions 1 (dish photo kept, recipe photo not, text cleaned, bad text refused) + 404 vs 403
+      messages, e2e 1 (@R4.37: 403 message, photo + text, remove photo, dish picture kept).
+
 ## What's left for the owner
 
 1. Deploy (hosting, functions, storage rules).

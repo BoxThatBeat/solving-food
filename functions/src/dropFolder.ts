@@ -95,6 +95,8 @@ async function findDroppedImage(uid: string, relPath: string, waitMs: number): P
 export interface DropOptions {
   /** How long to wait for a referenced image to be uploaded. */
   imageWaitMs?: number;
+  /** A picture to use as the recipe's image instead of the file's `image:` (Add with Gemini's dish photo, R4.37). */
+  imageData?: Buffer;
 }
 
 export async function handleDropObject(objectName: string, generation: string | number | undefined, opts: DropOptions = {}): Promise<DropOutcome> {
@@ -265,7 +267,13 @@ export async function importCook(uid: string, fileName: string, text: string, op
 
   // Image: URL → download; relative path → a file uploaded next to the .cook.
   const image = prepared.frontMatter.image;
-  if (image) {
+  if (opts.imageData) {
+    try {
+      content.imagePaths = [await storeRecipeImage(id, opts.imageData)];
+    } catch (e) {
+      warnings.push(`the photo couldn't be saved as its picture (${(e as Error).message})`);
+    }
+  } else if (image) {
     try {
       let data: Buffer | null = null;
       let dropped: string | null = null;

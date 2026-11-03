@@ -3,8 +3,10 @@
 // (SKILL_TEXT, generated from it), which then goes through the drop-folder importer (`importCook`: validation, the
 // M15 ingredient judge, duplicates, the link's image, the notification). Allowlisted callers; the owner's Gemini key;
 // 10 per person per hour (`aiRate/{uid}`). A file that fails the importer's checks goes back to Gemini once with the
-// reason. The photo is never the recipe's image (it's a page of a book) and is deleted afterwards.
-import { CooklangError, dropLocalImage, extractCook, notARecipe, pageContent, recipeInstruction, safeRecipeUrl, type RecipeSource } from "@solving-food/core";
+// reason. A photo may come with the recipe's text (copied from a page that won't let the app read it, or a book); then
+// Gemini says whether the photo is the finished dish, and a dish photo becomes the recipe's picture. A photo of the
+// recipe itself never does. The upload is deleted afterwards.
+import { cleanRecipeText, CooklangError, dropLocalImage, extractCook, notARecipe, pageContent, photoIsDish, recipeInstruction, safeRecipeUrl, siteRefusesApps, type RecipeSource } from "@solving-food/core";
 import { bucket, db } from "../admin";
 import { importCook } from "../dropFolder";
 import { CallError, rateLimit } from "../pcx";
@@ -16,13 +18,15 @@ export const ADD_PER_HOUR = 10;
 const PAGE_TIMEOUT_MS = 15_000;
 const MAX_PAGE_BYTES = 3 * 1024 * 1024;
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+export const MAX_RECIPE_TEXT = 30_000;
 
-type AddInput = { source: "link"; url: string } | { source: "photo"; path: string };
+type AddInput = { source: "link"; url: string } | { source: "photo"; path: string; text: string };
 
 function parseInput(data: unknown): AddInput | null {
-  const d = (data ?? {}) as { source?: unknown; url?: unknown; path?: unknown };
+  const d = (data ?? {}) as { source?: unknown; url?: unknown; path?: unknown; text?: unknown };
   if (d.source === "link" && typeof d.url === "string" && d.url.trim().length >= 8 && d.url.length <= 2000) return { source: "link", url: d.url.trim() };
-  if (d.source === "photo" && typeof d.path === "string" && d.path.length >= 1 && d.path.length <= 300) return { source: "photo", path: d.path };
+  if (d.source === "photo" && typeof d.path === "string" && d.path.length >= 1 && d.path.length <= 300 && (d.text === undefined || (typeof d.text === "string" && d.text.length <= MAX_RECIPE_TEXT * 2)))
+    return { source: "photo", path: d.path, text: cleanRecipeText(typeof d.text === "string" ? d.text : "", MAX_RECIPE_TEXT) };
   return null;
 }
 
@@ -33,19 +37,29 @@ export interface AddRecipeResult {
   warnings: string[];
 }
 
+/** A page that didn't open; a site that refuses apps gets the way round it. */
+function pageError(status: number): CallError {
+  return new CallError(
+    "invalid-argument",
+    siteRefusesApps(status)
+      ? `That site doesn't let apps read its recipes (HTTP ${status}). Add a photo instead, with the recipe's text copied from the page.`
+      : `Couldn't open that page (HTTP ${status})`,
+  );
+}
+
 /** A page's HTML. Under the emulator from `_stubLlm/{uid}` (or config) `pages[url]`; "!<status>" fails like HTTP. */
 async function fetchPage(uid: string, url: URL): Promise<string> {
   if (isEmulator()) {
     const own = (await db.doc(`_stubLlm/${uid}`).get()).data()?.pages as Record<string, string> | undefined;
     const html = own?.[url.href] ?? ((await db.doc("_stubLlm/config").get()).data()?.pages as Record<string, string> | undefined)?.[url.href];
-    if (html === undefined || html.startsWith("!")) throw new CallError("invalid-argument", `Couldn't open that page (HTTP ${html?.slice(1) || 404})`);
+    if (html === undefined || html.startsWith("!")) throw pageError(Number(html?.slice(1) || 404));
     return html;
   }
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), PAGE_TIMEOUT_MS);
   try {
     const res = await fetch(url, { signal: ctl.signal, redirect: "follow", headers: { "User-Agent": "Mozilla/5.0 (compatible; SolvingFood/1.0; recipe import)", Accept: "text/html,application/xhtml+xml" } });
-    if (!res.ok) throw new CallError("invalid-argument", `Couldn't open that page (HTTP ${res.status})`);
+    if (!res.ok) throw pageError(res.status);
     if (!safeRecipeUrl(res.url || url.href)) throw new CallError("invalid-argument", "That page redirects somewhere the app can't open");
     const type = res.headers.get("content-type") ?? "";
     if (type && !/html|xml|text\/plain/i.test(type)) throw new CallError("invalid-argument", `That link isn't a web page (${type.split(";")[0]})`);
@@ -61,7 +75,7 @@ async function fetchPage(uid: string, url: URL): Promise<string> {
   }
 }
 
-async function readPhoto(uid: string, path: string): Promise<{ part: GeminiPart; file: ReturnType<ReturnType<typeof bucket>["file"]> }> {
+async function readPhoto(uid: string, path: string): Promise<{ part: GeminiPart; data: Buffer; file: ReturnType<ReturnType<typeof bucket>["file"]> }> {
   if (!path.startsWith(`recipe-photos/${uid}/`) || path.includes("..")) throw new CallError("invalid-argument", "That photo isn't yours");
   const file = bucket().file(path);
   const [exists] = await file.exists();
@@ -70,7 +84,7 @@ async function readPhoto(uid: string, path: string): Promise<{ part: GeminiPart;
   const mimeType = String(meta.contentType ?? "image/jpeg");
   if (!mimeType.startsWith("image/") || Number(meta.size ?? 0) > MAX_PHOTO_BYTES) throw new CallError("invalid-argument", "That isn't a photo the app can read");
   const [buf] = await file.download();
-  return { part: { inlineData: { mimeType, data: buf.toString("base64") } }, file };
+  return { part: { inlineData: { mimeType, data: buf.toString("base64") } }, data: buf, file };
 }
 
 export async function addRecipeWithGemini(uid: string, data: unknown): Promise<AddRecipeResult> {
@@ -95,8 +109,8 @@ export async function addRecipeWithGemini(uid: string, data: unknown): Promise<A
     } else {
       photo = await readPhoto(uid, req.path);
       await rateLimit(uid, Date.now(), { collection: "aiRate", limit: ADD_PER_HOUR, message: `That's ${ADD_PER_HOUR} recipes with Gemini this hour; try again later` });
-      source = { kind: "photo" };
-      first = [photo.part, { text: "Write the .cook file for the recipe in this photo." }];
+      source = { kind: "photo", withText: !!req.text };
+      first = req.text ? [photo.part, { text: `The recipe's text:\n${req.text}` }] : [photo.part, { text: "Write the .cook file for the recipe in this photo." }];
       fileName = "your photo";
     }
 
@@ -108,7 +122,8 @@ export async function addRecipeWithGemini(uid: string, data: unknown): Promise<A
       const cook = extractCook(answer);
       try {
         if (!cook) throw new CooklangError("the answer had no .cook file");
-        const out = await importCook(uid, fileName, dropLocalImage(cook), { imageWaitMs: 0 });
+        const dish = source.kind === "photo" && source.withText && photo && photoIsDish(answer) ? photo.data : undefined;
+        const out = await importCook(uid, fileName, dropLocalImage(cook), { imageWaitMs: 0, imageData: dish });
         if (out.status !== "imported" && out.status !== "pendingDuplicateReview") throw new CooklangError("it wasn't imported");
         const title = String((await db.doc(`recipes/${out.recipeId}`).get()).data()?.title ?? "");
         return { status: out.status, recipeId: out.recipeId, title, warnings: out.warnings };

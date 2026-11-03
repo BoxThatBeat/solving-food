@@ -64,7 +64,7 @@ export interface AddRecipeResult {
   warnings: string[];
 }
 
-const addRecipe = (data: { source: "link"; url: string } | { source: "photo"; path: string }) =>
+const addRecipe = (data: { source: "link"; url: string } | { source: "photo"; path: string; text?: string }) =>
   httpsCallable<typeof data, AddRecipeResult>(functions, "addRecipeWithGemini", { timeout: 240_000 })(data).then((r) => r.data);
 
 /** Add with Gemini from a web link (R4.37). */
@@ -74,13 +74,14 @@ export function addRecipeFromLink(url: string): Promise<AddRecipeResult> {
 
 const PHOTO_EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic", "image/heif": "heif", "image/avif": "avif", "image/gif": "gif" };
 
-/** Add with Gemini from a photo (R4.37): uploaded to recipe-photos/{uid}/ (the function deletes it), then read. */
-export async function addRecipeFromPhoto(uid: string, file: File): Promise<AddRecipeResult> {
+/** Add with Gemini from a photo (R4.37), optionally with the recipe's text: uploaded to recipe-photos/{uid}/ (the
+ * function deletes it), then read. */
+export async function addRecipeFromPhoto(uid: string, file: File, text = ""): Promise<AddRecipeResult> {
   const type = file.type || "image/jpeg";
   const ext = PHOTO_EXT[type];
   if (!ext) throw new Error("That isn't a photo the app can read (JPEG, PNG, WebP, HEIC)");
   if (file.size > 10 * 1024 * 1024) throw new Error("That photo is over 10 MB");
   const path = `recipe-photos/${uid}/${crypto.randomUUID().replace(/-/g, "")}.${ext}`;
   await uploadBytes(ref(storage, path), file, { contentType: type });
-  return addRecipe({ source: "photo", path });
+  return addRecipe(text.trim() ? { source: "photo", path, text: text.trim() } : { source: "photo", path });
 }

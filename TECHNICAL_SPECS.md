@@ -812,13 +812,18 @@ flowchart TD
   Claude** builds the same prompt client-side (`claudePrompt`) and **Paste Claude's answer** reads the first JSON in the
   reply (`parseClaudeAnswer`), then applies merges with the `mergeIngredient` callable and `new` with a client write
   of `nameCheck` (rules allow only `new` / `unsure`).
-- **Add with Gemini** (M16, R4.37): callable `addRecipeWithGemini({ source: "link", url } | { source: "photo", path })`,
+- **Add with Gemini** (M16, R4.37): callable `addRecipeWithGemini({ source: "link", url } | { source: "photo", path, text? })`,
   allowlisted callers, 10 per person per hour (`aiRate/{uid}`). A link must be a public http(s) address
   (`safeRecipeUrl`: no localhost, private or link-local IPs, single-label or `.internal` hosts; a redirect is checked
   again); the function fetches it (15 s, ≤ 3 MB, HTML) and sends Gemini the page's schema.org Recipe JSON-LD
   (`extractRecipeJsonLd`, also inside `@graph`), or else its visible text (`htmlToText`, ≤ 30k chars). A photo is
   uploaded by the client to `recipe-photos/{uid}/{random}.{ext}` (image, ≤ 10 MB), sent inline (`inlineData`) and
-  deleted after the call. The system instruction is the Claude skill itself (`SKILL_TEXT` in
+  deleted after the call. A photo may carry the recipe's text (≤ 30k chars, `cleanRecipeText`; the sheet takes a picture
+  pasted into it too): then the frame asks Gemini to start with `PHOTO: dish` or `PHOTO: recipe` (`photoIsDish`), and a
+  dish photo is stored as the recipe's image (`importCook`'s `imageData`). A page answering 401, 403, 429 or 451
+  (`siteRefusesApps`: bot protection on servers) gets a message pointing to a photo with the text; the app never
+  disguises its fetch. Every failed call is logged (`add with Gemini failed`: uid, source, host, message; never the
+  page, photo or text). The system instruction is the Claude skill itself (`SKILL_TEXT` in
   `functions/src/ai/skillText.generated.ts`, written by `pnpm gen:skill` from SKILL.md and the syntax, conventions,
   taxonomy and ingredients references; `skill.test.ts` fails when it's stale) with a frame (`recipeInstruction`: skip
   the delivery step, answer with one ```cooklang block, or NOT A RECIPE; for a link use it as `source` and the page's

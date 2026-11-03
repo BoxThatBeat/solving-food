@@ -95,12 +95,23 @@ export const pcxStatus = onCall({ cors: true }, (req) => pcxCall(() => pcxStatus
 export const aiStatus = onCall({ cors: true }, (req) => pcxCall(() => aiStatusLogic(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
 export const aiSetKey = onCall({ cors: true }, (req) => pcxCall(() => aiSetKeyLogic(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
 export const checkIngredientNames = onCall({ cors: true, timeoutSeconds: 300 }, (req) => pcxCall(() => checkNamesLogic(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
+function safeHost(url: string): string | undefined {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Add with Gemini (R4.37): a link or photo becomes a recipe. Allowlisted callers; Gemini can take a while, a photo is big. */
 export const addRecipeWithGemini = onCall({ cors: true, timeoutSeconds: 240, memory: "512MiB" }, async (req) => {
   try {
     const uid = await requireAllowed(req.auth);
     return await addRecipeLogic(uid, req.data);
   } catch (e) {
+    // Logged so a failure can be read later (the person only sees the message); never the page, photo or text.
+    const d = (req.data ?? {}) as { source?: unknown; url?: unknown };
+    logger.warn("add with Gemini failed", { uid: req.auth?.uid, source: d.source, host: typeof d.url === "string" ? safeHost(d.url) : undefined, error: (e as Error).message });
     if (e instanceof MergeError) throw new HttpsError(e.code, e.message);
     if (e instanceof CallError) throw new HttpsError(e.code, e.message);
     throw e;

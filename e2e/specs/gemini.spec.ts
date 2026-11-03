@@ -1,6 +1,8 @@
 // gemini.spec.ts (Planning/M16): Settings → Gemini (R11.15, R4.36: the owner's key, everyone else a status line) and
 // Add with Gemini (R4.37: a web link, an uploaded photo, the camera option; not set up). Gemini and the web pages are
 // the functions' stubs: `_stubLlm/{uid}` { pages, recipe, mode } for this test's own user.
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import type { Page } from "@playwright/test";
 import { adminDb } from "../fixtures/admin";
 import { uniqueTitle } from "../fixtures/recipes";
@@ -65,6 +67,9 @@ test("a photo of a recipe becomes a recipe; Gemini not set up says where to set 
   await adminDb.doc(`_stubLlm/${household.uid}`).set({ recipe: "```cooklang\n" + cook(title) + "```" });
   let sheet = await openAddSheet(page);
   await sheet.getByLabel("Upload a photo of a recipe").setInputFiles({ name: "card.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 16, 74, 70, 73, 70]) });
+  const chosen = sheet.getByTestId("gemini-photo");
+  await expect(chosen).toContainText("card.jpg");
+  await chosen.getByRole("button", { name: "Add", exact: true }).click();
   await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible({ timeout: 60_000 });
   const recipe = (await adminDb.collection("recipes").where("title", "==", title).get()).docs[0]!.data();
   expect(recipe.imagePaths).toEqual([]);
@@ -74,4 +79,29 @@ test("a photo of a recipe becomes a recipe; Gemini not set up says where to set 
   await expect(sheet.getByTestId("add-with-gemini")).toContainText("Gemini isn't set up yet", { timeout: 20_000 });
   await expect(sheet.getByRole("link", { name: "Settings → Gemini" })).toBeVisible();
   await expect(sheet.getByLabel("Paste a web recipe link")).toBeDisabled();
+});
+
+test("a photo can go with the recipe's text: a dish photo becomes its picture; a site that refuses apps says so (R4.37)", { tag: ["@R4.37"] }, async ({ page, household }) => {
+  test.setTimeout(120_000);
+  const title = uniqueTitle("Gemini Dish Toast");
+  const blocked = "https://blocked.example.com/toast";
+  await adminDb.doc(`_stubLlm/${household.uid}`).set({ pages: { [blocked]: "!403" }, recipe: "PHOTO: dish\n```cooklang\n" + cook(title) + "```" });
+  const sheet = await openAddSheet(page);
+  await sheet.getByLabel("Paste a web recipe link").fill(blocked);
+  await sheet.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(sheet.getByRole("alert")).toContainText("doesn't let apps read its recipes (HTTP 403)", { timeout: 30_000 });
+
+  const png = readFileSync(fileURLToPath(new URL("../../data/recipes/obsidian/attachments/Pasted image 20240116181103.png", import.meta.url)));
+  await sheet.getByLabel("Upload a photo of a recipe").setInputFiles({ name: "dish.png", mimeType: "image/png", buffer: png });
+  const chosen = sheet.getByTestId("gemini-photo");
+  await expect(chosen.getByRole("img", { name: "The chosen photo" })).toBeVisible();
+  await expect(sheet.getByLabel("Take a photo of a recipe")).toHaveCount(0);
+  await chosen.getByRole("button", { name: "Remove the photo" }).click();
+  await expect(chosen).toHaveCount(0);
+  await sheet.getByLabel("Upload a photo of a recipe").setInputFiles({ name: "dish.png", mimeType: "image/png", buffer: png });
+  await chosen.getByLabel("Recipe text").fill("Buttered toast. 1 tbsp butter, 2 slices bread. Toast the bread and butter it.");
+  await chosen.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible({ timeout: 60_000 });
+  const recipe = (await adminDb.collection("recipes").where("title", "==", title).get()).docs[0]!.data();
+  expect(recipe.imagePaths).toHaveLength(1);
 });
