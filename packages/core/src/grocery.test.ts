@@ -10,6 +10,9 @@ import {
   itemCosts,
   manualItem,
   mergeDraft,
+  isRemoved,
+  removedLineIds,
+  withoutRemoved,
   needsFor,
   packLabel,
   storeFor,
@@ -182,6 +185,33 @@ describe("draft regeneration", () => {
     // A changed tomato line keeps its tick.
     const gen4 = buildList([plan("a", "curry", 20)], c).items;
     expect(mergeDraft(stored, gen4).set.tomato).toMatchObject({ checked: true, checkedBy: "u2", packs: 3 }); // 2000 g in 796 g cans
+  });
+
+  it("removed lines (M17, R7.13) stay removed through regeneration; restore puts them back", () => {
+    const c = ctx();
+    const built = buildList([plan("a", "curry", 4)], c);
+    const gen = built.items;
+    const stored = { ...gen, tomato: { ...gen.tomato!, removed: true } };
+    // Regenerating keeps the flag: nothing to write.
+    expect(mergeDraft(stored, gen)).toEqual({ set: {}, remove: [] });
+    // A changed line keeps the flag too.
+    const gen2 = buildList([plan("a", "curry", 20)], c).items;
+    expect(mergeDraft(stored, gen2).set.tomato).toMatchObject({ removed: true, packs: 3 });
+    // Restore (the Regenerate button): the line comes back without the flag.
+    const restored = mergeDraft(stored, gen, { restore: true });
+    expect(Object.keys(restored.set)).toEqual(["tomato"]);
+    expect(restored.set.tomato!.removed).toBeUndefined();
+    expect(isRemoved(restored.set.tomato!)).toBe(false);
+    // A generated line never brings a removed flag of its own.
+    expect(mergeDraft({}, { tomato: { ...gen.tomato!, removed: true } }).set.tomato!.removed).toBeUndefined();
+    // Removed lines leave the totals (budget meter, R6.3).
+    const ids = removedLineIds(stored);
+    expect([...ids]).toEqual(["tomato"]);
+    const left = withoutRemoved(built, ids);
+    expect(left.items.tomato).toBeUndefined();
+    expect(left.totalCents).toBe(built.totalCents - (gen.tomato!.estPriceCents ?? 0));
+    expect(Object.values(left.sources).reduce((a, b) => a + b, 0)).toBe(Object.keys(left.items).length);
+    expect(withoutRemoved(built, new Set())).toBe(built);
   });
 
   it("manual lines: ingredients in packs, free text as is", () => {

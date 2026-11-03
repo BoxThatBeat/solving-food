@@ -483,6 +483,11 @@ export const groceryItemSchema = z.object({
   stapleReason: z.enum(["cadence", "plan", "out"]).optional(),
   checked: z.boolean(),
   checkedBy: z.string().optional(),
+  /**
+   * Taken off the draft with its × (M17, R7.13): a plan line the household doesn't want to buy. Kept on the stored draft
+   * so regeneration doesn't add it back; not shown, copied, ordered, or counted. Regenerate clears it.
+   */
+  removed: z.boolean().optional(),
   /** Set by receiveGroceries: canonical amount that arrived (0 = didn't arrive) and the ingredient actually bought. */
   receivedAmount: z.number().min(0).optional(),
   receivedIngredientId: id.optional(),
