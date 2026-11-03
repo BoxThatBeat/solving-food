@@ -49,6 +49,17 @@ R7.13 (new: remove any line; Regenerate restores), R7.12 (changed: Regenerate al
 - **A new period starts with nothing removed.** The draft belongs to the household and follows the current period; an
   ingredient skipped for one week's recipes isn't assumed unwanted next week.
 
+## Follow-up (2026-11-03): the Copy text names the store and carries the household's instructions
+
+Owner: "Add a text input for text that gets added to the ChatGPT prompt. I also don't like that I need to select my
+store in the ChatGPT chat when I paste the instructions. It should be in the pasted text which store."
+
+- [x] Core: `copyText(items, stores, { store, instructions })`, `pcxStoreForCopy`, `DEFAULT_PCX_STORE_LABEL`,
+      `COPY_INSTRUCTIONS_MAX`; `settings.chatgptInstructions` on the household (rules already accept any `settings` map).
+- [x] Grocery page: "Instructions for ChatGPT" box above Copy, saved on blur for the household.
+- [x] PRD R7.5, spec §4 and §8; core unit test; e2e (@R7.5: saved, survives a reload, store line and instructions in
+      the clipboard). Design-compare skipped (owner's standing request).
+
 ## Exit criteria
 
 - [x] Unit, rules and e2e tests pass (desktop-1080p and phone-ios).

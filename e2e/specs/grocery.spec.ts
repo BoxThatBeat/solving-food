@@ -66,6 +66,13 @@ test("Copy copies only the PC Express section and marks the list ordered; Undo p
   await seedPlanItem(household.hid, pid, [r.id]);
   await gotoGrocery(page);
   await expect(line(page, "Baby spinach")).toBeVisible();
+  // The household's own instructions travel with the copy (saved when the box loses focus).
+  const instructions = page.getByLabel("Instructions for ChatGPT");
+  await instructions.fill("Default to No Name or President's Choice brands if not specified.");
+  await instructions.blur();
+  await expect.poll(async () => (await adminDb.doc(`households/${household.hid}`).get()).data()?.settings?.chatgptInstructions).toBe("Default to No Name or President's Choice brands if not specified.");
+  await page.reload();
+  await expect(page.getByLabel("Instructions for ChatGPT")).toHaveValue("Default to No Name or President's Choice brands if not specified.");
   await page.getByRole("button", { name: "Copy for ChatGPT" }).click();
   if (browserName !== "chromium") {
     // WebKit and Firefox in Playwright may refuse the clipboard: the fallback sheet shows the text to copy by hand.
@@ -76,7 +83,16 @@ test("Copy copies only the PC Express section and marks the list ordered; Undo p
   if (browserName === "chromium") {
     const text = await page.evaluate(() => navigator.clipboard.readText());
     // Olive oil is a staple line (M10, R7.12: free-use, used by the meal, never bought here), ordered like any PC Express line.
-    expect(text).toBe(["Please add these to my PC Express cart:", "- Baby spinach, 312 g × 1", "- Olive oil, 1 L × 1", "Substitutions: closest equivalent size; skip if unavailable."].join("\n"));
+    // The store is named so ChatGPT doesn't ask which one (the fixture household keeps the default store).
+    expect(text).toBe(
+      [
+        "Please add these to my PC Express cart at the Loblaws Greenbank Road (Ottawa) store (use this store; don't ask me to pick one):",
+        "- Baby spinach, 312 g × 1",
+        "- Olive oil, 1 L × 1",
+        "Substitutions: closest equivalent size; skip if unavailable.",
+        "Default to No Name or President's Choice brands if not specified.",
+      ].join("\n"),
+    );
   }
   const ordered = page.getByTestId("ordered-list");
   await expect(ordered).toContainText("Chicken thigh"); // Costco's checklist travels with the order

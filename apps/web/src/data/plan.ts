@@ -47,6 +47,7 @@ import {
   type BrandMappingDoc,
   type CoverageRecipe,
   type CreateMealInput,
+  COPY_INSTRUCTIONS_MAX,
   type GroceryItem,
   type GroceryListDoc,
   type HouseholdDoc,
@@ -417,6 +418,12 @@ export function saveNutrition(hid: string, on: boolean) {
 }
 
 /** The household's PC Express store (R6.22). */
+/** Instructions added to the list copied for ChatGPT (R7.5); "" removes them. */
+export function saveChatgptInstructions(hid: string, text: string) {
+  const v = text.trim().slice(0, COPY_INSTRUCTIONS_MAX);
+  return updateDoc(doc(db, "households", hid), { "settings.chatgptInstructions": v ? v : deleteField() });
+}
+
 export function savePcxStore(hid: string, pcxStoreId: string, pcxStoreName: string) {
   return updateDoc(doc(db, "households", hid), { pcxStoreId, pcxStoreName: pcxStoreName.slice(0, 120) });
 }

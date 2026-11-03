@@ -4,6 +4,7 @@ import {
   addedCost,
   buildList,
   copyText,
+  pcxStoreForCopy,
   DEFAULT_STORES,
   groupByStore,
   incomingFrom,
@@ -27,6 +28,7 @@ import {
   type RuleEntry,
   type StapleIngredient,
 } from "./grocery";
+import { DEFAULT_PCX_STORE_ID } from "./config";
 import { budgetState } from "./budget";
 import { resolvePrice, costPerServing, formatCents } from "./pricing";
 
@@ -234,6 +236,12 @@ describe("copy text (R7.5)", () => {
         "Substitutions: closest equivalent size; skip if unavailable.",
       ].join("\n"),
     );
+    const withStore = copyText(items, STORES, { store: pcxStoreForCopy(DEFAULT_PCX_STORE_ID, undefined), instructions: "  Default to No Name or President's Choice brands if not specified.  " }).split("\n");
+    expect(withStore[0]).toBe("Please add these to my PC Express cart at the Loblaws Greenbank Road (Ottawa) store (use this store; don't ask me to pick one):");
+    expect(withStore.at(-1)).toBe("Default to No Name or President's Choice brands if not specified.");
+    expect(copyText(items, STORES, { store: " ", instructions: " " }).split("\n")).toHaveLength(5);
+    expect(pcxStoreForCopy("1009", "Loblaws Rideau Centre")).toBe("Loblaws Rideau Centre");
+    expect(pcxStoreForCopy("1009", undefined)).toBeNull();
     const groups = groupByStore(items, STORES);
     expect(groups.map((g) => g.store.id)).toEqual(["pc-express", "costco"]);
     expect(groups[1]!.items.map(([id]) => id)).toEqual(["chicken"]);

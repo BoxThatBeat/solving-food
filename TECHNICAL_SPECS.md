@@ -268,6 +268,7 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
                                  nutrition?: boolean,                       // (M9, R6.27) false hides protein and fibre
                                                                            // everywhere and turns the goal factors off;
                                                                            // absent = on; goals are kept either way
+                                 chatgptInstructions?: string,              // (M17, R7.5) ≤ 1000, added to the Copy text
                                  sides?: { [ingredientId]: { portion } } }  // (M6) household-flagged sides and portion
                                                                            // overrides (R11.14); effective portion =
                                                                            // settings.sides[id] ?? ingredient.side
@@ -675,14 +676,15 @@ Implementation (M2, `packages/core/grocery.ts`, Grocery page): the current draft
 
 Store resolution starts with the brand mapping because a mapping pinned to a specific PC Express product must never be sent to Costco by a broader category rule.
 
-**Copy button:** copies only the `pcExpress` store items and sets the list's `status` to `ordered` (R7.5), with an **Undo** in the confirmation toast that sets it back to `draft`. In M2 the draft's items move into a new list document with `status: ordered`, `orderedAt`, `orderedBy` (all stores: an in-store checklist such as Costco's travels with the order and stays tickable there), and Undo moves them back. If the browser refuses the clipboard, a sheet shows the text to copy by hand. Lines read `- <product>, <pack> × <packs>`, or `- <product>, <grams>` without a pack:
+**Copy button:** copies only the `pcExpress` store items and sets the list's `status` to `ordered` (R7.5), with an **Undo** in the confirmation toast that sets it back to `draft`. In M2 the draft's items move into a new list document with `status: ordered`, `orderedAt`, `orderedBy` (all stores: an in-store checklist such as Costco's travels with the order and stays tickable there), and Undo moves them back. If the browser refuses the clipboard, a sheet shows the text to copy by hand. Lines read `- <product>, <pack> × <packs>`, or `- <product>, <grams>` without a pack. The first line names the household's PC Express store (`pcxStoreForCopy`: `pcxStoreName`, else "Loblaws Greenbank Road (Ottawa)" for the default store) so ChatGPT doesn't ask to pick one; the household's `settings.chatgptInstructions` (the "Instructions for ChatGPT" box above Copy, saved on blur, ≤ 1000 characters; empty removes it) is the last line:
 
 ```
-Please add these to my PC Express cart:
+Please add these to my PC Express cart at the Loblaws Greenbank Road (Ottawa) store (use this store; don't ask me to pick one):
 - Mutti Polpa chopped tomatoes, 400 g can × 2
 - Organic baby spinach, 312 g clamshell × 1
 - Lactantia 2% milk, 4 L × 1
 Substitutions: closest equivalent size; skip if unavailable.
+Default to No Name or President's Choice brands if not specified.
 ```
 
 **Confirming a purchase** (R7.8): the confirmation screen lists the items as bought. Edits are optional. When a confirmed item comes from a `bulk` store and its ingredient is `freezable`, the screen asks how much to freeze (R7.9). Everything is submitted as one `receiveGroceries` command.

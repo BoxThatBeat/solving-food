@@ -18,6 +18,7 @@ import type { GroceryItem } from "./types";
 import { packToCanonical, resolvePrice, type LivePrice, type PriceEstimate, type PriceSource } from "./pricing";
 import type { RecipeRef } from "./plan";
 import { cadenceInterval, isDue, type CadenceLike } from "./cadence";
+import { DEFAULT_PCX_STORE_ID, DEFAULT_PCX_STORE_LABEL } from "./config";
 
 export interface GroceryIngredient extends ConvertibleIngredient {
   id: string;
@@ -564,13 +565,29 @@ export function copyLine(it: GroceryItem): string {
  * The Copy button's text (R7.5, §8): only the PC Express section, LLM-friendly, with quantities and brands. Lines
  * already ticked off are still included (a tick isn't an order).
  */
-export function copyText(items: Readonly<Record<string, GroceryItem>>, stores: readonly StoreEntry[]): string {
+export function copyText(items: Readonly<Record<string, GroceryItem>>, stores: readonly StoreEntry[], opts: { store?: string | null; instructions?: string | null } = {}): string {
   const pcx = new Set(stores.filter((s) => s.kind === "pcExpress").map((s) => s.id));
   const lines = groupByStore(items, stores)
     .filter((g) => pcx.has(g.store.id))
     .flatMap((g) => g.items.map(([, it]) => copyLine(it)));
-  return ["Please add these to my PC Express cart:", ...lines, "Substitutions: closest equivalent size; skip if unavailable."].join("\n");
+  const store = opts.store?.trim();
+  const extra = opts.instructions?.trim();
+  return [
+    store ? `Please add these to my PC Express cart at the ${store} store (use this store; don't ask me to pick one):` : "Please add these to my PC Express cart:",
+    ...lines,
+    "Substitutions: closest equivalent size; skip if unavailable.",
+    ...(extra ? [extra] : []),
+  ].join("\n");
 }
+
+/** The household's PC Express store as ChatGPT should hear it (R7.5): the picked store's name, else the default's. */
+export function pcxStoreForCopy(pcxStoreId: string | null | undefined, pcxStoreName: string | null | undefined): string | null {
+  if (pcxStoreName?.trim()) return pcxStoreName.trim();
+  return !pcxStoreId || pcxStoreId === DEFAULT_PCX_STORE_ID ? DEFAULT_PCX_STORE_LABEL : null;
+}
+
+/** Instructions for ChatGPT the household adds to the copied list (R7.5), at most this many characters. */
+export const COPY_INSTRUCTIONS_MAX = 1000;
 
 /** The PC Express lines of a list (what Copy sends). */
 export function pcExpressLines(items: Readonly<Record<string, GroceryItem>>, stores: readonly StoreEntry[]): Array<[string, GroceryItem]> {

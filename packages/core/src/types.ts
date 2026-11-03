@@ -281,6 +281,8 @@ export const householdSettingsSchema = z.object({
   nutrition: z.boolean().optional(),
   /** Sides the household flagged and/or portion overrides (R11.14), keyed by ingredient ID; portion canonical. */
   sides: z.record(id, z.object({ portion: z.number().positive() })).optional(),
+  /** Instructions added to the list copied for ChatGPT (R7.5), e.g. preferred brands. */
+  chatgptInstructions: z.string().max(1000).optional(),
 });
 
 export const householdNameSchema = z

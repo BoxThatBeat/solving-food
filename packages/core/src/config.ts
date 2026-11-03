@@ -22,6 +22,8 @@ export const DEFAULT_HOUSEHOLD_NAME = "Home";
  * households keep working whatever the real ID is. A household that picks a store in Settings stores the real ID.
  */
 export const DEFAULT_PCX_STORE_ID = "loblaws-greenbank-road";
+/** The default store's name, for people and ChatGPT. */
+export const DEFAULT_PCX_STORE_LABEL = "Loblaws Greenbank Road (Ottawa)";
 
 export const DISPLAY_NAME_MAX = 40;
 export const HOUSEHOLD_NAME_MAX = 60;
