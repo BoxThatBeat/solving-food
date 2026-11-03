@@ -214,6 +214,13 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   `.claude/skills/solving-food-skill/`; edit the skill, regenerate, deploy functions.
 - **Emulators:** Gemini and the page fetch are stubs: `_stubLlm/{uid}` (or `config`) `{ pages: { "<url>": "<html>" |
   "!404" }, recipe: "<answer>" | ["<first>", "<after repair>"], mode?: "down" | "off" }`.
+- **Storage rules can read Firestore (granted 2026-11-03).** Every Storage upload rule calls `allowed()`, which uses
+  `firestore.exists(allowlist/…)`. That cross-service read needs the Storage service agent to hold
+  `roles/firebaserules.firestoreServiceAgent`. The CLI offers the grant on an interactive deploy, but every deploy here
+  runs `--non-interactive`, so it was never given, and every browser upload was refused live with `storage/unauthorized`
+  (photos for Add with Gemini, recipe pictures). The emulator doesn't check it. Granted by the owner with:
+  `gcloud projects add-iam-policy-binding solvingfood --member=serviceAccount:service-28493041173@gcp-sa-firebasestorage.iam.gserviceaccount.com --role=roles/firebaserules.firestoreServiceAgent`.
+  Check it with `gcloud projects get-iam-policy solvingfood --flatten=bindings --filter="bindings.role:roles/firebaserules.firestoreServiceAgent" --format="value(bindings.members)"`.
 
 ## M11 hands-free mode (2026-10-13)
 
