@@ -3,7 +3,9 @@
 // Copy hands the PC Express section to ChatGPT and marks the list ordered, with Undo (R7.5). Prototype "Grocery",
 // phase "order". An ordered list is confirmed on arrival (phase "receipt", R7.8) with the freeze prompt for bulk buys
 // (R7.9): <ReceiveSheet> sends one receiveGroceries command. M10 (R7.12): staples that are due are on the list by
-// themselves (a "Staples" group in each store card); removing one keeps it off for its usual interval.
+// themselves (a "Staples" group in each store card); removing one keeps it off for its usual interval. M17 (R7.13):
+// every line has an ×; a plan line taken off stays on the stored draft flagged `removed` (so regeneration doesn't add
+// it back, and it isn't shown, copied, ordered, or counted) until the Regenerate button puts every removed line back.
 import { useStapleLines } from "@/components/grocery/staples";
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -16,6 +18,7 @@ import {
   groupByStore,
   manualItem,
   isGenerated,
+  isRemoved,
   mergeDraft,
   pcExpressLines,
   stapleDismissUntil,
@@ -28,7 +31,7 @@ import { Input, Select } from "@/components/ui/input";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/chip";
 import { useNotify } from "@/components/notifications-context";
-import { addLine, addManualItem, dismissStaple, DRAFT_ID, syncDraft, millis, orderDraft, removeItem, tickItem, undoOrder, type StoredList } from "@/data/plan";
+import { addLine, addManualItem, dismissStaple, DRAFT_ID, syncDraft, millis, orderDraft, removeItem, setLineRemoved, tickItem, undoOrder, type StoredList } from "@/data/plan";
 import { usePlanModel } from "@/data/planModel";
 import { ReceiveSheet } from "@/components/grocery/ReceiveSheet";
 import { searchIngredients, useAllIngredients, type IngredientEntry } from "@/data/ingredients";
@@ -57,30 +60,36 @@ function GroceryPage() {
   const staples = useStapleLines(m);
   const generated = React.useMemo(() => ({ ...m.built.items, ...staples.lines }), [m.built.items, staples.lines]);
 
-  // Regenerate (§8): keep the stored draft in step with the plan. Manual lines and ticks survive; field-level writes.
-  const sync = React.useCallback(async () => {
+  // Regenerate (§8): keep the stored draft in step with the plan. Manual lines, ticks and removed lines survive;
+  // field-level writes. `restore` (the Regenerate button, M17) puts every removed line and staple back.
+  const sync = React.useCallback(async (restore = false) => {
     if (!m.ready || !staples.ready || m.draft.data === undefined || !m.periodId) return;
     // Cheap check on the snapshot first; the transaction re-reads before writing.
     const { set, remove } = mergeDraft(m.draft.data?.items ?? {}, generated);
-    if (!Object.keys(set).length && !remove.length && m.draft.data && m.draft.data.periodId === m.periodId) return;
-    await syncDraft(m.hid, m.periodId, generated);
+    if (!restore && !Object.keys(set).length && !remove.length && m.draft.data && m.draft.data.periodId === m.periodId) return;
+    await syncDraft(m.hid, m.periodId, generated, { restore });
   }, [m.ready, staples.ready, m.draft.data, generated, m.periodId, m.hid]);
   React.useEffect(() => {
     const t = setTimeout(() => void sync().catch((e) => console.warn("grocery sync failed", e)), 300);
     return () => clearTimeout(t);
   }, [sync]);
 
-  // What the page shows: fresh generated lines (plan and staples, with the stored ticks) plus the stored manual lines.
+  // What the page shows: fresh generated lines (plan and staples, with the stored ticks) plus the stored manual lines,
+  // without the lines removed with their × (M17).
   const items: Record<string, GroceryItem> = React.useMemo(() => {
     const out: Record<string, GroceryItem> = {};
     for (const [id, it] of Object.entries(generated)) {
       const stored = draftItems?.[id];
+      if (stored && isRemoved(stored)) continue;
       out[id] = { ...it, checked: stored?.checked ?? false, ...(stored?.checkedBy ? { checkedBy: stored.checkedBy } : {}) };
     }
     // Stored staple lines wait for the staples to load rather than flicker out.
-    for (const [id, it] of Object.entries(draftItems ?? {})) if (!isGenerated(it) || (it.source === "staple" && !staples.ready)) out[id] = it;
+    for (const [id, it] of Object.entries(draftItems ?? {})) if (!isRemoved(it) && (!isGenerated(it) || (it.source === "staple" && !staples.ready))) out[id] = it;
     return out;
   }, [generated, draftItems, staples.ready]);
+  // Removed lines still on the draft (kept through regeneration and orders), and staples kept off: what Regenerate restores.
+  const removedLines = React.useMemo(() => Object.fromEntries(Object.entries(draftItems ?? {}).filter(([, it]) => isRemoved(it))), [draftItems]);
+  const removedCount = Object.keys(removedLines).filter((id) => id in generated).length + Object.values(m.draft.data?.dismissedStaples ?? {}).filter((until) => until > m.supply.now).length;
 
   const remove = (id: string) => {
     const it = items[id];
@@ -91,6 +100,12 @@ function GroceryPage() {
       // Not yet in the stored draft (regeneration is debounced): only the dismissal is written.
       const write = draftItems?.[id] ? dismissStaple(m.hid, id, it.ingredientId, until, m.draft.data?.dismissedStaples, Date.now()) : m.periodId ? addLine(m.hid, m.periodId, id, it, !!m.draft.data).then(() => dismissStaple(m.hid, id, it.ingredientId!, until, m.draft.data?.dismissedStaples, Date.now())) : Promise.resolve();
       return write.then(() => notify({ kind: "success", message: `Removed ${it.productName} · it won't be added again for a while` })).catch(fail);
+    }
+    if (it?.source === "plan") {
+      // M17 (R7.13): the line stays on the draft, flagged, so regeneration doesn't add it back. Supply isn't touched.
+      const undo = { label: "Undo", run: () => void setLineRemoved(m.hid, id, false).catch(fail) };
+      const write = draftItems?.[id] ? setLineRemoved(m.hid, id, true) : m.periodId ? addLine(m.hid, m.periodId, id, { ...it, removed: true }, !!m.draft.data) : Promise.resolve();
+      return write.then(() => notify({ kind: "success", message: `Removed ${it.productName} · Regenerate puts it back`, action: undo })).catch(fail);
     }
     return removeItem(m.hid, DRAFT_ID, id).catch(fail);
   };
@@ -106,7 +121,7 @@ function GroceryPage() {
     setBusy(true);
     try {
       await sync(); // the stored draft must hold what's shown
-      const listId = await orderDraft(m.hid, m.periodId, items, s.user.uid);
+      const listId = await orderDraft(m.hid, m.periodId, items, s.user.uid, removedLines);
       notify({
         kind: "success",
         message: copied ? `Copied ${pcxCount} item${pcxCount === 1 ? "" : "s"} for ChatGPT · list marked ordered` : "List marked ordered",
@@ -199,9 +214,22 @@ function GroceryPage() {
       />
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button variant="secondary" size="sm" onClick={() => void sync().then(() => notify({ kind: "success", message: "List regenerated from the plan" }))}>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() =>
+            void sync(true)
+              .then(() => notify({ kind: "success", message: removedCount ? "List regenerated · removed items are back" : "List regenerated from the plan" }))
+              .catch((e) => notify({ kind: "error", message: `Couldn't regenerate: ${(e as Error).message}` }))
+          }
+        >
           Regenerate
         </Button>
+        {removedCount ? (
+          <span className="font-mono text-[0.6875rem] font-bold text-sub uppercase" data-testid="removed-count">
+            {removedCount} removed · Regenerate puts {removedCount === 1 ? "it" : "them"} back
+          </span>
+        ) : null}
         <Link to="/settings/brands" className="text-[0.8125rem] font-extrabold text-ink underline">
           Brands
         </Link>
@@ -329,8 +357,8 @@ function StoreCard({
               <span className="font-mono text-[0.8125rem] font-extrabold">×{it.packs}</span>
               <span className="font-mono text-[0.625rem] font-semibold text-sub">{it.estPriceCents === null ? "price ?" : formatCents(it.estPriceCents)}</span>
             </span>
-            {it.source !== "plan" && onRemove && !readOnlyRemove ? (
-              <button type="button" aria-label={`Remove ${it.productName}`} onClick={() => onRemove(id)} className="grid size-9 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink">
+            {onRemove && !readOnlyRemove ? (
+              <button type="button" aria-label={`Remove ${it.productName}`} title="Remove from the list" onClick={() => onRemove(id)} className="grid size-11 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink sm:size-9">
                 <X aria-hidden className="size-4" strokeWidth={3} />
               </button>
             ) : null}

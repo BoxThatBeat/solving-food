@@ -322,13 +322,16 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
                                  items: { [itemId]: { ingredientId?, freeText?, amount, measure,   // amount: canonical bought
                                           need?, packAmount?, packLabel?,                        // shortfall, pack (canonical), "400 g"
                                           packs, productName, storeId, estPriceCents, priceSource?,
-                                          source: plan|manual|cadence, checked, checkedBy?,
+                                          source: plan|manual|cadence|staple, checked, checkedBy?,
+                                          removed?,                                              // M17: taken off with its ×
                                           receivedAmount?, receivedIngredientId? } }               // set on receiving (M3)
                                  // received lists also have receivedBy and receivedCents (estimated cost of what arrived:
                                  // the period's spend, R10.3); clients can't edit or delete a received list
                                  // the current draft is groceryLists/draft; Copy moves its items into a new list
                                  // with status ordered (Undo moves them back and deletes it)
                                  // status → ordered when the Copy button is used (R7.5); items on ordered lists count as "incoming" (§8)
+                                 // the draft also has dismissedStaples? (M10) and keeps removed lines (removed: true, M17,
+                                 // R7.13) through regeneration and orders; the Regenerate button clears both
 
   supply/{supplyId}              // ingredientId, or "leftover_{eventId}"
     ingredientId?, label, canonicalAmount, canonicalUnit,
@@ -664,9 +667,11 @@ packs     = ceil(shortfall / packSize)
 → store: brandMapping.storeId → ingredient sourcing rule → category sourcing rule → household default store
 ```
 
-Regenerating keeps manual items and checked-off state. The list is a Firestore document, so every member sees ticks live, which matters at Costco.
+Regenerating keeps manual items, checked-off state, and removed lines (M17; the Regenerate button puts removed lines back). The list is a Firestore document, so every member sees ticks live, which matters at Costco.
 
 Implementation (M2, `packages/core/grocery.ts`, Grocery page): the current draft is `groceryLists/draft`. While the Grocery page is open it writes the field-level difference between the stored draft and the generated plan lines (`mergeDraft`); plan lines are keyed by ingredient ID, manual ones `manual_<id>`. Manual lines are free text or an ingredient bought in whole packs; they don't count against the budget (R6.4). Store resolution falls through a rule or mapping that points at a deleted store. Expired lots don't count as supply (R8.15), so the builder buys replacements for them.
+
+**Removing a line (M17, R7.13):** every line has an × (`Remove <product>`). A manual or cadence line is deleted from the draft; a staple line is deleted and dismissed (below); a **plan line stays on the stored draft with `removed: true`** (`setLineRemoved`; a line not stored yet is written whole with the flag). `mergeDraft` carries the flag through regeneration like a tick (a generated line never brings one of its own), so the automatic sync doesn't add it back. Removed lines are not shown, copied, or ordered: `orderDraft` leaves them on the emptied draft so they don't return after an order. The Plan model's budget meter and Use it up (R6.25) read `withoutRemoved(built, removedLineIds(draft.items))`, so the meter answers what the next order will buy; the raw `built` still feeds regeneration. The **Regenerate** button runs `syncDraft(…, { restore: true })`: `mergeDraft(…, { restore: true })` drops every `removed` flag and the transaction deletes `dismissedStaples`, so every removed line and staple comes back; a draft moving to a new period is restored the same way. Removing never touches Supply (no command). Rules: the groceryLists rule doesn't validate item fields, so the flag needs no rule change (rules test covers it). Decision: a flag on the line, not a list of removed ingredient IDs, because the line is already keyed by ingredient ID and merges, ticks and orders already work per line.
 
 Store resolution starts with the brand mapping because a mapping pinned to a specific PC Express product must never be sent to Costco by a broader category rule.
 
@@ -1526,6 +1531,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | M14 | PC Express key | No PC Express account (sign-in and secrets removed); the public API key as an owner setting in Settings → Stores, tried on save |
 | M15 | LLM ingredients | Gemini (free tier) decides whether an imported name is an existing ingredient before anything is created; Check with Gemini merges waiting names; Copy for Claude fallback; the review/merge UI removed; "From PC Express" labels |
 | M16 | Add with Gemini | Settings → Gemini (status, the owner's key); Add recipe from a web link, an uploaded photo or the camera: Gemini follows the Claude skill (generated into the functions bundle) and the drop-folder importer imports its file |
+| M17 | Grocery remove | An × on every grocery line; removed plan lines stay off (flag on the draft line) and out of the budget until Regenerate puts them all back |
 
 Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix. The detailed, task-level plan for each milestone lives in `Planning/`.
 

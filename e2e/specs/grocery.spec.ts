@@ -144,3 +144,44 @@ test("ticks show up live for the other member (NFR5)", { tag: ["@NFR5"] }, async
   expect(items["chicken-thigh"]).toMatchObject({ checked: true, checkedBy: household.uid });
   expect(items["baby-spinach"]).toMatchObject({ checked: true, checkedBy: secondMember.user.uid });
 });
+
+test("every line has an ×: a removed plan line stays off (reload, order) and leaves the budget; Regenerate puts it back (R7.13)", { tag: ["@R7.13"] }, async ({ page, household }) => {
+  const r = await makePlanRecipe("Remove a line");
+  const pid = await seedPeriod(household.hid, { budgetCents: 20000 });
+  await seedPlanItem(household.hid, pid, [r.id]);
+  const plan = new PlanPage(page);
+  const dollars = async () => Number((await plan.budgetLeft().textContent())!.replace(/[^0-9.]/g, ""));
+  await plan.goto();
+  await expect(plan.budgetLeft()).not.toHaveText("$200.00");
+  const before = await dollars();
+  await gotoGrocery(page);
+  await expect(line(page, "Chicken thigh")).toBeVisible();
+  // Plan lines have the × too, not only lines added by hand.
+  await line(page, "Chicken thigh").getByRole("button", { name: "Remove Chicken thigh" }).click();
+  await expect(line(page, "Chicken thigh")).toHaveCount(0);
+  await expect(page.getByTestId("notifications")).toContainText("Regenerate puts it back");
+  await expect(page.getByTestId("removed-count")).toContainText("1 removed");
+  const draft = () => adminDb.doc(`households/${household.hid}/groceryLists/draft`).get();
+  await expect.poll(async () => (await draft()).data()?.items?.["chicken-thigh"]?.removed).toBe(true);
+  // It stays removed after a reload (stored on the draft, so for every member).
+  await gotoGrocery(page);
+  await expect(line(page, "Baby spinach")).toBeVisible();
+  await expect(line(page, "Chicken thigh")).toHaveCount(0);
+  // The budget meter no longer counts it (R6.3: what the next order will cost).
+  await plan.goto();
+  await expect.poll(dollars).toBeGreaterThan(before);
+  // Ordering leaves it out, and it doesn't come back afterwards.
+  await gotoGrocery(page);
+  await page.getByRole("button", { name: "Mark ordered without copying" }).click();
+  await expect(page.getByTestId("ordered-list")).toBeVisible();
+  await expect(page.getByTestId("ordered-list")).toContainText("Baby spinach");
+  await expect(line(page, "Chicken thigh")).toHaveCount(0);
+  expect((await draft()).data()?.items?.["chicken-thigh"]?.removed).toBe(true);
+  // Regenerate puts every removed line back.
+  await page.getByRole("button", { name: "Regenerate" }).click();
+  await expect(line(page, "Chicken thigh")).toBeVisible();
+  await expect(page.getByTestId("removed-count")).toHaveCount(0);
+  await expect.poll(async () => (await draft()).data()?.items?.["chicken-thigh"]?.removed).toBeUndefined();
+  await gotoGrocery(page);
+  await expect(line(page, "Chicken thigh")).toBeVisible();
+});

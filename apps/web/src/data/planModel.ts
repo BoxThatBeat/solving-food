@@ -8,6 +8,8 @@ import {
   addLocalDays,
   budgetState,
   buildList,
+  removedLineIds,
+  withoutRemoved,
   expiringSpare,
   incomingFrom,
   itemCosts,
@@ -100,7 +102,10 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[]; extraIn
   const costs = useMemo(() => itemCosts(inputs, ctx), [inputs, ctx]);
   // Projected supply (R8.4): unexpired − what the period's uncooked items will use.
   const projected = useMemo(() => projectedSupply(unexpired, inputs, ctx), [unexpired, inputs, ctx]);
-  const budget = useMemo(() => budgetState(period.data?.budgetCents ?? household?.budgetCents ?? 0, built), [period.data?.budgetCents, household?.budgetCents, built]);
+  // What the next order will buy: the built lines minus the ones removed from the list with their × (M17, R7.13).
+  const removedIds = useMemo(() => removedLineIds(draft.data?.items), [draft.data?.items]);
+  const order = useMemo(() => withoutRemoved(built, removedIds), [built, removedIds]);
+  const budget = useMemo(() => budgetState(period.data?.budgetCents ?? household?.budgetCents ?? 0, order), [period.data?.budgetCents, household?.budgetCents, order]);
   // Spare supply expiring within the period (or the next few days): what no planned meal will use (R6.13, M5).
   const tz = household?.timezone ?? "America/Toronto";
   const periodEndMs = millis(period.data?.end);
@@ -110,8 +115,8 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[]; extraIn
   // Use it up before ordering (M9, R6.25): the same rule, on Supply as it will be when the next order (the plan lines
   // the grocery builder would buy) arrives.
   const useItUp = useMemo(
-    () => orderSpare(lotsByIngredient, plannedNeeds, Object.values(built.items), (id) => ingredients.get(id), untilMs, supply.now, tz),
-    [lotsByIngredient, plannedNeeds, built.items, ingredients, untilMs, supply.now, tz],
+    () => orderSpare(lotsByIngredient, plannedNeeds, Object.values(order.items), (id) => ingredients.get(id), untilMs, supply.now, tz),
+    [lotsByIngredient, plannedNeeds, order.items, ingredients, untilMs, supply.now, tz],
   );
 
   // Ready to price: every recipe loaded and every ingredient they use.
@@ -134,7 +139,10 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[]; extraIn
     ctx,
     /** The plan items as the grocery builder reads them. */
     inputs,
+    /** Every generated plan line, removed ones included (regeneration keeps their flag). */
     built,
+    /** IDs of the plan lines removed from the list (M17, R7.13). */
+    removedIds,
     costs,
     budget,
     draft,

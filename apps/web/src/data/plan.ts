@@ -487,7 +487,7 @@ const draftRef = (hid: string) => doc(db, "households", hid, "groceryLists", DRA
  * transaction retry on fresh data, so nobody's tick is overwritten. Needs a connection; offline the page still shows
  * the computed lines and the draft catches up later.
  */
-export async function syncDraft(hid: string, periodId: string, generated: Record<string, GroceryItem>): Promise<void> {
+export async function syncDraft(hid: string, periodId: string, generated: Record<string, GroceryItem>, opts: { restore?: boolean } = {}): Promise<void> {
   if (typeof navigator !== "undefined" && navigator.onLine === false) return;
   const ref = draftRef(hid);
   await runTransaction(db, async (tx) => {
@@ -497,11 +497,14 @@ export async function syncDraft(hid: string, periodId: string, generated: Record
       tx.set(ref, { periodId, status: "draft", createdAt: serverTimestamp(), items: generated });
       return;
     }
-    const { set, remove } = mergeDraft(stored.items ?? {}, generated);
+    // Removed lines (M17, R7.13) come back on Regenerate (`restore`) and with a new period's list.
+    const { set, remove } = mergeDraft(stored.items ?? {}, generated, { restore: opts.restore || stored.periodId !== periodId });
     const args: unknown[] = [];
     for (const [id, it] of Object.entries(set)) args.push(new FieldPath("items", id), it);
     for (const id of remove) args.push(new FieldPath("items", id), deleteField());
     if (stored.periodId !== periodId) args.push(new FieldPath("periodId"), periodId);
+    // Regenerate puts removed staples back too (R7.12, R7.13).
+    if (opts.restore && stored.dismissedStaples && Object.keys(stored.dismissedStaples).length) args.push(new FieldPath("dismissedStaples"), deleteField());
     if (!args.length) return;
     const [f, v, ...rest] = args as [FieldPath, unknown, ...unknown[]];
     tx.update(ref, f, v, ...rest);
@@ -531,6 +534,14 @@ export function dismissStaple(hid: string, itemId: string, ingredientId: string,
   return updateDoc(draftRef(hid), new FieldPath("items", itemId), deleteField(), ...args);
 }
 
+/**
+ * The × on a plan line (M17, R7.13): the line stays on the stored draft flagged `removed`, so regeneration doesn't add
+ * it back; `removed: false` (Undo) shows it again. Supply is not touched.
+ */
+export function setLineRemoved(hid: string, itemId: string, removed: boolean) {
+  return updateDoc(draftRef(hid), new FieldPath("items", itemId, "removed"), removed ? true : deleteField());
+}
+
 export function removeItem(hid: string, listId: string, itemId: string) {
   return updateDoc(doc(db, "households", hid, "groceryLists", listId), new FieldPath("items", itemId), deleteField());
 }
@@ -547,13 +558,14 @@ export function tickItem(hid: string, listId: string, itemId: string, checked: b
 
 /**
  * The Copy button (R7.5): the draft's items move into a new list with status `ordered` (who and when), and the draft
- * empties. Ordered items count as incoming, so regenerating doesn't add them again (§8).
+ * empties (except for removed lines, M17). Ordered items count as incoming, so regenerating doesn't add them again (§8).
  */
-export async function orderDraft(hid: string, periodId: string, items: Record<string, GroceryItem>, uid: string): Promise<string> {
+export async function orderDraft(hid: string, periodId: string, items: Record<string, GroceryItem>, uid: string, keep: Record<string, GroceryItem> = {}): Promise<string> {
   const b = writeBatch(db);
   const ref = doc(collection(db, "households", hid, "groceryLists"));
   b.set(ref, { periodId, status: "ordered", createdAt: serverTimestamp(), orderedAt: serverTimestamp(), orderedBy: uid, items });
-  b.update(draftRef(hid), { items: {} });
+  // `keep`: the removed lines (M17), which stay on the draft so they don't come back after the order.
+  b.update(draftRef(hid), { items: keep });
   await b.commit();
   return ref.id;
 }

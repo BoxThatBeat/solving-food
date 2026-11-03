@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
 import { assertFails, assertSucceeds, initializeTestEnvironment, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
-import { deleteDoc, doc, getDoc, getDocs, collection, increment, serverTimestamp, setDoc, Timestamp, updateDoc, writeBatch, type Firestore } from "firebase/firestore";
+import { deleteDoc, deleteField, doc, getDoc, getDocs, collection, increment, serverTimestamp, setDoc, Timestamp, updateDoc, writeBatch, type Firestore } from "firebase/firestore";
 
 const rules = readFileSync(fileURLToPath(new URL("../../firestore.rules", import.meta.url)), "utf8");
 const [host, port] = (process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080").split(":");
@@ -185,6 +185,10 @@ describe("household collections are member-only (R2.8)", () => {
     await assertSucceeds(updateDoc(ref, { "dismissedStaples.milk": Date.now() + 86_400_000 }));
     await assertFails(updateDoc(ref, { dismissedStaples: "milk" }));
     await assertFails(updateDoc(ref, { somethingElse: 1 }));
+    // M17 (R7.13): a line taken off with its × is flagged on the draft; Regenerate clears the flag and the dismissals.
+    await assertSucceeds(updateDoc(ref, { "items.tomato.removed": true }));
+    await assertSucceeds(updateDoc(ref, { "items.tomato.removed": deleteField(), dismissedStaples: deleteField() }));
+    await assertFails(updateDoc(doc(dbAs(BOB), "households/h-alice/groceryLists/draft"), { "items.tomato.removed": true }));
     const ordered = doc(db, "households/h-alice/groceryLists/o1");
     await assertFails(setDoc(ordered, { periodId: "2026-10-05", status: "ordered", createdAt: serverTimestamp(), items: {} }));
     await assertSucceeds(setDoc(ordered, { periodId: "2026-10-05", status: "ordered", createdAt: serverTimestamp(), orderedAt: serverTimestamp(), orderedBy: ALICE.uid, items: { tomato: groceryItem } }));
