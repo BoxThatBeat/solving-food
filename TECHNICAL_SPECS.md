@@ -453,7 +453,7 @@ Firestore writes queue up offline, but callable functions don't. So every action
 
 | Command | Effect |
 |---|---|
-| `addSupply` | Manual add (R8.2): `purchase` (+) lot with estimated expiry |
+| `addSupply` | Manual add (R8.2): `purchase` (+) lot with estimated expiry, or `until` (ms, optional) as its use-by when picked in the sheet (R8.18; stored as `expiryExtendedTo`) |
 | `receiveGroceries` | `purchase` (+) per confirmed item → new lots; optional `freeze` split (R7.9); grocery list → received; update cadence |
 | `finishCooking` | Issued by **Done cooking**, before any review (R9.3). `cook` (−) per recipe ingredient at the planned servings and per side at portion × servings (M6, R5.10; the payload's `sides`, else the plan item's) (FEFO, skipping free-use ingredients); `leftover` (+) lot of `defaultLeftoverPortions`; leftover plan items (§7); plan item → cooked; cook event with `reviewStatus: pending` |
 | `submitReview` | Per-user rating for the meal and/or its recipes; updates `stats/*`. When the reviewer also confirms **used amounts and leftovers**, the function writes `correction` (±) transactions for the difference between the recipe defaults already deducted and the confirmed amounts, adjusts the leftover lot and its plan items to the confirmed count, marks the review `done`, and (M9, R9.5) sets the cooked plan item to `eaten` (status only; no Supply change). Later ratings from other members only add ratings |

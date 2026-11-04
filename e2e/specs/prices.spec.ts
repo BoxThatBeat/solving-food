@@ -36,9 +36,14 @@ test("product search links a brand to a PC Express product; the budget uses its 
   await expect(search.getByTestId("from-pcx")).toBeVisible();
   await expect(result).toContainText("796 mL");
   await expect(result).toContainText("$1.99");
+  await expect(result).toHaveAttribute("aria-pressed", "false");
   await result.click();
+  // The picked product is plainly marked, in the results and above the form.
+  await expect(result).toHaveAttribute("aria-pressed", "true");
+  await expect(result).toContainText("✓ SELECTED");
   await expect(page.getByLabel("PRODUCT", { exact: true })).toHaveValue("No Name Diced Tomatoes");
   await expect(page.getByTestId("linked-product")).toContainText("STUB-TOM-796");
+  await expect(page.getByTestId("linked-product")).toContainText("No Name Diced Tomatoes");
   await page.getByRole("button", { name: "Save brand" }).click();
   await expect(page.getByTestId("brand-row")).toContainText("No Name Diced Tomatoes");
   await expect(page.getByTestId("brand-price")).toContainText(/\$1\.99 · live today/i);

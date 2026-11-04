@@ -178,16 +178,22 @@ function MappingForm({
       }}
     >
       {initial?.m ? null : <IngredientPicker ingredients={ingredients} value={ingredient ?? undefined} onPick={(i) => setIngredient(i)} uid={uid} label="Ingredient" />}
-      {pcxStoreId ? <PcxProductSearch hid={hid} pcxStoreId={pcxStoreId} initialQuery={initial?.ingredient.name ?? ingredient?.name ?? ""} key={ingredient?.id ?? "none"} onPick={pick} /> : null}
+      {pcxStoreId ? <PcxProductSearch hid={hid} pcxStoreId={pcxStoreId} initialQuery={initial?.ingredient.name ?? ingredient?.name ?? ""} key={ingredient?.id ?? "none"} selectedCode={code} onPick={pick} /> : null}
       {code ? (
-        <p className="m-0 flex flex-wrap items-center gap-1.5 font-mono text-[0.625rem] font-bold uppercase" data-testid="linked-product">
-          <FromPcx />
-          Linked to PC Express product {code}
-          {pcxStoreName ? ` at ${pcxStoreName}` : ""} ·{" "}
-          <button type="button" onClick={() => setCode(undefined)} className="cursor-pointer bg-transparent p-0 font-mono text-[0.625rem] font-bold text-ink uppercase underline">
+        <div className="flex flex-wrap items-center gap-2 rounded-ui border-2 border-line bg-acc p-2.5 text-onc" data-testid="linked-product" role="status">
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">✓ SELECTED PC EXPRESS PRODUCT</span>
+            <span className="text-[0.875rem] leading-tight font-extrabold">{product || code}</span>
+            <span className="flex flex-wrap items-center gap-1.5 font-mono text-[0.625rem] font-semibold uppercase">
+              <FromPcx />
+              {code}
+              {pcxStoreName ? ` · ${pcxStoreName}` : ""}
+            </span>
+          </span>
+          <Button type="button" size="sm" variant="secondary" onClick={() => setCode(undefined)}>
             Unlink
-          </button>
-        </p>
+          </Button>
+        </div>
       ) : null}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="bm-product" className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">

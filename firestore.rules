@@ -345,7 +345,7 @@ service cloud.firestore {
     // The function validates the full payload with the shared zod schemas; rules check the envelope and the
     // payload's keys per type.
     function payloadKeys(t) {
-      return t == 'addSupply' ? ['ingredientId', 'amount', 'location', 'entered']
+      return t == 'addSupply' ? ['ingredientId', 'amount', 'location', 'entered', 'until']
         : t == 'receiveGroceries' ? ['listId', 'items']
         : t == 'finishCooking' ? ['cookEventId', 'planItemId', 'savedMealId', 'recipes', 'servings', 'mealType', 'title', 'sides']
         : t == 'submitReview' ? ['cookEventId', 'ratings', 'used', 'leftoverPortions', 'savedMealId', 'note']

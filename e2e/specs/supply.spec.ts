@@ -227,3 +227,27 @@ test("any purchase's use-by date can be set by hand from a calendar (R8.18)", { 
   expect(until).toBeGreaterThan(Date.now() + 9 * 86_400_000);
   expect(until).toBeLessThan(Date.now() + 12 * 86_400_000);
 });
+
+test("the use-by date can be set when adding to Supply (R8.18)", { tag: ["@R8.18", "@R8.2"] }, async ({ page, household }) => {
+  const supply = new SupplyPage(page);
+  await supply.goto();
+  await page.getByRole("button", { name: "+ Add" }).click();
+  const sheet = page.getByRole("dialog", { name: "Add to supply" });
+  await sheet.getByLabel("Ingredient").fill("dried red lent");
+  await sheet.getByRole("option", { name: /dried red lentil/i }).first().click();
+  await sheet.getByLabel("Amount").fill("500");
+  // The typical date for where it's kept shows until one is picked.
+  await expect(sheet.getByTestId("add-useby-typical")).toContainText(/typical in the/i);
+  await sheet.getByRole("button", { name: /Set the use-by date/ }).click();
+  const input = sheet.getByLabel("Use by");
+  await expect(input).toHaveAttribute("type", "date");
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(new Date(Date.now() + 10 * 86_400_000));
+  await input.fill(day);
+  await sheet.getByRole("button", { name: /^Add 500 g/ }).click();
+  await expect(supply.row("Dried red lentil")).toBeVisible();
+  await commandsSettled(household.hid, 1);
+  const d = await supplyDoc(household.hid, "dried-red-lentil");
+  const until = (d!.lots[0]!.expiryExtendedTo as { toMillis(): number }).toMillis();
+  expect(until).toBeGreaterThan(Date.now() + 9 * 86_400_000);
+  expect(until).toBeLessThan(Date.now() + 12 * 86_400_000);
+});

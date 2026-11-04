@@ -1,14 +1,28 @@
 // <PcxProductSearch> (PRD R7.10; TECHNICAL_SPECS §8 "Linking products"): searches PC Express at the household's store
 // (callable pcxSearchProducts) and shows each result's name, pack size, image, and current price. Picking one fills
-// the brand mapping (product name, code, pack); the callable has already written its price to prices/*.
+// the brand mapping (product name, code, pack); the callable has already written its price to prices/*. The picked
+// product (`selectedCode`) stays marked in the results: accent fill, a ✓ SELECTED tag, aria-pressed.
 import * as React from "react";
 import { FromPcx } from "@/components/FromPcx";
 import { formatCents, type PcxProduct } from "@solving-food/core";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { callError, searchPcxProducts } from "@/data/pcx";
 
-export function PcxProductSearch({ hid, pcxStoreId, initialQuery, onPick }: { hid: string; pcxStoreId: string; initialQuery?: string; onPick: (p: PcxProduct) => void }) {
+export function PcxProductSearch({
+  hid,
+  pcxStoreId,
+  initialQuery,
+  selectedCode,
+  onPick,
+}: {
+  hid: string;
+  pcxStoreId: string;
+  initialQuery?: string;
+  selectedCode?: string | undefined;
+  onPick: (p: PcxProduct) => void;
+}) {
   const [q, setQ] = React.useState(initialQuery ?? "");
   const [busy, setBusy] = React.useState(false);
   const [result, setResult] = React.useState<{ products: PcxProduct[]; connected: boolean; message?: string | undefined } | null>(null);
@@ -50,22 +64,37 @@ export function PcxProductSearch({ hid, pcxStoreId, initialQuery, onPick }: { hi
       {result?.products.length ? <FromPcx /> : null}
       {result?.products.length ? (
         <ul className="m-0 flex max-h-[24rem] list-none flex-col gap-1.5 overflow-y-auto p-0" aria-label="Products found">
-          {result.products.map((p) => (
+          {result.products.map((p) => {
+            const on = p.productCode === selectedCode;
+            return (
             <li key={p.productCode}>
-              <button type="button" onClick={() => onPick(p)} aria-label={`Use ${p.name}`} className="flex w-full cursor-pointer items-center gap-2.5 rounded-ui border-2 border-line bg-base p-2 text-left text-ink">
+              <button
+                type="button"
+                onClick={() => onPick(p)}
+                aria-label={`Use ${p.name}`}
+                aria-pressed={on}
+                className={cn(
+                  "flex w-full cursor-pointer items-center gap-2.5 rounded-ui border-line p-2 text-left text-ink",
+                  on ? "border-[3px] bg-acc text-onc shadow-[var(--sh)]" : "border-2 bg-base",
+                )}
+              >
                 <span className="grid size-12 flex-none place-items-center overflow-hidden rounded-[calc(var(--r)*0.6)] border-2 border-line bg-mantle">
                   {p.imageUrl ? <img src={p.imageUrl} alt="" className="size-full object-contain" loading="lazy" /> : <span aria-hidden className="font-mono text-[0.625rem] font-bold">PC</span>}
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="text-[0.8125rem] leading-tight font-extrabold">{p.name}</span>
-                  <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
+                  <span className={cn("font-mono text-[0.625rem] font-semibold uppercase", on ? "text-onc" : "text-sub")}>
                     {[p.brand, p.packageSize].filter(Boolean).join(" · ") || "Pack size unknown"}
                   </span>
                 </span>
-                <span className="flex-none font-mono text-[0.875rem] font-extrabold">{p.priceCents !== undefined ? formatCents(p.priceCents) : "—"}</span>
+                <span className="flex flex-none flex-col items-end gap-1">
+                  <span className="font-mono text-[0.875rem] font-extrabold">{p.priceCents !== undefined ? formatCents(p.priceCents) : "—"}</span>
+                  {on ? <span className="rounded-[calc(var(--r)*0.6)] border-2 border-line bg-base px-1.5 font-mono text-[0.5625rem] font-extrabold text-ink">✓ SELECTED</span> : null}
+                </span>
               </button>
             </li>
-          ))}
+            );
+          })}
         </ul>
       ) : null}
     </div>

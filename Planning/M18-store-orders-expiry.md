@@ -51,6 +51,20 @@ list just at the very bottom". The Suggested row, optimiser, expiry alerts and U
 - [x] Also fixed (2026-11-04): Supply lot actions wrap as one row under the details on a phone (they squeezed the
       details to one word a line after Set date was added).
 
+## Follow-up (2026-11-04): use-by when adding; picked PC Express product marked
+
+Owner: "add the setting expiry date flow to this add supply modal" and "when selecting a pc express product in the
+brands page, there is no real indication as to what is selected".
+
+- [x] **Add to supply → Use by (R8.18):** below Kept in, the typical use-by for the picked location
+      (`estimateExpiry`) with **Set date**, which swaps in a native date field (calendar via `showPicker()`, min today)
+      and **Use typical**. `addSupplyPayload.until` (optional ms, midnight after the day); the handler and the
+      optimistic projection set it as the lot's `expiryExtendedToMs`; `until` added to the addSupply keys in
+      `firestore.rules` (rules test). Hidden for staples. E2E @R8.18.
+- [x] **Brands → PC Express search (R7.10):** the picked result has `aria-pressed`, the accent fill, a heavier border
+      and a ✓ SELECTED tag; the linked-product line is now an accent panel naming the product, its code and store,
+      with an Unlink button. E2E (prices spec) asserts both. Design-compare skipped (owner's standing request).
+
 ## Verification
 
 - Typecheck, lint clean. Core 678, web 37, rules 99 (storeId). E2E grocery, receive, supply, core-loop on

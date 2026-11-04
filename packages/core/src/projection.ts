@@ -85,7 +85,9 @@ export function projectPending(supply: ReadonlyMap<string, ProjectedDoc>, pendin
         const ing = ctx.ingredient(c.payload.ingredientId);
         if (!ing || ing.freeUse) break;
         const d = out.get(c.payload.ingredientId) ?? { ingredientId: c.payload.ingredientId, label: ing.name, canonicalUnit: ing.canonicalUnit, lots: [] };
-        out.set(c.payload.ingredientId, { ...d, lots: applyPurchase(d.lots, newLotFor(id, c.payload.amount, c.payload.location, ing.shelfLifeDays, ctx.nowMs, ctx.tz)).lots, pending: true });
+        const lot = newLotFor(id, c.payload.amount, c.payload.location, ing.shelfLifeDays, ctx.nowMs, ctx.tz);
+        if (c.payload.until && c.payload.until > ctx.nowMs) lot.expiryExtendedToMs = c.payload.until;
+        out.set(c.payload.ingredientId, { ...d, lots: applyPurchase(d.lots, lot).lots, pending: true });
         break;
       }
       case "receiveGroceries": {

@@ -17,6 +17,8 @@ export const addSupplyPayload = z.object({
   location: z.enum(STORAGE_LOCATIONS),
   /** The amount added, in metric, for the transaction note ("380 g"; R8.13). */
   entered: z.string().max(60).optional(),
+  /** Use-by set by hand when adding (R8.18): the lot counts until this instant (midnight after the day). */
+  until: ms.optional(),
 });
 
 export const receiveItemPayload = z.object({

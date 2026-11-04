@@ -97,7 +97,10 @@ export async function addSupply(ctx: Ctx, p: CommandPayload<"addSupply">): Promi
   }
   await ctx.store.load([ing.id]);
   const d = ctx.store.ensure(ing.id, supplyInit(ing));
-  ctx.store.apply(ing.id, applyPurchase(d.lots, purchaseLot(ctx, ctx.cmdId, p.amount, ing, p.location), "purchase", p.entered ? `added ${p.entered}` : "added"), { clearShort: true });
+  const lot = purchaseLot(ctx, ctx.cmdId, p.amount, ing, p.location);
+  // A use-by date picked in the add sheet (R8.18) wins over the estimate, like Set date on a lot.
+  if (p.until && p.until > ctx.nowMs) lot.expiryExtendedToMs = p.until;
+  ctx.store.apply(ing.id, applyPurchase(d.lots, lot, "purchase", p.entered ? `added ${p.entered}` : "added"), { clearShort: true });
   ctx.store.commit();
   return undefined;
 }

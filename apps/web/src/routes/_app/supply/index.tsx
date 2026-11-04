@@ -262,7 +262,7 @@ function SupplyPage() {
         </section>
       ) : null}
 
-      <AddSupplySheet open={adding} onOpenChange={setAdding} hid={m.hid} uid={s.user.uid} />
+      <AddSupplySheet open={adding} onOpenChange={setAdding} hid={m.hid} uid={s.user.uid} tz={tz} nowMs={now} />
     </PageBody>
   );
 }
