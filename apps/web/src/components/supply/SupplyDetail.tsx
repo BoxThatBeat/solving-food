@@ -91,7 +91,7 @@ function LotRow({ lot, item, ingredient, unit, hid, uid, tz, nowMs }: { lot: Led
   return (
     <li className="flex flex-col gap-2 rounded-ui border-2 border-line bg-base p-2.5" data-testid="lot">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="flex min-w-[12rem] flex-1 flex-col gap-1">
           <span className="font-mono text-[0.8125rem] font-extrabold">
             {amountText(lot.amount, unit)} <span className="text-[0.625rem] font-semibold text-sub">BOUGHT {dateText(lot.acquiredAtMs, tz)}</span>
           </span>
@@ -104,6 +104,8 @@ function LotRow({ lot, item, ingredient, unit, hid, uid, tz, nowMs }: { lot: Led
             </span>
           </span>
         </span>
+        {/* The actions wrap as one group, below the details on a phone. */}
+        <div className="flex flex-wrap gap-2">
         <Button
           size="sm"
           variant="chip"
@@ -141,6 +143,7 @@ function LotRow({ lot, item, ingredient, unit, hid, uid, tz, nowMs }: { lot: Led
         >
           Threw it out
         </Button>
+        </div>
       </div>
       {dating !== null ? (
         <form

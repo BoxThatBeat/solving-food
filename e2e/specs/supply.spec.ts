@@ -207,6 +207,12 @@ test("any purchase's use-by date can be set by hand from a calendar (R8.18)", { 
   await supply.goto();
   const row = await supply.open("Italian sausage");
   const lot = row.getByTestId("lot").first();
+  // The actions wrap as one row, below the lot's details on a phone (they used to squeeze the details to one word a line).
+  const info = await lot.getByText(/use by/i).boundingBox();
+  const setDate = await lot.getByRole("button", { name: /Set the use-by date/ }).boundingBox();
+  const threw = await lot.getByRole("button", { name: /Threw out this purchase/ }).boundingBox();
+  expect(Math.abs(setDate!.y - threw!.y)).toBeLessThan(2);
+  if ((page.viewportSize()?.width ?? 1000) < 500) expect(setDate!.y).toBeGreaterThan(info!.y + info!.height - 1);
   await lot.getByRole("button", { name: /Set the use-by date/ }).click();
   const input = lot.getByLabel("italian sausage use by");
   await expect(input).toHaveAttribute("type", "date");
