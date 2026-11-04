@@ -5,7 +5,7 @@ import { expect, test } from "../fixtures/test";
 import { PlanPage } from "../pages/plan";
 import { commandsSettled, expectSupply, makeCookRecipe, supplyDoc } from "../pages/supply";
 
-test("the core loop, end to end", { tag: ["@smoke", "@R7.8", "@R7.9", "@R9.3", "@R9.4", "@R10.1"] }, async ({ page, household }) => {
+test("the core loop, end to end", { tag: ["@smoke", "@R7.14", "@R7.8", "@R7.9", "@R9.3", "@R9.4", "@R10.1"] }, async ({ page, household }) => {
   const r = await makeCookRecipe("Core loop chicken", { leftovers: 2 });
   // Meat goes to Costco (bulk), so the chicken arrives as a bulk buy.
   await adminDb.doc(`households/${household.hid}/sourcingRules/cat_meat`).set({ match: { category: "meat" }, storeId: "costco" });
@@ -20,13 +20,18 @@ test("the core loop, end to end", { tag: ["@smoke", "@R7.8", "@R7.9", "@R9.3", "
   await page.goto("/grocery");
   await expect(page.getByText("Building the list…")).toHaveCount(0, { timeout: 20_000 });
   await expect(page.getByTestId("store-inStore")).toContainText("Chicken thigh");
+  // Each store is its own order (R7.14): PC Express is ordered online, Costco is shopped in store and confirmed there.
   await page.getByRole("button", { name: "Mark ordered without copying" }).click();
   await expect(page.getByTestId("ordered-list")).toBeVisible();
-  await page.getByRole("button", { name: /Groceries arrived\? Confirm/ }).click();
+  await page.getByTestId("store-inStore").getByRole("button", { name: "Done shopping · confirm" }).click();
   await page.getByRole("dialog", { name: "Confirm groceries" }).getByRole("button", { name: "Everything arrived · add to supply" }).click();
   const bulk = page.getByRole("dialog", { name: "Bulk buy" });
   await bulk.getByRole("button", { name: /^Freeze/ }).click();
   expect(await commandsSettled(household.hid, 1)).toEqual([]);
+  await expect(page.getByTestId("ordered-list")).toHaveCount(1);
+  await page.getByRole("button", { name: /Groceries arrived\? Confirm/ }).click();
+  await page.getByRole("dialog", { name: "Confirm groceries" }).getByRole("button", { name: "Everything arrived · add to supply" }).click();
+  expect(await commandsSettled(household.hid, 2)).toEqual([]);
   const chicken = (await supplyDoc(household.hid, "chicken-thigh"))!;
   expect(chicken.canonicalAmount).toBe(1000);
   expect(chicken.lots.some((l) => l.location === "freezer")).toBe(true);
@@ -49,7 +54,7 @@ test("the core loop, end to end", { tag: ["@smoke", "@R7.8", "@R7.9", "@R9.3", "
   await spinach.getByRole("button", { name: "Less Baby spinach" }).click(); // 140 → 115
   await page.getByRole("button", { name: "Next →" }).click();
   await page.getByRole("button", { name: "Save & update supply" }).click();
-  expect(await commandsSettled(household.hid, 3)).toEqual([]);
+  expect(await commandsSettled(household.hid, 4)).toEqual([]);
   await expectSupply(household.hid, "baby-spinach", 197);
 
   // Supply, stats ("made 1 time"), and history all show it.

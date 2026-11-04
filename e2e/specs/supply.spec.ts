@@ -200,3 +200,24 @@ test("search filters Supply by name and alias, with the other filters (R8.17)", 
   await expect(box).toHaveValue("");
   await expect(rows()).toHaveCount(3);
 });
+
+test("any purchase's use-by date can be set by hand from a calendar (R8.18)", { tag: ["@R8.18"] }, async ({ page, household }) => {
+  await seedSupply(household.hid, "italian-sausage", [{ amount: 500, expiresInDays: 1 }], { label: "italian sausage" });
+  const supply = new SupplyPage(page);
+  await supply.goto();
+  const row = await supply.open("Italian sausage");
+  const lot = row.getByTestId("lot").first();
+  await lot.getByRole("button", { name: /Set the use-by date/ }).click();
+  const input = lot.getByLabel("italian sausage use by");
+  await expect(input).toHaveAttribute("type", "date");
+  // Ten days from today in the household's timezone.
+  const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto" }).format(new Date(Date.now() + 10 * 86_400_000));
+  await input.fill(day);
+  await lot.getByRole("button", { name: "Save" }).click();
+  await expect(lot).toContainText("date set");
+  await commandsSettled(household.hid, 1);
+  const d = await supplyDoc(household.hid, "italian-sausage");
+  const until = (d!.lots[0]!.expiryExtendedTo as { toMillis(): number }).toMillis();
+  expect(until).toBeGreaterThan(Date.now() + 9 * 86_400_000);
+  expect(until).toBeLessThan(Date.now() + 12 * 86_400_000);
+});

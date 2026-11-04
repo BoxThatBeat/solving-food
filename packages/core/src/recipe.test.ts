@@ -84,6 +84,11 @@ describe("ingredients", () => {
     expect(doc.needsReview).toBe(true);
     expect(guessCategory("chicken thighs")).toBe("meat");
     expect(guessCategory("ground cumin")).toBe("spices");
+    // Shelf-stable names are pantry, whatever is in the can.
+    expect(guessCategory("canned chicken")).toBe("pantry");
+    expect(guessCategory("tinned tuna")).toBe("pantry");
+    expect(guessCategory("jarred roasted red peppers")).toBe("pantry");
+    expect(guessCategory("ground chicken")).toBe("meat");
     expect(guessCategory("unicorn dust")).toBe("pantry");
   });
   it("resolves names and aliases, then without soft words", () => {

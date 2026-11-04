@@ -23,6 +23,7 @@ ordered, checkable tasks with the files they touch, the tests that prove them, a
 | [M15-llm-ingredients.md](M15-llm-ingredients.md) | LLM ingredients | M14 | Owner request: Gemini (free tier) decides imported names before anything is created, Check with Gemini merges waiting names, Copy for Claude fallback, review/merge UI removed, "From PC Express" labels |
 | [M16-add-with-gemini.md](M16-add-with-gemini.md) | Add with Gemini | M15 | Owner request: Settings → Gemini section; Add recipe from a web link, an uploaded photo or the camera, Gemini following the Claude skill, imported by the drop-folder importer |
 | [M17-grocery-remove.md](M17-grocery-remove.md) | Grocery remove | M10 | Owner request: an × on every grocery line to take off an ingredient the household doesn't want; it stays off (and out of the budget) until Regenerate puts every removed line back |
+| [M18-store-orders-expiry.md](M18-store-orders-expiry.md) | Store orders, expiry dates | M17 | Owner request: each store ordered on its own day, Set date on any Supply lot, the confirm sheet scrolls, canned names guessed as pantry |
 
 ## How to use these plans
 

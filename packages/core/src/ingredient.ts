@@ -71,6 +71,8 @@ export function categoryDefaults(category: string): CategoryDefaults {
 }
 
 const GUESSES: Array<[RegExp, IngredientCategory]> = [
+  // Shelf-stable first: "canned chicken" is a pantry can, not raw meat with 2 days in the fridge.
+  [/\b(canned|tinned|jarred|can of|tin of|jar of)\b/, "pantry"],
   [/\b(frozen)\b/, "frozen"],
   [/\b(chicken|beef|pork|turkey|lamb|veal|bacon|ham|sausage|steak|rib|mince|prosciutto|chorizo|salami)\b/, "meat"],
   [/\b(salmon|tuna|cod|shrimp|prawn|fish|tilapia|halibut|trout|scallop|crab|lobster|mussel|clam|anchovy|sardine)\b/, "fish"],

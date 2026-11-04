@@ -500,6 +500,8 @@ export const GROCERY_STATUSES = ["draft", "ordered", "received"] as const;
 export const groceryListSchema = z.object({
   periodId: id,
   status: z.enum(GROCERY_STATUSES),
+  /** The store an ordered list is for (R7.14): each store is ordered on its own. Absent on the draft and older orders. */
+  storeId: z.string().max(200).optional(),
   createdAt: timestamp,
   orderedAt: timestamp.optional(),
   orderedBy: z.string().optional(),

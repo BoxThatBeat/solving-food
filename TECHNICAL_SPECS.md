@@ -319,7 +319,8 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
   ratings/{ratingId}             uid, cookEventId, targetType: "recipe"|"meal", targetId, score, createdAt
                                  // ID <eventId>_<uid>_<type>_<targetId>: one per person and target; re-rating replaces
 
-  groceryLists/{listId}          periodId, status: draft|ordered|received, createdAt, orderedAt?, orderedBy?, receivedAt?,
+  groceryLists/{listId}          periodId, status: draft|ordered|received, storeId? (M18: the store an order is for),
+                                 createdAt, orderedAt?, orderedBy?, receivedAt?,
                                  items: { [itemId]: { ingredientId?, freeText?, amount, measure,   // amount: canonical bought
                                           need?, packAmount?, packLabel?,                        // shortfall, pack (canonical), "400 g"
                                           packs, productName, storeId, estPriceCents, priceSource?,
@@ -328,8 +329,9 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
                                           receivedAmount?, receivedIngredientId? } }               // set on receiving (M3)
                                  // received lists also have receivedBy and receivedCents (estimated cost of what arrived:
                                  // the period's spend, R10.3); clients can't edit or delete a received list
-                                 // the current draft is groceryLists/draft; Copy moves its items into a new list
-                                 // with status ordered (Undo moves them back and deletes it)
+                                 // the current draft is groceryLists/draft; ordering a store (M18, R7.14: Copy or Mark
+                                 // ordered for PC Express, Done shopping for an in-store store) moves that store's lines
+                                 // into a new list with status ordered and its storeId (Undo moves them back and deletes it)
                                  // status → ordered when the Copy button is used (R7.5); items on ordered lists count as "incoming" (§8)
                                  // the draft also has dismissedStaples? (M10) and keeps removed lines (removed: true, M17,
                                  // R7.13) through regeneration and orders; the Regenerate button clears both
@@ -457,7 +459,7 @@ Firestore writes queue up offline, but callable functions don't. So every action
 | `submitReview` | Per-user rating for the meal and/or its recipes; updates `stats/*`. When the reviewer also confirms **used amounts and leftovers**, the function writes `correction` (±) transactions for the difference between the recipe defaults already deducted and the confirmed amounts, adjusts the leftover lot and its plan items to the confirmed count, marks the review `done`, and (M9, R9.5) sets the cooked plan item to `eaten` (status only; no Supply change). Later ratings from other members only add ratings |
 | `correctSupply` | `correction` (± delta to reach the stated amount). Recorded as-is: the app doesn't ask why or try to infer unplanned consumption |
 | `discard` | `discard` (−) on a lot. Also what **Threw it out** sends for an expired lot (R8.15) |
-| `extendExpiry` | **Still good** on an expired lot (R8.15): 0-delta transaction that sets `expiryExtendedTo` (default +3 days, or a chosen date) so the lot counts again |
+| `extendExpiry` | **Still good** on an expired lot (R8.15), or **Set date** on any lot (M18, R8.18): 0-delta transaction that sets `expiryExtendedTo` (default +3 days, or a chosen date after now: the midnight after the picked use-by day), which then is the lot's expiry (`activeExpiry`) |
 | `freeze` / `thaw` | 0-delta transaction; moves the lot and switches its active expiry |
 | `markEaten` | `eaten` (−) on a leftover portion or snack (with its sides); leftover plan item → eaten |
 | `importHousehold` | Replaces the household's data from an uploaded export file (§13) |
@@ -676,7 +678,7 @@ Implementation (M2, `packages/core/grocery.ts`, Grocery page): the current draft
 
 Store resolution starts with the brand mapping because a mapping pinned to a specific PC Express product must never be sent to Costco by a broader category rule.
 
-**Copy button:** copies only the `pcExpress` store items and sets the list's `status` to `ordered` (R7.5), with an **Undo** in the confirmation toast that sets it back to `draft`. In M2 the draft's items move into a new list document with `status: ordered`, `orderedAt`, `orderedBy` (all stores: an in-store checklist such as Costco's travels with the order and stays tickable there), and Undo moves them back. If the browser refuses the clipboard, a sheet shows the text to copy by hand. Lines read `- <product>, <pack> × <packs>`, or `- <product>, <grams>` without a pack. The first line names the household's PC Express store (`pcxStoreForCopy`: `pcxStoreName`, else "Loblaws Greenbank Road (Ottawa)" for the default store) so ChatGPT doesn't ask to pick one; the household's `settings.chatgptInstructions` (the "Instructions for ChatGPT" box above Copy, saved on blur, ≤ 1000 characters; empty removes it) is the last line:
+**Copy button:** copies only the `pcExpress` store items and sets the list's `status` to `ordered` (R7.5), with an **Undo** in the confirmation toast that sets it back to `draft`. Since M18 (R7.14) **each store is ordered on its own**: `orderDraft(hid, periodId, storeId, lines, uid)` moves only that store's lines into a new list document with `status: ordered`, `storeId`, `orderedAt`, `orderedBy`, deleting just those fields from the draft (other stores and removed lines stay). PC Express is ordered by Copy (or *Mark ordered without copying*); an in-store store's card has **Done shopping · confirm**, which orders its lines and opens the confirmation sheet at once. Each order is received or undone on its own; lists from before M18 have no `storeId` and show every store they hold. Undo moves the lines back. If the browser refuses the clipboard, a sheet shows the text to copy by hand. Lines read `- <product>, <pack> × <packs>`, or `- <product>, <grams>` without a pack. The first line names the household's PC Express store (`pcxStoreForCopy`: `pcxStoreName`, else "Loblaws Greenbank Road (Ottawa)" for the default store) so ChatGPT doesn't ask to pick one; the household's `settings.chatgptInstructions` (the "Instructions for ChatGPT" box above Copy, saved on blur, ≤ 1000 characters; empty removes it) is the last line:
 
 ```
 Please add these to my PC Express cart at the Loblaws Greenbank Road (Ottawa) store (use this store; don't ask me to pick one):
@@ -807,7 +809,9 @@ flowchart TD
   notification says the names weren't checked. Not Firebase AI Logic: it's a client SDK and bills through this Blaze
   project; the key must come from a Google project without billing. Under the emulator the stub answers from
   `_stubLlm/config` (`answers` by lower-cased name, `mode: "down" | "off"`).
-- **Unknown ingredients** found in a dropped file are created with defaults inferred from the category (`needsReview`
+- **Unknown ingredients** found in a dropped file are created with defaults inferred from the category (`guessCategory`
+  from the name; since M18 "canned", "tinned", "jarred" names are pantry first, so "canned chicken" isn't raw meat with
+  2 fridge days) (`needsReview`
   when conversions or protein are missing) and `nameCheck`. The new ingredient's name drops pure preparation words
   (`cleanIngredientName`: "diced green chilies" → "green chilies", the wording kept as an alias) and its ID is the
   variant key (`newIngredientId`), so spelling variants of one new name create one ingredient (`green-chile`). The
@@ -1533,6 +1537,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | M14 | PC Express key | No PC Express account (sign-in and secrets removed); the public API key as an owner setting in Settings → Stores, tried on save |
 | M15 | LLM ingredients | Gemini (free tier) decides whether an imported name is an existing ingredient before anything is created; Check with Gemini merges waiting names; Copy for Claude fallback; the review/merge UI removed; "From PC Express" labels |
 | M16 | Add with Gemini | Settings → Gemini (status, the owner's key); Add recipe from a web link, an uploaded photo or the camera: Gemini follows the Claude skill (generated into the functions bundle) and the drop-folder importer imports its file |
+| M18 | Store orders, expiry dates | Each grocery store is its own order (Copy / Done shopping); Set date on any Supply lot; the confirm sheet scrolls; canned names guessed as pantry |
 | M17 | Grocery remove | An × on every grocery line; removed plan lines stay off (flag on the draft line) and out of the budget until Regenerate puts them all back |
 
 Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix. The detailed, task-level plan for each milestone lives in `Planning/`.

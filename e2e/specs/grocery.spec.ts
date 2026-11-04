@@ -58,7 +58,7 @@ test("brand mappings name the product and set the pack; stores group the list, a
   await expect(pcx).toContainText("Baby spinach");
 });
 
-test("Copy copies only the PC Express section and marks the list ordered; Undo puts it back; ordered items aren't added again (R7.5, R6.3)", { tag: ["@R7.5", "@R6.3"] }, async ({ page, household, context, browserName }) => {
+test("Copy copies only the PC Express section and marks the list ordered; Undo puts it back; ordered items aren't added again (R7.5, R6.3)", { tag: ["@R7.5", "@R6.3", "@R7.14"] }, async ({ page, household, context, browserName }) => {
   if (browserName === "chromium") await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   const r = await makePlanRecipe("Copy me");
   const pid = await seedPeriod(household.hid, { budgetCents: 10000 });
@@ -79,7 +79,7 @@ test("Copy copies only the PC Express section and marks the list ordered; Undo p
     const sheet = page.getByRole("dialog", { name: "Copy for ChatGPT" });
     if (await sheet.isVisible().catch(() => false)) await sheet.getByRole("button", { name: /mark ordered/ }).click();
   }
-  await expect(page.getByTestId("notifications")).toContainText(/list marked ordered/i);
+  await expect(page.getByTestId("notifications")).toContainText(/PC Express.* marked ordered/i);
   if (browserName === "chromium") {
     const text = await page.evaluate(() => navigator.clipboard.readText());
     // Olive oil is a staple line (M10, R7.12: free-use, used by the meal, never bought here), ordered like any PC Express line.
@@ -94,10 +94,24 @@ test("Copy copies only the PC Express section and marks the list ordered; Undo p
       ].join("\n"),
     );
   }
+  // R7.14: each store is its own order. Copy ordered PC Express only; Costco's checklist stays on the list.
   const ordered = page.getByTestId("ordered-list");
-  await expect(ordered).toContainText("Chicken thigh"); // Costco's checklist travels with the order
+  await expect(ordered).toHaveCount(1);
+  await expect(ordered).toContainText("PC Express");
+  await expect(ordered).not.toContainText("Chicken thigh");
+  const costco = page.getByTestId("store-inStore");
+  await expect(costco.getByText("Chicken thigh").first()).toBeVisible();
+  await expect.poll(async () => (await adminDb.collection(`households/${household.hid}/groceryLists`).where("status", "==", "ordered").get()).docs.map((d) => [d.data().storeId, d.data().orderedBy])).toEqual([["pc-express", household.uid]]);
+
+  // In the store: Done shopping orders Costco on its own and opens the confirm step for just its lines.
+  await costco.getByRole("button", { name: "Done shopping · confirm" }).click();
+  const confirm = page.getByRole("dialog");
+  await expect(confirm.getByTestId("receive-line")).toHaveCount(1);
+  await expect(confirm).toContainText("Chicken thigh");
+  await page.keyboard.press("Escape");
+  await expect(ordered).toHaveCount(2);
   await expect(page.getByText(/Nothing to buy/)).toBeVisible();
-  await expect.poll(async () => (await adminDb.collection(`households/${household.hid}/groceryLists`).where("status", "==", "ordered").get()).docs.map((d) => d.data().orderedBy)).toEqual([household.uid]);
+  await expect.poll(async () => (await adminDb.collection(`households/${household.hid}/groceryLists`).where("status", "==", "ordered").get()).docs.map((d) => d.data().storeId).sort()).toEqual(["costco", "pc-express"]);
 
   // The plan meter now counts nothing for these: they're incoming.
   const plan = new PlanPage(page);
@@ -106,10 +120,10 @@ test("Copy copies only the PC Express section and marks the list ordered; Undo p
 
   // Undo from the ordered list: back to the draft.
   await gotoGrocery(page);
-  await ordered.getByRole("button", { name: "Undo order" }).click();
-  await expect(ordered).toHaveCount(0);
+  await ordered.filter({ hasText: "PC Express" }).getByRole("button", { name: "Undo order" }).click();
+  await expect(ordered).toHaveCount(1);
   await expect(line(page, "Baby spinach")).toBeVisible();
-  await expect.poll(async () => (await adminDb.collection(`households/${household.hid}/groceryLists`).where("status", "==", "ordered").get()).size).toBe(0);
+  await expect.poll(async () => (await adminDb.collection(`households/${household.hid}/groceryLists`).where("status", "==", "ordered").get()).size).toBe(1);
 });
 
 test("the Undo in the copy banner reverts the order (R7.5)", { tag: ["@R7.5"] }, async ({ page, household }) => {

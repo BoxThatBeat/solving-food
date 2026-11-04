@@ -555,7 +555,10 @@ service cloud.firestore {
         // A received list is history (its cost is the period's spend, R10.3): no edits or deletes.
         allow delete: if isMember(hid) && resource.data.status != 'received';
         allow create, update: if isMember(hid) && (resource == null || resource.data.status != 'received')
-          && request.resource.data.keys().hasOnly(['periodId', 'status', 'createdAt', 'orderedAt', 'orderedBy', 'items', 'dismissedStaples'])
+          && request.resource.data.keys().hasOnly(['periodId', 'status', 'storeId', 'createdAt', 'orderedAt', 'orderedBy', 'items', 'dismissedStaples'])
+          // R7.14: an ordered list names its store.
+          && (!('storeId' in request.resource.data) || (request.resource.data.storeId is string
+              && request.resource.data.storeId.size() >= 1 && request.resource.data.storeId.size() <= 200))
           && request.resource.data.keys().hasAll(['periodId', 'status', 'createdAt', 'items'])
           && request.resource.data.status in ['draft', 'ordered']
           && request.resource.data.items is map && request.resource.data.items.size() <= 400

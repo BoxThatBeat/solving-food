@@ -567,12 +567,19 @@ export function tickItem(hid: string, listId: string, itemId: string, checked: b
  * The Copy button (R7.5): the draft's items move into a new list with status `ordered` (who and when), and the draft
  * empties (except for removed lines, M17). Ordered items count as incoming, so regenerating doesn't add them again (§8).
  */
-export async function orderDraft(hid: string, periodId: string, items: Record<string, GroceryItem>, uid: string, keep: Record<string, GroceryItem> = {}): Promise<string> {
+/**
+ * Orders one store's lines (R7.14): they move from the draft into a new ordered list for that store; every other line
+ * (other stores, and the removed lines of M17) stays on the draft.
+ */
+export async function orderDraft(hid: string, periodId: string, storeId: string, items: Record<string, GroceryItem>, uid: string): Promise<string> {
   const b = writeBatch(db);
   const ref = doc(collection(db, "households", hid, "groceryLists"));
-  b.set(ref, { periodId, status: "ordered", createdAt: serverTimestamp(), orderedAt: serverTimestamp(), orderedBy: uid, items });
-  // `keep`: the removed lines (M17), which stay on the draft so they don't come back after the order.
-  b.update(draftRef(hid), { items: keep });
+  b.set(ref, { periodId, status: "ordered", storeId, createdAt: serverTimestamp(), orderedAt: serverTimestamp(), orderedBy: uid, items });
+  const ids = Object.keys(items);
+  if (ids.length) {
+    const [first, ...rest] = ids;
+    b.update(draftRef(hid), new FieldPath("items", first!), deleteField(), ...rest.flatMap((id) => [new FieldPath("items", id), deleteField()]));
+  }
   await b.commit();
   return ref.id;
 }

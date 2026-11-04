@@ -192,6 +192,9 @@ describe("household collections are member-only (R2.8)", () => {
     const ordered = doc(db, "households/h-alice/groceryLists/o1");
     await assertFails(setDoc(ordered, { periodId: "2026-10-05", status: "ordered", createdAt: serverTimestamp(), items: {} }));
     await assertSucceeds(setDoc(ordered, { periodId: "2026-10-05", status: "ordered", createdAt: serverTimestamp(), orderedAt: serverTimestamp(), orderedBy: ALICE.uid, items: { tomato: groceryItem } }));
+    // R7.14: each store is ordered on its own; the list names it.
+    await assertSucceeds(setDoc(ordered, { periodId: "2026-10-05", status: "ordered", storeId: "costco", createdAt: serverTimestamp(), orderedAt: serverTimestamp(), orderedBy: ALICE.uid, items: { tomato: groceryItem } }));
+    await assertFails(setDoc(ordered, { periodId: "2026-10-05", status: "ordered", storeId: 7, createdAt: serverTimestamp(), orderedAt: serverTimestamp(), orderedBy: ALICE.uid, items: { tomato: groceryItem } }));
     await assertFails(updateDoc(ordered, { status: "received" }));
     await assertSucceeds(deleteDoc(ordered)); // Undo
   });

@@ -85,3 +85,18 @@ test("a bulk buy of something freezable asks to freeze some (R7.9)", { tag: ["@R
   await plan.goto();
   await expect(plan.budgetLeft()).toHaveText("$200.00");
 });
+
+test("a long order scrolls inside the confirm sheet down to its last line (R7.8)", { tag: ["@R7.8"] }, async ({ page, household }) => {
+  const pid = await seedPeriod(household.hid);
+  const items: Record<string, Record<string, unknown>> = {};
+  for (let i = 0; i < 25; i++) items[`manual_${i}`] = groceryLine({ freeText: `Thing ${i}`, amount: 0, productName: `Thing ${i}`, storeId: "pc-express" });
+  await seedOrderedList(household.hid, pid, items);
+  const sheet = await openConfirm(page);
+  await expect(sheet.getByTestId("receive-line")).toHaveCount(25);
+  const last = sheet.getByTestId("receive-line").last();
+  await last.scrollIntoViewIfNeeded();
+  await expect(last).toBeInViewport();
+  // The list isn't clipped: its full height is laid out, so the sheet's body is what scrolls.
+  const clipped = await sheet.getByRole("list", { name: "Items in this order" }).evaluate((el) => el.scrollHeight > el.clientHeight + 1);
+  expect(clipped).toBe(false);
+});

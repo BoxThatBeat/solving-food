@@ -5,10 +5,14 @@ import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import {
   activeExpiry,
+  addDays,
+  addLocalDays,
   enterableMeasures,
   expiryFlag,
   fromCanonical,
   isExpired,
+  localDate,
+  localMidnight,
   recomputeAmount,
   toCanonical,
   unitLabel,
@@ -76,7 +80,9 @@ export function SupplyDetail({
 function LotRow({ lot, item, ingredient, unit, hid, uid, tz, nowMs }: { lot: LedgerLot; item: SupplyItem; ingredient: IngredientEntry | undefined; unit: AmountUnit; hid: string; uid: string; tz: string; nowMs: number }) {
   const notify = useNotify();
   const [freezing, setFreezing] = React.useState<number | null>(null);
+  const [dating, setDating] = React.useState<string | null>(null);
   const e = activeExpiry(lot);
+  const today = localDate(nowMs, tz);
   const expired = isExpired(lot, nowMs);
   const frozen = !!lot.frozenAtMs;
   const canFreeze = !frozen && !expired && (item.ingredientId ? !!ingredient?.freezable : true);
@@ -94,10 +100,19 @@ function LotRow({ lot, item, ingredient, unit, hid, uid, tz, nowMs }: { lot: Led
             <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
               {LOCATION_LABEL[lot.location]}
               {e ? ` · use by ${dateText(e - 1, tz)}` : ""}
-              {lot.expiryExtendedToMs ? " · extended" : ""}
+              {lot.expiryExtendedToMs ? " · date set" : ""}
             </span>
           </span>
         </span>
+        <Button
+          size="sm"
+          variant="chip"
+          aria-expanded={dating !== null}
+          aria-label={`Set the use-by date of this purchase of ${name}`}
+          onClick={() => setDating(dating === null ? (e && e - 1 >= localMidnight(today, tz) ? localDate(e - 1, tz) : localDate(addLocalDays(nowMs, 3, tz), tz)) : null)}
+        >
+          Set date
+        </Button>
         {frozen ? (
           <Button
             size="sm"
@@ -127,6 +142,44 @@ function LotRow({ lot, item, ingredient, unit, hid, uid, tz, nowMs }: { lot: Led
           Threw it out
         </Button>
       </div>
+      {dating !== null ? (
+        <form
+          className="flex flex-wrap items-center gap-2 rounded-ui border-2 border-line bg-mantle p-2"
+          onSubmit={(ev) => {
+            ev.preventDefault();
+            if (dating < today) return;
+            // The lot counts until the midnight after its use-by day (R8.15).
+            sendCommand(hid, uid, "extendExpiry", { supplyId: item.id, lotId: lot.lotId, until: localMidnight(addDays(dating, 1), tz) });
+            notify({ kind: "success", message: `${name}: use by ${dateText(localMidnight(dating, tz), tz)}` });
+            setDating(null);
+          }}
+        >
+          <label className="flex flex-1 items-center gap-2 font-mono text-[0.625rem] font-bold">
+            USE BY
+            <Input
+              type="date"
+              value={dating}
+              min={today}
+              onChange={(ev) => setDating(ev.target.value)}
+              onClick={(ev) => {
+                try {
+                  ev.currentTarget.showPicker();
+                } catch {
+                  /* not every browser lets a page open the calendar */
+                }
+              }}
+              className="min-w-0 flex-1 py-2"
+              aria-label={`${name} use by`}
+            />
+          </label>
+          <Button size="sm" type="submit" disabled={!dating || dating < today}>
+            Save
+          </Button>
+          <Button size="sm" variant="secondary" type="button" onClick={() => setDating(null)}>
+            Cancel
+          </Button>
+        </form>
+      ) : null}
       {freezing !== null ? (
         <div className="flex flex-wrap items-center gap-2 rounded-ui border-2 border-line bg-blue-soft p-2 text-onc">
           <span className="font-mono text-[0.625rem] font-bold">FREEZE HOW MUCH?</span>

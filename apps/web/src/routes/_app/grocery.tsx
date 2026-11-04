@@ -21,7 +21,6 @@ import {
   isGenerated,
   isRemoved,
   mergeDraft,
-  pcExpressLines,
   pcxStoreForCopy,
   stapleDismissUntil,
   type GroceryItem,
@@ -51,7 +50,7 @@ function GroceryPage() {
   const notify = useNotify();
   const m = usePlanModel();
   const draftItems = m.draft.data?.items;
-  const [fallbackText, setFallbackText] = React.useState<string | null>(null);
+  const [fallback, setFallback] = React.useState<{ text: string; storeId: string } | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [receiving, setReceiving] = React.useState<string | null>(null);
   const receivingList = receiving ? (m.ordered ?? []).find((l) => l.id === receiving) : undefined;
@@ -113,39 +112,48 @@ function GroceryPage() {
   };
 
   const groups = groupByStore(items, m.stores);
-  const pcxCount = pcExpressLines(items, m.stores).length;
   const startMs = millis(m.period?.start);
   const endMs = millis(m.period?.end);
   const tz = m.household?.timezone ?? "America/Toronto";
 
-  const markOrdered = async (copied: boolean) => {
+  const storeName = (id: string) => m.stores.find((st) => st.id === id)?.name ?? "That store";
+
+  /** Orders one store's lines (R7.14); the other stores stay on the list. An in-store order opens the confirm step. */
+  const orderStore = async (storeId: string, how: "copied" | "marked" | "shopped") => {
     if (!m.periodId) return;
     setBusy(true);
     try {
       await sync(); // the stored draft must hold what's shown
-      const listId = await orderDraft(m.hid, m.periodId, items, s.user.uid, removedLines);
+      const lines = Object.fromEntries(Object.entries(items).filter(([, it]) => it.storeId === storeId));
+      const n = Object.keys(lines).length;
+      const listId = await orderDraft(m.hid, m.periodId, storeId, lines, s.user.uid);
+      if (how === "shopped") {
+        setReceiving(listId);
+        return;
+      }
       notify({
         kind: "success",
-        message: copied ? `Copied ${pcxCount} item${pcxCount === 1 ? "" : "s"} for ChatGPT · list marked ordered` : "List marked ordered",
+        message: how === "copied" ? `Copied ${n} item${n === 1 ? "" : "s"} for ChatGPT · ${storeName(storeId)} marked ordered` : `${storeName(storeId)} marked ordered`,
         action: { label: "Undo", run: () => void undoOrder(m.hid, listId).catch((e) => notify({ kind: "error", message: `Couldn't undo: ${(e as Error).message}` })) },
       });
     } catch (e) {
-      notify({ kind: "error", message: `Couldn't mark the list ordered: ${(e as Error).message}` });
+      notify({ kind: "error", message: `Couldn't mark it ordered: ${(e as Error).message}` });
     } finally {
       setBusy(false);
-      setFallbackText(null);
+      setFallback(null);
     }
   };
 
-  const copy = async () => {
-    const text = copyText(items, m.stores, { store: pcxStoreForCopy(m.household?.pcxStoreId, m.household?.pcxStoreName), instructions: m.household?.settings?.chatgptInstructions });
+  const copy = async (storeId: string) => {
+    const only = Object.fromEntries(Object.entries(items).filter(([, it]) => it.storeId === storeId));
+    const text = copyText(only, m.stores, { store: pcxStoreForCopy(m.household?.pcxStoreId, m.household?.pcxStoreName), instructions: m.household?.settings?.chatgptInstructions });
     try {
       await navigator.clipboard.writeText(text);
     } catch {
-      setFallbackText(text); // clipboard blocked: show the text to copy by hand
+      setFallback({ text, storeId }); // clipboard blocked: show the text to copy by hand
       return;
     }
-    await markOrdered(true);
+    await orderStore(storeId, "copied");
   };
 
   const tick = (listId: string, id: string, on: boolean) => {
@@ -189,14 +197,20 @@ function GroceryPage() {
                 g.store.kind === "pcExpress" ? (
                   <div className="flex flex-col gap-2 border-t-2 border-line bg-base p-3">
                     <ChatgptInstructions hid={m.hid} saved={m.household?.settings?.chatgptInstructions ?? ""} />
-                    <Button size="lg" className="w-full" disabled={busy || !pcxCount} onClick={copy}>
+                    <Button size="lg" className="w-full" disabled={busy || !g.items.length} onClick={() => void copy(g.store.id)}>
                       Copy for ChatGPT
                     </Button>
-                    <button type="button" disabled={busy} onClick={() => void markOrdered(false)} className="cursor-pointer self-center bg-transparent p-1 text-[0.8125rem] font-extrabold text-ink underline">
+                    <button type="button" disabled={busy} onClick={() => void orderStore(g.store.id, "marked")} className="cursor-pointer self-center bg-transparent p-1 text-[0.8125rem] font-extrabold text-ink underline">
                       Mark ordered without copying
                     </button>
                   </div>
-                ) : null
+                ) : (
+                  <div className="flex flex-col gap-2 border-t-2 border-line bg-base p-3">
+                    <Button size="lg" variant="secondary" className="w-full" disabled={busy || !g.items.length} onClick={() => void orderStore(g.store.id, "shopped")}>
+                      Done shopping · confirm
+                    </Button>
+                  </div>
+                )
               }
             />
           ))}
@@ -244,9 +258,9 @@ function GroceryPage() {
       {(m.ordered ?? []).length ? (
         <section aria-labelledby="ordered-h" className="flex flex-col gap-3">
           <h2 id="ordered-h" className="m-0 font-display text-[1.375rem] font-normal">
-            Ordered · waiting for delivery
+            Ordered · waiting to arrive
           </h2>
-          <p className="m-0 text-[0.8125rem] font-semibold text-sub">These count as incoming, so they aren't added again. When they arrive, confirm them and they go into supply.</p>
+          <p className="m-0 text-[0.8125rem] font-semibold text-sub">Each store is its own order. These count as incoming, so they aren't added again. When they arrive, confirm them and they go into Supply.</p>
           {[...(m.ordered ?? [])]
             .sort((a, b) => (millis(b.data.orderedAt) ?? 0) - (millis(a.data.orderedAt) ?? 0))
             .map((l) => (
@@ -269,17 +283,17 @@ function GroceryPage() {
         <ReceiveSheet open onOpenChange={(o) => !o && setReceiving(null)} listId={receivingList.id} items={receivingList.data.items} stores={m.stores} ingredients={m.ingredients} hid={m.hid} uid={s.user.uid} />
       ) : null}
 
-      <Sheet open={fallbackText !== null} onOpenChange={(o) => !o && setFallbackText(null)}>
+      <Sheet open={fallback !== null} onOpenChange={(o) => !o && setFallback(null)}>
         <SheetContent
           title="Copy for ChatGPT"
           footer={
-            <Button className="w-full" disabled={busy} onClick={() => void markOrdered(true)}>
+            <Button className="w-full" disabled={busy} onClick={() => fallback && void orderStore(fallback.storeId, "copied")}>
               I copied it · mark ordered
             </Button>
           }
         >
           <p className="m-0 text-sm font-semibold">This browser blocked the clipboard. Select the text and copy it.</p>
-          <Textarea readOnly rows={10} value={fallbackText ?? ""} onFocus={(e) => e.currentTarget.select()} aria-label="List for ChatGPT" />
+          <Textarea readOnly rows={10} value={fallback?.text ?? ""} onFocus={(e) => e.currentTarget.select()} aria-label="List for ChatGPT" />
         </SheetContent>
       </Sheet>
     </PageBody>
@@ -376,10 +390,13 @@ function StoreCard({
 
 function OrderedList({ id, list, stores, ingredients, onTick, onUndo, onReceive, receiving }: { id: string; list: StoredList; stores: readonly StoreEntry[]; ingredients: Map<string, IngredientEntry>; onTick: (id: string, on: boolean) => void; onUndo: () => void; onReceive: () => void; receiving: boolean }) {
   const at = millis(list.orderedAt);
+  const store = list.storeId ? stores.find((st) => st.id === list.storeId) : undefined;
   return (
     <div className="flex flex-col gap-2.5 rounded-ui border-2 border-dashed border-line p-3" data-testid="ordered-list" data-list={id}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="font-mono text-[0.6875rem] font-bold uppercase">Ordered {at ? ORDERED_AT.format(new Date(at)) : "just now"} · {Object.keys(list.items).length} items</span>
+        <span className="font-mono text-[0.6875rem] font-bold uppercase">
+          {store ? `${store.name} · ` : ""}Ordered {at ? ORDERED_AT.format(new Date(at)) : "just now"} · {Object.keys(list.items).length} items
+        </span>
         <Button size="sm" variant="secondary" onClick={onUndo} disabled={receiving}>
           Undo order
         </Button>
