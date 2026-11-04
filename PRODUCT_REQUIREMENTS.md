@@ -199,6 +199,8 @@ flowchart LR
   | Matches household food preferences | Missing kitchen tools |
   | Meets the protein goal | |
 
+  A recipe that is **already in the current plan is never suggested**: it's left out of the Suggested section, the optimiser, expiry alerts and Use it up, and the **Suggested** sort (the Recipes page, Create meal, saved meals whose recipes are all planned) lists it at the **very bottom**, below everything else.
+
 - **R6.12** Users can **tune the weight** of each factor in Settings. Presets such as *"Use it up"*, *"Cheap week"*, and *"Adventurous"* are available.
 - **R6.13** **Expiry alerts.** If supply will expire during the period (e.g. salmon), the app shows it prominently and suggests recipes that use more of it.
 - **R6.25** **Use it up before ordering.** Before the grocery list is ordered, the Plan page has a **Use it up** section for food the next order would bring that no planned meal uses and that won't keep (it would expire within the period, or within a few days of its end, after its usual shelf life where it's stored): typically the rest of a pack. Each entry shows how much would be spare, how much is being bought, roughly how long it keeps, and up to two recipes that use it, each one tap from Create meal, so meals can be added before ordering instead of rescuing the food after it arrives. It uses the same rule as the expiry alerts (R6.13), can be dismissed for the period, and disappears once the list is ordered.

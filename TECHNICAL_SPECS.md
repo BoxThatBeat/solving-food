@@ -578,7 +578,7 @@ score(r) = Σ wᵢ · fᵢ(r, plan, supply)     each fᵢ ∈ [0, 1]
 | recentlyCooked | cooked within the last N days | − |
 | missingTools | hard filter | − |
 
-The **Suggested sort** (§3 of the PRD) applies the same scoring to any filtered list. Weights and presets are stored in `households/{hid}.settings.scoreWeights`.
+The **Suggested sort** (§3 of the PRD) applies the same scoring to any filtered list. A recipe in the current plan (`ctx.plannedRecipeIds`) gets `planned: true` on its `ScoreResult` (M18, R6.11): `suggest()` drops it, `rank()` orders suggestions, then blocked, then planned, and the collection's `bySuggestion` puts `suggestion.planned` below blocked ones (`combinedSuggestion` marks a saved meal planned when all its recipes are). The Plan page's own list of planned meals doesn't pass the flag, since all of them are planned. Weights and presets are stored in `households/{hid}.settings.scoreWeights`.
 
 **As built (M5):** `packages/core/src/scoring/` (factors, weights, presets) runs in `apps/web/src/workers/scoring.worker.ts`
 on a snapshot of the household (plan, projected supply, spare expiring supply, stats, favourites, cook events of the last

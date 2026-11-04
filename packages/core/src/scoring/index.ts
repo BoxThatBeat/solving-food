@@ -58,6 +58,8 @@ export interface ScoreResult {
   blocked: string | null;
   /** A side dish only (R4.28): blocked as a meal of its own, but fine inside a meal (combinedSuggestion ignores it). */
   side?: boolean;
+  /** Already in the current plan (R6.11): never suggested again; the Suggested sort lists it at the very bottom. */
+  planned?: boolean;
   /** The top two raising factors and the strongest lowering one ("why" chips). */
   reasons: Reason[];
   /** Marginal cost at the household's servings (cents), null when unknown. */
@@ -169,17 +171,21 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
     factors: f,
     blocked,
     ...(side ? { side } : {}),
+    ...(ctx.plannedRecipeIds.has(r.id) ? { planned: true } : {}),
     reasons,
     costCents: cost,
     expiring: exp,
   };
 }
 
-/** Scores and ranks recipes best first; blocked ones last (or dropped with `dropBlocked`). Ties: title. */
+/** Where a result sorts: suggestions first, then blocked ones, then recipes already in the plan at the very bottom. */
+const tier = (x: ScoreResult) => (x.planned ? 2 : x.blocked ? 1 : 0);
+
+/** Scores and ranks recipes best first; blocked ones, then planned ones, last (or dropped with `dropBlocked`). Ties: title. */
 export function rank(recipes: readonly ScoreRecipe[], ctx: ScoreContext, w: Weights, opts: { dropBlocked?: boolean } = {}): ScoreResult[] {
   const titles = new Map(recipes.map((r) => [r.id, r.title]));
   const out = recipes.map((r) => score(r, ctx, w)).filter((x) => !opts.dropBlocked || !x.blocked);
-  return out.sort((a, b) => (a.blocked ? 1 : 0) - (b.blocked ? 1 : 0) || b.raw - a.raw || (titles.get(a.id) ?? "").localeCompare(titles.get(b.id) ?? ""));
+  return out.sort((a, b) => tier(a) - tier(b) || b.raw - a.raw || (titles.get(a.id) ?? "").localeCompare(titles.get(b.id) ?? ""));
 }
 
 /** The Plan page's Suggested row: not blocked, not already planned, best first. */
@@ -275,7 +281,7 @@ export function emptyScoreContext(overrides: Partial<ScoreContext> = {}): ScoreC
 
 /** The suggestion of a saved meal or plan item: the mean of its recipes' scores; blocked if any recipe is (M5), side dishes
  * excepted (M9). */
-export function combinedSuggestion(recipeIds: readonly string[], byId: ReadonlyMap<string, ScoreResult>): { raw: number; score: number; blocked: boolean; expiryDays: number | null } | null {
+export function combinedSuggestion(recipeIds: readonly string[], byId: ReadonlyMap<string, ScoreResult>): { raw: number; score: number; blocked: boolean; planned: boolean; expiryDays: number | null } | null {
   const rs = recipeIds.map((id) => byId.get(id)).filter((x): x is ScoreResult => !!x);
   if (!rs.length) return null;
   const days = rs.map((r) => (r.expiring ? r.expiring.daysLeft : null)).filter((d): d is number => d !== null);
@@ -284,6 +290,8 @@ export function combinedSuggestion(recipeIds: readonly string[], byId: ReadonlyM
     score: Math.round(rs.reduce((t, r) => t + r.score, 0) / rs.length),
     // A side recipe in a meal with a main is fine (R4.28); a meal of nothing but sides is not a meal.
     blocked: rs.some((r) => !!r.blocked && !r.side) || rs.every((r) => !!r.side),
+    // Every recipe of the meal is already planned (R6.11): it sorts at the very bottom.
+    planned: rs.every((r) => !!r.planned),
     expiryDays: days.length ? Math.min(...days) : null,
   };
 }

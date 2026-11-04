@@ -2,7 +2,7 @@
 // "why" chips; expiry alerts with recipes that use the expiring item, dismissible for the period; weights and presets.
 import { adminDb } from "../fixtures/admin";
 import { expect, test } from "../fixtures/test";
-import { makePlanRecipe, PlanPage, seedPeriod } from "../pages/plan";
+import { makePlanRecipe, PlanPage, seedPeriod, seedPlanItem } from "../pages/plan";
 import { seedSupply } from "../pages/supply";
 
 test("salmon expiring in two days: the Plan page says so and the top suggestion uses it (R6.11, R6.13)", { tag: ["@R6.11", "@R6.13", "@smoke"] }, async ({ page, household }) => {
@@ -111,4 +111,24 @@ test("use it up disappears once the list is ordered (R6.25)", { tag: ["@R6.25"] 
     "baby-spinach": groceryLine({ ingredientId: "baby-spinach", amount: 312, packAmount: 312, packLabel: "312 g", productName: "Baby spinach", storeId: "pc-express", estPriceCents: 499 }),
   });
   await expect(page.getByTestId("use-it-up")).toHaveCount(0);
+});
+
+test("a recipe already in the plan is never suggested: the Suggested sort lists it at the very bottom (R6.11)", { tag: ["@R6.11"] }, async ({ page, household }) => {
+  // Both titles share a word, so a search shows just these two; the salmon one would rank first (its salmon expires).
+  const word = `Zq${Math.random().toString(36).slice(2, 7)}`;
+  const hot = await makePlanRecipe(`${word} salmon`, { lines: "Roast @salmon fillet{340%g} with @lemon{1}." });
+  const plain = await makePlanRecipe(`${word} rice`, { lines: "Cook @jasmine rice{200%g}." });
+  const pid = await seedPeriod(household.hid);
+  await seedSupply(household.hid, "salmon-fillet", [{ amount: 340, expiresInDays: 2 }], { label: "salmon fillet" });
+  const order = async () => (await page.getByRole("list", { name: "Recipes" }).getByRole("listitem").allInnerTexts()).map((t) => (t.includes(hot.title) ? "hot" : t.includes(plain.title) ? "plain" : "?"));
+  await page.goto(`/recipes?q=${word}&sort=suggested`);
+  await expect.poll(order, { timeout: 20_000 }).toEqual(["hot", "plain"]);
+
+  await seedPlanItem(household.hid, pid, [hot.id]);
+  await page.reload();
+  await expect.poll(order, { timeout: 20_000 }).toEqual(["plain", "hot"]);
+  // And the Plan page's Suggested row leaves it out.
+  await new PlanPage(page).goto();
+  await expect(page.getByTestId("suggestion").first()).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("suggestion").filter({ hasText: hot.title })).toHaveCount(0);
 });

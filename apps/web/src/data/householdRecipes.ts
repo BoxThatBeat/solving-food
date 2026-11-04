@@ -90,7 +90,7 @@ export function useHouseholdFacts(hid: string | null, summaries?: readonly Recip
         lastCookedAtMs: millis(s?.lastCookedAt),
         rating: s && s.ratingCount > 0 ? s.ratingSum / s.ratingCount : null,
         ...(x ?? {}),
-        ...(sc ? { suggestion: { raw: sc.raw, blocked: !!sc.blocked }, expiryDays: sc.expiring ? sc.expiring.daysLeft : null } : {}),
+        ...(sc ? { suggestion: { raw: sc.raw, blocked: !!sc.blocked, ...(sc.planned ? { planned: true } : {}) }, expiryDays: sc.expiring ? sc.expiring.daysLeft : null } : {}),
       };
     };
   }, [favs, stats, extra, scores]);

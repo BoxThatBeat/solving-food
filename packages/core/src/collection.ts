@@ -100,7 +100,7 @@ export interface HouseholdFacts {
   /** Share of the recipe's tracked amounts projected supply covers, 0..1 (R4.4). */
   supplyFraction?: number;
   /** The suggestion score (M5): `raw` ranks; blocked (missing tool, dislike, diet) sorts last. Absent until scored. */
-  suggestion?: { raw: number; blocked: boolean } | null;
+  suggestion?: { raw: number; blocked: boolean; planned?: boolean } | null;
   /** Days left on the soonest spare expiring ingredient it uses, or null (M5: "Expiring first", "Uses expiring"). */
   expiryDays?: number | null;
 }
@@ -157,10 +157,16 @@ export function passes(r: RecipeSummary, s: CollectionSearch, facts: HouseholdFa
   return true;
 }
 
+/** Suggested order: best first; blocked ones (tool, dislike, diet, side) after; recipes already in the plan at the very
+ * bottom (R6.11), each group by score; unscored ones last of all. */
+function suggestionKey(f: HouseholdFacts): number {
+  const s = f.suggestion;
+  if (!s) return -4e9;
+  return (s.planned ? -2e9 : s.blocked ? -1e9 : 0) + Math.max(-9e8, Math.min(9e8, s.raw));
+}
+
 function bySuggestion(fa: HouseholdFacts, fb: HouseholdFacts): number {
-  const ka = fa.suggestion ? (fa.suggestion.blocked ? -1e9 : fa.suggestion.raw) : -2e9;
-  const kb = fb.suggestion ? (fb.suggestion.blocked ? -1e9 : fb.suggestion.raw) : -2e9;
-  return kb - ka;
+  return suggestionKey(fb) - suggestionKey(fa);
 }
 
 function compare(sort: CollectionSort, a: RecipeSummary, b: RecipeSummary, fa: HouseholdFacts, fb: HouseholdFacts): number {

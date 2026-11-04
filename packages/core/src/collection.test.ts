@@ -88,6 +88,17 @@ describe("<CollectionView> filters and sorts (R4.2, R4.7)", () => {
   });
 });
 
+describe("Suggested sort: recipes already in the plan go to the very bottom (R6.11)", () => {
+  const f: Record<string, HouseholdFacts> = {
+    Alpha: { ...NO_FACTS, suggestion: { raw: 9, blocked: false, planned: true } },
+    Bravo: { ...NO_FACTS, suggestion: { raw: 1, blocked: true } },
+    Charlie: { ...NO_FACTS, suggestion: { raw: 2, blocked: false } },
+  };
+  it("best first, blocked after, planned last even with the best score", () => {
+    expect(applyCollection(all, collectionSearchSchema.parse({}), (id) => f[id] ?? NO_FACTS).items.map((x) => x.id)).toEqual(["Charlie", "Bravo", "Alpha"]);
+  });
+});
+
 describe("M2 filters: has all tools, cost per serving, Cheapest", () => {
   const f: Record<string, HouseholdFacts> = {
     Alpha: { ...NO_FACTS, hasAllTools: false, costPerServingCents: 150 },

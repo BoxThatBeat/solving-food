@@ -333,6 +333,19 @@ describe("hard filters and ranking", () => {
     expect(s[0]!.reasons.filter((r) => r.tone !== "bad")).toHaveLength(2);
     expect(s[0]!.reasons.at(-1)).toMatchObject({ tone: "bad", label: "Another chicken" });
   });
+
+  it("rank puts planned recipes at the very bottom, below blocked ones; a meal of planned recipes is planned (R6.11)", () => {
+    const best = recipe("best", { lines: { pasta: 100 } });
+    const other = recipe("other");
+    const side = recipe("side", { tags: ["side"] });
+    const c = ctx({ plannedRecipeIds: new Set(["best"]), projected: new Map([["pasta", 1000]]) });
+    const r = rank([best, other, side], c, DEFAULT_WEIGHTS);
+    expect(r.map((x) => x.id)).toEqual(["other", "side", "best"]);
+    expect(r.at(-1)!.planned).toBe(true);
+    const byId = new Map(r.map((x) => [x.id, x]));
+    expect(combinedSuggestion(["best"], byId)!.planned).toBe(true);
+    expect(combinedSuggestion(["best", "other"], byId)!.planned).toBe(false);
+  });
 });
 
 describe("context helpers", () => {

@@ -27,7 +27,7 @@ export function useMealFacts(hid: string | null, rows: readonly MealRow[], score
         lastCookedAtMs: millis(st?.lastCookedAt),
         rating: st && st.ratingCount > 0 ? st.ratingSum / st.ratingCount : null,
         costPerServingCents: cost.get(id) ?? null,
-        ...(sugg.get(id) ? { suggestion: { raw: sugg.get(id)!.raw, blocked: sugg.get(id)!.blocked }, expiryDays: sugg.get(id)!.expiryDays } : {}),
+        ...(sugg.get(id) ? { suggestion: { raw: sugg.get(id)!.raw, blocked: sugg.get(id)!.blocked, ...(sugg.get(id)!.planned ? { planned: true } : {}) }, expiryDays: sugg.get(id)!.expiryDays } : {}),
       };
     };
   }, [stats.docs, favKey, rows, scores]);

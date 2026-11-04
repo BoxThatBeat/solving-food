@@ -38,6 +38,19 @@ R7.14 (new: each store is its own order), R8.18 (new: set a use-by date by hand)
 - [x] Docs: PRD R7.14, R8.18; spec §4 (groceryLists `storeId`), §6 command table, §8 Copy button, §9 unknown
       ingredients, §15 row. Design-compare skipped (owner's standing request).
 
+## Follow-up (2026-11-04): planned recipes never suggested
+
+Owner: "the suggestion algorithm should never suggest recipes that are already in the plan. they can still be in the
+list just at the very bottom". The Suggested row, optimiser, expiry alerts and Use it up already left them out; the
+**Suggested sort** (Recipes page, Create meal, saved meals) didn't.
+
+- [x] `ScoreResult.planned`; `rank()` tiers: suggestions → blocked → planned; `bySuggestion` puts `suggestion.planned`
+      at the very bottom; `combinedSuggestion().planned` when every recipe of a saved meal is planned. Unit tests
+      (scoring, collection); e2e @R6.11 (a salmon recipe that ranks first drops to last once planned; not in the
+      Suggested row). PRD R6.11, spec §8.
+- [x] Also fixed (2026-11-04): Supply lot actions wrap as one row under the details on a phone (they squeezed the
+      details to one word a line after Set date was added).
+
 ## Verification
 
 - Typecheck, lint clean. Core 678, web 37, rules 99 (storeId). E2E grocery, receive, supply, core-loop on
