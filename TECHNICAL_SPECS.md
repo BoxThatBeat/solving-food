@@ -648,7 +648,7 @@ Accept writes one plan item per recipe in a batch.
 
 ### Protein summary
 
-The Plan page shows, for each meal type, the average `proteinPerServingG` of the planned items next to the household goal (R6.17). This is computed on the client. As built (M5): a bar per meal type (accent at or above the goal, peach below); goals are set in Settings → Nutrition goals (Settings → Preferences before M20) with an on/off switch each (a missing key is "off"). M7: the card sits at the bottom of the page, directly above the optimiser. M9: the card is "Protein & fibre / serving" with a fibre bar under each protein bar (`fibre-<type>`), against `settings.fibreGoals` (R6.26).
+The Plan page shows, for each meal type, the average `proteinPerServingG` of the planned items next to the household goal (R6.17): per person, each meal is Σ over its recipes of per-serving × `servingsMultiplier` (fibre the same; M21 fixed the multiplier being ignored). This is computed on the client. As built (M5): a bar per meal type (accent at or above the goal, peach below); goals are set in Settings → Nutrition goals (Settings → Preferences before M20) with an on/off switch each (a missing key is "off"). M7: the card sits at the bottom of the page, directly above the optimiser. M9: the card is "Protein & fibre / serving" with a fibre bar under each protein bar (`fibre-<type>`), against `settings.fibreGoals` (R6.26).
 
 ### Nutrition tracking switch (M9, R6.27)
 

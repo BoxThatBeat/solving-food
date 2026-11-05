@@ -143,6 +143,16 @@ describe("proteinSummary", () => {
     );
     expect(s).toEqual({ dinner: { avg: 35, items: 2 } });
   });
+  it("counts each recipe's servings multiplier (a double portion is double the protein, M21)", () => {
+    const s = proteinSummary(
+      [
+        { mealType: "dinner", recipes: [{ recipeId: "a", servingsMultiplier: 2 }, { recipeId: "b", servingsMultiplier: 0.5 }], status: "planned" },
+        { mealType: "dinner", recipes: [ref("a")], status: "planned" },
+      ],
+      (id) => ({ a: 30, b: 10 })[id],
+    );
+    expect(s).toEqual({ dinner: { avg: 47.5, items: 2 } });
+  });
 });
 
 describe("eating out (M9, R6.23)", () => {

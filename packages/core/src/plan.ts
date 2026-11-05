@@ -222,7 +222,10 @@ export function carriedItemId(periodId: string, fromId: string): string {
 /** Grouping order on the Plan page: breakfast, lunch, dinner, snack. */
 export const MEAL_TYPE_ORDER: Record<MealType, number> = { breakfast: 0, lunch: 1, dinner: 2, snack: 3 };
 
-/** Average protein per serving of the plan's items per meal type (R6.17's summary). Recipes only: sides are ignored. */
+/**
+ * Average protein (or fibre, with a fibre lookup) per person of the plan's items per meal type (R6.17's summary): Σ over
+ * the meal's recipes of per-serving × `servingsMultiplier`. Recipes only: sides are ignored.
+ */
 export function proteinSummary(
   items: ReadonlyArray<Pick<PlanItemDoc, "mealType" | "recipes" | "status">>,
   proteinOf: (recipeId: string) => number | null | undefined,
@@ -230,7 +233,11 @@ export function proteinSummary(
   const out: Partial<Record<MealType, { sum: number; n: number }>> = {};
   for (const it of items) {
     if (it.status === "skipped") continue;
-    const vals = it.recipes.map((r) => proteinOf(r.recipeId)).filter((v): v is number => typeof v === "number");
+    // Each recipe is cooked for `servings × servingsMultiplier`, so each eater has `servingsMultiplier` portions of it.
+    const vals = it.recipes.flatMap((r) => {
+      const v = proteinOf(r.recipeId);
+      return typeof v === "number" ? [v * (r.servingsMultiplier || 1)] : [];
+    });
     if (!vals.length) continue;
     const per = vals.reduce((a, b) => a + b, 0); // a meal's servings eat every recipe in it
     const o = (out[it.mealType] ??= { sum: 0, n: 0 });
