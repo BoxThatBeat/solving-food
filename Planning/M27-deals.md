@@ -1,6 +1,6 @@
 # M27 — Deal awareness
 
-Status: in progress
+Status: done (owner: look at Settings → Brands and History → Prices after the first two or three Monday refreshes; deals need 4 prices)
 
 ## Goal
 
@@ -41,12 +41,47 @@ price feeds the history). PRD v0.13. Spec §2 (quota rows), §4.2 (`brandMapping
 - [x] **4. Web data**: `deals` in the plan model (`dealsFromMappings` over the mapping docs and live prices, both views);
       the worker snapshot carries only the on-sale ingredients (`deals: [id, { dealPct }]`) and the worker prices them
       with `linePricing` from its build context; `saveMapping` merges when the product (code and pack) is unchanged.
-- [ ] **5. UI**: Brands row chip; grocery line chip and "on sale" staple reason; suggestion and plan cards' Deal chip;
-      reasons line; Settings → Suggestion weights lists "On sale"; History → Prices card.
-- [ ] **6. E2E** tagged @R6.32 @R6.33 @R6.34 @R7.19 @R10.4.
-- [ ] **7. Docs**: PRD, spec, README row, this plan.
-- [ ] **8. Screenshot check** on phone (430×932) and desktop (1920×1080).
+- [x] **5. UI**: `<DealChip>` ("20% below usual · usual $1.99", accent badge) on Settings → Brands rows and grocery lines;
+      staple reason "on sale, due soon"; a Deal badge on suggestion cards (`ScoreResult.deal`) and planned meals
+      (`mealDeal`); the reason "Chicken thighs 20% below usual"; Settings → Suggestion weights lists "On sale" (from
+      `FACTORS`); History → **Prices · this week vs usual** tile (`priceMovers`, from the shell's plan model: no reads).
+- [x] **6. E2E**: prices.spec (@R6.32 @R6.33: a stubbed drop via `_stubPcx/{hid}.prices`, brand row, saving the same
+      product keeps the history, grocery line, planned meal), suggestions.spec (@R6.34 @R6.33: reason, Deal, the weight),
+      history.spec (@R10.4: movers up and down, stale and unchanged left out, empty state), cadence.spec (@R7.19: pulled
+      forward, gone without budget room). Each test gets its own PC Express store ID (`ownPcxStore`) so other tests'
+      prices docs can't change its live prices.
+- [x] **7. Docs**: PRD v0.13 (R6.32–R6.34, R7.19, R10.4; R6.11 table, R7.17), spec §2, §4.2, §7, §8, §13, §14.1, §15,
+      README row, this plan.
+- [x] **8. Screenshot check** (dev emulator with seeded histories and live prices; phone 430×932, desktop 1920×1080):
+      Plan (Deal on the planned meal, Deal + reason on suggestions), Grocery (chips on the chicken line and the pulled
+      milk staple), Settings → Brands (chip under the live price), History (Prices tile). Fixed: History's fourth tile sat
+      alone on a row at 1920 px (now four columns from 2xl); Deal badges wrap instead of overflowing a phone card.
 
 ## Deviations
 
+- **History lives on the brand mapping, not the price doc.** The mapping is per household and covers products without a
+  PC Express code (Costco lines with a receipt price); the client already listens to it, so History and the chips need
+  no new reads. Cost: the weekly refresh writes each mapping of a refreshed product once (~50 writes a week), §2 row.
+- **"Current" is the live price when there is one.** The product search writes a fresher `prices/*` doc than the weekly
+  history, so `priceDeal` takes the live price as current and every history entry before it as usual; the weekly
+  observation written with the same timestamp isn't counted twice.
+- **Receipts count toward usual but are never a deal** (they are what was paid, not what it costs now).
+- **4 observations include the current one** (three earlier prices plus today's).
+- **Deal chip rule:** the brief's "main protein" is read as a meat or fish ingredient the order buys (`mainProtein` is a
+  taxonomy value, not an ingredient); otherwise the most expensive line to buy. Cheap garnish on sale gets no chip.
+- **The factor is skipped while nothing is on sale** (like a goal that's off), so the card's 0–100 score doesn't drop for
+  every recipe when the household has no deals.
+- **Staples pull-forward needs a learned interval** (bought before) and uses the meter's `remainingCents` as headroom,
+  shared in list order; it doesn't count against the budget, like every staple.
+- **Optimiser unchanged**: a core test shows the sale price reaches the list, the meter and `marginalCostFn`.
+- **No local e2e** (owner rule change mid-milestone: the machine's memory kills the runs). One early local run of the new
+  tests found two test bugs (tomato vs tomatoes; another run's copy of the recipe tying at 100), fixed; CI runs the matrix.
+- **Stub prices per household**: `_stubPcx/{hid}.prices` used to fill a module-global override other tests saw.
+
 ## Verification
+
+- Typecheck, lint: clean. `pnpm e2e:coverage`: green, M27 tagged.
+- Unit: core 732 → 747 (`priceHistory.test.ts` 9, scoring +3, grocery +2, mealDeal 1), web 48.
+- Functions: 93 → 94 (pcx history appended per mapping and once per week; receive appends the paid price).
+- Rules: 104 (brand mapping test extended: function-written fields kept by a merge, dropped by a replace, never set).
+- E2E: see the CI run in the report (not run locally, deviation above).

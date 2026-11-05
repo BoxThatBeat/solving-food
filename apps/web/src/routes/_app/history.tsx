@@ -155,7 +155,7 @@ function HistoryPage() {
       >
           <div className="flex flex-col gap-3.5">
             <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">History</h1>
-            <div className="grid grid-cols-1 items-start gap-3.5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 items-start gap-3.5 md:grid-cols-2 2xl:grid-cols-4">
               <StatTile title="Most cooked" testId="stat-most-cooked">
                 {most.length ? (
                   most.map((m) => (
