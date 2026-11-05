@@ -35,6 +35,8 @@ functions/lib/
 e2e/test-results/
 e2e/playwright-report/
 e2e/.auth/
+# scripts/pw (playwright-cli) session files and snapshots
+.playwright-cli/
 
 # CNF API responses cached by pnpm nutrition:write
 data/.cnf-cache/

@@ -39,11 +39,8 @@ export const TOOL_SYNONYMS: Readonly<Record<string, readonly string[]>> = {
   skewer: ["wooden skewer"],
 };
 
-const ALIAS = new Map<string, string>();
-for (const [canon, alts] of Object.entries(TOOL_SYNONYMS)) {
-  ALIAS.set(canon, canon);
-  for (const a of alts) ALIAS.set(a, canon);
-}
+// One expression, no top-level statements: the package is `"sideEffects": false` (M21).
+const ALIAS = new Map<string, string>(Object.entries(TOOL_SYNONYMS).flatMap(([canon, alts]) => [[canon, canon] as const, ...alts.map((a) => [a, canon] as const)]));
 
 /** Size and material words that don't change which tool it is ("large", "oven-safe", "nonstick"…). */
 const QUALIFIERS = /\b(?:extra|large|medium|small|mini|big|shallow|deep|rimmed|round|metal|glass|ceramic|heavy(?: bottomed)?|oven safe|ovenproof|oven proof|disposable|digital|sharp|good|sturdy|clean|wide|tall|non stick|nonstick)\b/g;
