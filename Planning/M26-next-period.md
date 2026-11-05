@@ -1,0 +1,75 @@
+# M26 — Plan the next period
+
+Status: in progress
+
+## Goal
+
+Orders go in before the new period starts (Monday), but plan items only belonged to the current period and the grocery
+draft was built from the current plan, so the household either planned next week into this one (polluting coverage and
+the budget) or waited for the rollover and ordered late. Let the household plan and order the next period while the
+current one runs, and have the rollover make that plan the current one with nothing copied.
+
+## Requirements covered
+
+New: **R3.2** (This period · Next period on the Plan page; next-period meals in their own strip, list and budget, not
+this period's), **R3.3** (the rollover adopts the next period's meals and list with no copies; restart moves them),
+**R3.4** (suggestions, optimiser and "can make" on the Supply projected at its start; the projected-at-start note),
+**R7.18** (the next period's grocery list: its own draft and orders). Changed: R3.1 (restart moves the next period), R6.1
+(the next period's list), R6.6 (rolls over beside meals already planned). PRD v0.12. Spec §4.2 (`planItems.periodId`,
+`groceryLists/draft-next`), §7 ("The next period"; restart), §8 ("A draft per period"), §12 (routes, `<PeriodSwitch>`),
+§14.1 (plan, rollover, grocery, optimiser specs), §15.
+
+## What rollover did before (verified)
+
+`bootstrapHousehold` (`data/plan.ts`), on open, focus, reconnect and at the period's end: when the current period has
+ended, one client transaction creates `nextPeriod(prevEnd, …)` (the period containing now, aligned to the old
+boundaries) with a budget snapshot, copies every still-`planned` item (`carriesOver`: not eating out; leftovers only
+while the batch is good) to `<newId>_<fromId>` with `carriedFromId`, and advances `currentPeriodId`. `restartPeriod`
+shares `plannedCandidates` / `readCarry` / `writeCarry`. The draft was one household document (`groceryLists/draft`)
+that followed `currentPeriodId` (a new periodId restores removed lines).
+
+## Items
+
+- [x] **0. CI for M25.** The Checks run for e465b09 passed (two flaky layout tests retried green); nothing to fix.
+- [x] **1. Core** (`packages/core/src/upcoming.ts`): `upcomingPeriod`, `rolloverTarget` (adopts or skipped),
+      `restartUpcoming`, `supplyAtStart` (FEFO use by this period's meals, then this period's incoming, expiry at the
+      start, next-period orders added), `atStartSummary`, `listsForView`; `NEXT_DRAFT_ID` and `adoptDraft`
+      (`grocery/draft.ts`). Unit tests `upcoming.test.ts` (15: IDs incl. DST and a cut-short period, adoption and skip,
+      restart re-key for new/move/noop, projection, the note, a draft per period, adoption, lists per view).
+- [x] **2. Rollover and restart** (`data/plan.ts`): the rollover adopts (no item writes), carries a skipped next
+      period's planned items, and turns `draft-next` into `draft` in its transaction; restart re-keys the next period's
+      items, orders and draft. Every draft function takes the view's draft ID.
+- [x] **3. Model** (`data/planModel.ts`): one `usePeriodModel` for both views; `useNextPlanModel()` computed in
+      `<PlanModelProvider>` only while wanted (one plan-items query and one draft document more); ordered lists split by
+      view; current incoming excludes next-period orders.
+- [x] **4. Plan page**: `<PeriodSwitch>` (`?period=next`), kicker "… · STARTS IN n DAYS · 7 DAYS", its strip, list,
+      budget, Create meal (`CreateMealRequest.period`), Suggested (`useSuggestions("next")`), optimiser; next-period
+      items show *Next period* with no Cook / Ate it; the projected-at-start note instead of the alerts.
+- [x] **5. Grocery page**: the same switch; the next draft, its staples (due at its start, not on this period's list),
+      its orders under *Ordered for the next period*; a line of explanation.
+- [x] **6. Suggestions and optimiser**: a second engine on the same worker for the next period; the snapshot carries
+      `period: { view, fromMs }`; this period's planned and cooked recipes count as recent.
+- [x] **7. Rules**: unchanged (periodId is a string, no period document needed); rules test "the next period".
+- [x] **8. E2E**: plan.spec (@R3.2 create a next-period meal, absent from this period's strip and budget; @R3.4 the
+      note), grocery.spec (@R7.18 next draft from projected Supply, its order in the next view only), rollover.spec
+      (@R3.3 adoption with no copies and the draft; restart moves it), optimiser.spec (@R3.4 accept into the next period).
+- [ ] **9. Docs**: PRD, spec, README row, this plan.
+- [ ] **10. Design-compare** Plan and Grocery (both views) on phone and desktop.
+
+## Deviations
+
+- **Next-period orders are incoming for the next period only**, not "for both views" as the brief said: counted in this
+  period's list too, this period's list would leave out what the next order buys for next week, and the next list
+  (which subtracts this period's needs) would then add the same thing back after it was ordered. Received orders are
+  Supply for both, so the receive flow is unchanged.
+- **The period ID is computed, not created lazily**: the rollover already creates the period with its budget snapshot;
+  a document written early would need a budget, dismissals and a clean-up when a restart moves it. The next view uses
+  the household's budget.
+- **Restart keeps the next period the next period**: its items, draft and orders are re-keyed to the period after the
+  restarted one (also for a `move` of a period that hasn't started), rather than folded into the restarted period, which
+  would put two weeks of meals in one period and pollute its coverage and budget.
+- **Next-period meals can't be cooked** from the Plan page until their period starts (`finishCooking` records leftovers
+  and the cook event in the current period).
+- **Staples**: the next list asks which staples are due at its start and leaves out any already on this period's list
+  or ordered, so one isn't bought twice.
+- **No prototype screen**: `<PeriodSwitch>` reuses the Create meal sheet's segmented tabs (accent on the chosen one).

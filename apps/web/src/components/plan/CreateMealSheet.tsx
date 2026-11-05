@@ -37,7 +37,7 @@ import { useNotify } from "@/components/notifications-context";
 import { useHouseholdFacts, useNotes } from "@/data/householdRecipes";
 import { addEatingOut, createMeal, useMeals, useRecipeDocs } from "@/data/plan";
 import { useIngredientsById } from "@/data/ingredients";
-import { usePlanModel } from "@/data/planModel";
+import { useViewModel } from "@/data/planModel";
 import { useSides } from "@/data/sides";
 import { SidePicker } from "./SidePicker";
 import { MealTypePicker } from "./MealTypePicker";
@@ -106,7 +106,10 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
     setName(preMeal.data.name);
   }
 
-  const model = usePlanModel();
+  // M26 (R3.2): Create meal from the next-period view adds to the next period, with its budget and projected Supply.
+  const view = request.period ?? "current";
+  const upcoming = view === "next";
+  const model = useViewModel(view);
   // The picked recipes and sides, loaded here (M23: the shared plan model holds only what's planned).
   const pickedRecipes = useRecipeDocs(selected.map((r) => r.recipeId));
   const pickedIngredientIds = React.useMemo(() => [...new Set([...[...pickedRecipes.values()].flatMap((r) => r.ingredientIds), ...sides.map((x) => x.ingredientId)])], [pickedRecipes, sides]);
@@ -132,7 +135,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
 
   // Recipes tab: shared filters and text search over the index.
   const notes = useNotes(model.hid);
-  const suggestions = useSuggestions();
+  const suggestions = useSuggestions(view);
   const factsOf = useHouseholdFacts(model.hid, all, model.supply.loading ? undefined : model.projected, suggestions.byId);
   const matches = useRecipeSearch(all, notes, search.q ?? "");
   const nut = useNutritionSearch();
@@ -190,7 +193,8 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
       // The write shows at once (Firestore applies it locally) and reaches the server when it can: the sheet never
       // waits for it (M23: a dead connection that still reads as online used to hold it on "Adding…").
       void createMeal(model.hid, model.periodId, parsed.data, s.user.uid, recipeOf).catch((e) => notify({ kind: "error", message: `Couldn't add the meal to the plan: ${(e as Error).message}` }));
-      const what = parsed.data.saveAsMeal ? `Added to plan · ${MEAL_LABEL[effectiveType].toLowerCase()} · saved to Meals` : `Added to plan · ${MEAL_LABEL[effectiveType].toLowerCase()}`;
+      const where = upcoming ? "Added to the next period" : "Added to plan";
+      const what = parsed.data.saveAsMeal ? `${where} · ${MEAL_LABEL[effectiveType].toLowerCase()} · saved to Meals` : `${where} · ${MEAL_LABEL[effectiveType].toLowerCase()}`;
       notify({ kind: "success", message: what, ...(pathname !== "/plan" ? { link: { to: "/plan", label: "Plan" } } : {}) });
       close();
     } catch (e) {
@@ -208,7 +212,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
     setBusy(true);
     try {
       void addEatingOut(model.hid, model.periodId, { mealType: effectiveType, ...(outNote.trim() ? { note: outNote.trim() } : {}) }, s.user.uid).catch((e) => notify({ kind: "error", message: `Couldn't add it to the plan: ${(e as Error).message}` }));
-      notify({ kind: "success", message: `Eating out · ${MEAL_LABEL[effectiveType].toLowerCase()} added to the plan`, ...(pathname !== "/plan" ? { link: { to: "/plan", label: "Plan" } } : {}) });
+      notify({ kind: "success", message: `Eating out · ${MEAL_LABEL[effectiveType].toLowerCase()} added to ${upcoming ? "the next period" : "the plan"}`, ...(pathname !== "/plan" ? { link: { to: "/plan", label: "Plan" } } : {}) });
       close();
     } catch (e) {
       setError(`Couldn't add it: ${(e as Error).message}`);
@@ -220,7 +224,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
     return (
       <SheetContent
         title="Create meal"
-        description="Pick one or more recipes, or a saved meal"
+        description={upcoming ? "For the next period: pick one or more recipes, or a saved meal" : "Pick one or more recipes, or a saved meal"}
         className="md:h-[88dvh]"
         footer={
           tab === "recipes" ? (
@@ -377,7 +381,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
   return (
     <SheetContent
       title="Add to plan"
-      description="Meal type, servings, sides, and an optional name"
+      description={upcoming ? "For the next period: meal type, servings, sides, and an optional name" : "Meal type, servings, sides, and an optional name"}
       footer={
         <div className="flex flex-col gap-2">
           {error ? (
@@ -460,7 +464,8 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
           <>
             <span className="text-[1.0625rem] font-extrabold">{impact.cents > 0 ? `+${formatCents(impact.cents)} to buy` : "Nothing extra to buy"}</span>
             <span className="text-[0.8125rem] font-semibold">
-              Leaves {formatCents(model.budget.remainingCents - impact.cents)} of {formatCents(model.budget.budgetCents)}.
+              Leaves {formatCents(model.budget.remainingCents - impact.cents)} of {formatCents(model.budget.budgetCents)}
+              {upcoming ? " next period" : ""}.
               {impact.unknown ? ` ${impact.unknown} price${impact.unknown === 1 ? "" : "s"} unknown.` : ""}
             </span>
           </>

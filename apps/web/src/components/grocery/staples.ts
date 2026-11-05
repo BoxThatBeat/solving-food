@@ -9,7 +9,11 @@ import { millis } from "@/data/plan";
 import type { PlanModel } from "@/data/planModel";
 import { useCadence } from "@/data/supply";
 
-export function useStapleLines(m: PlanModel): { lines: Record<string, GroceryItem>; ready: boolean; cadenceOf: (id: string) => { avgIntervalDays: number | null; purchaseCount: number } | null; ingredientOf: (id: string) => StapleIngredient | undefined } {
+/**
+ * M26 (R7.18): the next period's list asks which staples are due at its start (`nowMs`), leaving out any already on
+ * this period's list or on its way (`alsoOnList`), so a staple is never on both drafts.
+ */
+export function useStapleLines(m: PlanModel, opts: { nowMs?: number; alsoOnList?: ReadonlySet<string> } = {}): { lines: Record<string, GroceryItem>; ready: boolean; cadenceOf: (id: string) => { avgIntervalDays: number | null; purchaseCount: number } | null; ingredientOf: (id: string) => StapleIngredient | undefined } {
   const cadence = useCadence(m.hid);
   const ids = React.useMemo(() => (cadence.docs ?? []).map((d) => d.id), [cadence.docs]);
   const extra = useIngredientsById(ids);
@@ -24,6 +28,7 @@ export function useStapleLines(m: PlanModel): { lines: Record<string, GroceryIte
     for (const it of Object.values(draftItems ?? {})) if (it.ingredientId && it.source !== "staple") onList.add(it.ingredientId);
     for (const id of Object.keys(m.built.items)) onList.add(id);
     for (const l of m.ordered ?? []) for (const it of Object.values(l.data.items)) if (it.ingredientId) onList.add(it.ingredientId);
+    for (const id of opts.alsoOnList ?? []) onList.add(id);
     return stapleLines(
       {
         items: m.inputs,
@@ -34,11 +39,11 @@ export function useStapleLines(m: PlanModel): { lines: Record<string, GroceryIte
         onList,
         // A dismissal from an earlier period that's still running stays; the until time decides.
         dismissed,
-        nowMs: m.supply.now,
+        nowMs: opts.nowMs ?? m.supply.now,
       },
       { ...m.ctx, ingredients: ingredientOf },
     );
-  }, [ready, draftItems, dismissed, m.built.items, m.ordered, m.inputs, m.supply.now, m.ctx, cadence.docs, ingredientOf]);
+  }, [ready, draftItems, dismissed, m.built.items, m.ordered, m.inputs, m.supply.now, m.ctx, cadence.docs, ingredientOf, opts.nowMs, opts.alsoOnList]);
   const cadenceOf = React.useCallback(
     (id: string) => {
       const d = cadence.docs?.find((x) => x.id === id)?.data;

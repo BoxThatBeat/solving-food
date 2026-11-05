@@ -2,7 +2,9 @@
 // prompts, Cook / eaten actions, expiry badges, and leftover items. Phone: sticky budget meter, header with Create
 // meal, coverage strip, the period's meals by meal type, then Suggested (+ See more), protein, optimiser. lg: two
 // columns; xl: plan · suggestions/protein/optimiser · budget/expiry, as the prototype's desktop mode. M7 (owner review):
-// no Grocery list button (the tab stays), no "not a schedule" hint, protein directly above the optimiser.
+// no Grocery list button (the tab stays), no "not a schedule" hint, protein directly above the optimiser. M26 (R3.2,
+// R3.4): "This period · Next period" at the top; the next period has its own strip, list, budget, Create meal,
+// Suggested and optimiser (Supply projected at its start), and one note instead of the alerts.
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -31,10 +33,16 @@ import {
   SORT_LABELS,
   stripModel,
   toSearchParams,
+  atStartSummary,
+  daysBetween,
+  formatCanonical,
+  localDate,
   type CollectionSearch,
   type HouseholdFacts,
   type MealType,
+  type PeriodView,
 } from "@solving-food/core";
+import { PeriodSwitch } from "@/components/plan/PeriodSwitch";
 import { EmptyState, PageBody } from "@/components/AppShell";
 import { CollectionView } from "@/components/CollectionView";
 import { Button } from "@/components/ui/button";
@@ -47,7 +55,7 @@ import { ExpiryAlerts } from "@/components/plan/ExpiryAlerts";
 import { UseItUp } from "@/components/plan/UseItUp";
 import { PlanAlerts } from "@/components/plan/PlanAlerts";
 import { OptimiserCard } from "@/components/plan/Optimiser";
-import { usePlanModel } from "@/data/planModel";
+import { usePlanModel, useViewModel, type PlanModel } from "@/data/planModel";
 import { dismissExpiryAlert, millis } from "@/data/plan";
 import { useScoringSnapshot, useSuggestions } from "@/data/suggestions";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
@@ -67,17 +75,22 @@ import { useNow } from "@/hooks/useNow";
 const PLAN_DEFAULT_SORT = "expiry" as const;
 
 export const Route = createFileRoute("/_app/plan")({
-  validateSearch: (s) => collectionSearchSchema.parse(s),
+  // M26: `?period=next` shows the next period.
+  validateSearch: (s: Record<string, unknown>): CollectionSearch & { period?: "next" } => ({ ...collectionSearchSchema.parse(s), ...(s.period === "next" ? { period: "next" as const } : {}) }),
   component: PlanPage,
 });
 
 function PlanPage() {
   const s = useReadySession();
-  const search = Route.useSearch();
+  const { period: periodParam, ...search } = Route.useSearch();
+  const view: PeriodView = periodParam === "next" ? "next" : "current";
+  const upcoming = view === "next";
   const navigate = useNavigate();
-  const openCreateMeal = useCreateMeal()!;
+  const openCreate = useCreateMeal()!;
+  const openCreateMeal = React.useCallback((req: Parameters<typeof openCreate>[0] = {}) => openCreate({ ...req, ...(upcoming ? { period: "next" as const } : {}) }), [openCreate, upcoming]);
   const online = useOnline();
-  const m = usePlanModel();
+  const current = usePlanModel();
+  const m = useViewModel(view);
   const summaries = useRecipeIndex();
   const byId = React.useMemo(() => new Map((summaries ?? []).map((r) => [r.id, r])), [summaries]);
   const [openItem, setOpenItem] = React.useState<string | null>(null);
@@ -87,7 +100,7 @@ function PlanPage() {
   const startMs = millis(m.period?.start);
   const endMs = millis(m.period?.end);
   const cells = React.useMemo(() => (startMs && endMs ? periodCells(startMs, endMs, tz) : []), [startMs, endMs, tz]);
-  const ended = endMs !== null && now >= endMs;
+  const ended = !upcoming && endMs !== null && now >= endMs;
 
   const titleOf = React.useCallback((id: string) => m.recipes.get(id)?.title ?? byId.get(id)?.title, [m.recipes, byId]);
   // Sides (R5.9) by ingredient name: "Salmon + french fries, frozen peas" on unnamed rows, searchable by name.
@@ -109,7 +122,7 @@ function PlanPage() {
     () =>
       m.items.map((i) => {
         const status = optimistic.get(i.id) ?? i.data.status;
-        const v: PlanItemView = { id: i.id, item: i.data, title: planItemTitle(i.data, titleOf, sideNameOf), cost: m.ready ? m.costs.get(i.id) : undefined, status, review: reviewOf.get(i.id) };
+        const v: PlanItemView = { id: i.id, item: i.data, title: planItemTitle(i.data, titleOf, sideNameOf), cost: m.ready ? m.costs.get(i.id) : undefined, status, review: reviewOf.get(i.id), upcoming };
         if (status === "planned" && i.data.kind === "meal") {
           // R6.7: the soonest-expiring lot this meal would use, when it expires within the period (or within days).
           const needs = mealRequirements(i.data.recipes, i.data.servings, m.ctx, i.data.sides);
@@ -128,14 +141,14 @@ function PlanPage() {
         }
         return v;
       }),
-    [m.items, titleOf, sideNameOf, m.costs, m.ready, optimistic, reviewOf, m.ctx, m.lotsByIngredient, m.ingredients, m.supply.items, supplyNow, endMs, tz],
+    [m.items, titleOf, sideNameOf, m.costs, m.ready, optimistic, reviewOf, m.ctx, m.lotsByIngredient, m.ingredients, m.supply.items, supplyNow, endMs, tz, upcoming],
   );
   const rows = React.useMemo(
     () => stripModel(views.map((v) => ({ coverage: v.item.coverage, status: v.status, kind: v.item.kind })), cells.length, m.household?.plannedMealTypes ?? []),
     [views, cells.length, m.household?.plannedMealTypes],
   );
   const listRows = React.useMemo(() => views.map((v) => planItemRow(v.id, v.item, (id) => byId.get(id), v.title, sideNameOf)), [views, byId, sideNameOf]);
-  const suggestions = useSuggestions();
+  const suggestions = useSuggestions(view);
   // The list's Suggested and Expiring first sorts: each item's recipes' scores, combined (M5).
   const factsOf = React.useCallback(
     (id: string): HouseholdFacts => {
@@ -156,9 +169,12 @@ function PlanPage() {
   const groups = MEAL_TYPES.map((t) => ({ type: t, items: result.items.map((r) => viewById.get(r.id)!).filter((v) => v && v.item.mealType === t) })).filter((g) => g.items.length);
 
   const onSearchChange = React.useCallback(
-    (next: CollectionSearch, opts?: { replace?: boolean }) => void navigate({ to: "/plan", search: toSearchParams(next) as never, replace: opts?.replace ?? false }),
-    [navigate],
+    (next: CollectionSearch, opts?: { replace?: boolean }) => void navigate({ to: "/plan", search: { ...toSearchParams(next), ...(upcoming ? { period: "next" } : {}) } as never, replace: opts?.replace ?? false }),
+    [navigate, upcoming],
   );
+  const setView = (v: PeriodView) => void navigate({ to: "/plan", search: { ...toSearchParams(search), ...(v === "next" ? { period: "next" } : {}) } as never });
+  const currentStart = millis(current.period?.start);
+  const currentEnd = millis(current.period?.end);
   const planned = views.filter((v) => v.status === "planned" && v.item.kind === "meal").length;
   const expired = expiredEntries(m.supply.items.values(), supplyNow, (it) => unitFor(it, it.ingredientId ? m.ingredients.get(it.ingredientId) : undefined));
   const protein = proteinSummary(
@@ -205,13 +221,24 @@ function PlanPage() {
       <div className="flex flex-wrap items-end justify-between gap-2.5">
         <div className="flex flex-col gap-1">
           <span className="kicker" data-testid="period-range">
-            {startMs && endMs ? `${formatPeriodRange(startMs, endMs, tz)} · DAY ${dayOfPeriod(now, startMs, endMs, tz)} OF ${cells.length}` : "SETTING UP THE PERIOD…"}
+            {startMs && endMs
+              ? upcoming
+                ? `${formatPeriodRange(startMs, endMs, tz)} · ${startsIn(daysBetween(localDate(now, tz), localDate(startMs, tz)))} · ${cells.length} DAYS`
+                : `${formatPeriodRange(startMs, endMs, tz)} · DAY ${dayOfPeriod(now, startMs, endMs, tz)} OF ${cells.length}`
+              : "SETTING UP THE PERIOD…"}
           </span>
           <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">Plan</h1>
         </div>
         <Button onClick={() => openCreateMeal()}>+ Create meal</Button>
       </div>
-      <PendingReviews hid={m.hid} uid={s.user.uid} />
+      <PeriodSwitch
+        view={view}
+        onChange={setView}
+        tz={tz}
+        current={currentStart && currentEnd ? { startMs: currentStart, endMs: currentEnd } : null}
+        next={current.upcoming ? { startMs: current.upcoming.startMs, endMs: current.upcoming.endMs } : null}
+      />
+      {upcoming ? null : <PendingReviews hid={m.hid} uid={s.user.uid} />}
       {ended && !online ? (
         <div role="status" className="rounded-ui border-2 border-dashed border-line bg-base p-3 text-sm font-bold">
           This period has ended. It will roll over when you're back online; uncooked meals carry into the next one.
@@ -220,11 +247,11 @@ function PlanPage() {
 
       <div className="grid grid-cols-1 items-start gap-[1.125rem] [grid-template-areas:'c'_'a'_'b'] lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:[grid-template-areas:'a_c'_'a_b'] xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,0.85fr)] xl:[grid-template-areas:'a_b_c']">
         <div className="flex min-w-0 flex-col gap-3.5 [grid-area:a]">
-          {cells.length ? <CoverageStrip rows={rows} cells={cells} todayIndex={dayOfPeriod(now, startMs!, endMs!, tz) - 1} /> : null}
+          {cells.length ? <CoverageStrip rows={rows} cells={cells} todayIndex={upcoming ? -1 : dayOfPeriod(now, startMs!, endMs!, tz) - 1} /> : null}
           <CollectionView
             search={search}
             onSearchChange={onSearchChange}
-            placeholder="Search this period's meals…"
+            placeholder={upcoming ? "Search the next period's meals…" : "Search this period's meals…"}
             noun="planned meals"
             countFor={(x) => applyCollection(listRows, x, factsOf, null).items.length}
             defaultSort={PLAN_DEFAULT_SORT}
@@ -233,7 +260,7 @@ function PlanPage() {
             sticky={false}
             header={
               <div className="flex items-baseline justify-between gap-2">
-                <h2 className="m-0 font-display text-[1.375rem] font-normal">This period</h2>
+                <h2 className="m-0 font-display text-[1.375rem] font-normal">{upcoming ? "Next period" : "This period"}</h2>
                 <span className="font-mono text-[0.65625rem] font-bold" data-testid="plan-count">
                   {m.loading ? "LOADING…" : `${planned} TO COOK · ${SORT_LABELS[search.sort ?? PLAN_DEFAULT_SORT].toUpperCase()}`}
                 </span>
@@ -242,7 +269,11 @@ function PlanPage() {
           >
             {!m.loading && m.items.length === 0 ? (
               <EmptyState>
-                <p className="m-0 mb-3">Nothing planned yet. Create a meal from one or more recipes, or a saved meal.</p>
+                <p className="m-0 mb-3">
+                  {upcoming
+                    ? "Nothing planned for the next period yet. Plan it now and order before it starts; its meals don't count toward this period."
+                    : "Nothing planned yet. Create a meal from one or more recipes, or a saved meal."}
+                </p>
                 <Button onClick={() => openCreateMeal()}>+ Create meal</Button>
               </EmptyState>
             ) : !m.loading && result.items.length === 0 ? (
@@ -285,7 +316,10 @@ function PlanPage() {
 
         <div className="flex min-w-0 flex-col gap-3.5 [grid-area:c] lg:sticky lg:top-4">
           <BudgetMeterCard b={m.budget} className="hidden lg:flex" />
-          {/* M24 (R6.31): every alert in this column (on phones, above the strip), folded to one line once seen. */}
+          {upcoming ? (
+            <AtStartNote m={m} />
+          ) : (
+          /* M24 (R6.31): every alert in this column (on phones, above the strip), folded to one line once seen. */
           <PlanAlerts hid={m.hid} keys={alertKeys} foldable={!lg} counts={{ expired: expired.length, expiring: alertList.length, useUp: useUpList.length }}>
             <ExpiredLotPrompts entries={expired} hid={m.hid} uid={s.user.uid} tz={tz} nowMs={supplyNow} />
             <ExpiryAlerts
@@ -326,6 +360,7 @@ function PlanPage() {
               />
             ) : null}
           </PlanAlerts>
+          )}
         </div>
       </div>
 
@@ -389,5 +424,29 @@ function ProteinCard({
         Protein and fibre goals
       </Link>
     </section>
+  );
+}
+
+function startsIn(days: number): string {
+  return days <= 0 ? "STARTS TODAY" : days === 1 ? "STARTS TOMORROW" : `STARTS IN ${days} DAYS`;
+}
+
+/**
+ * The next-period view's one line (M26, R3.4) in place of the alerts (they stay about this period): what will be left in
+ * Supply at its start that expires within it and no planned meal of it uses, so Create meal and Suggested (whose scores
+ * use it) can use it up.
+ */
+function AtStartNote({ m }: { m: PlanModel }) {
+  if (!m.ready) return null;
+  const sum = atStartSummary(m.expiring);
+  const names = sum.items.map((i) => {
+    const ing = m.ingredients.get(i.ingredientId);
+    return `${ing?.name ?? i.ingredientId.replace(/-/g, " ")} ${formatCanonical(i.amount, ing?.canonicalUnit ?? "g", ing?.unitWeightG)}`;
+  });
+  return (
+    <p role="status" className="m-0 rounded-ui border-2 border-dashed border-line bg-base px-3.5 py-2.5 text-[0.8125rem] font-semibold" data-testid="at-start-note">
+      <span className="font-extrabold">Projected at period start: </span>
+      {sum.lots ? `${sum.lots} lot${sum.lots === 1 ? "" : "s"} expiring · ${names.join(", ")}` : "nothing in Supply expiring that its meals don't use."}
+    </p>
   );
 }

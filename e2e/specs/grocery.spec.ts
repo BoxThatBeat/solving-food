@@ -5,7 +5,9 @@
 import { adminDb } from "../fixtures/admin";
 import { forgetIngredients } from "../fixtures/recipes";
 import { expect, test } from "../fixtures/test";
-import { makePlanRecipe, PlanPage, seedPeriod, seedPlanItem } from "../pages/plan";
+import { makePlanRecipe, PlanPage, seedPeriod, seedPlanItem, TZ } from "../pages/plan";
+import { seedSupply } from "../pages/supply";
+import { addDays, localDate } from "../../packages/core/src/index";
 import type { Page } from "@playwright/test";
 
 const line = (page: Page, name: string | RegExp) => page.getByTestId("grocery-line").filter({ hasText: name });
@@ -214,4 +216,37 @@ test("every line has an ×: a removed plan line stays off (reload, order) and le
   await expect.poll(async () => (await draft()).data()?.items?.["chicken-thigh"]?.removed).toBeUndefined();
   await gotoGrocery(page);
   await expect(line(page, "Chicken thigh")).toBeVisible();
+});
+
+test("the next period's list: its own draft from its meals and the Supply left after this period, ordered for it (R7.18)", { tag: ["@R7.18"] }, async ({ page, household }) => {
+  const r = await makePlanRecipe("Grocery next period");
+  const pid = await seedPeriod(household.hid);
+  const nextId = addDays(localDate(Date.now(), TZ), 7); // the current period starts today and runs 7 days
+  await seedPlanItem(household.hid, pid, [r.id]); // 600 g chicken this period
+  await seedPlanItem(household.hid, nextId, [r.id], { name: "Next week's chicken" }); // 600 g next period
+  await seedSupply(household.hid, "chicken-thigh", [{ amount: 1000, expiresInDays: null }]);
+
+  // This period: Supply covers the chicken; the next period's meal adds nothing here.
+  await gotoGrocery(page);
+  await expect(line(page, "Chicken thigh")).toHaveCount(0);
+  await expect(line(page, "Baby spinach")).toContainText("need 140 g");
+
+  // Next period: 1000 g − this period's 600 g leaves 400 g, so 200 g more (one pack).
+  await page.getByRole("group", { name: "Period" }).getByRole("button", { name: /^Next period/ }).click();
+  await expect(page).toHaveURL(/period=next/);
+  await expect(page.getByText("Building the list…")).toHaveCount(0, { timeout: 20_000 });
+  await expect(line(page, "Chicken thigh")).toContainText("need 200 g →");
+  await expect(line(page, "Baby spinach")).toContainText("need 140 g");
+  await expect.poll(async () => (await adminDb.doc(`households/${household.hid}/groceryLists/draft-next`).get()).data()?.periodId).toBe(nextId);
+  expect(Object.keys((await adminDb.doc(`households/${household.hid}/groceryLists/draft-next`).get()).data()!.items)).toContain("chicken-thigh");
+
+  // Ordering it puts an order for the next period under the next view only.
+  await page.getByRole("button", { name: "Mark ordered without copying" }).click();
+  await expect(page.getByRole("heading", { name: "Ordered for the next period" })).toBeVisible();
+  const orders = await adminDb.collection(`households/${household.hid}/groceryLists`).where("status", "==", "ordered").get();
+  expect(orders.docs.map((d) => d.data().periodId)).toEqual([nextId]);
+  await page.getByRole("group", { name: "Period" }).getByRole("button", { name: /^This period/ }).click();
+  await expect(page.getByRole("heading", { name: /Ordered/ })).toHaveCount(0);
+  // This period's list still buys its own spinach: the next order isn't counted as incoming here.
+  await expect(line(page, "Baby spinach")).toContainText("need 140 g");
 });

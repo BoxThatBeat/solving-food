@@ -5,6 +5,7 @@ import { adminDb, eventually } from "../fixtures/admin";
 import { forgetIngredients, seedRecipeId } from "../fixtures/recipes";
 import { expect, test } from "../fixtures/test";
 import { CHICKEN_LINES, cook, makePlanRecipe, PlanPage, planItems, seedPeriod, seedPlanItem } from "../pages/plan";
+import { seedSupply } from "../pages/supply";
 
 test.describe("Create meal (R5.7)", () => {
   test("one recipe: pick, set meal type and servings, add; the item shows in the plan", { tag: ["@R5.7", "@R5.5", "@R6.1", "@smoke"] }, async ({ page, household }) => {
@@ -444,5 +445,59 @@ test.describe("alerts fold once seen (M24)", () => {
     await plan.goto();
     await expect(page.getByTestId("expired-prompts")).toContainText("Baby spinach");
     await expect(page.getByTestId("plan-alerts-summary")).toHaveCount(0);
+  });
+});
+
+test.describe("the next period (M26)", () => {
+  test("plan the next period: its meal is in its own strip, list and budget, and not in this period's (R3.2)", { tag: ["@R3.2"] }, async ({ page, household }) => {
+    const r = await makePlanRecipe("Next week's skillet");
+    const pid = await seedPeriod(household.hid, { budgetCents: 10000 });
+    const plan = new PlanPage(page);
+    await plan.goto();
+    await expect(plan.budgetLeft()).toHaveText("$100.00");
+
+    await page.getByRole("group", { name: "Period" }).getByRole("button", { name: /^Next period/ }).click();
+    await expect(page).toHaveURL(/period=next/);
+    await expect(page.getByTestId("period-range")).toContainText(/STARTS (IN \d+ DAYS|TOMORROW)/);
+    await expect(page.getByText("Nothing planned for the next period yet.")).toBeVisible();
+    await plan.createMeal({ recipes: [r.title] });
+    await expect(page.getByTestId("notifications")).toContainText("Added to the next period · dinner");
+    await expect(plan.item(r.title)).toBeVisible();
+    await expect(plan.item(r.title).getByTestId("plan-item-status")).toHaveText("Next period");
+    await expect(plan.item(r.title).getByRole("button", { name: `Cook ${r.title}` })).toHaveCount(0);
+    await expect(plan.stripCount("dinner")).toHaveText("1/7");
+    await expect(plan.budgetLeft()).toHaveText("$82.02");
+    // Alerts stay about this period: the next one has its note instead.
+    await expect(page.getByTestId("at-start-note")).toBeVisible();
+
+    // Written with the upcoming period's ID (the period document doesn't exist yet).
+    const mine = (all: Awaited<ReturnType<typeof planItems>>) => all.find((i) => (i.recipes as Array<{ recipeId: string }>)[0]?.recipeId === r.id);
+    const next = mine(await eventually(() => planItems(household.hid), (all) => !!mine(all)))!;
+    expect(next.periodId).not.toBe(pid);
+    expect((await adminDb.doc(`households/${household.hid}/periods/${next.periodId as string}`).get()).exists).toBe(false);
+
+    // This period: none of it.
+    await page.getByRole("group", { name: "Period" }).getByRole("button", { name: /^This period/ }).click();
+    await expect(page).not.toHaveURL(/period=next/);
+    await expect(plan.item(r.title)).toHaveCount(0);
+    await expect(plan.stripCount("dinner")).toHaveText("0/7");
+    await expect(plan.budgetLeft()).toHaveText("$100.00");
+  });
+
+  test("the next period's note: Supply left at its start that its meals won't use (R3.4)", { tag: ["@R3.4"] }, async ({ page, household }) => {
+    const r = await makePlanRecipe("Uses most of the chicken");
+    const pid = await seedPeriod(household.hid);
+    await seedPlanItem(household.hid, pid, [r.id]); // 600 g chicken thigh this period
+    // 1 kg, good until two days into the next period: 400 g left at its start, which nothing there uses.
+    await seedSupply(household.hid, "chicken-thigh", [{ amount: 1000, expiresInDays: 9 }]);
+    await page.goto("/plan?period=next");
+    await expect(page.getByTestId("at-start-note")).toHaveText(/Projected at period start: 1 lot expiring · chicken thigh 400 g/);
+    // Planning it there uses it up.
+    const plan = new PlanPage(page);
+    await plan.createMeal({ recipes: [r.title] });
+    await expect(page.getByTestId("at-start-note")).toContainText("nothing in Supply expiring");
+    // This period's own alerts are unchanged (its meal uses 600 g of the same lot).
+    await page.getByRole("group", { name: "Period" }).getByRole("button", { name: /^This period/ }).click();
+    await expect(page.getByTestId("at-start-note")).toHaveCount(0);
   });
 });

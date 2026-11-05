@@ -20,6 +20,7 @@ import {
   where,
   writeBatch,
   type DocumentData,
+  type DocumentReference,
   type Transaction,
 } from "firebase/firestore";
 import {
@@ -31,6 +32,11 @@ import {
   cleanSides,
   mergeDraft,
   orderableLines,
+  adoptDraft,
+  NEXT_DRAFT_ID,
+  rolloverTarget,
+  restartUpcoming,
+  upcomingPeriod,
   carryOver,
   DEFAULT_STORE_ID,
   DEFAULT_STORES,
@@ -40,7 +46,6 @@ import {
   unexpiredAmount,
   type StoredLotLike,
   newMeal,
-  nextPeriod,
   periodIdFor,
   planRestart,
   type RestartDay,
@@ -99,10 +104,13 @@ export function useBrandMappings(hid: string) {
   return useLiveQuery<BrandMappingDoc>(collection(db, "households", hid, "brandMappings"), hh(hid, "brandMappings"));
 }
 
+/** The current period's draft; the next period's is `NEXT_DRAFT_ID` ("draft-next", M26). */
 export const DRAFT_ID = "draft";
+export { NEXT_DRAFT_ID };
 
-export function useDraftList(hid: string) {
-  return useLiveDoc<StoredList>(doc(db, "households", hid, "groceryLists", DRAFT_ID), hh(hid, "groceryLists", DRAFT_ID));
+/** A grocery draft: the current period's (`draft`) or the next period's (`draft-next`, M26); null = not followed. */
+export function useDraftList(hid: string, id: string | null = DRAFT_ID) {
+  return useLiveDoc<StoredList>(id ? doc(db, "households", hid, "groceryLists", id) : null, id ? hh(hid, "groceryLists", id) : null);
 }
 
 /** Lists copied to ChatGPT and not yet received: their items are "incoming" (§8). */
@@ -168,6 +176,24 @@ function writeCarry(tx: Transaction, hid: string, toPeriodId: string, carry: rea
   }
 }
 
+/**
+ * Restart (M26): the next period's documents to re-key, re-read inside the transaction: its plan items, its orders
+ * still on their way, and its draft, each only while it still carries the old upcoming ID.
+ */
+async function readUpcoming(tx: Transaction, hid: string, fromId: string, itemIds: readonly string[], listIds: readonly string[]): Promise<DocumentReference[]> {
+  const out: DocumentReference[] = [];
+  for (const id of itemIds) {
+    const ref = doc(db, "households", hid, "planItems", id);
+    if ((await tx.get(ref)).data()?.periodId === fromId) out.push(ref);
+  }
+  for (const id of [...listIds.filter((x) => x !== DRAFT_ID && x !== NEXT_DRAFT_ID), NEXT_DRAFT_ID]) {
+    const ref = doc(db, "households", hid, "groceryLists", id);
+    const l = (await tx.get(ref)).data() as StoredList | undefined;
+    if (l && l.periodId === fromId && (l.status === "ordered" || id === NEXT_DRAFT_ID)) out.push(ref);
+  }
+  return out;
+}
+
 export type BootstrapResult = "ok" | "rolled" | "offline" | "error";
 
 /**
@@ -190,6 +216,10 @@ export async function bootstrapHousehold(hid: string, now = Date.now()): Promise
 
   // Queries can't run inside a client transaction: find the candidates first, re-check each inside it.
   const candidates = needPeriod && curId && cur ? await plannedCandidates(hid, curId) : [];
+  // M26: the next period's items become current as they are when the new period is that period; when it was skipped
+  // (nobody opened the app for a whole period), its still-planned items are carried like the current period's.
+  const target = needPeriod && cur ? rolloverTarget({ endMs: cur.end.toMillis() }, h.periodDays, h.timezone, now) : null;
+  const upcomingCandidates = target && !target.adopts ? await plannedCandidates(hid, target.upcomingId) : [];
 
   let rolled = false;
   await runTransaction(db, async (tx) => {
@@ -199,15 +229,33 @@ export async function bootstrapHousehold(hid: string, now = Date.now()): Promise
     const update: Record<string, unknown> = {};
     // ---- reads
     const stillCurrent = hd.currentPeriodId === (curId ?? null);
-    const bounds = needPeriod && stillCurrent ? (cur ? nextPeriod(cur.end.toMillis(), hd.periodDays, hd.timezone, now) : firstPeriod(now, hd.periodDays, hd.timezone)) : null;
+    const t = needPeriod && stillCurrent && cur ? rolloverTarget({ endMs: cur.end.toMillis() }, hd.periodDays, hd.timezone, now) : null;
+    const bounds = needPeriod && stillCurrent ? (t ? t.bounds : firstPeriod(now, hd.periodDays, hd.timezone)) : null;
     const pRef = bounds ? doc(db, "households", hid, "periods", bounds.id) : null;
     const pSnap = pRef ? await tx.get(pRef) : null;
     const carry = bounds && curId ? await readCarry(tx, hid, curId, candidates, bounds.id, now) : [];
+    if (bounds && t && !t.adopts) carry.push(...(await readCarry(tx, hid, t.upcomingId, upcomingCandidates, bounds.id, now)));
+    // The next period's draft becomes the current one (M26, R7.18): its lines, ticks and removed lines, plus the lines
+    // added by hand to the old draft. A stale one (another upcoming ID) is left for the next-period view to restore.
+    const nextDraft = bounds && t ? ((await tx.get(draftRef(hid, NEXT_DRAFT_ID))).data() as StoredList | undefined) : undefined;
+    const adoptNext = !!t && !!nextDraft && nextDraft.periodId === t.upcomingId;
+    const oldDraft = adoptNext ? ((await tx.get(draftRef(hid))).data() as StoredList | undefined) : undefined;
     const storeSnaps = !hd.defaultStoreId ? await Promise.all(DEFAULT_STORES.map((s) => tx.get(doc(db, "households", hid, "stores", s.id)))) : [];
     // ---- writes
     if (bounds && pRef && pSnap) {
       if (!pSnap.exists()) tx.set(pRef, { start: Timestamp.fromMillis(bounds.startMs), end: Timestamp.fromMillis(bounds.endMs), budgetCents: hd.budgetCents });
       writeCarry(tx, hid, bounds.id, carry);
+      if (adoptNext && nextDraft) {
+        const adopted = adoptDraft(oldDraft, nextDraft);
+        tx.set(draftRef(hid), {
+          periodId: bounds.id,
+          status: "draft",
+          createdAt: serverTimestamp(),
+          items: adopted.items,
+          ...(Object.keys(adopted.dismissedStaples).length ? { dismissedStaples: adopted.dismissedStaples } : {}),
+        });
+        tx.delete(draftRef(hid, NEXT_DRAFT_ID));
+      }
       update.currentPeriodId = bounds.id;
       rolled = true;
     }
@@ -240,6 +288,12 @@ export async function restartPeriod(hid: string, day: RestartDay, now = Date.now
   if (!h) throw new Error("Household not found");
   const curId = h.currentPeriodId;
   const candidates = curId ? await plannedCandidates(hid, curId) : [];
+  // M26: the next period moves with the restart (its items, its draft and its orders keep being the next period's). Its
+  // old ID comes from the current period as read now; the transaction re-checks it.
+  const before = curId ? ((await getDoc(doc(db, "households", hid, "periods", curId))).data() as StoredPeriod | undefined) : undefined;
+  const upcomingFrom = before ? upcomingPeriod({ endMs: before.end.toMillis() }, h.periodDays, h.timezone).id : null;
+  const upcomingItems = upcomingFrom ? (await getDocs(query(collection(db, "households", hid, "planItems"), where("periodId", "==", upcomingFrom)))).docs.map((d) => d.id) : [];
+  const upcomingLists = upcomingFrom ? (await getDocs(query(collection(db, "households", hid, "groceryLists"), where("periodId", "==", upcomingFrom)))).docs.map((d) => d.id) : [];
   return runTransaction(db, async (tx): Promise<RestartResult> => {
     // ---- reads
     const hd = (await tx.get(hRef)).data() as HouseholdDoc | undefined;
@@ -250,8 +304,11 @@ export async function restartPeriod(hid: string, day: RestartDay, now = Date.now
     if (plan.kind === "noop") return { kind: "noop", ...(curId ? { periodId: curId } : {}) };
     const start = Timestamp.fromMillis(plan.bounds.startMs);
     const end = Timestamp.fromMillis(plan.bounds.endMs);
+    const rekey = cur ? restartUpcoming({ endMs: cur.end.toMillis() }, plan, hd.periodDays, hd.timezone) : null;
+    const moves = rekey && rekey.from === upcomingFrom ? await readUpcoming(tx, hid, rekey.from, upcomingItems, upcomingLists) : [];
     if (plan.kind === "move" && curRef && curId) {
       tx.update(curRef, { start, end, budgetCents: hd.budgetCents });
+      if (rekey) for (const ref of moves) tx.update(ref, { periodId: rekey.to });
       return { kind: "moved", periodId: curId };
     }
     // A period ID is its start date; an earlier restart may have used it (then "date-2", …).
@@ -267,6 +324,7 @@ export async function restartPeriod(hid: string, day: RestartDay, now = Date.now
     tx.set(doc(db, "households", hid, "periods", newId), { start, end, budgetCents: hd.budgetCents });
     if (curRef && cur && plan.kind === "new") tx.update(curRef, { end: Timestamp.fromMillis(plan.oldEndMs) });
     writeCarry(tx, hid, newId, carry);
+    if (rekey) for (const ref of moves) tx.update(ref, { periodId: rekey.to });
     tx.update(hRef, { currentPeriodId: newId });
     return { kind: "restarted", periodId: newId, carried: carry.length };
   });
@@ -468,7 +526,7 @@ export function deleteMapping(hid: string, ingredientId: string) {
 
 // ---------- grocery lists (§8, R7.1, R7.5, R7.6)
 
-const draftRef = (hid: string) => doc(db, "households", hid, "groceryLists", DRAFT_ID);
+const draftRef = (hid: string, id: string = DRAFT_ID) => doc(db, "households", hid, "groceryLists", id);
 
 /**
  * Regenerate (§8) in a transaction: read the stored draft, merge the generated plan lines into it (core `mergeDraft`:
@@ -476,9 +534,9 @@ const draftRef = (hid: string) => doc(db, "households", hid, "groceryLists", DRA
  * transaction retry on fresh data, so nobody's tick is overwritten. Needs a connection; offline the page still shows
  * the computed lines and the draft catches up later.
  */
-export async function syncDraft(hid: string, periodId: string, generated: Record<string, GroceryItem>, opts: { restore?: boolean } = {}): Promise<void> {
+export async function syncDraft(hid: string, periodId: string, generated: Record<string, GroceryItem>, opts: { restore?: boolean; draftId?: string } = {}): Promise<void> {
   if (!isOnline()) return;
-  const ref = draftRef(hid);
+  const ref = draftRef(hid, opts.draftId);
   await runTransaction(db, async (tx) => {
     const snap = await tx.get(ref);
     const stored = snap.data() as StoredList | undefined;
@@ -501,15 +559,15 @@ export async function syncDraft(hid: string, periodId: string, generated: Record
 }
 
 /** Writes one whole line into the draft (creating the draft if needed; merge, never replace). */
-export async function addLine(hid: string, periodId: string, id: string, item: GroceryItem, draftExists: boolean): Promise<void> {
-  if (draftExists) await updateDoc(draftRef(hid), new FieldPath("items", id), item);
+export async function addLine(hid: string, periodId: string, id: string, item: GroceryItem, draftExists: boolean, draftId: string = DRAFT_ID): Promise<void> {
+  if (draftExists) await updateDoc(draftRef(hid, draftId), new FieldPath("items", id), item);
   // Two quick writes can both think the draft is missing: merge so neither replaces the other.
-  else await setDoc(draftRef(hid), { periodId, status: "draft", createdAt: serverTimestamp(), items: { [id]: item } }, { merge: true });
+  else await setDoc(draftRef(hid, draftId), { periodId, status: "draft", createdAt: serverTimestamp(), items: { [id]: item } }, { merge: true });
 }
 
-export async function addManualItem(hid: string, periodId: string, item: GroceryItem, draftExists: boolean): Promise<string> {
+export async function addManualItem(hid: string, periodId: string, item: GroceryItem, draftExists: boolean, draftId: string = DRAFT_ID): Promise<string> {
   const id = `manual_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`;
-  await addLine(hid, periodId, id, item, draftExists);
+  await addLine(hid, periodId, id, item, draftExists, draftId);
   return id;
 }
 
@@ -517,18 +575,18 @@ export async function addManualItem(hid: string, periodId: string, item: Grocery
  * Removes a staple line from the draft and keeps it off until `untilMs` (M10, R7.12), in one write. Expired entries
  * are pruned on the way.
  */
-export function dismissStaple(hid: string, itemId: string, ingredientId: string, untilMs: number, current: Readonly<Record<string, number>> | undefined, nowMs: number) {
+export function dismissStaple(hid: string, itemId: string, ingredientId: string, untilMs: number, current: Readonly<Record<string, number>> | undefined, nowMs: number, draftId: string = DRAFT_ID) {
   const args: unknown[] = [new FieldPath("dismissedStaples", ingredientId), Math.round(untilMs)];
   for (const [id, until] of Object.entries(current ?? {})) if (until <= nowMs && id !== ingredientId) args.push(new FieldPath("dismissedStaples", id), deleteField());
-  return updateDoc(draftRef(hid), new FieldPath("items", itemId), deleteField(), ...args);
+  return updateDoc(draftRef(hid, draftId), new FieldPath("items", itemId), deleteField(), ...args);
 }
 
 /**
  * The × on a plan line (M17, R7.13): the line stays on the stored draft flagged `removed`, so regeneration doesn't add
  * it back; `removed: false` (Undo) shows it again. Supply is not touched.
  */
-export function setLineRemoved(hid: string, itemId: string, removed: boolean) {
-  return updateDoc(draftRef(hid), new FieldPath("items", itemId, "removed"), removed ? true : deleteField());
+export function setLineRemoved(hid: string, itemId: string, removed: boolean, draftId: string = DRAFT_ID) {
+  return updateDoc(draftRef(hid, draftId), new FieldPath("items", itemId, "removed"), removed ? true : deleteField());
 }
 
 export function removeItem(hid: string, listId: string, itemId: string) {
@@ -552,16 +610,16 @@ export function tickItem(hid: string, listId: string, itemId: string, checked: b
  * members pressing at once can't put the same lines on two ordered lists. Returns null when nothing was left to order
  * (someone else just ordered it). Needs a connection.
  */
-export async function orderDraft(hid: string, periodId: string, storeId: string, shown: Record<string, GroceryItem>, uid: string): Promise<{ listId: string; count: number } | null> {
+export async function orderDraft(hid: string, periodId: string, storeId: string, shown: Record<string, GroceryItem>, uid: string, draftId: string = DRAFT_ID): Promise<{ listId: string; count: number } | null> {
   const ref = doc(collection(db, "households", hid, "groceryLists"));
   return runTransaction(db, async (tx) => {
-    const draft = (await tx.get(draftRef(hid))).data() as StoredList | undefined;
+    const draft = (await tx.get(draftRef(hid, draftId))).data() as StoredList | undefined;
     const items = orderableLines(draft?.items, shown);
     const ids = Object.keys(items);
     if (!ids.length) return null;
     tx.set(ref, { periodId, status: "ordered", storeId, createdAt: serverTimestamp(), orderedAt: serverTimestamp(), orderedBy: uid, items });
     const [first, ...rest] = ids;
-    tx.update(draftRef(hid), new FieldPath("items", first!), deleteField(), ...rest.flatMap((id) => [new FieldPath("items", id), deleteField()]));
+    tx.update(draftRef(hid, draftId), new FieldPath("items", first!), deleteField(), ...rest.flatMap((id) => [new FieldPath("items", id), deleteField()]));
     return { listId: ref.id, count: ids.length };
   });
 }
@@ -570,22 +628,23 @@ export async function orderDraft(hid: string, periodId: string, storeId: string,
  * Undo: the order wasn't placed. Its items go back into the draft (ticks kept) and the ordered list is deleted, in one
  * transaction (M23): a list already undone elsewhere or received meanwhile is left alone ("gone" / "received").
  */
-export async function undoOrder(hid: string, listId: string): Promise<"undone" | "gone" | "received"> {
+export async function undoOrder(hid: string, listId: string, draftId: string = DRAFT_ID): Promise<"undone" | "gone" | "received"> {
   const ref = doc(db, "households", hid, "groceryLists", listId);
   return runTransaction(db, async (tx) => {
     const list = (await tx.get(ref)).data() as StoredList | undefined;
     if (!list) return "gone";
     if (list.status !== "ordered") return "received";
-    const draft = await tx.get(draftRef(hid));
+    const dRef = draftRef(hid, draftId);
+    const draft = await tx.get(dRef);
     const entries = Object.entries(list.items ?? {});
     if (entries.length) {
       if (draft.exists()) {
         const args: unknown[] = [];
         for (const [id, it] of entries) args.push(new FieldPath("items", id), it);
         const [f, v, ...rest] = args as [FieldPath, unknown, ...unknown[]];
-        tx.update(draftRef(hid), f, v, ...rest);
+        tx.update(dRef, f, v, ...rest);
       } else {
-        tx.set(draftRef(hid), { periodId: list.periodId, status: "draft", createdAt: serverTimestamp(), items: list.items });
+        tx.set(dRef, { periodId: list.periodId, status: "draft", createdAt: serverTimestamp(), items: list.items });
       }
     }
     tx.delete(ref);

@@ -1,31 +1,43 @@
 // The suggestions engine (TECHNICAL_SPECS §7): one scoring worker for the signed-in shell, fed the household snapshot
-// 300 ms after it settles, running only while something on screen uses the scores (data/suggestions.ts).
+// 300 ms after it settles, running only while something on screen uses the scores (data/suggestions.ts). M26: a second
+// engine for the next period (its plan, the Supply projected at its start), only while the next-period view is open.
 import * as React from "react";
+import type { PeriodView } from "@solving-food/core";
 import { useActiveHousehold } from "@/data/households";
-import { usePlanModel } from "@/data/planModel";
+import { useNextPlanModel, usePlanModel, type PlanModel } from "@/data/planModel";
 import { EMPTY, SuggestionsContext, useScoringSnapshot, type SuggestionsState } from "@/data/suggestions";
 import type { ScoringSnapshot } from "@/workers/snapshot";
 import type { ScoringRequest, ScoringResponse } from "@/workers/plan.worker";
 
 export function SuggestionsProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = React.useState<SuggestionsState>(EMPTY);
-  const [subscribers, setSubscribers] = React.useState(0);
-  const subscribe = React.useCallback(() => {
-    setSubscribers((n) => n + 1);
-    return () => setSubscribers((n) => n - 1);
+  const [state, setState] = React.useState<Record<PeriodView, SuggestionsState>>({ current: EMPTY, next: EMPTY });
+  const [subscribers, setSubscribers] = React.useState<Record<PeriodView, number>>({ current: 0, next: 0 });
+  const subscribe = React.useCallback((view: PeriodView) => {
+    setSubscribers((n) => ({ ...n, [view]: n[view] + 1 }));
+    return () => setSubscribers((n) => ({ ...n, [view]: n[view] - 1 }));
   }, []);
+  const onCurrent = React.useCallback((s: SuggestionsState) => setState((x) => ({ ...x, current: s })), []);
+  const onNext = React.useCallback((s: SuggestionsState) => setState((x) => ({ ...x, next: s })), []);
   const value = React.useMemo(() => ({ state, subscribe }), [state, subscribe]);
   return (
     <SuggestionsContext.Provider value={value}>
-      {subscribers > 0 ? <Engine onResult={setState} /> : null}
+      {subscribers.current > 0 ? <CurrentEngine onResult={onCurrent} /> : null}
+      {subscribers.next > 0 ? <NextEngine onResult={onNext} /> : null}
       {children}
     </SuggestionsContext.Provider>
   );
 }
 
-function Engine({ onResult }: { onResult: (s: SuggestionsState) => void }) {
+function CurrentEngine({ onResult }: { onResult: (s: SuggestionsState) => void }) {
+  return <Engine m={usePlanModel()} onResult={onResult} />;
+}
+
+function NextEngine({ onResult }: { onResult: (s: SuggestionsState) => void }) {
+  return <Engine m={useNextPlanModel()} onResult={onResult} />;
+}
+
+function Engine({ m, onResult }: { m: PlanModel; onResult: (s: SuggestionsState) => void }) {
   const hh = useActiveHousehold();
-  const m = usePlanModel();
   const snapshot = useScoringSnapshot(m);
   const worker = React.useRef<Worker | null>(null);
   const seq = React.useRef(0);

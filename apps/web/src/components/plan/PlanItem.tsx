@@ -54,6 +54,8 @@ export interface PlanItemView {
   review?: string | undefined;
   /** Leftovers: "use by 13 Oct" and whether the batch is already past it. */
   leftover?: { useBy: string | null; expired: boolean } | undefined;
+  /** In the next period (M26, R3.2): cooked once its period starts, so no Cook or Ate it yet. */
+  upcoming?: boolean | undefined;
 }
 
 /** Uppercased by CSS; the duration stays lower case ("45m", not "45M"). Protein and fibre only while tracked (R6.27). */
@@ -86,10 +88,10 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
   const status = v.status;
   const leftover = it.kind === "leftover";
   const out = it.kind === "out";
-  const canCook = status === "planned" && !leftover && it.recipes.length > 0;
+  const canCook = status === "planned" && !leftover && it.recipes.length > 0 && !v.upcoming;
   // A cooked meal is finished by its review (M9); Mark eaten stays only for one whose review is already done (older data).
   const canReview = status === "cooked" && !!v.review;
-  const canEat = !out && ((status === "cooked" && !v.review) || (status === "planned" && (leftover || it.mealType === "snack")));
+  const canEat = !out && !v.upcoming && ((status === "cooked" && !v.review) || (status === "planned" && (leftover || it.mealType === "snack")));
   const eat = () => {
     sendCommand(hid, uid, "markEaten", { planItemId: v.id });
     notify({ kind: "success", message: leftover ? `Ate a portion of ${v.title}` : `${v.title} marked eaten` });
@@ -117,7 +119,7 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
             {v.title}
           </button>
           <Badge className={cn("flex-none rounded-[calc(var(--r)*0.5)] px-1.5 py-1 text-[0.5625rem] uppercase", status === "planned" ? "bg-base" : "bg-acc text-onc")} data-testid="plan-item-status">
-            {out ? "Eating out" : status === "planned" ? (leftover ? "Leftover" : "To cook") : status}
+            {out ? "Eating out" : status === "planned" ? (leftover ? "Leftover" : v.upcoming ? "Next period" : "To cook") : status}
           </Badge>
         </div>
         {sides ? (

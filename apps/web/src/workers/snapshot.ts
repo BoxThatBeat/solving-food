@@ -17,6 +17,11 @@ export interface SnapshotIngredient extends GroceryIngredient {
 
 export interface ScoringSnapshot {
   nowMs: number;
+  /**
+   * The period scored (M26): the current one, or the next one from its start (`fromMs`: how long ago a recipe was
+   * cooked is counted from there). Planned items, Supply, incoming and expiring in this snapshot are that period's.
+   */
+  period?: { view: "current" | "next"; fromMs: number };
   servings: number;
   periodDays: number;
   mealType: MealType | null;
@@ -100,7 +105,7 @@ export function buildContexts(s: ScoringSnapshot, seed: ReadonlyMap<string, Snap
   const planned = tally(s.plannedRecipeIds, (id) => byId.get(id));
   const recent = tally(s.recentRecipeIds, (id) => byId.get(id));
   const score: ScoreContext = {
-    nowMs: s.nowMs,
+    nowMs: s.period?.fromMs ?? s.nowMs,
     servings: s.servings,
     mealType: s.mealType,
     periodDays: s.periodDays,

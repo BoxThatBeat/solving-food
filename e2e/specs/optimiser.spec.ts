@@ -81,3 +81,20 @@ test("only recipes that meet the protein goal, until there are no more good comb
   await expect(card.getByRole("button", { name: "+$10 budget" })).toBeVisible();
   await expect(card.getByRole("button", { name: "Any protein" })).toBeVisible();
 });
+
+test("from the next-period view the optimiser plans the next period (R3.4)", { tag: ["@R3.4"] }, async ({ page, household }) => {
+  await cheapDinners();
+  const pid = await seedPeriod(household.hid);
+  await page.goto("/plan?period=next");
+  const card = page.getByTestId("optimiser");
+  await card.getByRole("button", { name: "Find sets" }).click();
+  await expect(card.getByTestId("optimiser-set")).toBeVisible({ timeout: 30_000 });
+  await card.getByRole("button", { name: "Accept · add 4" }).click();
+  await expect.poll(async () => (await planItems(household.hid)).length).toBe(4);
+  const items = await planItems(household.hid);
+  expect(new Set(items.map((i) => i.periodId)).size).toBe(1);
+  expect(items[0]!.periodId).not.toBe(pid);
+  await expect(page.getByTestId("plan-item")).toHaveCount(4);
+  await page.getByRole("group", { name: "Period" }).getByRole("button", { name: /^This period/ }).click();
+  await expect(page.getByTestId("plan-item")).toHaveCount(0);
+});

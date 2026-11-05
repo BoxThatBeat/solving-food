@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { MealType } from "@solving-food/core";
+import type { MealType, PeriodView } from "@solving-food/core";
 
 export interface CreateMealRequest {
   /** Recipes to preselect (the "Add to plan" shortcut on a recipe, R5.7). */
@@ -7,6 +7,8 @@ export interface CreateMealRequest {
   /** A saved meal to preselect ("Add to plan" on a meal). */
   savedMealId?: string;
   mealType?: MealType;
+  /** The period to add to (M26): the next one from the Plan page's next-period view; the current one otherwise. */
+  period?: PeriodView;
 }
 
 export interface PlanSheetCtx {

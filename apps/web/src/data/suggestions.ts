@@ -4,10 +4,10 @@
 // optimiser) call `useSuggestions()`; the engine only runs while at least one of them is mounted.
 import { activeGoals, nutritionOf } from "./nutrition";
 import * as React from "react";
-import { addLocalDays, VARIETY_PERIODS, type MealType, type RecipeLines, type ScoreResult } from "@solving-food/core";
+import { addLocalDays, VARIETY_PERIODS, type MealType, type PeriodView, type RecipeLines, type ScoreResult } from "@solving-food/core";
 import { useFavourites, useStats } from "./householdRecipes";
 import { millis } from "./plan";
-import type { PlanModel } from "./planModel";
+import { usePlanModel, type PlanModel } from "./planModel";
 import { useCookEvents } from "./supply";
 import { useRecipeIndex } from "@/search/useRecipeSearch";
 import type { ScoringSnapshot, SnapshotIngredient } from "@/workers/snapshot";
@@ -23,18 +23,22 @@ export interface SuggestionsState {
 export const EMPTY: SuggestionsState = { ranked: null, byId: new Map(), snapshot: null };
 
 export interface Ctx {
-  state: SuggestionsState;
-  subscribe: () => () => void;
+  /** Scores for the current period's plan, and (M26) for the next period's. */
+  state: Record<PeriodView, SuggestionsState>;
+  subscribe: (view: PeriodView) => () => void;
 }
 
 export const SuggestionsContext = React.createContext<Ctx | null>(null);
 
-/** Scores for the active household (null until ready). Mounting this starts the engine. */
-export function useSuggestions(): SuggestionsState {
+/**
+ * Scores for the active household (null until ready). Mounting this starts the engine. M26: `"next"` scores against
+ * the next period's plan and the Supply projected at its start (its own engine, running only while used).
+ */
+export function useSuggestions(view: PeriodView = "current"): SuggestionsState {
   const c = React.useContext(SuggestionsContext);
   const subscribe = c?.subscribe;
-  React.useEffect(() => subscribe?.(), [subscribe]);
-  return c?.state ?? EMPTY;
+  React.useEffect(() => subscribe?.(view), [subscribe, view]);
+  return c?.state[view] ?? EMPTY;
 }
 
 /** Builds the worker snapshot from the plan model and the household's facts. */
@@ -43,6 +47,14 @@ export function useScoringSnapshot(m: PlanModel, mealType: MealType | null = nul
   const stats = useStats(m.hid);
   const favourites = useFavourites(m.hid);
   const events = useCookEvents(m.hid);
+  // M26: the next period is scored as if this period's meals were cooked by its start (variety counts them).
+  const current = usePlanModel();
+  const next = m.view === "next";
+  const fromMs = next ? (millis(m.period?.start) ?? m.supply.now) : null;
+  const currentMeals = React.useMemo(
+    () => (next ? current.items.filter((i) => i.data.kind === "meal" && (i.data.status === "planned" || i.data.status === "cooked")).flatMap((i) => i.data.recipes.map((r) => r.recipeId)) : []),
+    [next, current.items],
+  );
   const household = m.household;
   const tz = household?.timezone ?? "America/Toronto";
   // `now` changes every minute; scores follow it every ten.
@@ -52,7 +64,7 @@ export function useScoringSnapshot(m: PlanModel, mealType: MealType | null = nul
     if (!household || !summaries || !m.ready || m.supply.loading || events.docs === undefined) return null;
     const periodDays = household.periodDays;
     const windowStart = addLocalDays(now, -VARIETY_PERIODS * periodDays, tz);
-    const recent = (events.docs ?? []).filter((e) => (millis(e.data.cookedAt) ?? 0) >= windowStart).flatMap((e) => e.data.recipeIds);
+    const recent = [...(events.docs ?? []).filter((e) => (millis(e.data.cookedAt) ?? 0) >= windowStart).flatMap((e) => e.data.recipeIds), ...currentMeals];
     const plannedRecipeIds = m.items.filter((i) => i.data.kind === "meal" && i.data.status !== "skipped").flatMap((i) => i.data.recipes.map((r) => r.recipeId));
     const extraLines: Array<[string, RecipeLines]> = [];
     const indexed = new Set(summaries.map((r) => r.id));
@@ -63,6 +75,7 @@ export function useScoringSnapshot(m: PlanModel, mealType: MealType | null = nul
     const { proteinGoals, fibreGoals } = activeGoals(nutritionOf(settings));
     return {
       nowMs: now,
+      ...(fromMs !== null ? { period: { view: "next" as const, fromMs } } : {}),
       servings: household.defaultServings,
       periodDays,
       mealType,
@@ -90,6 +103,6 @@ export function useScoringSnapshot(m: PlanModel, mealType: MealType | null = nul
       defaultStoreId: m.ctx.defaultStoreId,
       live: [...m.livePrices].map(([code, p]) => [code, { priceCents: p.priceCents, packAmount: p.packAmount, packMeasure: p.packMeasure, fetchedAtMs: p.fetchedAtMs }]),
     } satisfies ScoringSnapshot;
-    }, [household, summaries, m.ready, m.supply.loading, m.items, m.recipes, m.ingredients, m.unexpired, m.ctx, m.expiring, m.livePrices, m.period?.budgetCents, stats, favourites, events.docs, mealType, tz, tick]);
+    }, [household, summaries, m.ready, m.supply.loading, m.items, m.recipes, m.ingredients, m.unexpired, m.ctx, m.expiring, m.livePrices, m.period?.budgetCents, stats, favourites, events.docs, mealType, tz, tick, fromMs, currentMeals]);
 }
 

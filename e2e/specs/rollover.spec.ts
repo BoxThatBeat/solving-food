@@ -3,6 +3,7 @@
 // two members opening at once create one period and one copy of each item. Boundaries across DST are unit-tested
 // in packages/core (period.test.ts). M7: "Restart period" in Settings → Household (R3.1) uses the same carry code.
 import { addDays, formatPeriodRange, localDate, nextPeriod, periodBounds } from "../../packages/core/src/index";
+import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "../fixtures/admin";
 import { expect, test } from "../fixtures/test";
 import { makePlanRecipe, PlanPage, seedPeriod, seedPlanItem, TZ } from "../pages/plan";
@@ -103,4 +104,53 @@ test("restart the period for tomorrow from Settings: planned meals move, cooked 
   const today = periodBounds(localDate(Date.now(), TZ), 7, TZ);
   await expect.poll(async () => (await adminDb.doc(`households/${household.hid}/periods/${next.id}`).get()).data()!.start.toMillis()).toBe(today.startMs);
   expect((await adminDb.collection(`households/${household.hid}/planItems`).where("periodId", "==", next.id).get()).size).toBe(2);
+});
+
+test("the rollover adopts the next period: its meals and draft become current with no copies; leftovers from this period still carry (R3.3)", { tag: ["@R3.3", "@R6.6"] }, async ({ page, household }) => {
+  const a = await makePlanRecipe("Planned ahead");
+  const b = await makePlanRecipe("Not cooked in time");
+  const { oldId, newId } = await endedPeriod(household.hid);
+  const ahead = await seedPlanItem(household.hid, newId, [a.id], { name: "Planned ahead" }); // planned from the next-period view
+  const late = await seedPlanItem(household.hid, oldId, [b.id], { name: "Not cooked in time" });
+  const manual = { productName: "Birthday candles", amount: 0, measure: "", packs: 1, storeId: "pc-express", estPriceCents: null, checked: false, source: "manual" };
+  await adminDb.doc(`households/${household.hid}/groceryLists/draft-next`).set({ periodId: newId, status: "draft", createdAt: FieldValue.serverTimestamp(), items: { manual_next: manual } });
+
+  const plan = new PlanPage(page);
+  await page.goto("/plan");
+  await expect.poll(async () => (await adminDb.doc(`households/${household.hid}`).get()).data()!.currentPeriodId, { timeout: 20_000 }).toBe(newId);
+  await plan.goto();
+  await expect(plan.item("Planned ahead")).toBeVisible();
+  await expect(plan.item("Planned ahead")).not.toContainText("Carried over");
+  await expect(plan.item("Not cooked in time")).toContainText("Carried over");
+  await expect(plan.stripCount("dinner")).toHaveText("2/7");
+
+  // Nothing duplicated: the planned-ahead item is the same document; only this period's uncooked meal was copied.
+  const inNew = await adminDb.collection(`households/${household.hid}/planItems`).where("periodId", "==", newId).get();
+  expect(inNew.docs.map((d) => d.id).sort()).toEqual([ahead, `${newId}_${late}`].sort());
+  // The next period's draft is the current draft now.
+  await expect.poll(async () => (await adminDb.doc(`households/${household.hid}/groceryLists/draft-next`).get()).exists).toBe(false);
+  const draft = (await adminDb.doc(`households/${household.hid}/groceryLists/draft`).get()).data()!;
+  expect(draft.periodId).toBe(newId);
+  expect(draft.items.manual_next).toMatchObject({ productName: "Birthday candles" });
+});
+
+test("restart moves the next period's meals with it (R3.3, R3.1)", { tag: ["@R3.3"] }, async ({ page, household }) => {
+  const r = await makePlanRecipe("Planned for after the restart");
+  const start = addDays(localDate(Date.now(), TZ), -3);
+  await seedPeriod(household.hid, { startDate: start, days: 7 });
+  const oldNext = addDays(start, 7);
+  const ahead = await seedPlanItem(household.hid, oldNext, [r.id], { name: "Next week's meal" });
+  const tomorrow = periodBounds(addDays(localDate(Date.now(), TZ), 1), 7, TZ);
+
+  await page.goto("/settings/household");
+  await page.getByRole("group", { name: "Restart period" }).getByRole("button", { name: "Tomorrow" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Restart period" }).click();
+  await expect.poll(async () => (await adminDb.doc(`households/${household.hid}`).get()).data()!.currentPeriodId).toBe(tomorrow.id);
+  // Still the next period's: it moved to the period after the restarted one, and stays out of the new current one.
+  await expect.poll(async () => (await adminDb.doc(`households/${household.hid}/planItems/${ahead}`).get()).data()!.periodId).toBe(tomorrow.endDate);
+  const plan = new PlanPage(page);
+  await plan.goto();
+  await expect(plan.item("Next week's meal")).toHaveCount(0);
+  await page.getByRole("group", { name: "Period" }).getByRole("button", { name: /^Next period/ }).click();
+  await expect(plan.item("Next week's meal")).toBeVisible();
 });

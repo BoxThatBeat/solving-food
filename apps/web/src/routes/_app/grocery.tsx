@@ -6,9 +6,11 @@
 // themselves (a "Staples" group in each store card); removing one keeps it off for its usual interval. M17 (R7.13):
 // every line has an ×; a plan line taken off stays on the stored draft flagged `removed` (so regeneration doesn't add
 // it back, and it isn't shown, copied, ordered, or counted) until the Regenerate button puts every removed line back.
+// M26 (R7.18): "This period · Next period"; the next period's list is its own draft (`draft-next`) built from its plan
+// and the Supply projected at its start, ordered store by store into lists that carry its period ID.
 import { useStapleLines } from "@/components/grocery/staples";
 import * as React from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
 import {
   copyText,
@@ -21,9 +23,12 @@ import {
   mergeDraft,
   pcxStoreForCopy,
   stapleDismissUntil,
+  isRemoved as removedLine,
   type GroceryItem,
+  type PeriodView,
   type StoreEntry,
 } from "@solving-food/core";
+import { PeriodSwitch } from "@/components/plan/PeriodSwitch";
 import { EmptyState, PageBody } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
@@ -31,14 +36,16 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/chip";
 import { useNotify } from "@/components/notifications-context";
 import { ChatgptInstructions } from "@/components/grocery/ChatgptInstructions";
-import { addLine, addManualItem, dismissStaple, DRAFT_ID, syncDraft, millis, orderDraft, removeItem, setLineRemoved, tickItem, undoOrder, type StoredList } from "@/data/plan";
-import { usePlanModel } from "@/data/planModel";
+import { addLine, addManualItem, dismissStaple, syncDraft, millis, orderDraft, removeItem, setLineRemoved, tickItem, undoOrder, type StoredList } from "@/data/plan";
+import { usePlanModel, useViewModel } from "@/data/planModel";
 import { ReceiveSheet } from "@/components/grocery/ReceiveSheet";
 import { searchIngredients, useAllIngredients, type IngredientEntry } from "@/data/ingredients";
 import { useReadySession } from "@/session/useSession";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/grocery")({
+  // M26: `?period=next` shows the next period's list.
+  validateSearch: (s: Record<string, unknown>): { period?: "next" } => (s.period === "next" ? { period: "next" } : {}),
   component: GroceryPage,
 });
 
@@ -47,7 +54,12 @@ const ORDERED_AT = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "sh
 function GroceryPage() {
   const s = useReadySession();
   const notify = useNotify();
-  const m = usePlanModel();
+  const navigate = useNavigate();
+  const view: PeriodView = Route.useSearch().period === "next" ? "next" : "current";
+  const upcoming = view === "next";
+  const current = usePlanModel();
+  const m = useViewModel(view);
+  const draftId = m.draftId;
   const draftItems = m.draft.data?.items;
   const [fallback, setFallback] = React.useState<{ text: string; storeId: string } | null>(null);
   const [busy, setBusy] = React.useState(false);
@@ -57,7 +69,17 @@ function GroceryPage() {
   const receivingIds = new Set(m.supply.pendingCommands.flatMap((p) => (p.command.type === "receiveGroceries" ? [p.command.payload.listId] : [])));
 
   // Staples that are due (M10, R7.12): generated like plan lines, never in the budget (R6.4).
-  const staples = useStapleLines(m);
+  // M26: the next list's staples are the ones due at its start that this period's list or orders don't already have.
+  const upcomingStart = upcoming ? millis(m.period?.start) ?? undefined : undefined;
+  const onCurrentList = React.useMemo(() => {
+    if (!upcoming) return undefined;
+    const ids = new Set<string>();
+    for (const it of Object.values(current.draft.data?.items ?? {})) if (it.ingredientId && !removedLine(it)) ids.add(it.ingredientId);
+    for (const id of Object.keys(current.built.items)) if (!current.removedIds.has(id)) ids.add(id);
+    for (const l of current.ordered ?? []) for (const it of Object.values(l.data.items)) if (it.ingredientId) ids.add(it.ingredientId);
+    return ids;
+  }, [upcoming, current.draft.data?.items, current.built.items, current.removedIds, current.ordered]);
+  const staples = useStapleLines(m, { ...(upcomingStart !== undefined ? { nowMs: upcomingStart } : {}), ...(onCurrentList ? { alsoOnList: onCurrentList } : {}) });
   const generated = React.useMemo(() => ({ ...m.built.items, ...staples.lines }), [m.built.items, staples.lines]);
 
   // Regenerate (§8): keep the stored draft in step with the plan. Manual lines, ticks and removed lines survive;
@@ -67,8 +89,8 @@ function GroceryPage() {
     // Cheap check on the snapshot first; the transaction re-reads before writing.
     const { set, remove } = mergeDraft(m.draft.data?.items ?? {}, generated);
     if (!restore && !Object.keys(set).length && !remove.length && m.draft.data && m.draft.data.periodId === m.periodId) return;
-    await syncDraft(m.hid, m.periodId, generated, { restore });
-  }, [m.ready, staples.ready, m.draft.data, generated, m.periodId, m.hid]);
+    await syncDraft(m.hid, m.periodId, generated, { restore, draftId });
+  }, [m.ready, staples.ready, m.draft.data, generated, m.periodId, m.hid, draftId]);
   React.useEffect(() => {
     const t = setTimeout(() => void sync().catch((e) => console.warn("grocery sync failed", e)), 300);
     return () => clearTimeout(t);
@@ -98,16 +120,16 @@ function GroceryPage() {
       const ing = staples.ingredientOf(it.ingredientId);
       const until = stapleDismissUntil(ing ?? {}, staples.cadenceOf(it.ingredientId), Date.now(), millis(m.period?.end));
       // Not yet in the stored draft (regeneration is debounced): only the dismissal is written.
-      const write = draftItems?.[id] ? dismissStaple(m.hid, id, it.ingredientId, until, m.draft.data?.dismissedStaples, Date.now()) : m.periodId ? addLine(m.hid, m.periodId, id, it, !!m.draft.data).then(() => dismissStaple(m.hid, id, it.ingredientId!, until, m.draft.data?.dismissedStaples, Date.now())) : Promise.resolve();
+      const write = draftItems?.[id] ? dismissStaple(m.hid, id, it.ingredientId, until, m.draft.data?.dismissedStaples, Date.now(), draftId) : m.periodId ? addLine(m.hid, m.periodId, id, it, !!m.draft.data, draftId).then(() => dismissStaple(m.hid, id, it.ingredientId!, until, m.draft.data?.dismissedStaples, Date.now(), draftId)) : Promise.resolve();
       return write.then(() => notify({ kind: "success", message: `Removed ${it.productName} · it won't be added again for a while` })).catch(fail);
     }
     if (it?.source === "plan") {
       // M17 (R7.13): the line stays on the draft, flagged, so regeneration doesn't add it back. Supply isn't touched.
-      const undo = { label: "Undo", run: () => void setLineRemoved(m.hid, id, false).catch(fail) };
-      const write = draftItems?.[id] ? setLineRemoved(m.hid, id, true) : m.periodId ? addLine(m.hid, m.periodId, id, { ...it, removed: true }, !!m.draft.data) : Promise.resolve();
+      const undo = { label: "Undo", run: () => void setLineRemoved(m.hid, id, false, draftId).catch(fail) };
+      const write = draftItems?.[id] ? setLineRemoved(m.hid, id, true, draftId) : m.periodId ? addLine(m.hid, m.periodId, id, { ...it, removed: true }, !!m.draft.data, draftId) : Promise.resolve();
       return write.then(() => notify({ kind: "success", message: `Removed ${it.productName} · Regenerate puts it back`, action: undo })).catch(fail);
     }
-    return removeItem(m.hid, DRAFT_ID, id).catch(fail);
+    return removeItem(m.hid, draftId, id).catch(fail);
   };
 
   const groups = groupByStore(items, m.stores);
@@ -121,7 +143,7 @@ function GroceryPage() {
     try {
       await sync(); // the stored draft must hold what's shown
       const lines = Object.fromEntries(Object.entries(items).filter(([, it]) => it.storeId === storeId));
-      const done = await orderDraft(m.hid, m.periodId, storeId, lines, s.user.uid);
+      const done = await orderDraft(m.hid, m.periodId, storeId, lines, s.user.uid, draftId);
       if (!done) {
         notify({ kind: "info", message: `${storeName(storeId)} was just marked ordered on another device` });
         return;
@@ -132,7 +154,7 @@ function GroceryPage() {
         return;
       }
       const undo = () =>
-        void undoOrder(m.hid, done.listId)
+        void undoOrder(m.hid, done.listId, draftId)
           .then((r) => {
             if (r === "received") notify({ kind: "info", message: "That order has already been received" });
           })
@@ -166,11 +188,11 @@ function GroceryPage() {
     const fail = (e: unknown) => notify({ kind: "error", message: `Couldn't tick it: ${(e as Error).message}` });
     // A plan line not yet in the stored draft (regeneration is debounced): write the whole line, ticked.
     const shown = items[id];
-    if (listId === DRAFT_ID && shown && !draftItems?.[id] && m.periodId) {
+    if (listId === draftId && shown && !draftItems?.[id] && m.periodId) {
       const line: GroceryItem = { ...shown, checked: on };
       if (on) line.checkedBy = s.user.uid;
       else delete line.checkedBy;
-      return addLine(m.hid, m.periodId, id, line, !!m.draft.data).catch(fail);
+      return addLine(m.hid, m.periodId, id, line, !!m.draft.data, draftId).catch(fail);
     }
     return tickItem(m.hid, listId, id, on, s.user.uid).catch(fail);
   };
@@ -178,12 +200,24 @@ function GroceryPage() {
   return (
     <PageBody className="max-w-[112.5rem]">
       <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">Grocery List</h1>
+      <PeriodSwitch
+        view={view}
+        onChange={(v) => void navigate({ to: "/grocery", search: v === "next" ? { period: "next" } : {} })}
+        tz={m.household?.timezone ?? "America/Toronto"}
+        current={millis(current.period?.start) && millis(current.period?.end) ? { startMs: millis(current.period?.start)!, endMs: millis(current.period?.end)! } : null}
+        next={current.upcoming ? { startMs: current.upcoming.startMs, endMs: current.upcoming.endMs } : null}
+      />
+      {upcoming ? (
+        <p className="m-0 max-w-[60rem] text-[0.8125rem] font-semibold text-sub" data-testid="next-list-note">
+          For the next period&apos;s meals, after what this period&apos;s meals will use. Order it before the period starts; this period&apos;s list stays as it is.
+        </p>
+      ) : null}
 
       {!m.ready ? (
         <p className="m-0 text-sm font-bold">Building the list…</p>
       ) : groups.length === 0 ? (
         <EmptyState>
-          Nothing to buy. {m.items.length ? "Supply and ordered lists cover the plan." : "Plan some meals and the list builds itself."}
+          Nothing to buy. {m.items.length ? "Supply and ordered lists cover the plan." : upcoming ? "Plan the next period's meals and its list builds itself." : "Plan some meals and the list builds itself."}
         </EmptyState>
       ) : (
         <div className="grid grid-cols-1 items-start gap-3.5 lg:grid-cols-[repeat(auto-fill,minmax(28rem,1fr))]">
@@ -193,7 +227,7 @@ function GroceryPage() {
               store={g.store}
               lines={g.items}
               ingredients={m.ingredients}
-              onTick={(id, on) => tick(DRAFT_ID, id, on)}
+              onTick={(id, on) => tick(draftId, id, on)}
               onRemove={(id) => void remove(id)}
               footer={
                 g.store.kind === "pcExpress" ? (
@@ -228,7 +262,7 @@ function GroceryPage() {
           const ctx = ingredient ? { ...m.ctx, ingredients: (id: string) => (id === ingredient.id ? ingredient : m.ctx.ingredients(id)) } : m.ctx;
           const item = manualItem(input, ctx);
           // Shown at once; only a failure comes back (M23).
-          void addManualItem(m.hid, m.periodId, item, !!m.draft.data).catch((e) => notify({ kind: "error", message: `Couldn't add ${item.productName}: ${(e as Error).message}` }));
+          void addManualItem(m.hid, m.periodId, item, !!m.draft.data, draftId).catch((e) => notify({ kind: "error", message: `Couldn't add ${item.productName}: ${(e as Error).message}` }));
           notify({ kind: "success", message: `Added ${item.productName} to the list` });
         }}
       />
@@ -261,7 +295,7 @@ function GroceryPage() {
       {(m.ordered ?? []).length ? (
         <section aria-labelledby="ordered-h" className="flex flex-col gap-3">
           <h2 id="ordered-h" className="m-0 font-display text-[1.375rem] font-normal">
-            Ordered · waiting to arrive
+            {upcoming ? "Ordered for the next period" : "Ordered · waiting to arrive"}
           </h2>
           <p className="m-0 text-[0.8125rem] font-semibold text-sub">Each store is its own order. These count as incoming, so they aren't added again. When they arrive, confirm them and they go into Supply.</p>
           {[...(m.ordered ?? [])]
@@ -277,7 +311,7 @@ function GroceryPage() {
                 onReceive={() => setReceiving(l.id)}
                 onTick={(id, on) => tick(l.id, id, on)}
                 onUndo={() =>
-                  void undoOrder(m.hid, l.id)
+                  void undoOrder(m.hid, l.id, draftId)
                     .then((r) => notify(r === "undone" ? { kind: "success", message: "Order undone · items back on the list" } : { kind: "info", message: r === "received" ? "That order has already been received" : "That order was already undone" }))
                     .catch((e) => notify({ kind: "error", message: `Couldn't undo: ${(e as Error).message}` }))
                 }
