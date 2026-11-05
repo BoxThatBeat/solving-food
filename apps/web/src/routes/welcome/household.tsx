@@ -1,7 +1,7 @@
 import * as React from "react";
+import { Stepper } from "@/components/ui/stepper";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { signOut } from "firebase/auth";
-import { Minus, Plus } from "lucide-react";
 import {
   CURRENCY,
   DEFAULT_BUDGET_CENTS,
@@ -153,32 +153,16 @@ function CreateHouseholdPage() {
           <div className="flex flex-col gap-2">
             <Label id="servings-label">Default servings</Label>
             <div className="flex items-center gap-3">
-              <div role="group" aria-labelledby="servings-label" className="flex overflow-hidden rounded-ui border-2 border-line bg-base">
-                <button
-                  type="button"
-                  aria-label="Fewer servings"
-                  disabled={form.defaultServings <= 1}
-                  onClick={() => setForm((f) => ({ ...f, defaultServings: Math.max(1, f.defaultServings - 1) }))}
-                  className="grid size-11 cursor-pointer place-items-center bg-pg text-ink disabled:opacity-40"
-                >
-                  <Minus aria-hidden className="size-4" strokeWidth={3} />
-                </button>
-                <output
-                  aria-live="polite"
-                  className="grid min-w-14 place-items-center border-x-2 border-line font-mono text-[1rem] font-extrabold"
-                >
-                  {form.defaultServings}
-                </output>
-                <button
-                  type="button"
-                  aria-label="More servings"
-                  disabled={form.defaultServings >= SERVINGS_MAX}
-                  onClick={() => setForm((f) => ({ ...f, defaultServings: Math.min(SERVINGS_MAX, f.defaultServings + 1) }))}
-                  className="grid size-11 cursor-pointer place-items-center bg-pg text-ink disabled:opacity-40"
-                >
-                  <Plus aria-hidden className="size-4" strokeWidth={3} />
-                </button>
-              </div>
+              <Stepper
+                label="Default servings"
+                labelledBy="servings-label"
+                decLabel="Fewer servings"
+                incLabel="More servings"
+                value={form.defaultServings}
+                min={1}
+                max={SERVINGS_MAX}
+                onChange={(v) => setForm((f) => ({ ...f, defaultServings: v }))}
+              />
               <span className="text-[0.8125rem] font-semibold text-sub">Recipes are planned for this many.</span>
             </div>
           </div>

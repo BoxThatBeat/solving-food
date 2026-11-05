@@ -62,6 +62,8 @@ import {
 } from "@solving-food/core";
 import { isOnline } from "@/hooks/useOnline";
 import { db } from "@/firebase/app";
+import { millis } from "@/lib/millis";
+import { hh } from "./paths";
 import { useLiveDoc, useLiveDocs, useLiveQuery } from "./live";
 import type { StoredRecipe } from "./recipes";
 
@@ -70,7 +72,7 @@ export type StoredPlanItem = PlanItemDoc & { addedAt?: Timestamp };
 export type StoredMeal = MealDoc & { updatedAt: Timestamp; createdAt?: Timestamp };
 export type StoredList = GroceryListDoc & { createdAt: Timestamp; orderedAt?: Timestamp };
 
-const hh = (hid: string, ...rest: string[]) => ["households", hid, ...rest].join("/");
+
 
 // ---------- reads
 
@@ -124,12 +126,7 @@ export function useRecipeDocs(ids: readonly string[]): ReadonlyMap<string, Store
   return useLiveDocs("recipes", ids, toRecipe);
 }
 
-export function millis(v: unknown): number | null {
-  if (!v) return null;
-  if (v instanceof Date) return v.getTime();
-  const t = v as { toMillis?: () => number };
-  return typeof t.toMillis === "function" ? t.toMillis() : null;
-}
+export { millis } from "@/lib/millis";
 
 // ---------- household bootstrap: rollover (§7) and default stores (Planning/M2 §5)
 

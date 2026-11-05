@@ -86,7 +86,7 @@ const OPTIONAL_KEYS = [
 ] as const;
 
 /** Only the content fields, in case a whole stored document is passed in. */
-export function contentOf(r: RecipeContent | RecipeDoc): RecipeContent {
+function contentOf(r: RecipeContent | RecipeDoc): RecipeContent {
   const c: RecipeContent = {
     title: r.title,
     servings: r.servings,

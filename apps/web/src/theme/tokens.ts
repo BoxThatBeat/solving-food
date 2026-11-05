@@ -54,8 +54,6 @@ export const ACCENT_LABELS: Record<Accent, string> = {
   yellow: "Yellow",
 };
 
-/** Fixed signal colours the prototype uses regardless of flavour. */
-export const SIGNAL = { red: "#ed8796", peach: "#f5a97f", yellow: "#eed49f", blue: "#8aadf4", green: "#a6da95" } as const;
 
 /**
  * The prototype's "look" switch. Classic ships (CLAUDE.md); the structure stays so Quiet/Loud could be added.

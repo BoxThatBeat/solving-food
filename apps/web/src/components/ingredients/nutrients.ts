@@ -4,7 +4,7 @@ import * as React from "react";
 import { NUTRITION_KEYS, type NutritionKey, type Nutrients } from "@solving-food/core";
 export type NutrientStrings = Record<NutritionKey, string>;
 
-export function nutrientStrings(n: Nutrients | undefined): NutrientStrings {
+function nutrientStrings(n: Nutrients | undefined): NutrientStrings {
   return Object.fromEntries(NUTRITION_KEYS.map((k) => [k, n?.[k] === undefined ? "" : String(n[k])])) as NutrientStrings;
 }
 

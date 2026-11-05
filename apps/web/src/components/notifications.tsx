@@ -12,13 +12,14 @@ import { db } from "@/firebase/app";
 import { useLiveQuery } from "@/data/live";
 import { bannerFor, householdOf, onListenerError } from "@/data/listenErrors";
 import { cn } from "@/lib/utils";
+import { millis } from "@/lib/millis";
 import { applyUpdate, useUpdatePending } from "@/pwa/update";
 import { isStale, markSeenHere, seenHere } from "./notificationsSeen";
 import { NotificationsContext, useNotifications, useNotify, type Banner, type NotificationKind } from "./notifications-context";
 
-export const AUTO_DISMISS_MS = 6000;
+const AUTO_DISMISS_MS = 6000;
 /** At most this many banners at once; the rest collapse into a "+N more" row (a bulk drop reports one per file). */
-export const MAX_VISIBLE = 3;
+const MAX_VISIBLE = 3;
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const [banners, setBanners] = React.useState<Banner[]>([]);
@@ -81,7 +82,7 @@ export function NotificationFeed({ uid }: { uid: string }) {
   React.useEffect(() => {
     if (!q.docs) return;
     const live = new Set<string>();
-    const sorted = [...q.docs].sort((a, b) => millis(a.data.createdAt) - millis(b.data.createdAt));
+    const sorted = [...q.docs].sort((a, b) => (millis(a.data.createdAt) ?? Date.now()) - (millis(b.data.createdAt) ?? Date.now()));
     const now = Date.now();
     for (const d of sorted) {
       const id = `fs:${d.id}`;
@@ -91,7 +92,7 @@ export function NotificationFeed({ uid }: { uid: string }) {
       const ref = doc(db, "users", uid, "notifications", d.id);
       const dismissEverywhere = () => void updateDoc(ref, { dismissedAt: serverTimestamp() }).catch(() => {});
       // A day-old success or info nobody dismissed: cleared for everyone. One this device already showed: not again.
-      if (isStale(d.data.kind, millisOrNull(d.data.createdAt), now)) {
+      if (isStale(d.data.kind, millis(d.data.createdAt), now)) {
         dismissEverywhere();
         continue;
       }
@@ -117,15 +118,6 @@ export function NotificationFeed({ uid }: { uid: string }) {
   return null;
 }
 
-function millisOrNull(v: unknown): number | null {
-  const t = v as { toMillis?: () => number } | null;
-  return t && typeof t.toMillis === "function" ? t.toMillis() : null;
-}
-
-function millis(v: unknown): number {
-  const t = v as { toMillis?: () => number } | null;
-  return t && typeof t.toMillis === "function" ? t.toMillis() : Date.now();
-}
 
 /**
  * Listener failures (M23, data/listenErrors.ts) as a non-blocking banner: permission-denied is an error banner,

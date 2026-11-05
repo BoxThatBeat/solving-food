@@ -36,10 +36,6 @@ let enabled = readDiagFlag();
 let events: DiagEvent[] = [];
 const listeners = new Set<() => void>();
 
-export function diagEnabled(): boolean {
-  return enabled;
-}
-
 /** Re-reads the flag (a client-side navigation to a URL with `?voicedebug=1`). */
 export function refreshDiagFlag(): boolean {
   enabled = readDiagFlag();

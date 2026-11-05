@@ -34,7 +34,7 @@ let asr: Promise<{ run: AutomaticSpeechRecognitionPipeline; device: "webgpu" | "
  * with the audio (≈ 5 tokens a second of speech, at least 16, at most 64) so a command costs a handful of decoder steps
  * while a long sentence still reaches its last keyword (the last one wins).
  */
-export function decodeOptions(samples: number) {
+function decodeOptions(samples: number) {
   const seconds = samples / 16_000;
   return { max_new_tokens: Math.min(64, Math.max(16, Math.ceil(seconds * 5))), num_beams: 1, do_sample: false, return_timestamps: false } as const;
 }

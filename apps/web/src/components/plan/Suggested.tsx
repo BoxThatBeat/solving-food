@@ -9,7 +9,7 @@ import { RecipeThumb } from "@/components/recipes/RecipeThumb";
 import { cn } from "@/lib/utils";
 import { NutritionText } from "@/components/NutritionText";
 
-export function WhyChips({ reasons, className }: { reasons: readonly Reason[]; className?: string }) {
+function WhyChips({ reasons, className }: { reasons: readonly Reason[]; className?: string }) {
   if (!reasons.length) return null;
   return (
     <span className={cn("flex flex-wrap gap-1", className)} aria-label="Why">

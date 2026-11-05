@@ -60,7 +60,7 @@ export interface WorkerContexts {
 }
 
 /** Summary lines (per serving) → the builder's recipe lines at the recipe's own servings. */
-export function linesOf(r: Pick<RecipeSummary, "servings" | "lines">): RecipeLines {
+function linesOf(r: Pick<RecipeSummary, "servings" | "lines">): RecipeLines {
   const servings = Math.max(1, r.servings);
   return { servings, ingredients: Object.entries(r.lines ?? {}).map(([ingredientId, per]) => ({ ingredientId, canonicalAmount: per * servings, optional: false })) };
 }

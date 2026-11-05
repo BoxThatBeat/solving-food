@@ -2,7 +2,7 @@
 // Clients never write supply: every change is a command document, applied by the `commands` function. While a command
 // is pending, its effect is projected onto the supply shown (core `projectPending`).
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   collection,
   doc,
@@ -36,14 +36,16 @@ import {
 import { db } from "@/firebase/app";
 import { useNow } from "@/hooks/useNow";
 import { useLiveDoc, useLiveQuery } from "./live";
-import { millis, type StoredList } from "./plan";
+import { type StoredList } from "./plan";
+import { millis } from "@/lib/millis";
+import { hh } from "./paths";
 import { useIngredientsById } from "./ingredients";
 import freeUseIds from "../../../../data/free-use.json";
 
 /** The seed's free-use ingredients (R8.14), bundled: data/free-use.json. */
 export const FREE_USE = new Set<string>(freeUseIds as string[]);
 
-const hh = (hid: string, ...rest: string[]) => ["households", hid, ...rest].join("/");
+
 
 export interface SupplyItem {
   id: string;
@@ -73,7 +75,7 @@ interface StoredSupply {
   mergedInto?: string;
 }
 
-export function useSupplyDocs(hid: string | null) {
+function useSupplyDocs(hid: string | null) {
   return useLiveQuery<StoredSupply>(hid ? collection(db, "households", hid, "supply") : null, hid ? hh(hid, "supply") : null);
 }
 
@@ -171,11 +173,6 @@ function stripUndefined<T>(v: T): T {
   return v;
 }
 
-/** `useCommand(hid, uid)` → send(type, payload). */
-export function useCommand(hid: string, uid: string) {
-  return useCallback(<T extends CommandType>(type: T, payload: CommandPayload<T>, id?: string) => sendCommand(hid, uid, type, payload, id), [hid, uid]);
-}
-
 /** A command's live state (pending / applied / failed). */
 export function useCommandDoc(hid: string, id: string | null) {
   return useLiveDoc<StoredCommand>(id ? doc(db, "households", hid, "commands", id) : null, id ? hh(hid, "commands", id) : null);
@@ -188,7 +185,7 @@ export function newId(hid: string, coll = "commands"): string {
 // ---------- transactions (R8.7): paginated, newest first
 
 export type StoredTx = TransactionDoc & { createdAt?: { toMillis(): number } };
-export const LEDGER_PAGE = 25;
+const LEDGER_PAGE = 25;
 
 export function useLedger(hid: string, supplyId: string) {
   const base = () => query(collection(db, "households", hid, "supply", supplyId, "transactions"), orderBy("createdAt", "desc"), orderBy(documentId(), "desc"));

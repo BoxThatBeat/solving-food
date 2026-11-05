@@ -192,7 +192,7 @@ function num(v: string): number | undefined {
 }
 
 /** The "create new" path: category, allowed measurements, and the conversions they need (§5). */
-export function NewIngredientForm({
+function NewIngredientForm({
   initialName,
   existing,
   uid,

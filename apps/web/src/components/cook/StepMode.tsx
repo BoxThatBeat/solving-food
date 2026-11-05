@@ -348,7 +348,7 @@ function NextStep({ text, recipe, lookup, factor }: { text: string; recipe: Stor
 }
 
 /** The step's timer: start, pause, ±1 min, cancel. Counts down on wall-clock time. */
-export function TimerBox({ timers, recipeId, step, seconds }: { timers: Timers; recipeId: string; step: number; seconds: number }) {
+function TimerBox({ timers, recipeId, step, seconds }: { timers: Timers; recipeId: string; step: number; seconds: number }) {
   const id = timerId(recipeId, step);
   const t = timers.get(id);
   const label = `Step ${step + 1}: ${formatDuration(seconds * 1000)}`;

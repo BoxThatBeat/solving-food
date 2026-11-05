@@ -40,6 +40,7 @@ import { useIngredientsById } from "@/data/ingredients";
 import { usePlanModel } from "@/data/planModel";
 import { useSides } from "@/data/sides";
 import { SidePicker } from "./SidePicker";
+import { MealTypePicker } from "./MealTypePicker";
 import { useSuggestions } from "@/data/suggestions";
 import { useRecipeIndex, useRecipeSearch } from "@/search/useRecipeSearch";
 import { useReadySession } from "@/session/useSession";
@@ -335,24 +336,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
         ) : tab === "out" ? (
           <section aria-label="Eating out" className="flex flex-col gap-3">
             <p className="m-0 text-[0.875rem] font-semibold">A meal you&apos;ll eat out: it fills a slot in the plan with nothing to buy, cook, or take from Supply.</p>
-            <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-              <legend className="mb-2 p-0">
-                <SectionLabel>Meal type</SectionLabel>
-              </legend>
-              <div className="grid grid-cols-2 gap-2">
-                {mealTypes.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    aria-pressed={effectiveType === t}
-                    onClick={() => setMealType(t)}
-                    className={cn("cursor-pointer rounded-ui border-2 border-line px-2 py-3 text-[0.9375rem] font-extrabold", effectiveType === t ? "bg-acc text-onc" : "bg-base text-ink shadow-hard")}
-                  >
-                    {MEAL_LABEL[t]}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
+            <MealTypePicker types={mealTypes} value={effectiveType} onChange={setMealType} />
             <label className="flex flex-col gap-1.5">
               <SectionLabel hint="Optional">Note</SectionLabel>
               <Input value={outNote} maxLength={EATING_OUT_NOTE_MAX} onChange={(e) => setOutNote(e.target.value)} placeholder="Pizza night, dinner at Mom's…" aria-label="Note" />
@@ -425,24 +409,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
       </div>
       </div>
 
-      <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-        <legend className="mb-2 p-0">
-          <SectionLabel>Meal type</SectionLabel>
-        </legend>
-        <div className="grid grid-cols-2 gap-2">
-          {mealTypes.map((t) => (
-            <button
-              key={t}
-              type="button"
-              aria-pressed={effectiveType === t}
-              onClick={() => setMealType(t)}
-              className={cn("cursor-pointer rounded-ui border-2 border-line px-2 py-3 text-[0.9375rem] font-extrabold", effectiveType === t ? "bg-acc text-onc" : "bg-base text-ink shadow-hard")}
-            >
-              {MEAL_LABEL[t]}
-            </button>
-          ))}
-        </div>
-      </fieldset>
+      <MealTypePicker types={mealTypes} value={effectiveType} onChange={setMealType} />
 
       <div className="flex items-center justify-between gap-3 rounded-ui border-2 border-line bg-base px-3 py-2">
         <span className="flex flex-col gap-0.5">

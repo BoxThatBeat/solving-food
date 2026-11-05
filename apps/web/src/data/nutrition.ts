@@ -14,7 +14,7 @@ export interface Nutrition {
   fibreGoals: Goals;
 }
 
-export const NUTRITION_ON: Nutrition = { on: true, proteinGoals: {}, fibreGoals: {} };
+const NUTRITION_ON: Nutrition = { on: true, proteinGoals: {}, fibreGoals: {} };
 
 function goals(v: unknown): Goals {
   const out: Goals = {};

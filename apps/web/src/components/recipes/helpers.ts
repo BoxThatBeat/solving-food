@@ -24,7 +24,7 @@ const TINTS: Record<string, string> = {
   vietnamese: "#a6da95",
 };
 
-export function tintFor(cuisine: string): string {
+function tintFor(cuisine: string): string {
   return TINTS[cuisine] ?? "#ccd0da";
 }
 

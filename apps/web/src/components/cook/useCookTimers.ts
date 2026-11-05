@@ -19,7 +19,7 @@ function load(key: string): CookTimer[] {
 
 let audio: AudioContext | null = null;
 /** A short, loud three-beep alarm, synthesised (no audio file to fetch offline). */
-export function playAlarm(): void {
+function playAlarm(): void {
   try {
     audio ??= new AudioContext();
     const ctx = audio;

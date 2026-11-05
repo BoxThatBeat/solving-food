@@ -46,7 +46,7 @@ export interface HandsFreeState {
 /** M11 remembered the setting per device; M12 never restores it (a start needs a tap), so the old key is removed. */
 const LEGACY_KEY = "sf.handsFree";
 /** Set while the engine is starting: still set on the next page load means that start crashed the page (M12). */
-export const STARTING_KEY = "sf.handsFree.starting";
+const STARTING_KEY = "sf.handsFree.starting";
 const GRACE_MS = 800;
 
 const CRASHED = "Hands-free couldn't start on this device, so it's off.";

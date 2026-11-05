@@ -1,7 +1,7 @@
 import { FirebaseError } from "firebase/app";
 
 /** The address the link was sent to, kept for the finish step (same browser). */
-export const SIGN_IN_EMAIL_KEY = "sf.signInEmail";
+const SIGN_IN_EMAIL_KEY = "sf.signInEmail";
 
 export function storeSignInEmail(email: string): void {
   try {

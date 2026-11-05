@@ -8,7 +8,7 @@ import { httpsCallable } from "firebase/functions";
 import { app, db, functions, useEmulators } from "@/firebase/app";
 import { isStandalone } from "./install";
 
-export const VAPID_KEY = "BDJ6cML5GULVZZ0X3Zd2B2m02s_aGTbRRkbKPrV38lLZr6YE9SrkbwL4_aOGAQp72B5eDVeoQ-iui05v0vn1Rgk";
+const VAPID_KEY = "BDJ6cML5GULVZZ0X3Zd2B2m02s_aGTbRRkbKPrV38lLZr6YE9SrkbwL4_aOGAQp72B5eDVeoQ-iui05v0vn1Rgk";
 
 export type PushState = "ready" | "denied" | "unsupported" | "needs-install" | "offline";
 
@@ -30,7 +30,7 @@ export function pushSupport(): PushState {
 let registered: Promise<boolean> | null = null;
 
 /** Asks permission (once) and registers this device for pushes. Resolves false when that isn't possible. */
-export function ensureDevice(uid: string): Promise<boolean> {
+function ensureDevice(uid: string): Promise<boolean> {
   if (registered) return registered;
   registered = (async () => {
     if (pushSupport() !== "ready") return false;

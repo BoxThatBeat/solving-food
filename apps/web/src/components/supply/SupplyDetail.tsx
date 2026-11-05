@@ -209,7 +209,7 @@ function LotRow({ lot, item, ingredient, unit, hid, uid, tz, nowMs }: { lot: Led
 const ENTRY_UNITS: Record<Measure, string[]> = { weight: ["g", "oz"], volume: ["ml", "cup"], count: ["count"] };
 
 /** <SupplyAdjust> (R8.8): "I actually have …" in any allowed measurement, ±5/±25 (or ±1), Apply → correctSupply. */
-export function SupplyAdjust({ item, ingredient, unit, hid, uid }: { item: SupplyItem; ingredient: IngredientEntry | undefined; unit: AmountUnit; hid: string; uid: string }) {
+function SupplyAdjust({ item, ingredient, unit, hid, uid }: { item: SupplyItem; ingredient: IngredientEntry | undefined; unit: AmountUnit; hid: string; uid: string }) {
   const notify = useNotify();
   const current = recomputeAmount(item.lots);
   const measures: Measure[] = ingredient ? enterableMeasures(ingredient) : ["count"];
@@ -302,7 +302,7 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 /** <LedgerList> (R8.7): every change with its date and who did it; loads more as you scroll (25 per page). */
-export function LedgerList({ hid, supplyId, unit, tz, members, limitTo }: { hid: string; supplyId: string; unit: AmountUnit; tz: string; members: ReadonlyMap<string, string>; limitTo?: number | undefined }) {
+function LedgerList({ hid, supplyId, unit, tz, members, limitTo }: { hid: string; supplyId: string; unit: AmountUnit; tz: string; members: ReadonlyMap<string, string>; limitTo?: number | undefined }) {
   const l = useLedger(hid, supplyId);
   const sentinel = React.useRef<HTMLDivElement>(null);
   const { hasMore, loadMore } = l;

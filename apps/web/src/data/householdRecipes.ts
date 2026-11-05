@@ -1,6 +1,7 @@
 // The active household's facts about recipes: favourites (R4.6), notes (R4.8), and cook stats (function-maintained,
 // M3; read now for filters and cards).
 
+import { millis } from "@/lib/millis";
 import { useMemo } from "react";
 import { collection, deleteDoc, doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { costPerServing, missingTools, NO_FACTS, supplyCoverage, type FavouriteDoc, type HouseholdFacts, type NoteDoc, type RecipeSummary, type ScoreResult, type StatsDoc } from "@solving-food/core";
@@ -41,12 +42,6 @@ export function useStats(hid: string | null) {
   return useMemo(() => new Map((q.docs ?? []).filter((d) => d.id.startsWith("recipe_")).map((d) => [d.id.slice(7), d.data])), [q.docs]);
 }
 
-function millis(v: unknown): number | null {
-  if (!v) return null;
-  if (v instanceof Date) return v.getTime();
-  const t = v as { toMillis?: () => number };
-  return typeof t.toMillis === "function" ? t.toMillis() : null;
-}
 
 /**
  * Everything <CollectionView> needs to know about the household for each recipe: favourite, cook stats, whether the

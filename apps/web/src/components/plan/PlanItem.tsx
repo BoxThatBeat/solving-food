@@ -3,6 +3,7 @@
 // marked eaten (R9.5, `markEaten`); an expiry badge names the soonest-expiring ingredient the meal would use (R6.7);
 // leftovers show their use-by (R6.10). M9 (R9.5): a cooked meal's review marks it eaten, so a cooked meal shows
 // Review (its pending review) instead of Mark eaten.
+import { MealTypePicker } from "./MealTypePicker";
 import * as React from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { X } from "lucide-react";
@@ -318,18 +319,7 @@ function PlanItemBody({
           </li>
         ))}
       </ul>
-      <fieldset className="m-0 flex flex-col gap-2 border-0 p-0" disabled={!editable}>
-        <legend className="mb-2 p-0">
-          <SectionLabel>Meal type</SectionLabel>
-        </legend>
-        <div className="grid grid-cols-2 gap-2">
-          {types.map((t) => (
-            <button key={t} type="button" aria-pressed={mealType === t} onClick={() => setMealType(t)} className={cn("cursor-pointer rounded-ui border-2 border-line px-2 py-3 text-[0.9375rem] font-extrabold", mealType === t ? "bg-acc text-onc" : "bg-base text-ink shadow-hard")}>
-              {MEAL_LABEL[t]}
-            </button>
-          ))}
-        </div>
-      </fieldset>
+      <MealTypePicker types={types} value={mealType} onChange={setMealType} disabled={!editable} />
       {out ? null : (
       <div className="flex items-center justify-between gap-3 rounded-ui border-2 border-line bg-base px-3 py-2">
         <span id="pi-servings" className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">

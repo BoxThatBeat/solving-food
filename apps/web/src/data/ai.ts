@@ -1,10 +1,10 @@
 // Gemini from the app (PRD R4.27, R4.35, R4.36, R4.37): its status and the owner's key, Check names, and Add with
 // Gemini (a recipe from a link or a photo).
-import { useEffect, useState } from "react";
 import { httpsCallable } from "firebase/functions";
 import { ref, uploadBytes } from "firebase/storage";
 import type { PcxStatus } from "@solving-food/core";
 import { functions, storage } from "@/firebase/app";
+import { useCallableStatus } from "./callableStatus";
 
 export interface AiStatus extends PcxStatus {
   waiting: number;
@@ -19,6 +19,7 @@ export interface CheckReport {
 }
 
 const STATUS_CHANGED = "ai-status-changed";
+const AI_UNREACHABLE: AiStatus = { connected: false, waiting: 0, message: "Couldn't reach the server to check Gemini." };
 const changed = () => window.dispatchEvent(new Event(STATUS_CHANGED));
 
 /** Saves the Gemini key (owner only; "" clears it); the status asks again. */
@@ -37,24 +38,7 @@ export async function checkIngredientNames(hid: string): Promise<CheckReport> {
 
 /** Gemini's status for this person (null while asking or offline). */
 export function useAiStatus(hid: string | null): AiStatus | null {
-  const [s, setS] = useState<{ hid: string; status: AiStatus } | null>(null);
-  const [asked, setAsked] = useState(0);
-  useEffect(() => {
-    const again = () => setAsked((n) => n + 1);
-    window.addEventListener(STATUS_CHANGED, again);
-    return () => window.removeEventListener(STATUS_CHANGED, again);
-  }, []);
-  useEffect(() => {
-    if (!hid) return;
-    let live = true;
-    httpsCallable<{ hid: string }, AiStatus>(functions, "aiStatus")({ hid })
-      .then((r) => live && setS({ hid, status: r.data }))
-      .catch(() => live && setS({ hid, status: { connected: false, waiting: 0, message: "Couldn't reach the server to check Gemini." } }));
-    return () => {
-      live = false;
-    };
-  }, [hid, asked]);
-  return s?.hid === hid ? s.status : null;
+  return useCallableStatus<AiStatus>(hid, "aiStatus", STATUS_CHANGED, AI_UNREACHABLE);
 }
 
 export interface AddRecipeResult {

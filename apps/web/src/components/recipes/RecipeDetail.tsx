@@ -1,6 +1,8 @@
 // Recipe detail (PRD R4.8, R4.11, R4.13, R4.14, R4.21, R4.26, R6.15; spec §12). Renders for signed-out
 // visitors too (share links): then only the global recipe shows, without notes, favourites, supply badges, stats, or
 // edit controls.
+import { Stepper } from "@/components/ui/stepper";
+import { millis } from "@/lib/millis";
 import * as React from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { doc } from "firebase/firestore";
@@ -56,10 +58,6 @@ function useDisplayName(uid: string | undefined, enabled: boolean): string | nul
   return d.data?.displayName ?? null;
 }
 
-function millis(v: unknown): number | null {
-  const t = v as { toMillis?: () => number } | null | undefined;
-  return t && typeof t.toMillis === "function" ? t.toMillis() : null;
-}
 
 export function RecipeDetail({
   id,
@@ -332,22 +330,7 @@ export function RecipeDetail({
               {factor === 1 ? "As written" : `Scaled ×${Math.round(factor * 100) / 100} · amounts update`}
             </span>
           </span>
-          <div role="group" aria-labelledby="servings-label" className="flex overflow-hidden rounded-ui border-2 border-line">
-            <button
-              type="button"
-              aria-label="Fewer servings"
-              onClick={() => setServings((s) => Math.max(1, s - 1))}
-              className="h-10 w-11 cursor-pointer border-0 bg-pg text-lg font-extrabold text-ink"
-            >
-              −
-            </button>
-            <output className="flex min-w-11 items-center justify-center border-x-2 border-line font-mono text-[1rem] font-extrabold" aria-label="Servings">
-              {servings}
-            </output>
-            <button type="button" aria-label="More servings" onClick={() => setServings((s) => Math.min(100, s + 1))} className="h-10 w-11 cursor-pointer border-0 bg-pg text-lg font-extrabold text-ink">
-              +
-            </button>
-          </div>
+          <Stepper compact label="Servings" labelledBy="servings-label" decLabel="Fewer servings" incLabel="More servings" value={servings} min={1} max={100} onChange={setServings} />
         </div>
 
         <IngredientsTable recipe={recipe} ingredients={ingredients} factor={factor} servings={servings} signedIn={!!ctx} have={have} />
