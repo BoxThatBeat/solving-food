@@ -35,7 +35,8 @@ import { SectionLabel } from "@/components/ui/chip";
 import { Button } from "@/components/ui/button";
 import { useNotify } from "@/components/notifications-context";
 import { useHouseholdFacts, useNotes } from "@/data/householdRecipes";
-import { addEatingOut, createMeal, useMeals } from "@/data/plan";
+import { addEatingOut, createMeal, useMeals, useRecipeDocs } from "@/data/plan";
+import { useIngredientsById } from "@/data/ingredients";
 import { usePlanModel } from "@/data/planModel";
 import { useSides } from "@/data/sides";
 import { SidePicker } from "./SidePicker";
@@ -104,7 +105,17 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
     setName(preMeal.data.name);
   }
 
-  const model = usePlanModel({ extraRecipeIds: selected.map((r) => r.recipeId), extraIngredientIds: sides.map((x) => x.ingredientId) });
+  const model = usePlanModel();
+  // The picked recipes and sides, loaded here (M23: the shared plan model holds only what's planned).
+  const pickedRecipes = useRecipeDocs(selected.map((r) => r.recipeId));
+  const pickedIngredientIds = React.useMemo(() => [...new Set([...[...pickedRecipes.values()].flatMap((r) => r.ingredientIds), ...sides.map((x) => x.ingredientId)])], [pickedRecipes, sides]);
+  const pickedIngredients = useIngredientsById(pickedIngredientIds);
+  const pickedReady = selected.every((r) => pickedRecipes.has(r.recipeId)) && pickedIngredientIds.every((id) => pickedIngredients.has(id));
+  const recipeOf = React.useCallback((id: string) => pickedRecipes.get(id) ?? model.recipes.get(id), [pickedRecipes, model.recipes]);
+  const ctx = React.useMemo(
+    () => ({ ...model.ctx, recipes: (id: string) => pickedRecipes.get(id) ?? model.ctx.recipes(id), ingredients: (id: string) => pickedIngredients.get(id) ?? model.ctx.ingredients(id) }),
+    [model.ctx, pickedRecipes, pickedIngredients],
+  );
   const household = model.household;
   const plannedTypes = household?.plannedMealTypes ?? [...PLANNABLE_MEAL_TYPES];
   const mealTypes: MealType[] = [...PLANNABLE_MEAL_TYPES.filter((t) => plannedTypes.includes(t)), "snack"];
@@ -113,8 +124,8 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
   const [servings, setServings] = React.useState<number | null>(null);
   const effectiveServings = servings ?? household?.defaultServings ?? 4;
 
-  const titles = selected.map((r) => byId.get(r.recipeId)?.title ?? model.recipes.get(r.recipeId)?.title ?? "Recipe");
-  const sideNames = sides.map((x) => sideName(x.ingredientId) ?? model.ingredients.get(x.ingredientId)?.name ?? "side");
+  const titles = selected.map((r) => byId.get(r.recipeId)?.title ?? recipeOf(r.recipeId)?.title ?? "Recipe");
+  const sideNames = sides.map((x) => sideName(x.ingredientId) ?? pickedIngredients.get(x.ingredientId)?.name ?? model.ingredients.get(x.ingredientId)?.name ?? "side");
   const autoName = savedMealId ? name : defaultMealName(titles, sideNames);
   const shownName = nameTouched || savedMealId ? name : autoName;
 
@@ -147,13 +158,13 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
   };
 
   const impact = React.useMemo(() => {
-    if (!model.ready || !selected.length) return null;
+    if (!model.ready || !pickedReady || !selected.length) return null;
     const planned = model.items.map((i) => ({ id: i.id, status: i.data.status, servings: i.data.servings, recipes: i.data.recipes, sides: i.data.sides }));
-    return addedCost(planned, { id: "new", status: "planned", servings: effectiveServings, recipes: selected, sides }, model.ctx);
-  }, [model.ready, model.items, model.ctx, selected, sides, effectiveServings]);
+    return addedCost(planned, { id: "new", status: "planned", servings: effectiveServings, recipes: selected, sides }, ctx);
+  }, [model.ready, pickedReady, model.items, ctx, selected, sides, effectiveServings]);
 
   const canName = !savedMealId;
-  const submit = async () => {
+  const submit = () => {
     setError(null);
     if (!model.periodId) {
       setError("The plan period is still being set up. Try again in a moment.");
@@ -175,11 +186,9 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
     }
     setBusy(true);
     try {
-      const lookup = (id: string) => model.recipes.get(id);
-      const write = createMeal(model.hid, model.periodId, parsed.data, s.user.uid, lookup);
-      // Offline the write is queued and resolves later; don't hold the sheet open for it.
-      if (navigator.onLine) await write;
-      else void write.catch(() => notify({ kind: "error", message: "Couldn't add the meal to the plan" }));
+      // The write shows at once (Firestore applies it locally) and reaches the server when it can: the sheet never
+      // waits for it (M23: a dead connection that still reads as online used to hold it on "Adding…").
+      void createMeal(model.hid, model.periodId, parsed.data, s.user.uid, recipeOf).catch((e) => notify({ kind: "error", message: `Couldn't add the meal to the plan: ${(e as Error).message}` }));
       const what = parsed.data.saveAsMeal ? `Added to plan · ${MEAL_LABEL[effectiveType].toLowerCase()} · saved to Meals` : `Added to plan · ${MEAL_LABEL[effectiveType].toLowerCase()}`;
       notify({ kind: "success", message: what, ...(pathname !== "/plan" ? { link: { to: "/plan", label: "Plan" } } : {}) });
       close();
@@ -189,7 +198,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
     }
   };
 
-  const submitOut = async () => {
+  const submitOut = () => {
     setError(null);
     if (!model.periodId) {
       setError("The plan period is still being set up. Try again in a moment.");
@@ -197,9 +206,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
     }
     setBusy(true);
     try {
-      const write = addEatingOut(model.hid, model.periodId, { mealType: effectiveType, ...(outNote.trim() ? { note: outNote.trim() } : {}) }, s.user.uid);
-      if (navigator.onLine) await write;
-      else void write.catch(() => notify({ kind: "error", message: "Couldn't add it to the plan" }));
+      void addEatingOut(model.hid, model.periodId, { mealType: effectiveType, ...(outNote.trim() ? { note: outNote.trim() } : {}) }, s.user.uid).catch((e) => notify({ kind: "error", message: `Couldn't add it to the plan: ${(e as Error).message}` }));
       notify({ kind: "success", message: `Eating out · ${MEAL_LABEL[effectiveType].toLowerCase()} added to the plan`, ...(pathname !== "/plan" ? { link: { to: "/plan", label: "Plan" } } : {}) });
       close();
     } catch (e) {
@@ -401,7 +408,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
       }
     >
       <div className="flex items-stretch gap-2.5">
-      <MealThumb ids={selected.map((r) => r.recipeId)} summary={(id) => byId.get(id) ?? model.recipes.get(id)} className="min-h-14" />
+      <MealThumb ids={selected.map((r) => r.recipeId)} summary={(id) => byId.get(id) ?? recipeOf(id)} className="min-h-14" />
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <span className="text-[1.0625rem] leading-tight font-extrabold" data-testid="create-meal-title">
           {fromMeal ? fromMeal.title : defaultMealName(titles, sideNames) || "No recipes picked"}
@@ -450,7 +457,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
       <section aria-label="Sides" className="flex flex-col gap-2">
         <SectionLabel hint="Optional · per person">Sides</SectionLabel>
         <span className="-mt-1 text-[0.75rem] font-semibold text-sub">Fries, rice, buns: eaten as is, no recipe. They go on the grocery list.</span>
-        <SidePicker value={sides} onChange={setSides} sides={sideList.list} servings={effectiveServings} ingredientOf={(id) => model.ingredients.get(id)} />
+        <SidePicker value={sides} onChange={setSides} sides={sideList.list} servings={effectiveServings} ingredientOf={(id) => pickedIngredients.get(id) ?? model.ingredients.get(id)} />
       </section>
 
       {canName ? (

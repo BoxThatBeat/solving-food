@@ -1,9 +1,10 @@
 // Everything the Plan page, the Create meal sheet, and the Grocery page compute from: the current period, its plan
 // items, the recipes and ingredients they use, stores, rules, mappings, and ordered lists, fed through the core
-// grocery builder (spec §8) and budget math (§7). Firestore shares identical listeners, so several callers cost no
-// extra reads.
+// grocery builder (spec §8) and budget math (§7). M23: computed once for the signed-in shell (<PlanModelProvider>)
+// and read with `usePlanModel()` by the Plan, Grocery, Supply and Recipes pages, Create meal, the suggestions engine
+// and the nav badges, instead of once per caller.
 
-import { useMemo } from "react";
+import { createContext, useContext, useMemo } from "react";
 import {
   addLocalDays,
   budgetState,
@@ -34,7 +35,8 @@ import { useIngredientsById } from "./ingredients";
 import { useSupply } from "./supply";
 import { millis, useBrandMappings, useDraftList, useOrderedLists, usePeriod, usePlanItems, useRecipeDocs, useSourcingRules, useStores, type StoredPlanItem } from "./plan";
 
-export function usePlanModel(opts: { extraRecipeIds?: readonly string[]; extraIngredientIds?: readonly string[] } = {}) {
+/** Computes the model. Only <PlanModelProvider> calls this; everything else reads `usePlanModel()`. */
+export function useComputePlanModel() {
   const hh = useActiveHousehold();
   const hid = hh.id;
   const household = hh.data;
@@ -60,13 +62,11 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[]; extraIn
     () => [...(planItems.docs ?? [])].sort((a, b) => (millis(a.data.addedAt) ?? Number.MAX_SAFE_INTEGER) - (millis(b.data.addedAt) ?? Number.MAX_SAFE_INTEGER) || a.id.localeCompare(b.id)),
     [planItems.docs],
   );
-  const extraKey = (opts.extraRecipeIds ?? []).join(",");
-  const recipeIds = useMemo(() => [...new Set([...items.flatMap((i) => i.data.recipes.map((r) => r.recipeId)), ...(extraKey ? extraKey.split(",") : [])])], [items, extraKey]);
+  const recipeIds = useMemo(() => [...new Set(items.flatMap((i) => i.data.recipes.map((r) => r.recipeId)))], [items]);
   const recipes = useRecipeDocs(recipeIds);
 
-  const extraIngKey = (opts.extraIngredientIds ?? []).join(",");
   // Side ingredients (R5.10) price and count like recipe ones, so they're loaded too.
-  const sideIds = useMemo(() => [...new Set([...items.flatMap((i) => (i.data.sides ?? []).map((s) => s.ingredientId)), ...(extraIngKey ? extraIngKey.split(",") : [])])], [items, extraIngKey]);
+  const sideIds = useMemo(() => [...new Set(items.flatMap((i) => (i.data.sides ?? []).map((s) => s.ingredientId)))], [items]);
   const ingredientIds = useMemo(() => {
     const ids = new Set<string>(sideIds);
     for (const r of recipes.values()) for (const id of r.ingredientIds) ids.add(id);
@@ -126,36 +126,49 @@ export function usePlanModel(opts: { extraRecipeIds?: readonly string[]; extraIn
   const ingredientsReady = [...wantedIngredients].every((id) => ingredients.has(id));
   const ready = !!household && !supply.loading && planItems.docs !== undefined && recipesReady && ingredientsReady && stores.docs !== undefined && ordered.docs !== undefined && mappings.docs !== undefined;
 
-  return {
-    hid,
-    household,
-    periodId,
-    period: period.data,
-    items: items as Array<{ id: string; data: StoredPlanItem }>,
-    loading: planItems.docs === undefined,
-    recipes,
-    ingredients,
-    stores: ctx.stores,
-    ctx,
-    /** The plan items as the grocery builder reads them. */
-    inputs,
-    /** Every generated plan line, removed ones included (regeneration keeps their flag). */
-    built,
-    /** IDs of the plan lines removed from the list (M17, R7.13). */
-    removedIds,
-    costs,
-    budget,
-    draft,
-    ordered: ordered.docs,
-    ready,
-    supply,
-    unexpired,
-    projected,
-    lotsByIngredient,
-    expiring,
-    useItUp,
-    livePrices,
-  };
+  const model = useMemo(
+    () => ({
+      hid,
+      household,
+      periodId,
+      period: period.data,
+      items: items as Array<{ id: string; data: StoredPlanItem }>,
+      loading: planItems.docs === undefined,
+      recipes,
+      ingredients,
+      stores: ctx.stores,
+      ctx,
+      /** The plan items as the grocery builder reads them. */
+      inputs,
+      /** Every generated plan line, removed ones included (regeneration keeps their flag). */
+      built,
+      /** IDs of the plan lines removed from the list (M17, R7.13). */
+      removedIds,
+      costs,
+      budget,
+      draft,
+      ordered: ordered.docs,
+      ready,
+      supply,
+      unexpired,
+      projected,
+      lotsByIngredient,
+      expiring,
+      useItUp,
+      livePrices,
+      }),
+    [hid, household, periodId, period.data, items, planItems.docs, recipes, ingredients, ctx, inputs, built, removedIds, costs, budget, draft, ordered.docs, ready, supply, unexpired, projected, lotsByIngredient, expiring, useItUp, livePrices],
+  );
+  return model;
 }
 
-export type PlanModel = ReturnType<typeof usePlanModel>;
+export type PlanModel = ReturnType<typeof useComputePlanModel>;
+
+export const PlanModelContext = createContext<PlanModel | null>(null);
+
+/** The shell's shared plan model (M23). */
+export function usePlanModel(): PlanModel {
+  const m = useContext(PlanModelContext);
+  if (!m) throw new Error("usePlanModel outside PlanModelProvider");
+  return m;
+}

@@ -142,7 +142,9 @@ export function useSupply(hid: string | null, tz: string) {
     }
     return out;
   }, [docs.docs, pending, ingredients, now, tz]);
-  return { items, loading: docs.docs === undefined, pendingCount: pending.length, pendingCommands: pending, now, ingredients };
+  const loading = docs.docs === undefined;
+  // One object per change, so the shared plan model's memos hold (M23).
+  return useMemo(() => ({ items, loading, pendingCount: pending.length, pendingCommands: pending, now, ingredients }), [items, loading, pending, now, ingredients]);
 }
 
 // ---------- the command writer

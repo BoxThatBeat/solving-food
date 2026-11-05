@@ -1,8 +1,11 @@
 // Hooks and pure helpers for the cooking views (kept apart from the components for fast refresh).
 import * as React from "react";
-import { lineText, pendingReviews, renderStep, type IngredientLookup } from "@solving-food/core";
+import { collection, limit, query, Timestamp, where } from "firebase/firestore";
+import { DAY_MS, lineText, pendingReviews, RATE_PROMPT_DAYS, renderStep, type IngredientLookup } from "@solving-food/core";
+import { db } from "@/firebase/app";
+import { useLiveQuery } from "@/data/live";
 import type { StoredRecipe } from "@/data/recipes";
-import { useCookEvents } from "@/data/supply";
+import type { StoredEvent } from "@/data/supply";
 import { millis } from "@/data/plan";
 import { useNow } from "@/hooks/useNow";
 
@@ -38,18 +41,25 @@ export function useWakeLock(on: boolean): boolean {
   return held;
 }
 
+/**
+ * Cooked meals waiting for this person (R9.4): every event still waiting for its review, and the last week's events they
+ * haven't rated. Two small queries (M23) instead of the last 300 cook events; the week's start moves once a day.
+ */
 export function usePendingReviews(hid: string, uid: string) {
-  const events = useCookEvents(hid);
   const now = useNow();
-  return React.useMemo(
-    () =>
-      pendingReviews(
-        (events.docs ?? []).map((d) => ({ ...d.data, id: d.id, cookedAtMs: millis(d.data.cookedAt) ?? 0 })),
-        uid,
-        now,
-      ),
-    [events.docs, uid, now],
-  );
+  const sinceMs = Math.floor((now - RATE_PROMPT_DAYS * DAY_MS) / DAY_MS) * DAY_MS;
+  const events = (hid: string) => collection(db, "households", hid, "cookEvents");
+  const waiting = useLiveQuery<StoredEvent>(query(events(hid), where("reviewStatus", "==", "pending"), limit(100)), `households/${hid}/cookEvents?review=pending`);
+  const recent = useLiveQuery<StoredEvent>(query(events(hid), where("cookedAt", ">=", Timestamp.fromMillis(sinceMs))), `households/${hid}/cookEvents?since=${sinceMs}`);
+  return React.useMemo(() => {
+    const byId = new Map<string, StoredEvent>();
+    for (const d of [...(waiting.docs ?? []), ...(recent.docs ?? [])]) byId.set(d.id, d.data);
+    return pendingReviews(
+      [...byId].map(([id, e]) => ({ ...e, id, cookedAtMs: millis(e.cookedAt) ?? 0 })),
+      uid,
+      now,
+    );
+  }, [waiting.docs, recent.docs, uid, now]);
 }
 
 /** Prep tasks, or (for recipes without any) "Measure out …" for each ingredient, as the prototype does. */

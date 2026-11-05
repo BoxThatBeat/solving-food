@@ -25,21 +25,30 @@ import { Wordmark } from "./Wordmark";
 import { PlanSheetProvider } from "./plan/PlanSheetProvider";
 import { SuggestionsProvider } from "./SuggestionsProvider";
 import { NutritionContext, nutritionOf } from "@/data/nutrition";
-import { useMeals, usePlanItems } from "@/data/plan";
+import { useMeals } from "@/data/plan";
+import { usePlanModel } from "@/data/planModel";
 import { usePendingReviews } from "./cook/helpers";
-import { useSupply } from "@/data/supply";
 import { itemExpiry } from "./supply/format";
+import { PlanModelProvider } from "./PlanModelProvider";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
-/** Supply items expiring soon or expired (the prototype's "3 SOON" beside Supply). */
-function useSoonCount(hid: string, tz: string): number {
-  const supply = useSupply(hid, tz);
-  let n = 0;
-  for (const it of supply.items.values()) {
-    if (!it.lots.length) continue;
-    const f = itemExpiry(it.lots, supply.now, tz).flag;
-    if (f === "soon" || f === "expired") n++;
-  }
-  return n;
+/** The shell's breakpoints (index.css): md 48rem rail, lg 64rem side nav. */
+const MD_UP = "(min-width: 48rem)";
+const LG_UP = "(min-width: 64rem)";
+
+/** Supply items expiring soon or expired (the prototype's "3 SOON" beside Supply), from the shared plan model. */
+function useSoonCount(): number {
+  const m = usePlanModel();
+  const tz = m.household?.timezone ?? "America/Toronto";
+  return React.useMemo(() => {
+    let n = 0;
+    for (const it of m.supply.items.values()) {
+      if (!it.lots.length) continue;
+      const f = itemExpiry(it.lots, m.supply.now, tz).flag;
+      if (f === "soon" || f === "expired") n++;
+    }
+    return n;
+  }, [m.supply.items, m.supply.now, tz]);
 }
 
 const page = (to: NavPage["to"]) => PAGES.find((p) => p.to === to)!;
@@ -184,15 +193,15 @@ function HouseholdButton({ compact }: { compact?: boolean }) {
 
 function NavList({ compact }: { compact?: boolean }) {
   const pathname = usePathname();
-  // Counts beside nav items, as in the prototype: meals to cook this period, recipes, saved meals. The listeners are
-  // the same ones the pages use, shared by the SDK, so they cost no extra reads.
+  // Counts beside nav items, as in the prototype: meals to cook this period, recipes, saved meals. M23: read from the
+  // shell's shared plan model and the pages' own listeners; mounted only on tablets and desktops, where they show.
   const recipeCount = useRecipeIndex()?.length;
-  const hh = useActiveHousehold();
-  const planned = usePlanItems(hh.id, hh.data?.currentPeriodId).docs?.filter((d) => d.data.status === "planned").length;
+  const m = usePlanModel();
+  const planned = m.loading ? undefined : m.items.filter((d) => d.data.status === "planned").length;
   const meals = useMeals().docs?.length;
   const s = useReadySession();
-  const toRate = usePendingReviews(hh.id, s.user.uid).length;
-  const soon = useSoonCount(hh.id, hh.data?.timezone ?? "America/Toronto");
+  const toRate = usePendingReviews(m.hid, s.user.uid).length;
+  const soon = useSoonCount();
   const counts: Partial<Record<NavPage["to"], number | string | undefined>> = {
     "/plan": planned,
     "/recipes": recipeCount,
@@ -376,22 +385,27 @@ function NutritionProvider({ children }: { children: React.ReactNode }) {
 function ReadyShell({ children, uid }: { children: React.ReactNode; uid: string }) {
   const s = useReadySession();
   const pathname = usePathname();
+  // M23: only the navigation for this width is mounted (each variant's badges open listeners).
+  const md = useMediaQuery(MD_UP);
+  const lg = useMediaQuery(LG_UP);
   return (
     <NutritionProvider>
+    <PlanModelProvider>
     <SuggestionsProvider>
     <PlanSheetProvider>
     <div className="flex min-h-dvh bg-pg text-ink">
-      <SideRail />
-      <SideNav />
+      {lg ? <SideNav /> : md ? <SideRail /> : null}
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="md:hidden">
-          <PhoneHeader />
-        </div>
+        {md ? null : (
+          <div className="md:hidden">
+            <PhoneHeader />
+          </div>
+        )}
         {pathname === "/settings/account" ? null : <InviteBanner me={{ uid: s.user.uid, email: s.user.email, displayName: s.displayName }} householdIds={s.householdIds} />}
         <main id="main" className="min-w-0 flex-1">
           {children}
         </main>
-        <TabBar />
+        {md ? null : <TabBar />}
       </div>
       <NotificationFeed uid={uid} />
       <ListenerErrorBanner householdIds={s.householdIds} />
@@ -401,6 +415,7 @@ function ReadyShell({ children, uid }: { children: React.ReactNode; uid: string 
     </div>
     </PlanSheetProvider>
     </SuggestionsProvider>
+    </PlanModelProvider>
     </NutritionProvider>
   );
 }
