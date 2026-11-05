@@ -371,7 +371,7 @@ function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, clos
               return (
                 <li key={x.id} className={cn("flex flex-col gap-2 px-3 py-2.5", i && "border-t-2 border-line")} data-testid="receipt-extra">
                   <div className="flex items-center gap-2">
-                    <span className={cn("flex min-w-0 flex-1 flex-col gap-0.5", !x.add && "opacity-70")}>
+                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="text-[0.875rem] leading-tight font-extrabold">{x.line.description}</span>
                       <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
                         {x.ingredient ? `${x.ingredient.name}${amt ? ` · ${formatCanonical(amt, x.ingredient.canonicalUnit, x.ingredient.unitWeightG)}` : " · no size on the receipt"}` : "no ingredient matched"}
