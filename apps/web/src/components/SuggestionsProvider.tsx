@@ -5,7 +5,7 @@ import { useActiveHousehold } from "@/data/households";
 import { usePlanModel } from "@/data/planModel";
 import { EMPTY, SuggestionsContext, useScoringSnapshot, type SuggestionsState } from "@/data/suggestions";
 import type { ScoringSnapshot } from "@/workers/snapshot";
-import type { ScoringRequest, ScoringResponse } from "@/workers/scoring.worker";
+import type { ScoringRequest, ScoringResponse } from "@/workers/plan.worker";
 
 export function SuggestionsProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = React.useState<SuggestionsState>(EMPTY);
@@ -32,10 +32,10 @@ function Engine({ onResult }: { onResult: (s: SuggestionsState) => void }) {
   const latest = React.useRef<ScoringSnapshot | null>(null);
 
   React.useEffect(() => {
-    const w = new Worker(new URL("../workers/scoring.worker.ts", import.meta.url), { type: "module" });
+    const w = new Worker(new URL("../workers/plan.worker.ts", import.meta.url), { type: "module" });
     worker.current = w;
     w.onmessage = (e: MessageEvent<ScoringResponse>) => {
-      if (e.data.seq !== seq.current) return;
+      if (e.data.kind !== "score" || e.data.seq !== seq.current) return;
       onResult({ ranked: e.data.ranked, byId: new Map(e.data.ranked.map((r) => [r.id, r])), snapshot: latest.current });
     };
     return () => {
@@ -52,7 +52,7 @@ function Engine({ onResult }: { onResult: (s: SuggestionsState) => void }) {
     const t = setTimeout(() => {
       const id = ++seq.current;
       latest.current = snapshot;
-      worker.current?.postMessage({ seq: id, snapshot } satisfies ScoringRequest);
+      worker.current?.postMessage({ kind: "score", seq: id, snapshot } satisfies ScoringRequest);
     }, 300);
     return () => clearTimeout(t);
   }, [snapshot]);

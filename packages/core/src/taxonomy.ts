@@ -54,6 +54,8 @@ export type RecipeCourse = (typeof RECIPE_COURSES)[number];
 /** Meal types a household can choose to plan (R11.13). Snacks are always available and never planned in the strip. */
 export const PLANNABLE_MEAL_TYPES = ["breakfast", "lunch", "dinner"] as const;
 export type PlannableMealType = (typeof PLANNABLE_MEAL_TYPES)[number];
+const PLANNABLE = new Set<string>(PLANNABLE_MEAL_TYPES);
+export const isPlannable = (t: string): t is PlannableMealType => PLANNABLE.has(t);
 
 export const STORAGE_LOCATIONS = ["pantry", "cupboard", "fridge", "freezer"] as const;
 export type StorageLocation = (typeof STORAGE_LOCATIONS)[number];

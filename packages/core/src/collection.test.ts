@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { activeFilterCount, applyCollection, withoutNutrition, collectionSearchSchema, isSideOnly, mealTypesOf, NO_FACTS, optionCount, passes, tagCounts, taxonomyLabel, toSearchParams, type HouseholdFacts } from "./collection";
+import { collectionSearchSchema } from "./collectionSchema";
+import { activeFilterCount, applyCollection, withoutNutrition, isSideOnly, mealTypesOf, NO_FACTS, optionCount, passes, tagCounts, taxonomyLabel, toSearchParams, type HouseholdFacts } from "./collection";
 import type { RecipeSummary } from "./recipe";
 
 function r(id: string, over: Partial<RecipeSummary> = {}): RecipeSummary {
@@ -123,7 +124,8 @@ describe("M2 filters: has all tools, cost per serving, Cheapest", () => {
 
 describe("supply filters (R4.3, R4.4)", () => {
   it("can make and Use what's left read the household's supply facts", async () => {
-    const { passes, collectionSearchSchema, activeFilterCount } = await import("./collection");
+    const { passes, activeFilterCount } = await import("./collection");
+    const { collectionSearchSchema } = await import("./collectionSchema");
     const r: RecipeSummary = { id: "r", title: "x", tags: [], cuisine: "other", mainProtein: "none", proteinPerServingG: 1, proteinApproximate: false, ingredientIds: [], ingredientNames: [], totalMin: 1, activeMin: 1, servings: 1, thumb: null, sourceUrlCanonical: null, fingerprint: "f", createdAtMs: 0 };
     const base = { favourite: false, timesCooked: 0, lastCookedAtMs: null, rating: null };
     const can = collectionSearchSchema.parse({ supply: "can" });

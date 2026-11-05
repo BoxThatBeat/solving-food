@@ -5,7 +5,12 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./scoring": "./src/scoring/index.ts",
+    "./optimiser": "./src/optimiser.ts",
+    "./grocery": "./src/grocery/index.ts",
+    "./cooking": "./src/cooking.ts",
+    "./collection": "./src/collection.ts"
   },
   "scripts": {
     "test": "vitest run",

@@ -5,7 +5,7 @@
 // right. Pure functions only: the web app writes the documents.
 
 import { z } from "zod";
-import { MEAL_TYPES, PLANNABLE_MEAL_TYPES, type MealType, type PlannableMealType } from "./taxonomy";
+import { isPlannable, MEAL_TYPES, PLANNABLE_MEAL_TYPES, type MealType, type PlannableMealType } from "./taxonomy";
 import { MEAL_NAME_MAX, MEAL_RECIPES_MAX, MEAL_SIDES_MAX, type MealSide, type PlanItemDoc } from "./types";
 import { SERVINGS_MAX } from "./config";
 
@@ -22,8 +22,6 @@ export interface CoverageRecipe {
   leftoverMealType?: MealType | undefined;
 }
 
-const PLANNABLE = new Set<string>(PLANNABLE_MEAL_TYPES);
-export const isPlannable = (t: string): t is PlannableMealType => PLANNABLE.has(t);
 
 /**
  * `coverageFor(item, recipes)`: the meal itself fills one slot of its type (snacks fill none), and each recipe's

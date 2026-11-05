@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { useNutrition } from "@/data/nutrition";
 import { addOptimiserSet } from "@/data/plan";
 import type { ScoringSnapshot } from "@/workers/snapshot";
-import type { OptimiserRequest, OptimiserResponse } from "@/workers/optimiser.worker";
+import type { OptimiserRequest, OptimiserResponse } from "@/workers/plan.worker";
 import { MEAL_LABEL } from "./plan-sheet-context";
 
 type ShownSet = OptimiserSet & { costs: Record<string, number | null> };
@@ -76,11 +76,11 @@ export function OptimiserCard({
     new Promise<OptimiserResponse>((resolve) => {
       let w = worker.current;
       if (!w) {
-        w = new Worker(new URL("../../workers/optimiser.worker.ts", import.meta.url), { type: "module" });
+        w = new Worker(new URL("../../workers/plan.worker.ts", import.meta.url), { type: "module" });
         worker.current = w;
       }
       const onMsg = (e: MessageEvent<OptimiserResponse>) => {
-        if (e.data.seq !== req.seq) return;
+        if (e.data.kind !== "optimise" || e.data.seq !== req.seq) return;
         w!.removeEventListener("message", onMsg);
         resolve(e.data);
       };
@@ -95,7 +95,7 @@ export function OptimiserCard({
     setSets([]);
     setIndex(0);
     const cap = caps ?? defaultCap(n);
-    const r = await ask({ type: "start", seq: id, snapshot, n, maxCents: maxDollars * 100, mealType, proteinOnly, cuisineCap: cap, proteinCap: cap });
+    const r = await ask({ kind: "optimise", type: "start", seq: id, snapshot, n, maxCents: maxDollars * 100, mealType, proteinOnly, cuisineCap: cap, proteinCap: cap });
     if (id !== seq.current) return;
     if (r.set) {
       setSets([r.set]);
@@ -108,7 +108,7 @@ export function OptimiserCard({
     if (state === "exhausted") return;
     const id = ++seq.current;
     setBusy(true);
-    const r = await ask({ type: "next", seq: id });
+    const r = await ask({ kind: "optimise", type: "next", seq: id });
     setBusy(false);
     if (id !== seq.current) return;
     if (r.set) {

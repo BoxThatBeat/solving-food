@@ -2,7 +2,8 @@
 // R9.1–R9.5; TECHNICAL_SPECS §6, §7, §8). Pure: functions and the web app share these.
 
 import type { MealType, PlannableMealType } from "./taxonomy";
-import { isPlannable, type Coverage, type RecipeRef } from "./plan";
+import type { Coverage, RecipeRef } from "./plan";
+import { isPlannable } from "./taxonomy";
 import { needsFor, type BuildContext, type GroceryIngredient, type PlanItemInput, type RecipeLines, type SideRef } from "./grocery";
 import { activeExpiry, isExpired, type LedgerLot } from "./ledger";
 import { DAY_MS, EPS } from "./math";

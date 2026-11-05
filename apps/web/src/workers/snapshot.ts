@@ -5,30 +5,10 @@
 // Ingredients: the snapshot carries the ingredient docs the page has loaded (planned recipes, supply, mappings); every
 // other ingredient comes from the seed bundled into the worker (data/ingredients/*.json), which has the categories,
 // conversions, and pack sizes scoring and costing need without reading 475 documents.
-import {
-  marginalCostFn,
-  needsFor,
-  projectedSupply,
-  buildList,
-  resolveWeights,
-  tally,
-  type BuildContext,
-  type ExpiringSpare,
-  type GroceryIngredient,
-  type LivePrice,
-  type MappingEntry,
-  type MealType,
-  type PlanItemInput,
-  type PriceEstimate,
-  type RecipeLines,
-  type RecipeStats,
-  type RecipeSummary,
-  type RuleEntry,
-  type ScoreContext,
-  type ScoreRecipe,
-  type StoreEntry,
-  type Weights,
-} from "@solving-food/core";
+import { marginalCostFn, needsFor, buildList, type BuildContext, type GroceryIngredient, type MappingEntry, type PlanItemInput, type RecipeLines, type RuleEntry, type StoreEntry } from "@solving-food/core/grocery";
+import { projectedSupply } from "@solving-food/core/cooking";
+import { resolveWeights, tally, type ScoreContext, type ScoreRecipe, type Weights } from "@solving-food/core/scoring";
+import type { ExpiringSpare, LivePrice, MealType, PriceEstimate, RecipeStats, RecipeSummary } from "@solving-food/core";
 
 export interface SnapshotIngredient extends GroceryIngredient {
   defaultCadenceDays?: number | undefined;

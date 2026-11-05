@@ -2,29 +2,14 @@
 // piece for count-canonical ingredients). Resolution: live PC Express price for a mapped product (M5; fetched ≤ 14 days
 // ago) → the bundled estimate (`data/price-estimates.json`) → unknown, which counts as $0 and is flagged on the meter.
 
-import { z } from "zod";
-import { MEASURES, type Measure } from "./taxonomy";
+import type { Measure } from "./taxonomy";
 import { toCanonical, type ConvertibleIngredient } from "./units";
 import { DAY_MS } from "./math";
 
 export const LIVE_PRICE_MAX_AGE_DAYS = 14;
 
-export const priceEstimateSchema = z.object({
-  priceCents: z.number().int().min(0),
-  packAmount: z.number().positive(),
-  packMeasure: z.enum(MEASURES),
-  /** Cents per canonical unit from the seed ingredient's conversions; written by `pnpm prices:check -- --write`. */
-  centsPerUnit: z.number().min(0).optional(),
-});
-export type PriceEstimate = z.infer<typeof priceEstimateSchema>;
-
-export const priceEstimatesFileSchema = z.object({
-  schemaVersion: z.literal(1),
-  currency: z.literal("CAD"),
-  region: z.string().optional(),
-  estimates: z.record(z.string(), priceEstimateSchema),
-});
-export type PriceEstimatesFile = z.infer<typeof priceEstimatesFileSchema>;
+export type { PriceEstimate, PriceEstimatesFile } from "./pricingSchema";
+import type { PriceEstimate } from "./pricingSchema";
 
 /** The unit a pack measure is given in: grams, millilitres, or pieces. */
 const BASE_UNIT: Record<Measure, string> = { weight: "g", volume: "ml", count: "count" };

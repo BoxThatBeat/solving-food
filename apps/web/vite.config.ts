@@ -1,3 +1,4 @@
+import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
@@ -21,6 +22,45 @@ function dropOrtWasm(): Plugin {
   };
 }
 
+/**
+ * The ingredient seed for the plan worker (M23): `virtual:sf-seed-ingredients` is data/ingredients/*.json with only the
+ * fields scoring and costing read (snapshot.ts), so nutrients, nutrient sources and aliases stay out of the bundle.
+ */
+const SEED_DIR = fileURLToPath(new URL("../../data/ingredients/", import.meta.url));
+const SEED_FIELDS = [
+  "id",
+  "name",
+  "category",
+  "allowedMeasures",
+  "canonicalUnit",
+  "densityGPerMl",
+  "unitWeightG",
+  "freeUse",
+  "defaultPackAmount",
+  "defaultPackMeasure",
+  "defaultCadenceDays",
+  "isStaple",
+] as const;
+function sfSeedIngredients(): Plugin {
+  const id = "virtual:sf-seed-ingredients";
+  return {
+    name: "sf-seed-ingredients",
+    resolveId: (source) => (source === id ? `\0${id}` : null),
+    load(source) {
+      if (source !== `\0${id}`) return null;
+      const files = readdirSync(SEED_DIR).filter((f) => f.endsWith(".json")).sort();
+      const all: Array<Record<string, unknown>> = [];
+      for (const f of files) {
+        this.addWatchFile(SEED_DIR + f);
+        for (const i of JSON.parse(readFileSync(SEED_DIR + f, "utf8")) as Array<Record<string, unknown>>) {
+          all.push(Object.fromEntries(SEED_FIELDS.filter((k) => i[k] !== undefined).map((k) => [k, i[k]])));
+        }
+      }
+      return `export default ${JSON.stringify(all)};`;
+    },
+  };
+}
+
 // The splash and install chrome match the app icon's navy (apps/web/public/icons) rather than a Latte
 // surface, so no light-grey field shows behind the icon; the runtime theme still updates
 // <meta name="theme-color"> per flavour once the app is up.
@@ -35,6 +75,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     dropOrtWasm(),
+    sfSeedIngredients(),
     VitePWA({
       registerType: "prompt",
       injectRegister: false,
@@ -100,7 +141,11 @@ export default defineConfig({
       devOptions: { enabled: false },
     }),
   ],
+  // Worker bundles get their own plugin list: the plan worker needs the slim seed.
+  worker: { plugins: () => [sfSeedIngredients()] },
   server: { port: 5173, strictPort: true },
   preview: { port: 4173, strictPort: true },
-  build: { target: "es2022", sourcemap: true },
+  // Source maps are built (for debugging a production stack trace by hand) but not referenced from the bundles, and
+  // firebase.json keeps them off Hosting (M23: ~10 MB per deploy).
+  build: { target: "es2022", sourcemap: "hidden" },
 });
