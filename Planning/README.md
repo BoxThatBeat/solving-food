@@ -27,6 +27,7 @@ ordered, checkable tasks with the files they touch, the tests that prove them, a
 | [M19-declutter.md](M19-declutter.md) | Declutter | M18 | Owner request: Supply without count/explainer, filters in a sheet like Recipes (deduped), the bracket only when planned, amounts in the unit they were added in; Grocery List title alone; Settings without kickers |
 | [M20-settings-groups.md](M20-settings-groups.md) | Settings groups | M19 | Owner request: Settings sections under five headings with a search box, Account and Nutrition goals as their own pages, invites only when open, Instructions for ChatGPT in Settings → Stores too |
 | [M21-core-fixes.md](M21-core-fixes.md) | Core fixes | M20 | Verified bugs in `packages/core` (freeze after Still good, package units, Cooklang timers and amounts, negative °C, protein × multiplier, tiny expiring spare, DST at midnight, un-removed grocery lines), a faster optimiser cost path, `grocery/` split, shared math and ingredient types, tree-shakeable core |
+| [M22-backend-hardening.md](M22-backend-hardening.md) | Backend hardening | M21 | Allowlisted callables and an owner-only merge, timer rate limit, stuck commands failed, long grocery lists in chunks, path-safe command IDs, write-then-delete import, `safeFetch` against SSRF, tighter rules, retention and orphan sweeps, maintenance alert, backups and alerts for the owner, safer deploy order |
 
 ## How to use these plans
 
