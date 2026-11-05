@@ -4,6 +4,7 @@ import { lineText, pendingReviews, renderStep, type IngredientLookup } from "@so
 import type { StoredRecipe } from "@/data/recipes";
 import { useCookEvents } from "@/data/supply";
 import { millis } from "@/data/plan";
+import { useNow } from "@/hooks/useNow";
 
 /** Screen Wake Lock while cooking (R4.10); re-acquired when the tab comes back. Returns whether it's held. */
 export function useWakeLock(on: boolean): boolean {
@@ -39,7 +40,7 @@ export function useWakeLock(on: boolean): boolean {
 
 export function usePendingReviews(hid: string, uid: string) {
   const events = useCookEvents(hid);
-  const [now] = React.useState(() => Date.now());
+  const now = useNow();
   return React.useMemo(
     () =>
       pendingReviews(

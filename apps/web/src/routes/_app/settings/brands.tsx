@@ -9,7 +9,7 @@ import { enterableMeasures, formatCents, LIVE_PRICE_MAX_AGE_DAYS, packLabel, typ
 import { PcxProductSearch } from "@/components/settings/PcxProductSearch";
 import { PcxStatusLine } from "@/components/settings/PcxStorePicker";
 import { useLivePrices } from "@/data/livePrices";
-import { useNow } from "@/data/supply";
+import { useNow } from "@/hooks/useNow";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/input";

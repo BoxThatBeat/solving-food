@@ -39,6 +39,7 @@ import { RecipeImage } from "./RecipeImage";
 import { useCreateMeal } from "@/components/plan/plan-sheet-context";
 import { useSupply } from "@/data/supply";
 import { SupplyBadge } from "./SupplyBadge";
+import { useNow } from "@/hooks/useNow";
 
 const DAY = 86_400_000;
 const DATE = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }); // "21 Sep", as the prototype
@@ -88,7 +89,7 @@ export function RecipeDetail({
     setSeen(`${id}:${recipe.servings}`);
     setServings(recipe.servings);
   }
-  const [now] = React.useState(() => Date.now());
+  const now = useNow();
   const factor = scaleFactor(recipe, servings);
   const factsOf = useHouseholdFacts(ctx?.hid ?? null);
   const facts = factsOf(id);

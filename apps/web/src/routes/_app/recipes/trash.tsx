@@ -11,6 +11,7 @@ import { restoreRecipe, useRecipesWithStatus } from "@/data/recipes";
 import { lookupFromMap, useAllIngredients } from "@/data/ingredients";
 import { useReadySession } from "@/session/useSession";
 import { RecipeImage } from "@/components/recipes/RecipeImage";
+import { useNow } from "@/hooks/useNow";
 
 export const Route = createFileRoute("/_app/recipes/trash")({
   component: TrashPage,
@@ -23,7 +24,7 @@ function TrashPage() {
   const notify = useNotify();
   const trashed = useRecipesWithStatus("trashed");
   const ing = useAllIngredients();
-  const [now] = React.useState(() => Date.now());
+  const now = useNow();
   const list = [...(trashed.docs ?? [])].sort((a, b) => (b.data.trashedAt?.toMillis?.() ?? 0) - (a.data.trashedAt?.toMillis?.() ?? 0));
   const restore = async (id: string, title: string) => {
     try {

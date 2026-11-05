@@ -2,7 +2,7 @@
 // Clients never write supply: every change is a command document, applied by the `commands` function. While a command
 // is pending, its effect is projected onto the supply shown (core `projectPending`).
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   collection,
   doc,
@@ -33,6 +33,7 @@ import {
   type TransactionDoc,
 } from "@solving-food/core";
 import { db } from "@/firebase/app";
+import { useNow } from "@/hooks/useNow";
 import { useLiveDoc, useLiveQuery } from "./live";
 import { millis, type StoredList } from "./plan";
 import { useIngredientsById } from "./ingredients";
@@ -142,20 +143,6 @@ export function useSupply(hid: string | null, tz: string) {
     return out;
   }, [docs.docs, pending, ingredients, now, tz]);
   return { items, loading: docs.docs === undefined, pendingCount: pending.length, pendingCommands: pending, now, ingredients };
-}
-
-export function useNow(intervalMs: number): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), intervalMs);
-    const vis = () => document.visibilityState === "visible" && setNow(Date.now());
-    document.addEventListener("visibilitychange", vis);
-    return () => {
-      clearInterval(t);
-      document.removeEventListener("visibilitychange", vis);
-    };
-  }, [intervalMs]);
-  return now;
 }
 
 // ---------- the command writer

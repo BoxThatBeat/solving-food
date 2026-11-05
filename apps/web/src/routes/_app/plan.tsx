@@ -57,6 +57,7 @@ import { usePendingReviews } from "@/components/cook/helpers";
 import { useOnline } from "@/hooks/useOnline";
 import { useReadySession } from "@/session/useSession";
 import { useNutrition, useNutritionSearch } from "@/data/nutrition";
+import { useNow } from "@/hooks/useNow";
 
 /** M9 (owner review, R6.24): planned meals whose ingredients expire soonest first; ties by Suggested. */
 const PLAN_DEFAULT_SORT = "expiry" as const;
@@ -76,7 +77,7 @@ function PlanPage() {
   const summaries = useRecipeIndex();
   const byId = React.useMemo(() => new Map((summaries ?? []).map((r) => [r.id, r])), [summaries]);
   const [openItem, setOpenItem] = React.useState<string | null>(null);
-  const [now] = React.useState(() => Date.now());
+  const now = useNow();
 
   const tz = m.household?.timezone ?? "America/Toronto";
   const startMs = millis(m.period?.start);
