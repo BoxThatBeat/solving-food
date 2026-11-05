@@ -30,7 +30,7 @@ export function onListenerError(fn: Sink): () => void {
 
 /** The household a listener label belongs to, if any (`households/<hid>/…`). */
 export function householdOf(label: string): string | null {
-  return /^households\/([^/?]+)/.exec(label)?.[1] ?? null;
+  return /^households\/([^/?#]+)/.exec(label)?.[1] ?? null;
 }
 
 /** Codes worth telling the person about; anything else is logged only. */

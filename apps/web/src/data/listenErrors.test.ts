@@ -16,6 +16,7 @@ describe("listener errors", () => {
     expect(codeOf(new Error("x"))).toBe("unknown");
     expect(householdOf("households/h1/supply")).toBe("h1");
     expect(householdOf("households/h1?x")).toBe("h1");
+    expect(householdOf("households/h1#probe")).toBe("h1");
     expect(householdOf("recipes/r1")).toBeNull();
     expect(bannerFor("permission-denied")?.kind).toBe("error");
     expect(bannerFor("unavailable")?.kind).toBe("info");
