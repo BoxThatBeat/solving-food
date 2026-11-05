@@ -1,7 +1,7 @@
 ---
 name: playwright-cli
 description: Drive a headless Chromium from the shell to open, inspect, click, and screenshot web pages. Use for checking the running app or the design prototype visually, reading a page's accessibility snapshot, or reproducing a UI bug. In this repo always call it as scripts/pw (never playwright-cli or npx directly).
-allowed-tools: Bash(scripts/pw:*) Bash(nix develop:*) Bash(node scripts/design-serve.mjs:*)
+allowed-tools: Bash(scripts/pw:*) Bash(nix develop:*)
 ---
 
 # Browser automation in this repo: `scripts/pw`
@@ -13,11 +13,10 @@ Every example below is the upstream skill with `playwright-cli` replaced by `scr
 Project rules:
 
 - Run inside the dev shell: direnv does this on `cd`; otherwise `nix develop -c scripts/pw …`.
-- `file:` URLs are blocked by the CLI. Serve files over HTTP instead. The design prototype has its own server:
-  `node scripts/design-serve.mjs --daemon` → `http://127.0.0.1:8787/` (see the `design-compare` skill).
+- `file:` URLs are blocked by the CLI. Serve files over HTTP instead (the Vite dev server from `pnpm dev`).
 - Default viewport is 430×932 (phone). Use `scripts/pw resize W H` for other sizes: tablet 820×1180,
   desktop 1920×1080, 4K 3840×2160.
-- Use `-s=<name>` sessions when the app and the prototype are open at the same time, e.g. `-s=app`, `-s=design`.
+- Use `-s=<name>` sessions when two pages need to be open at the same time, e.g. `-s=app`, `-s=other`.
 - Screenshots go to the session scratchpad or `.playwright-cli/` (git-ignored). Never commit them. Read a PNG
   with the Read tool to look at it.
 - Prefer `snapshot` / `find` for structure and `screenshot` for appearance. Close sessions when done.

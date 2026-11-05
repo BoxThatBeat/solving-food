@@ -40,8 +40,8 @@ ordered, checkable tasks with the files they touch, the tests that prove them, a
   when the code compiles.
 - **Deviations go in the plan**, in the same commit, with a one-line reason. The spec is updated too if the
   deviation changes a documented decision.
-- **Design reference:** every UI task should be built by opening `claude-design-result/Solving Food.dc.html`
-  on the matching page and device mode first (see `CLAUDE.md`).
+- **Screenshot check:** every UI task ends with a screenshot of the changed screen on phone and desktop,
+  checked against the styling of the rest of the app (see `CLAUDE.md`, "Visual verification").
 - **Requirement tags:** every user-facing requirement ID listed under a milestone's "Requirements covered"
   must have a Playwright test tagged with it by the end of that milestone. `pnpm e2e:coverage` enforces this
   for the IDs whose milestone is complete (it reads the `Status` line at the top of each plan).

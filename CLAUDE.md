@@ -11,61 +11,36 @@
   order and conventions. Before starting any implementation work, read the current milestone's plan. Tick its
   checkboxes as tasks land, and edit the plan (in the same commit) when the work deviates from it.
 
-## Design reference: `claude-design-result/`
+## Visual language
 
-`claude-design-result/Solving Food.dc.html` is a **Claude Design prototype of the full app, every page, in one
-file**. Open it in a browser (it loads `support.js` next to it). It is the visual and interaction reference
-for implementation: layout per page, component shapes, spacing, type, colour tokens, sheet and toast
-behaviour, and the phone / tablet / desktop / 4K variants (the "device" prop at the top of the script block
-near line 815 switches them).
+The app itself is the visual reference. `claude-design-result/` holds the original Claude Design prototype;
+it is history (like `THOUGHTS.md`), not a reference to match, and nothing compares against it any more.
 
-- **Match its look**, don't reinvent it. When the PRD or spec and the design disagree on *behaviour*, the
-  documents win and the design gets a note; when they disagree on *appearance*, the design wins.
-- **It is not a feature spec.** The prototype does not have full parity with the requirements: some screens,
-  states, and controls the PRD asks for are missing from it, and a few things it shows are simplified. Build
-  everything the PRD and the milestone plan require, whether or not the prototype shows it, and style the
-  parts it doesn't show in the same visual language. Never drop a requirement because "the design doesn't
-  have it", and never add a feature only because the prototype shows it.
-- **Pixel-close, not pixel-perfect.** Design-compare is for catching wrong tokens, type, spacing, and layout,
-  not for chasing every pixel. Accessibility fixes (contrast, hit targets, focus rings) take precedence over
-  matching the prototype exactly; record them in the milestone plan.
-- **Pages** in the prototype: plan, recipes, meals, supply, grocery, history, settings. **Sheets:** filter,
-  supply item, plan item, more, household, confirm purchase, add. **Cooking phases:** mise, steps, review.
-  **Grocery phases:** order, receipt (with the Costco in-store checklist and the freeze step).
+- **Styling is Tailwind CSS (v4) + shadcn/ui.** Theme tokens are CSS variables (`--base`, `--mantle`, `--pg`,
+  `--desk`, `--ink`, `--sub`, `--acc`, `--onc`, `--line`, `--bw`, `--r`, `--sh`, `--tt`) mapped into Tailwind's
+  theme, so utilities like `bg-base text-ink border-line` exist. No other CSS framework, no CSS-in-JS.
+  Hand-written CSS only for things Tailwind can't express (fluid root font size, step-mode typography, print).
+- **Look:** brutalist, Catppuccin Latte only (PRD R11.9; the accent is the one choice in Settings, green
+  `#a6da95` by default), "Classic" weights for borders, hard shadows and radius. Latte values: ink `#4c4f69`,
+  sub `#5c5f77` (Subtext 1, for WCAG AA), base `#eff1f5`, mantle `#e6e9ef`, pg `#dce0e8`, s0 `#ccd0da`,
+  onc `#4c4f69`, desk `#bcc0cc`, scrim `rgba(76,79,105,.55)`. Keep the token structure so a flavour or look
+  could come back, but don't build or test others.
 - **Type:** Archivo (500–900) and Archivo Black for display, JetBrains Mono for numbers and amounts.
-- **Tokens** (CSS variables in the file): `--base`, `--mantle`, `--pg`, `--desk`, `--ink`, `--sub`, `--acc`,
-  `--onc` (text on accent), `--line`, `--bw` (border width), `--r` (radius), `--sh` (hard shadow), `--tt`.
-  Reproduce these as the app's theme variables so the Catppuccin flavour and accent map one-to-one.
-- **Colour source of truth is the prototype's `FLAV` table** in the script block (search `const FLAV=`), not
-  `@catppuccin/palette` guesses. **Catppuccin Latte is the default flavour and the reference** for every
-  design decision and screenshot baseline. Its values: ink `#4c4f69`, sub `#6c6f85`, base `#eff1f5`,
-  mantle `#e6e9ef`, pg `#dce0e8`, s0 `#ccd0da`, onc `#4c4f69`, desk `#bcc0cc`, scrim `rgba(76,79,105,.55)`.
-  (M0 exception: the app uses sub `#5c5f77`, Catppuccin Latte Subtext 1, because `#6c6f85` fails WCAG AA for
-  small text on Latte backgrounds.)
-  Accents come from the prototype's `ACCENTS` list (green `#a6da95` is the default). Since M9 (owner review 2)
-  Latte is the **only** flavour (PRD R11.9): Settings offers the accent alone and a stored non-Latte flavour reads as
-  Latte. Keep the `FLAV` token structure so a flavour could come back, but don't build or test other flavours.
-- **Styling is Tailwind CSS (v4) + shadcn/ui.** Theme tokens are exposed as CSS variables and mapped into
-  Tailwind's theme so utilities like `bg-base text-ink border-line` exist. No other CSS framework, no
-  CSS-in-JS. Hand-written CSS only for things Tailwind can't express (fluid root font size, step-mode
-  typography, print).
-- The prototype also has a **"look"** switch (Quiet / Classic / Loud) that scales border weight, shadow, and
-  radius. Ship **Classic**; keep the token structure so the others could be added later.
-- Data and state in the prototype are mock. Never copy its data model; the Firestore model in the spec is the
-  truth. Treat the prototype's "Sam" user, sample recipes, and prices as placeholders.
+- **New UI reuses existing components** (`apps/web/src/components/ui`, the shared sheets, chips, steppers,
+  pickers and cards) and the same spacing and kicker headings as the page it sits on. Accessibility rules
+  (contrast, 44 px hit targets on phones, focus rings) are enforced by `e2e/specs/a11y.spec.ts` and win over
+  any styling choice.
 
 ## Visual verification (do this, don't guess)
 
-Claude can drive a headless browser here. Two project skills cover it:
+Claude can drive a headless browser here with the **`playwright-cli`** project skill: `scripts/pw
+open|goto|click|snapshot|screenshot|resize|close …` runs Microsoft's Playwright CLI on the nixpkgs Chromium
+from the dev shell. Read the resulting PNG with the Read tool.
 
-- **`playwright-cli`**: `scripts/pw open|goto|click|snapshot|screenshot|resize|close …` runs Microsoft's
-  Playwright CLI on the nixpkgs Chromium from the dev shell. Read the resulting PNG with the Read tool.
-- **`design-compare`**: the procedure for screenshotting a page of the running app and the same page of the
-  prototype (served by `node scripts/design-serve.mjs --daemon` at `http://127.0.0.1:8787/`, with
-  `/v/<device>/<flavour>/<look>.html` variants) at the same viewport, reading both, and fixing differences.
-
-Every UI task ends with a design-compare pass on phone and desktop before its checkbox is ticked. `file:`
-URLs are blocked in the CLI; serve things over HTTP. Screenshots never go into the repo.
+Every UI task ends with a screenshot check before its checkbox is ticked: screenshot the new or changed screen
+in the running app on phone (430×932) and desktop (1920×1080), read the images, and confirm it matches the
+styling of the rest of the app (tokens, type, spacing, component shapes, empty and loading states). Fix what
+doesn't match. `file:` URLs are blocked in the CLI; serve things over HTTP. Screenshots never go into the repo.
 
 ## Git
 
