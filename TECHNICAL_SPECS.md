@@ -1548,6 +1548,7 @@ There are no automatic backups. Instead, **Settings → Data** has two buttons:
 | M18 | Store orders, expiry dates | Each grocery store is its own order (Copy / Done shopping); Set date on any Supply lot; the confirm sheet scrolls; canned names guessed as pantry |
 | M17 | Grocery remove | An × on every grocery line; removed plan lines stay off (flag on the draft line) and out of the budget until Regenerate puts them all back |
 | M20 | Settings groups | Settings sections under five group headings with a search box (name, description, keywords); Account (sign out, invites) and Nutrition goals as their own pages; the invites banner on Settings only with an open invite; Instructions for ChatGPT also in Settings → Stores |
+| M21 | Core fixes | Freeze clears Still good; package words (can, jar, bunch) have no weight; Cooklang timer units and thousands separators; negative °C; protein/fibre summary × servings multiplier; one minimum expiring spare for alerts, scoring and Use it up; `localMidnight` where DST skips midnight; `mergeDraft` keeps `removed: false`; marginal cost from a per-ingredient pricing table; `grocery/` split; shared `math.ts` and ingredient slice types; retired cadence prompt helpers removed; core `"sideEffects": false` |
 
 Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix. The detailed, task-level plan for each milestone lives in `Planning/`.
 
