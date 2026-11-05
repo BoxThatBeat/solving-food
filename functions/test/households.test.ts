@@ -275,15 +275,16 @@ describe("importHousehold (R11.10)", () => {
     expect(txs.reduce((t, d) => t + (d.data().delta as number), 0)).toBeCloseTo(s.canonicalAmount, 6);
   });
 
-  it("a bad file fails with a reason and a banner, and changes nothing", async () => {
+  it("a bad file fails with a reason and a banner, keeps the upload, and changes nothing", async () => {
     const planBefore = (await db.collection(`households/${B}/planItems`).get()).size;
     const bad = await upload(B, "bad", new TextEncoder().encode("not a zip"));
     const r = await command(B, "importHousehold", { path: bad });
     expect(r.status).toBe("failed");
     expect(r.error).toMatch(/not a zip/);
-    expect(await fileExists(bad)).toBe(false);
+    // M22: a failed import keeps the upload (swept by maintenance after a few days) and names it in the banner.
+    expect(await fileExists(bad)).toBe(true);
     const banners = await db.collection(`users/${UID}/notifications`).where("kind", "==", "error").get();
-    expect(banners.docs.some((d) => /Couldn't import household data/.test(d.data().message))).toBe(true);
+    expect(banners.docs.some((d) => /Couldn't import household data: .*not a zip.*kept for a few days at imports\//.test(d.data().message))).toBe(true);
     expect((await db.collection(`households/${B}/planItems`).get()).size).toBe(planBefore);
 
     // Another household's upload can't be imported, nor a missing one.

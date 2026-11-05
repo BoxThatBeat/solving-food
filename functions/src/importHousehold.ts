@@ -5,11 +5,14 @@
 //   2. downloads `imports/{hid}/…zip` (only this household's folder) and validates it with the shared zod schema
 //   3. matches each referenced recipe by ID, then by fingerprint; missing ones are recreated from their .cook file
 //      (M1 pipeline) under the original ID; missing saved meals are recreated too
-//   4. deletes the household's data except members, invites, and this command
-//   5. writes the imported documents (supply with its transactions: Σ transactions == amount, reconciled if not),
-//      and the household's settings (name and creator stay)
+//   4. writes the imported documents over the household's (same IDs: supply with its transactions, Σ transactions ==
+//      amount, reconciled if not), and the household's settings (name and creator stay)
+//   5. only then deletes the household's documents the import doesn't have (except members, invites, this command)
 //   6. deletes the upload, marks the command applied, and notifies the importer
-import { FieldValue, Timestamp, type DocumentReference } from "firebase-admin/firestore";
+// M22: write-then-delete, so a failure part-way never leaves the household empty (it can leave old and imported
+// documents side by side; importing the same file again finishes it), and the upload is deleted only on success: a
+// failed import keeps it (its path is in the error banner) until the weekly maintenance sweeps imports/ (§13).
+import { FieldValue, Timestamp, type CollectionReference, type DocumentReference } from "firebase-admin/firestore";
 import {
   decodeValue,
   EXPORT_COLLECTIONS,
@@ -51,23 +54,26 @@ export async function runImport(hid: string, cmdId: string, uid: string, path: s
   if (!claimed) return { status: "skipped" };
 
   const file = bucket().file(path);
-  const finish = async (r: ImportReport): Promise<ImportReport> => {
-    await file.delete({ ignoreNotFound: true }).catch(() => undefined);
+  const finish = async (r: ImportReport, kept = false): Promise<ImportReport> => {
     if (r.status === "failed") {
       await cmdRef.update({ status: "failed", error: (r.error ?? "import failed").slice(0, 500), appliedAt: FieldValue.serverTimestamp() });
-      await notify(uid, { kind: "error", message: `Couldn't import household data: ${r.error}`, link: "/settings/data" }).catch(() => undefined);
+      const where = kept ? `. The uploaded file is kept for a few days at ${path}` : "";
+      await notify(uid, { kind: "error", message: `Couldn't import household data: ${r.error}${where}`, link: "/settings/data" }).catch(() => undefined);
     } else {
+      await file.delete({ ignoreNotFound: true }).catch(() => undefined);
       await cmdRef.update({ status: "applied", result: r.result ?? "", appliedAt: FieldValue.serverTimestamp() });
       await notify(uid, { kind: "success", message: `Household data imported. ${r.result ?? ""}`.trim(), link: "/plan" }).catch(() => undefined);
     }
     return r;
   };
 
+  let own = false;
   try {
     // Only this household's import folder: a member of one household can't import another's upload.
     if (!path.startsWith(`imports/${hid}/`) || path.includes("..") || path.split("/").length !== 3) {
       throw new ImportFailure("the file isn't in this household's import folder");
     }
+    own = true;
     const hRef = db.doc(`households/${hid}`);
     if (!(await hRef.get()).exists) throw new ImportFailure("household not found");
     const [exists] = await file.exists();
@@ -85,8 +91,9 @@ export async function runImport(hid: string, cmdId: string, uid: string, path: s
     const meals = await resolveMeals(parsed, uid, recipes.map);
     const exp = remapExport(parsed.export, recipes.map, new Map());
 
-    const deletes = await clearHousehold(hRef, cmdId);
-    const writes = await writeExport(hRef, exp);
+    const written = new Set<string>();
+    const writes = await writeExport(hRef, exp, written);
+    const deletes = await pruneHousehold(hRef, cmdId, written);
     const s = exportSummary({ export: exp, meals: parsed.meals });
     const created = recipes.created + meals.created;
     const result =
@@ -98,7 +105,7 @@ export async function runImport(hid: string, cmdId: string, uid: string, path: s
   } catch (e) {
     const msg = e instanceof ImportFailure ? e.message : "something went wrong on the server; try again";
     if (!(e instanceof ImportFailure)) console.error("importHousehold failed", { hid, cmdId, error: e });
-    return finish({ status: "failed", error: msg });
+    return finish({ status: "failed", error: msg }, own && (await file.exists().then(([x]) => x).catch(() => false)));
   }
 }
 
@@ -152,36 +159,49 @@ async function resolveMeals(p: ParsedExport, uid: string, recipes: Map<string, s
   return { created };
 }
 
-/** Deletes every household subcollection except members, invites, and the running import command. */
-async function clearHousehold(hRef: DocumentReference, cmdId: string): Promise<number> {
+/**
+ * After the import is written (M22): deletes every household document the import didn't write, at any depth (a supply
+ * row's old transactions too), except members, invites and the running import command. Other commands all go (they
+ * aren't exported). Returns how many documents were deleted.
+ */
+async function pruneHousehold(hRef: DocumentReference, cmdId: string, written: ReadonlySet<string>): Promise<number> {
   let deletes = 0;
   const keep = new Set<string>(IMPORT_KEEPS);
+  const w = db.bulkWriter();
+  w.onWriteResult(() => {
+    deletes++;
+  });
+  const prune = async (col: CollectionReference): Promise<void> => {
+    for (const d of await col.listDocuments()) {
+      if (!written.has(d.path)) await db.recursiveDelete(d, w);
+      else for (const sub of await d.listCollections()) await prune(sub);
+    }
+  };
   for (const col of await hRef.listCollections()) {
     if (keep.has(col.id)) continue;
     if (col.id === "commands") {
-      const w = db.bulkWriter();
-      for (const d of (await col.select().get()).docs) {
-        if (d.id === cmdId) continue;
-        void w.delete(d.ref);
-        deletes++;
-      }
-      await w.close();
+      for (const d of (await col.select().get()).docs) if (d.id !== cmdId) void w.delete(d.ref);
       continue;
     }
-    const w = db.bulkWriter();
-    w.onWriteResult(() => {
-      deletes++;
-    });
-    await db.recursiveDelete(col, w);
+    await prune(col);
   }
+  await w.close();
   return deletes;
 }
 
-async function writeExport(hRef: DocumentReference, exp: ParsedExport["export"]): Promise<number> {
+async function writeExport(hRef: DocumentReference, exp: ParsedExport["export"], written: Set<string>): Promise<number> {
   let writes = 0;
+  let failed = 0;
   const w = db.bulkWriter();
+  // A write that still fails after BulkWriter's retries stops the import before anything is deleted (M22).
+  w.onWriteError((e) => {
+    if (e.failedAttempts < 5) return true;
+    failed++;
+    return false;
+  });
   const set = (ref: DocumentReference, data: Record<string, unknown>) => {
     void w.set(ref, data);
+    written.add(ref.path);
     writes++;
   };
   const nowMs = Date.now();
@@ -193,6 +213,7 @@ async function writeExport(hRef: DocumentReference, exp: ParsedExport["export"])
     for (const t of r.transactions) set(ref.collection("transactions").doc(t.id), decode(t.data));
   }
   await w.close();
+  if (failed) throw new ImportFailure(`${failed} documents couldn't be written; nothing was deleted, try again`);
   const fields = decode(exp.household.fields);
   delete fields.name;
   delete fields.createdBy;
