@@ -1,6 +1,6 @@
 ---
 name: playwright-cli
-description: Drive a headless Chromium from the shell to open, inspect, click, and screenshot web pages. Use for checking the running app or the design prototype visually, reading a page's accessibility snapshot, or reproducing a UI bug. In this repo always call it as scripts/pw (never playwright-cli or npx directly).
+description: Drive a headless Chromium from the shell to open, inspect, click, and screenshot web pages. Use for checking the running app visually, reading a page's accessibility snapshot, or reproducing a UI bug. In this repo always call it as scripts/pw (never playwright-cli or npx directly).
 allowed-tools: Bash(scripts/pw:*) Bash(nix develop:*)
 ---
 
