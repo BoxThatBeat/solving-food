@@ -25,6 +25,7 @@ ordered, checkable tasks with the files they touch, the tests that prove them, a
 | [M17-grocery-remove.md](M17-grocery-remove.md) | Grocery remove | M10 | Owner request: an × on every grocery line to take off an ingredient the household doesn't want; it stays off (and out of the budget) until Regenerate puts every removed line back |
 | [M18-store-orders-expiry.md](M18-store-orders-expiry.md) | Store orders, expiry dates | M17 | Owner request: each store ordered on its own day, Set date on any Supply lot, the confirm sheet scrolls, canned names guessed as pantry |
 | [M19-declutter.md](M19-declutter.md) | Declutter | M18 | Owner request: Supply without count/explainer, filters in a sheet like Recipes (deduped), the bracket only when planned, amounts in the unit they were added in; Grocery List title alone; Settings without kickers |
+| [M20-settings-groups.md](M20-settings-groups.md) | Settings groups | M19 | Owner request: Settings sections under five headings with a search box, Account and Nutrition goals as their own pages, invites only when open, Instructions for ChatGPT in Settings → Stores too |
 
 ## How to use these plans
 
