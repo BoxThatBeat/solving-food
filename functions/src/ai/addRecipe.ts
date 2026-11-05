@@ -13,6 +13,7 @@ import { CallError, rateLimit } from "../pcx";
 import { isEmulator } from "../pcx/client";
 import { AI_NOT_SET_UP, AiError, geminiGenerate, geminiReady, type GeminiPart, type GeminiTurn } from "./gemini";
 import { SKILL_TEXT } from "./skillText.generated";
+import { safeFetch, SafeFetchError } from "../safeFetch";
 
 export const ADD_PER_HOUR = 10;
 const PAGE_TIMEOUT_MS = 15_000;
@@ -55,23 +56,21 @@ async function fetchPage(uid: string, url: URL): Promise<string> {
     if (html === undefined || html.startsWith("!")) throw pageError(Number(html?.slice(1) || 404));
     return html;
   }
-  const ctl = new AbortController();
-  const t = setTimeout(() => ctl.abort(), PAGE_TIMEOUT_MS);
+  // safeFetch (M22): DNS checked before connecting and on every redirect hop, size and time capped.
   try {
-    const res = await fetch(url, { signal: ctl.signal, redirect: "follow", headers: { "User-Agent": "Mozilla/5.0 (compatible; SolvingFood/1.0; recipe import)", Accept: "text/html,application/xhtml+xml" } });
+    const res = await safeFetch(url, { timeoutMs: PAGE_TIMEOUT_MS, maxBytes: MAX_PAGE_BYTES, headers: { "User-Agent": "Mozilla/5.0 (compatible; SolvingFood/1.0; recipe import)", Accept: "text/html,application/xhtml+xml" } });
     if (!res.ok) throw pageError(res.status);
-    if (!safeRecipeUrl(res.url || url.href)) throw new CallError("invalid-argument", "That page redirects somewhere the app can't open");
-    const type = res.headers.get("content-type") ?? "";
+    const type = res.headers["content-type"] ?? "";
     if (type && !/html|xml|text\/plain/i.test(type)) throw new CallError("invalid-argument", `That link isn't a web page (${type.split(";")[0]})`);
-    if (Number(res.headers.get("content-length") ?? 0) > MAX_PAGE_BYTES) throw new CallError("invalid-argument", "That page is too large");
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (buf.length > MAX_PAGE_BYTES) throw new CallError("invalid-argument", "That page is too large");
-    return buf.toString("utf8");
+    return res.body.toString("utf8");
   } catch (e) {
     if (e instanceof CallError) throw e;
-    throw new CallError("invalid-argument", `Couldn't open that page (${(e as Error).name === "AbortError" ? "it took too long" : (e as Error).message})`);
-  } finally {
-    clearTimeout(t);
+    if (e instanceof SafeFetchError) {
+      if (e.kind === "blocked") throw new CallError("invalid-argument", "That page is (or redirects) somewhere the app can't open");
+      if (e.kind === "tooLarge") throw new CallError("invalid-argument", "That page is too large");
+      if (e.kind === "timeout") throw new CallError("invalid-argument", "Couldn't open that page (it took too long)");
+    }
+    throw new CallError("invalid-argument", `Couldn't open that page (${(e as Error).message})`);
   }
 }
 

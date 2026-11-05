@@ -99,6 +99,7 @@ describe("drop folder", () => {
     expect(r!.data.imagePaths).toEqual([]);
     const n = await poll(async () => (await notifications()).find((x) => String(x.message).includes("Tzatziki Without Image")), 10_000, "notification");
     expect(n.message).toMatch(/image couldn't be saved/);
+    expect(n.message).toMatch(/private network/); // M22: safeFetch never connects to a loopback address
   });
 
   it("unknown ingredients are created flagged needsReview", async () => {

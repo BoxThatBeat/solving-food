@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { IMAGE_SIZES, imageVariant } from "@solving-food/core";
 import { bucket } from "./admin";
+import { safeFetch, SafeFetchError } from "./safeFetch";
 
 export const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 const FETCH_TIMEOUT_MS = 20_000;
@@ -37,23 +38,17 @@ export async function storeRecipeImage(recipeId: string, input: Buffer): Promise
   return base;
 }
 
-/** Downloads an image URL (http/https only) with a timeout and a size cap. */
+/**
+ * Downloads an image URL with a timeout and a size cap, through safeFetch (M22): http(s) only, never a private, loopback,
+ * link-local or metadata address, checked on every redirect hop. The image ends up public in the bucket, so this guard
+ * is what stops a recipe's `image:` line from copying something internal out.
+ */
 export async function downloadImage(url: string): Promise<Buffer> {
-  const u = new URL(url);
-  if (u.protocol !== "https:" && u.protocol !== "http:") throw new Error("not an http(s) URL");
-  const ctl = new AbortController();
-  const timer = setTimeout(() => ctl.abort(), FETCH_TIMEOUT_MS);
-  try {
-    const res = await fetch(u, { signal: ctl.signal, redirect: "follow", headers: { "User-Agent": "SolvingFood/1.0 (recipe import)" } });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const type = res.headers.get("content-type") ?? "";
-    if (type && !type.startsWith("image/") && !type.startsWith("application/octet-stream")) throw new Error(`not an image (${type})`);
-    const len = Number(res.headers.get("content-length") ?? 0);
-    if (len > MAX_IMAGE_BYTES) throw new Error("image too large");
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (buf.length > MAX_IMAGE_BYTES) throw new Error("image too large");
-    return buf;
-  } finally {
-    clearTimeout(timer);
-  }
+  const res = await safeFetch(url, { timeoutMs: FETCH_TIMEOUT_MS, maxBytes: MAX_IMAGE_BYTES, headers: { "User-Agent": "SolvingFood/1.0 (recipe import)" } }).catch((e: Error) => {
+    throw new Error(e instanceof SafeFetchError && e.kind === "tooLarge" ? "image too large" : e.message);
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const type = res.headers["content-type"] ?? "";
+  if (type && !type.startsWith("image/") && !type.startsWith("application/octet-stream")) throw new Error(`not an image (${type})`);
+  return res.body;
 }

@@ -1078,6 +1078,16 @@ the `OWNER_UID` param (`functions/src/owner.ts`). The emulator's per-household s
 honoured only when `FUNCTIONS_EMULATOR === "true"` (set by the emulator itself), never because of `PCX_STUB`, which only
 picks the PC Express and Gemini stubs.
 
+**Outbound fetches (M22):** the functions fetch two kinds of URL people supply: the recipe page behind Add with Gemini's
+link and a recipe's `image:` URL (stored publicly in the bucket). Both go through `functions/src/safeFetch.ts`: http(s)
+only, no credentials in the URL, no obviously internal names (`localhost`, `*.local`, `*.internal`, single labels); the
+hostname is resolved by the helper itself (every address) and refused if **any** address is private, loopback,
+link-local (incl. the metadata server 169.254.169.254), CGNAT, multicast or reserved, in IPv4 or IPv6 (unique-local,
+link-local, IPv4-mapped / -compatible, NAT64 and 6to4 forms are checked by their embedded IPv4); the connection uses the
+addresses it checked (a custom `lookup`, so DNS can't change in between); redirects are followed by hand, at most 5, each
+hop checked again; a timeout and a size cap (3 MB pages, 15 MB images) stop the read. PC Express and Gemini calls go to
+fixed hosts and use plain `fetch`.
+
 **Merged ingredients (M8):** `mergedInto` is not among `validIngredient`'s keys, so clients can neither set it nor edit
 a merged ingredient (which carries it); only the `mergeIngredient` function writes tombstones. Supply stays
 function-only, so the merge's Supply moves happen in the function.
