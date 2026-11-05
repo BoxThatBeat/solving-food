@@ -41,15 +41,17 @@ export function tzOffsetMs(ms: number, tz: string): number {
   return asUtc - Math.floor(ms / 1000) * 1000;
 }
 
-/** The instant of local midnight at the start of `date` in `tz`. */
+/**
+ * The first instant of `date` in `tz`: local midnight, or where DST skips midnight (Santiago, Havana spring forward at
+ * 00:00), the transition instant when the day starts at 01:00. Tries the offsets in force around the date and keeps the
+ * earliest candidate that falls on `date`; where midnight happens twice (fall back at 01:00) that is the first one.
+ */
 export function localMidnight(date: LocalDate, tz: string): number {
   const [y, m, d] = date.split("-").map(Number) as [number, number, number];
   const guess = Date.UTC(y, m - 1, d);
-  const o1 = tzOffsetMs(guess, tz);
-  let t = guess - o1;
-  const o2 = tzOffsetMs(t, tz);
-  if (o2 !== o1) t = guess - o2;
-  return t;
+  const offsets = new Set([tzOffsetMs(guess - DAY_MS, tz), tzOffsetMs(guess, tz), tzOffsetMs(guess + DAY_MS, tz)]);
+  const candidates = [...offsets].map((o) => guess - o).sort((a, b) => a - b);
+  return candidates.find((t) => localDate(t, tz) === date) ?? guess - tzOffsetMs(guess, tz);
 }
 
 /** The local calendar date of an instant. */

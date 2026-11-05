@@ -138,3 +138,27 @@ describe("restart period (R3.1)", () => {
     );
   });
 });
+
+describe("localMidnight where DST changes at midnight (M21)", () => {
+  it("a skipped midnight starts the day at the transition (01:00), never on the day before", () => {
+    // Chile springs forward Sat 24:00 → Sun 01:00; Cuba Sun 00:00 → 01:00.
+    expect(new Date(localMidnight("2026-09-06", "America/Santiago")).toISOString()).toBe("2026-09-06T04:00:00.000Z");
+    expect(new Date(localMidnight("2026-03-08", "America/Havana")).toISOString()).toBe("2026-03-08T05:00:00.000Z");
+    expect(localDate(localMidnight("2026-09-06", "America/Santiago"), "America/Santiago")).toBe("2026-09-06");
+    expect(localDate(localMidnight("2026-09-06", "America/Santiago") - 1, "America/Santiago")).toBe("2026-09-05");
+  });
+  it("a repeated midnight is the first one", () => {
+    expect(new Date(localMidnight("2026-11-01", "America/Havana")).toISOString()).toBe("2026-11-01T04:00:00.000Z");
+    expect(new Date(localMidnight("2026-04-05", "America/Santiago")).toISOString()).toBe("2026-04-05T04:00:00.000Z");
+  });
+  it("property: every day of 2026 starts on its own date, right after the previous one", () => {
+    for (const tz of ["America/Santiago", "America/Havana", "America/Toronto", "Asia/Tehran", "Australia/Lord_Howe"]) {
+      for (let i = 0; i < 365; i++) {
+        const d = addDays("2026-01-01", i);
+        const t = localMidnight(d, tz);
+        expect(localDate(t, tz)).toBe(d);
+        expect(localDate(t - 1, tz)).toBe(addDays(d, -1));
+      }
+    }
+  });
+});
