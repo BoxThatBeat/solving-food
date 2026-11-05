@@ -209,3 +209,8 @@ export const SWAP_PENALTY = 0.25;
 export function swapText(s: Pick<Swap, "ingredientId" | "withIngredientId" | "amount">, name: (id: string) => string, amount: (id: string, n: number) => string): string {
   return `${name(s.ingredientId)}: use ${amount(s.withIngredientId, s.amount)} ${name(s.withIngredientId)} from Supply`;
 }
+
+/** Suggest substitutions (M28, R11.20): on unless the household switched it off. */
+export function substitutionsOn(settings: { substitutions?: boolean | undefined } | null | undefined): boolean {
+  return settings?.substitutions !== false;
+}

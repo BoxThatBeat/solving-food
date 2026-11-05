@@ -457,6 +457,11 @@ export function saveNutrition(hid: string, on: boolean) {
   return updateDoc(doc(db, "households", hid), { "settings.nutrition": on });
 }
 
+/** Suggest substitutions (M28, R11.20). */
+export function saveSubstitutions(hid: string, on: boolean) {
+  return updateDoc(doc(db, "households", hid), { "settings.substitutions": on });
+}
+
 /** The household's PC Express store (R6.22). */
 /** Instructions added to the list copied for ChatGPT (R7.5); "" removes them. */
 export function saveChatgptInstructions(hid: string, text: string) {

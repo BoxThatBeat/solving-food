@@ -10,12 +10,32 @@ import { thumbOf } from "@/components/recipes/helpers";
 import * as React from "react";
 import { useLocation, useNavigate, useRouter } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
-import { formatMinutes, missingTools, scaleFactor, type MealSide, type MealType, type RecipeRef } from "@solving-food/core";
+import {
+  findSwaps,
+  formatCanonical,
+  formatMinutes,
+  isBaking,
+  latestStepNotes,
+  mealRequirements,
+  missingTools,
+  recipeNotes,
+  scaleFactor,
+  stepNotesToSend,
+  substitutionsOn,
+  swapText,
+  type MealSide,
+  type MealType,
+  type RecipeRef,
+  type StepNote,
+} from "@solving-food/core";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useNotify } from "@/components/notifications-context";
 import { lookupFromMap, useIngredientsById } from "@/data/ingredients";
 import { useRecipeDocs } from "@/data/plan";
+import { usePlanModel } from "@/data/planModel";
+import { useCookNotes } from "@/data/cookNotes";
+import { useMemberNames } from "@/data/households";
 import { newId, sendCommand } from "@/data/supply";
 import type { StoredRecipe } from "@/data/recipes";
 import { useOnline } from "@/hooks/useOnline";
@@ -24,7 +44,7 @@ import { setUpdateDeferred } from "@/pwa/update";
 import { isIos } from "@/pwa/push";
 import { cn } from "@/lib/utils";
 import { HandsFreeToggle } from "@/voice/HandsFreeToggle";
-import { MiseEnPlace, StepMode } from "./StepMode";
+import { MiseEnPlace, StepMode, type MiseSwap } from "./StepMode";
 import { useWakeLock } from "./helpers";
 import { useCookTimers } from "./useCookTimers";
 
@@ -60,7 +80,17 @@ function depthOf(m: Mode, single: boolean): number {
 
 const PROGRESS = (k: string) => `sf.cook.${k}`;
 
-function loadProgress(key: string): { phase: Phase; order: string[]; done: string[] } | null {
+interface Progress {
+  phase: Phase;
+  order: string[];
+  done: string[];
+  /** M28 (R4.39): this cook's step note edits, by recipe and step ("" = cleared). */
+  notes?: Record<string, Record<string, string>>;
+  /** M28 (R4.40): ingredients whose swap was accepted on mise en place. */
+  swaps?: string[];
+}
+
+function loadProgress(key: string): Progress | null {
   try {
     const raw = sessionStorage.getItem(PROGRESS(key));
     return raw ? JSON.parse(raw) : null;
@@ -75,10 +105,27 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
   const notify = useNotify();
   const online = useOnline();
   const recipeMap = useRecipeDocs(target.recipes.map((r) => r.recipeId));
-  const ingredientIds = React.useMemo(() => [...recipeMap.values()].flatMap((r) => r.ingredientIds), [recipeMap]);
-  const ingredients = useIngredientsById(ingredientIds);
-  const lookup = lookupFromMap(ingredients);
+  const ingredientIds = React.useMemo(() => [...new Set([...[...recipeMap.values()].flatMap((r) => r.ingredientIds), ...(target.sides ?? []).map((x) => x.ingredientId)])], [recipeMap, target.sides]);
+  const recipeIngredients = useIngredientsById(ingredientIds);
   const saved = loadProgress(target.key);
+  const plan = usePlanModel();
+  const tz = plan.household?.timezone ?? "America/Toronto";
+  const names = useMemberNames(hid);
+  const recipeIds = React.useMemo(() => target.recipes.map((r) => r.recipeId), [target.recipes]);
+  const noted = useCookNotes(hid, recipeIds);
+  const [noteEdits, setNoteEdits] = React.useState<Record<string, Record<string, string>>>(() => saved?.notes ?? {});
+  const [accepted, setAccepted] = React.useState<string[]>(() => saved?.swaps ?? []);
+  // M28 (R4.40): what the meal needs that Supply (unexpired, now) doesn't hold, covered by a substitute it does hold.
+  const loaded = target.recipes.every((r) => recipeMap.has(r.recipeId)) && ingredientIds.every((id) => recipeIngredients.has(id));
+  const swaps = React.useMemo(() => {
+    if (!loaded || plan.supply.loading || !substitutionsOn(plan.household?.settings)) return [];
+    const needs = mealRequirements(target.recipes, target.servings, { recipes: (id) => recipeMap.get(id), ingredients: (id) => recipeIngredients.get(id) }, target.sides ?? []);
+    return findSwaps(needs, plan.unexpired, { baking: [...recipeMap.values()].some((r) => isBaking(r.tags)) });
+  }, [loaded, plan.supply.loading, plan.household?.settings, plan.unexpired, target.recipes, target.servings, target.sides, recipeMap, recipeIngredients]);
+  const swapIds = React.useMemo(() => swaps.map((x) => x.withIngredientId).filter((id) => !ingredientIds.includes(id)), [swaps, ingredientIds]);
+  const swapIngredients = useIngredientsById(swapIds);
+  const ingredients = React.useMemo(() => (swapIngredients.size ? new Map([...recipeIngredients, ...swapIngredients]) : recipeIngredients), [recipeIngredients, swapIngredients]);
+  const lookup = lookupFromMap(ingredients);
   const single = target.recipes.length === 1;
   const [order, setOrder] = React.useState<string[]>(() => (saved?.order?.length === target.recipes.length ? saved.order : target.recipes.map((r) => r.recipeId)));
   const [done, setDone] = React.useState<string[]>(() => saved?.done ?? []);
@@ -138,11 +185,26 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
 
   React.useEffect(() => {
     try {
-      sessionStorage.setItem(PROGRESS(target.key), JSON.stringify({ phase, order, done }));
+      sessionStorage.setItem(PROGRESS(target.key), JSON.stringify({ phase, order, done, notes: noteEdits, swaps: accepted } satisfies Progress));
     } catch {
       /* ignore */
     }
-  }, [phase, order, done, target.key]);
+  }, [phase, order, done, noteEdits, accepted, target.key]);
+
+  // M28 (R4.39): the step notes a recipe shows: the last cook's (carried forward) with this cook's edits on top.
+  const editsOf = (id: string) => new Map(Object.entries(noteEdits[id] ?? {}).map(([k, v]) => [Number(k), v] as const));
+  const shownOf = (id: string) => latestStepNotes(noted ?? [], id);
+  const stepNotesOf = (id: string) => {
+    const m = shownOf(id);
+    for (const [k, v] of editsOf(id)) {
+      if (v.trim()) m.set(k, v.trim());
+      else m.delete(k);
+    }
+    return m;
+  };
+  const setStepNote = (id: string, step: number, text: string) => setNoteEdits((e) => ({ ...e, [id]: { ...(e[id] ?? {}), [String(step)]: text } }));
+  const nameOf = (id: string) => ingredients.get(id)?.name ?? id.replace(/-/g, " ");
+  const amountOf = (id: string, n: number) => formatCanonical(n, ingredients.get(id)?.canonicalUnit ?? "g", ingredients.get(id)?.unitWeightG);
 
   const ref = (id: string) => target.recipes.find((r) => r.recipeId === id)!;
   const recipeAt = (i: number): StoredRecipe | undefined => recipeMap.get(order[i] ?? "");
@@ -164,6 +226,9 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
     setFinished(true);
     timers.cancelAll();
     const cookEventId = newId(hid, "cookEvents");
+    // M28: accepted swaps (R4.40) and the step notes (R4.39) go with Done cooking.
+    const substitutions = swaps.filter((x) => accepted.includes(x.ingredientId)).map((x) => ({ ingredientId: x.ingredientId, withIngredientId: x.withIngredientId, amount: Math.round(x.amount * 1000) / 1000 })).filter((x) => x.amount > 0);
+    const stepNotes: StepNote[] = target.recipes.flatMap((r) => stepNotesToSend(r.recipeId, shownOf(r.recipeId), editsOf(r.recipeId)));
     sendCommand(hid, uid, "finishCooking", {
       cookEventId,
       recipes: target.recipes,
@@ -173,6 +238,8 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
       ...(target.savedMealId ? { savedMealId: target.savedMealId } : {}),
       ...(target.mealType ? { mealType: target.mealType } : {}),
       ...(target.sides?.length ? { sides: target.sides } : {}),
+      ...(substitutions.length ? { substitutions } : {}),
+      ...(stepNotes.length ? { stepNotes } : {}),
     });
     try {
       sessionStorage.removeItem(PROGRESS(target.key));
@@ -276,7 +343,19 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
             <p className="m-0 text-[0.8125rem] font-semibold text-sub">The review opens once every recipe is checked off, or when you tap Done cooking.</p>
           </div>
         ) : phase.kind === "mise" && current ? (
-          <MiseEnPlace recipe={current} recipeId={order[phase.recipe]!} lookup={lookup} factor={factorFor(order[phase.recipe]!)} missingTools={tools.length ? missingTools(current.tools, tools) : []} onStart={() => go({ kind: "steps", recipe: phase.recipe, step: 0 })} />
+          <MiseEnPlace
+            recipe={current}
+            recipeId={order[phase.recipe]!}
+            lookup={lookup}
+            factor={factorFor(order[phase.recipe]!)}
+            missingTools={tools.length ? missingTools(current.tools, tools) : []}
+            onStart={() => go({ kind: "steps", recipe: phase.recipe, step: 0 })}
+            notes={{ notes: recipeNotes(noted ?? [], order[phase.recipe]!), names, tz }}
+            swaps={swaps
+              .filter((x) => current.ingredientIds.includes(x.ingredientId))
+              .map((x): MiseSwap => ({ ingredientId: x.ingredientId, text: swapText(x, nameOf, amountOf), note: x.note, accepted: accepted.includes(x.ingredientId) }))}
+            onSwap={(id, on) => setAccepted((a) => (on ? [...new Set([...a, id])] : a.filter((x) => x !== id)))}
+          />
         ) : phase.kind === "steps" && current ? (
           <StepMode
             recipe={current}
@@ -288,6 +367,8 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
             onFinish={() => recipeDone(phase.recipe)}
             timers={timers}
             isLastRecipe={single || done.length + 1 >= target.recipes.length}
+            stepNotes={stepNotesOf(order[phase.recipe]!)}
+            onNote={(step, text) => setStepNote(order[phase.recipe]!, step, text)}
           />
         ) : null}
       </main>

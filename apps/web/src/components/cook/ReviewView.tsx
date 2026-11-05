@@ -8,7 +8,9 @@ import * as React from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import {
+  applySwaps,
   defaultMealName,
+  recipeNotes,
   formatCanonical,
   leftoverPortionsByType,
   mealRequirements,
@@ -27,6 +29,8 @@ import { sendCommand, useCookEvent, usePendingCommands, useEventRatings, useSupp
 import { useMemberNames } from "@/data/households";
 import { cn } from "@/lib/utils";
 import { HandsFreeToggle } from "@/voice/HandsFreeToggle";
+import { useCookNotes } from "@/data/cookNotes";
+import { noteWhen } from "./noteWhen";
 
 interface Source {
   title: string;
@@ -68,7 +72,8 @@ export function ReviewView({ hid, uid, eventId, tz }: { hid: string; uid: string
     }
     if (finishCmd?.command.type === "finishCooking" && refs.every((r) => recipes.has(r.recipeId)) && ingredientIds.every((id) => recipeIngredients.has(id))) {
       const p = finishCmd.command.payload;
-      const needs = mealRequirements(p.recipes, p.servings, { recipes: (id) => recipes.get(id), ingredients: (id) => recipeIngredients.get(id) }, pendingSides);
+      // M28 (R4.40): accepted swaps are deducted in place of the original, as the function will.
+      const needs = applySwaps(mealRequirements(p.recipes, p.servings, { recipes: (id) => recipes.get(id), ingredients: (id) => recipeIngredients.get(id) }, pendingSides), p.substitutions ?? []);
       return {
         title: p.title ?? p.recipes.map((r) => recipes.get(r.recipeId)?.title ?? "Recipe").join(" + "),
         recipeIds: p.recipes.map((r) => r.recipeId),
@@ -155,6 +160,12 @@ function ReviewFlow({
   const setUsed = (f: (l: Array<{ ingredientId: string; canonicalAmount: number }>) => Array<{ ingredientId: string; canonicalAmount: number }>) => setUsedEdit(f(used.map((u) => ({ ...u }))));
   const setLeftovers = (f: (n: number) => number) => setLeftoversEdit(f(leftovers));
   const [note, setNote] = React.useState("");
+  // M28 (R9.6): the newest note an earlier cook of these recipes left, to keep or replace.
+  const noted = useCookNotes(hid, source.recipeIds);
+  const previous = React.useMemo(() => {
+    const all = source.recipeIds.flatMap((id) => recipeNotes(noted ?? [], id, { exclude: eventId, max: 1 }));
+    return all.sort((a, b) => b.cookedAtMs - a.cookedAtMs)[0] ?? null;
+  }, [noted, source.recipeIds, eventId]);
   const supply = useSupply(hid, tz);
   const usedIngredients = useIngredientsById([...used.map((u) => u.ingredientId), ...[...supply.items.values()].flatMap((i) => (i.ingredientId ? [i.ingredientId] : []))]);
   const [adding, setAdding] = React.useState(false);
@@ -327,6 +338,16 @@ function ReviewFlow({
                   </Button>
                 </span>
               </div>
+              {previous ? (
+                <div className="flex flex-col gap-1.5 rounded-ui border-2 border-dashed border-line bg-base px-3 py-2.5" data-testid="previous-note">
+                  <p className="m-0 text-[0.9375rem] leading-snug font-semibold">
+                    <span className="font-extrabold">Last time ({noteWhen(previous, members, tz)}):</span> {previous.text}
+                  </p>
+                  <Button size="sm" variant="secondary" className="self-start" onClick={() => setNote(previous.text)} disabled={note.trim() === previous.text}>
+                    {note.trim() === previous.text ? "Kept ✓" : "Keep this note"}
+                  </Button>
+                </div>
+              ) : null}
               <label className="flex flex-col gap-1.5">
                 <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">NOTES FOR NEXT TIME (OPTIONAL)</span>
                 <Textarea rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Pork could go five minutes longer." />

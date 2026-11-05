@@ -52,6 +52,8 @@ export interface ScoringSnapshot {
   live: Array<[string, LivePrice]>;
   /** M27 (R6.34): only the products on sale (usually a handful), by ingredient ID: how far below usual. */
   deals?: Array<[string, { dealPct: number }]>;
+  /** M28 (R6.35, R11.20): count a missing ingredient with a substitute in Supply as covered. */
+  substitute?: boolean;
 }
 
 export interface WorkerContexts {
@@ -139,6 +141,7 @@ export function buildContexts(s: ScoringSnapshot, seed: ReadonlyMap<string, Snap
     },
     remainingBudgetCents: s.budgetCents - spent,
     deals: new Map(s.deals ?? []),
+    substitute: !!s.substitute,
     // The price the list would pay per canonical unit (the live sale price for a mapped product), looked up once.
     centsPerUnit: (id) => {
       if (!cpuCache.has(id)) cpuCache.set(id, linePricing(id, build)?.centsPerUnit ?? null);

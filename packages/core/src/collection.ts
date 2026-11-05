@@ -61,6 +61,8 @@ export interface HouseholdFacts {
   canMake?: boolean;
   /** Share of the recipe's tracked amounts projected supply covers, 0..1 (R4.4). */
   supplyFraction?: number;
+  /** M28 (R6.35): substitutes in Supply it counts on to be "can make" (0 or absent: none). */
+  swaps?: number;
   /** The suggestion score (M5): `raw` ranks; blocked (missing tool, dislike, diet) sorts last. Absent until scored. */
   suggestion?: { raw: number; blocked: boolean; planned?: boolean } | null;
   /** Days left on the soonest spare expiring ingredient it uses, or null (M5: "Expiring first", "Uses expiring"). */

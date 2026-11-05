@@ -4,7 +4,7 @@
 // optimiser) call `useSuggestions()`; the engine only runs while at least one of them is mounted.
 import { activeGoals, nutritionOf } from "./nutrition";
 import * as React from "react";
-import { addLocalDays, VARIETY_PERIODS, type MealType, type PeriodView, type RecipeLines, type ScoreResult } from "@solving-food/core";
+import { addLocalDays, substitutionsOn, VARIETY_PERIODS, type MealType, type PeriodView, type RecipeLines, type ScoreResult } from "@solving-food/core";
 import { useFavourites, useStats } from "./householdRecipes";
 import { millis } from "./plan";
 import { usePlanModel, type PlanModel } from "./planModel";
@@ -103,6 +103,7 @@ export function useScoringSnapshot(m: PlanModel, mealType: MealType | null = nul
       defaultStoreId: m.ctx.defaultStoreId,
       live: [...m.livePrices].map(([code, p]) => [code, { priceCents: p.priceCents, packAmount: p.packAmount, packMeasure: p.packMeasure, fetchedAtMs: p.fetchedAtMs }]),
       deals: [...m.deals].map(([id, d]) => [id, { dealPct: d.dealPct }]),
+      substitute: substitutionsOn(settings),
     } satisfies ScoringSnapshot;
     }, [household, summaries, m.ready, m.supply.loading, m.items, m.recipes, m.ingredients, m.unexpired, m.ctx, m.expiring, m.livePrices, m.deals, m.period?.budgetCents, stats, favourites, events.docs, mealType, tz, tick, fromMs, currentMeals]);
 }

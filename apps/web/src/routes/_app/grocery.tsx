@@ -23,6 +23,8 @@ import {
   mergeDraft,
   pcxStoreForCopy,
   stapleDismissUntil,
+  substituteInSupply,
+  substitutionsOn,
   isRemoved as removedLine,
   type GroceryItem,
   type PriceDeal,
@@ -38,6 +40,7 @@ import { Textarea } from "@/components/ui/chip";
 import { useNotify } from "@/components/notifications-context";
 import { ChatgptInstructions } from "@/components/grocery/ChatgptInstructions";
 import { DealChip } from "@/components/DealChip";
+import { Badge } from "@/components/ui/chip";
 import { addLine, addManualItem, dismissStaple, syncDraft, millis, orderDraft, removeItem, setLineRemoved, tickItem, undoOrder, type StoredList } from "@/data/plan";
 import { usePlanModel, useViewModel } from "@/data/planModel";
 import { ReceiveSheet } from "@/components/grocery/ReceiveSheet";
@@ -135,6 +138,20 @@ function GroceryPage() {
   };
 
   const groups = groupByStore(items, m.stores);
+  // M28 (R7.20): a hint on a plan or staple line when a substitute for it is already in Supply (after what planned meals
+  // use) in the amount the line covers. Only a hint: the line stays on the list until the person takes it off.
+  const substitute = substitutionsOn(m.household?.settings);
+  const swapHints = React.useMemo(() => {
+    const out = new Map<string, string>();
+    if (!substitute) return out;
+    for (const it of Object.values(items)) {
+      if (!it.ingredientId || it.source === "manual") continue;
+      const sw = substituteInSupply(it.ingredientId, it.need ?? it.amount, m.projected);
+      const name = sw ? m.ingredients.get(sw.withIngredientId)?.name : undefined;
+      if (name) out.set(it.ingredientId, name);
+    }
+    return out;
+  }, [substitute, items, m.projected, m.ingredients]);
 
   const storeName = (id: string) => m.stores.find((st) => st.id === id)?.name ?? "That store";
 
@@ -230,6 +247,7 @@ function GroceryPage() {
               lines={g.items}
               ingredients={m.ingredients}
               deals={m.deals}
+              swapHints={swapHints}
               onTick={(id, on) => tick(draftId, id, on)}
               onRemove={(id) => void remove(id)}
               footer={
@@ -366,6 +384,7 @@ function StoreCard({
   lines,
   ingredients,
   deals,
+  swapHints,
   onTick,
   onRemove,
   footer,
@@ -376,6 +395,8 @@ function StoreCard({
   ingredients: ReadonlyMap<string, IngredientEntry>;
   /** M27 (R6.33): products on sale, by ingredient ID (the draft's lines only). */
   deals?: ReadonlyMap<string, PriceDeal>;
+  /** M28 (R7.20): a substitute already in Supply, by the line's ingredient ID (the draft's lines only): its name. */
+  swapHints?: ReadonlyMap<string, string>;
   onTick: (id: string, on: boolean) => void;
   onRemove?: (id: string) => void;
   footer?: React.ReactNode;
@@ -421,6 +442,11 @@ function StoreCard({
               </span>
               <span className="font-mono text-[0.625rem] font-semibold text-sub">{lineSub(it, it.ingredientId ? ingredients.get(it.ingredientId) : undefined)}</span>
               {it.ingredientId && deals?.get(it.ingredientId) ? <DealChip deal={deals.get(it.ingredientId)!} usual /> : null}
+              {it.ingredientId && swapHints?.get(it.ingredientId) ? (
+                <Badge className="w-fit border-dashed bg-base text-ink uppercase" data-testid="swap-hint" title="Something that can stand in for it is already in Supply: take the line off if you'll use that instead">
+                  Have {swapHints.get(it.ingredientId)}
+                </Badge>
+              ) : null}
             </span>
             <span className="flex flex-none flex-col items-end">
               <span className="font-mono text-[0.8125rem] font-extrabold">×{it.packs}</span>

@@ -4,7 +4,7 @@
 import { millis } from "@/lib/millis";
 import { useMemo } from "react";
 import { collection, deleteDoc, doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { costPerServing, missingTools, NO_FACTS, supplyCoverage, type FavouriteDoc, type HouseholdFacts, type NoteDoc, type RecipeSummary, type ScoreResult, type StatsDoc } from "@solving-food/core";
+import { costPerServing, isBaking, missingTools, NO_FACTS, substitutionsOn, supplyCoverage, type FavouriteDoc, type HouseholdFacts, type NoteDoc, type RecipeSummary, type ScoreResult, type StatsDoc } from "@solving-food/core";
 import { db } from "@/firebase/app";
 import { useLiveDoc, useLiveQuery } from "./live";
 import { useHousehold } from "./households";
@@ -53,10 +53,12 @@ export function useHouseholdFacts(hid: string | null, summaries?: readonly Recip
   const stats = useStats(hid);
   const household = useHousehold(hid);
   const tools = household.data?.settings?.tools;
+  const substitute = substitutionsOn(household.data?.settings);
   const extra = useMemo(() => {
-    const m = new Map<string, { hasAllTools: boolean; costPerServingCents: number | null; canMake?: boolean; supplyFraction?: number }>();
+    type Extra = { hasAllTools: boolean; costPerServingCents: number | null; canMake?: boolean; supplyFraction?: number; swaps?: number };
+    const m = new Map<string, Extra>();
     for (const r of summaries ?? []) {
-      const x: { hasAllTools: boolean; costPerServingCents: number | null; canMake?: boolean; supplyFraction?: number } = {
+      const x: Extra = {
         hasAllTools: !tools?.length || missingTools(r.tools ?? [], tools).length === 0,
         costPerServingCents: r.lines ? costPerServing(r.lines, estimateCentsPerUnit) : null,
       };
@@ -64,14 +66,16 @@ export function useHouseholdFacts(hid: string | null, summaries?: readonly Recip
       // left after the plan. Free-use ingredients (bundled list) don't count.
       if (projected && r.lines) {
         const lines = Object.entries(r.lines).map(([ingredientId, per]) => ({ ingredientId, canonicalAmount: per * r.servings, optional: false }));
-        const c = supplyCoverage(lines, projected, (id) => ({ freeUse: FREE_USE.has(id) }));
+        // M28 (R6.35): a substitute in Supply counts (unless the household switched substitutions off).
+        const c = supplyCoverage(lines, projected, (id) => ({ freeUse: FREE_USE.has(id) }), { substitute, baking: isBaking(r.tags) });
         x.canMake = c.canMake;
         x.supplyFraction = c.canMake ? 1 : c.fraction;
+        if (c.canMake && c.swaps.length) x.swaps = c.swaps.length;
       }
       m.set(r.id, x);
     }
     return m;
-  }, [summaries, tools, projected]);
+  }, [summaries, tools, projected, substitute]);
   return useMemo(() => {
     return (id: string): HouseholdFacts => {
       const s = stats.get(id);

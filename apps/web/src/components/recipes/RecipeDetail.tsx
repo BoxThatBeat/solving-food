@@ -23,12 +23,16 @@ import {
   missingTools,
   toolLabel,
   unitDef,
+  recipeNotes,
 } from "@solving-food/core";
 import { db } from "@/firebase/app";
 import { useLiveDoc } from "@/data/live";
 import { restoreRecipe, restoreVersion, trashRecipe, useVersions, type StoredRecipe } from "@/data/recipes";
 import { lookupFromMap, useIngredientsById, type IngredientEntry } from "@/data/ingredients";
 import { saveNote, setFavourite, useHouseholdFacts, useNote } from "@/data/householdRecipes";
+import { useCookNotes } from "@/data/cookNotes";
+import { useMemberNames } from "@/data/households";
+import { LastTimeNotes } from "@/components/cook/LastTimeNotes";
 import { useNotify } from "@/components/notifications-context";
 import { Badge, SectionLabel, Textarea } from "@/components/ui/chip";
 import { NutritionFactsPanel } from "./NutritionFacts";
@@ -100,6 +104,11 @@ export function RecipeDetail({
   // Unexpired supply per ingredient for the badges (R4.9; expired lots don't count, R8.15). Signed in only.
   const supply = useSupply(ctx?.hid ?? null, ctx?.household?.timezone ?? "America/Toronto");
   const have = React.useMemo(() => (ctx ? unexpiredByIngredient(supply.items.values(), supply.now) : null), [ctx, supply.items, supply.now]);
+  // M28 (R4.38): the last cook's notes for this recipe (signed in only).
+  const notedIds = React.useMemo(() => [id], [id]);
+  const noted = useCookNotes(ctx?.hid ?? null, notedIds);
+  const memberNames = useMemberNames(ctx?.hid ?? null);
+  const lastNotes = React.useMemo(() => recipeNotes(noted ?? [], id), [noted, id]);
 
   const copyLink = async () => {
     const url = `${location.origin}/recipes/${id}`;
@@ -295,6 +304,8 @@ export function RecipeDetail({
             </span>
           </div>
         ) : null}
+
+        {ctx && lastNotes.length ? <LastTimeNotes notes={lastNotes} names={memberNames} tz={ctx.household?.timezone ?? "America/Toronto"} /> : null}
 
         {recipe.tools.length ? (
           <div className="flex flex-col gap-2">

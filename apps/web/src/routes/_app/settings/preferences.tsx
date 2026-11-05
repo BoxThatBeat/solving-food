@@ -12,6 +12,7 @@ import {
   formatPref,
   MAIN_PROTEINS,
   prefLabel,
+  substitutionsOn,
   taxonomyLabel,
 } from "@solving-food/core";
 import { SettingsPage } from "@/components/settings/SettingsPage";
@@ -22,7 +23,7 @@ import { ToggleChip } from "@/components/ui/chip";
 import { useNotify } from "@/components/notifications-context";
 import { useActiveHousehold } from "@/data/households";
 import { searchIngredients, useAllIngredients } from "@/data/ingredients";
-import { savePreferences } from "@/data/plan";
+import { savePreferences, saveSubstitutions } from "@/data/plan";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/settings/preferences")({
@@ -37,6 +38,7 @@ function PreferencesPage() {
   const notify = useNotify();
   const ing = useAllIngredients();
   const prefs = hh.data?.settings?.preferences ?? { likes: [], dislikes: [], diets: [] };
+  const subs = substitutionsOn(hh.data?.settings);
   const [text, setText] = React.useState("");
   const [kind, setKind] = React.useState<Kind>("likes");
   const name = (id: string) => ing.byId.get(id)?.name;
@@ -140,6 +142,30 @@ function PreferencesPage() {
         </div>
       </Card>
 
+      {/* M28 (R11.20): substitutions in suggestions, Can make, mise en place and the grocery list. */}
+      <Card className="gap-3">
+        <div className="flex items-center gap-2.5">
+          <CardTitle className="flex-1">Substitutions</CardTitle>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={subs}
+            aria-label="Suggest substitutions"
+            disabled={!hh.data}
+            onClick={() => void saveSubstitutions(hh.id, !subs).catch(fail("substitutions"))}
+            className="flex h-11 w-[3.25rem] flex-none cursor-pointer items-center bg-transparent p-0"
+          >
+            <span className={cn("box-border flex h-[1.875rem] w-full rounded-full border-2 border-line p-0.5", subs ? "justify-end bg-acc" : "justify-start bg-s0")}>
+              <span className="box-border size-[1.375rem] rounded-full border-2 border-line bg-base" />
+            </span>
+          </button>
+        </div>
+        <p className="m-0 text-[0.8125rem] font-semibold" data-testid="substitutions-note">
+          {subs
+            ? "On: when a recipe needs something Supply doesn't have but a common stand-in is there (shallot for onion, garlic powder for garlic, dried herbs for fresh), suggestions and Can make count it, mise en place offers the swap, and the grocery list says you have it."
+            : "Off: a missing ingredient is missing. Nothing is swapped or hinted."}
+        </p>
+      </Card>
     </SettingsPage>
   );
 }

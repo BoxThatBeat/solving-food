@@ -5,7 +5,7 @@
 // tablet portrait (step, next step, all ingredients), and landscape tablet/desktop (ingredient checklist | step |
 // timers and next step).
 import * as React from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, NotebookPen } from "lucide-react";
 import {
   ingredientSpeech,
   formatClock,
@@ -14,21 +14,62 @@ import {
   newTimer,
   remainingMs,
   renderStep,
+  STEP_NOTE_MAX,
+  type CookNote,
   type CookTimer,
   type IngredientLookup,
   type RecipeIngredient,
   toolLabel,
 } from "@solving-food/core";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/chip";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import type { StoredRecipe } from "@/data/recipes";
 import type { useCookTimers } from "./useCookTimers";
 import { layoutFor, prepList, timerId } from "./helpers";
 import { useVoiceScript } from "@/voice/handsFree";
+import { LastTimeNotes } from "./LastTimeNotes";
+
+/** A swap offered on mise en place (M28, R4.40): what it says and whether it was accepted. */
+export interface MiseSwap {
+  ingredientId: string;
+  /** "Garlic: use 0.8 g garlic powder from Supply". */
+  text: string;
+  note?: string | undefined;
+  accepted: boolean;
+}
+
+/** The last cook's notes for mise en place (M28, R4.38). */
+export interface MiseNotes {
+  notes: readonly CookNote[];
+  names: ReadonlyMap<string, string>;
+  tz: string;
+}
 
 type Timers = ReturnType<typeof useCookTimers>;
 
-export function MiseEnPlace({ recipe, recipeId, lookup, factor, missingTools, onStart }: { recipe: StoredRecipe; recipeId: string; lookup: IngredientLookup; factor: number; missingTools: string[]; onStart: () => void }) {
+export function MiseEnPlace({
+  recipe,
+  recipeId,
+  lookup,
+  factor,
+  missingTools,
+  onStart,
+  notes,
+  swaps = [],
+  onSwap,
+}: {
+  recipe: StoredRecipe;
+  recipeId: string;
+  lookup: IngredientLookup;
+  factor: number;
+  missingTools: string[];
+  onStart: () => void;
+  notes?: MiseNotes | undefined;
+  swaps?: readonly MiseSwap[];
+  onSwap?: (ingredientId: string, accept: boolean) => void;
+}) {
   const items = prepList(recipe, lookup, factor);
   const [done, setDone] = React.useState<Set<number>>(new Set());
   // Hands-free (R4.33): mise en place reads its prep list; "next" starts step mode.
@@ -62,6 +103,31 @@ export function MiseEnPlace({ recipe, recipeId, lookup, factor, missingTools, on
             </>
           ) : null}
         </div>
+      ) : null}
+      {notes?.notes.length ? <LastTimeNotes notes={notes.notes} names={notes.names} tz={notes.tz} /> : null}
+      {swaps.length ? (
+        <ul className="m-0 flex list-none flex-col gap-2 p-0" aria-label="Swaps from Supply">
+          {swaps.map((sw) => (
+            <li key={sw.ingredientId} className={cn("flex items-center gap-3 rounded-ui border-2 border-line px-3 py-2", sw.accepted ? "bg-[color-mix(in_srgb,var(--acc)_35%,var(--base))]" : "bg-base")} data-testid="swap">
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="font-mono text-[0.5625rem] font-bold tracking-[0.09rem] uppercase">{sw.accepted ? "Swapped · Done cooking takes this from Supply" : "Not in Supply · swap"}</span>
+                <span className="text-[0.9375rem] leading-snug font-bold first-letter:uppercase">{sw.text}</span>
+                {sw.note ? <span className="text-[0.8125rem] font-semibold text-sub first-letter:uppercase">{sw.note}</span> : null}
+              </span>
+              {onSwap ? (
+                sw.accepted ? (
+                  <Button size="sm" variant="secondary" className="flex-none" onClick={() => onSwap(sw.ingredientId, false)}>
+                    Undo
+                  </Button>
+                ) : (
+                  <Button size="sm" className="flex-none" onClick={() => onSwap(sw.ingredientId, true)}>
+                    Use it
+                  </Button>
+                )
+              ) : null}
+            </li>
+          ))}
+        </ul>
       ) : null}
       {items.length ? (
         <ul className="m-0 list-none overflow-hidden rounded-ui border-bw bg-base p-0 shadow-hard" aria-label="Prep tasks">
@@ -121,6 +187,8 @@ export function StepMode({
   onFinish,
   timers,
   isLastRecipe,
+  stepNotes,
+  onNote,
 }: {
   recipe: StoredRecipe;
   recipeId: string;
@@ -132,6 +200,10 @@ export function StepMode({
   onFinish: () => void;
   timers: Timers;
   isLastRecipe: boolean;
+  /** M28 (R4.39): the notes on this recipe's steps (carried from the last cook, with this cook's edits), by step. */
+  stepNotes?: ReadonlyMap<number, string> | undefined;
+  /** Save (or, with "", clear) a step's note; it goes with Done cooking. */
+  onNote?: ((step: number, text: string) => void) | undefined;
 }) {
   const [ref, size] = useSize<HTMLDivElement>();
   const layout = layoutFor(size.w, size.h);
@@ -141,6 +213,8 @@ export function StepMode({
   const next = recipe.steps[i + 1];
   const go = React.useCallback((d: number) => onStep(Math.min(Math.max(0, i + d), Math.max(0, n - 1))), [i, n, onStep]);
   const [checked, setChecked] = React.useState<Set<string>>(new Set());
+  const [noting, setNoting] = React.useState(false);
+  const stepNote = stepNotes?.get(i);
 
   // Hands-free (R4.33): entering a step reads its ingredients, then its instructions (names only: the amounts were
   // just read); "next" / "previous" move like the buttons, but never past the last step (finishing stays a tap).
@@ -192,10 +266,19 @@ export function StepMode({
 
   const stepCard = (
     <section aria-label={`Step ${i + 1} of ${n}`} className="flex min-h-0 flex-1 flex-col gap-4 rounded-ui border-bw bg-base p-[clamp(1rem,2.5vw,2.25rem)] shadow-hard" data-testid="step-card">
-      <span className="self-start rounded-ui border-2 border-line bg-acc px-2.5 py-1 font-display text-[0.8125rem] text-onc uppercase">
-        Step {i + 1} of {n}
-        {s.section ? ` · ${s.section}` : ""}
-      </span>
+      <div className="flex flex-none items-center justify-between gap-2">
+        <span className="rounded-ui border-2 border-line bg-acc px-2.5 py-1 font-display text-[0.8125rem] text-onc uppercase">
+          Step {i + 1} of {n}
+          {s.section ? ` · ${s.section}` : ""}
+        </span>
+        {/* M28 (R4.39): a note on this step for next time. */}
+        {onNote ? (
+          <Button size="sm" variant="chip" onClick={() => setNoting(true)} aria-label={stepNote ? `Edit the note on step ${i + 1}` : `Add a note to step ${i + 1}`} className="relative z-20">
+            <NotebookPen aria-hidden />
+            {stepNote ? "Edit note" : "Note"}
+          </Button>
+        ) : null}
+      </div>
       {/* M9 (owner review): a long step scrolls inside the card; the controls below never move under it. */}
       {/* M10 (owner review 3): an arrow at the bottom while there's more text below (StepScroll). */}
       <StepScroll resetKey={i}>
@@ -211,6 +294,12 @@ export function StepMode({
           ),
         )}
       </p>
+      {stepNote ? (
+        <p className="mt-3 mb-0 rounded-ui border-2 border-dashed border-line bg-mantle px-3 py-2 text-[clamp(0.9375rem,1.6vw,1.375rem)] leading-snug font-bold" data-testid="step-note">
+          <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem] uppercase">Note · </span>
+          {stepNote}
+        </p>
+      ) : null}
       </StepScroll>
       {layout !== "wide" && layout !== "phone-landscape" ? <StepIngredients lines={lines} lookup={lookup} factor={factor} big={layout === "tablet-portrait"} /> : null}
       {layout === "phone" || layout === "tablet-portrait" ? (
@@ -292,7 +381,41 @@ export function StepMode({
         )}
         {nav}
       </div>
+      {onNote ? <StepNoteSheet open={noting} onOpenChange={setNoting} step={i} text={stepNote ?? ""} onSave={(t) => onNote(i, t)} /> : null}
     </div>
+  );
+}
+
+/** The step note sheet (M28, R4.39): one short text field; Save, or Remove an existing note. */
+function StepNoteSheet({ open, onOpenChange, step, text, onSave }: { open: boolean; onOpenChange: (o: boolean) => void; step: number; text: string; onSave: (t: string) => void }) {
+  return <Sheet open={open} onOpenChange={onOpenChange}>{open ? <StepNoteBody step={step} text={text} onSave={(t) => (onSave(t.trim()), onOpenChange(false))} /> : null}</Sheet>;
+}
+
+/** Mounted each time the sheet opens, so the draft starts from the saved note. */
+function StepNoteBody({ step, text, onSave }: { step: number; text: string; onSave: (t: string) => void }) {
+  const [draft, setDraft] = React.useState(text);
+  return (
+    <SheetContent
+      title={`Note on step ${step + 1}`}
+      footer={
+        <div className="flex gap-2.5">
+          {text ? (
+            <Button variant="secondary" className="flex-none" onClick={() => onSave("")}>
+              Remove
+            </Button>
+          ) : null}
+          <Button className="flex-1" onClick={() => onSave(draft)} disabled={!draft.trim() && !text}>
+            Save note
+          </Button>
+        </div>
+      }
+    >
+      <label className="flex flex-col gap-1.5">
+        <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">SHOWN UNDER THIS STEP NEXT TIME</span>
+        <Textarea rows={3} maxLength={STEP_NOTE_MAX} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Pan hotter than you think." autoFocus aria-label={`Note on step ${step + 1}`} />
+      </label>
+      <p className="m-0 text-[0.8125rem] font-semibold text-sub">Saved with Done cooking, for everyone in the household.</p>
+    </SheetContent>
   );
 }
 

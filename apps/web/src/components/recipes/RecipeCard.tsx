@@ -53,8 +53,8 @@ export function RecipeCard({
           <div className="absolute top-[0.4375rem] right-11 left-[0.4375rem] flex flex-wrap gap-1">
             {facts.favourite ? <Badge className="bg-yellow text-onc shadow-hard-sm">★ FAV</Badge> : null}
             {facts.canMake ? (
-              <Badge className="bg-acc text-onc shadow-hard-sm" data-testid="can-make">
-                CAN MAKE
+              <Badge className="bg-acc text-onc shadow-hard-sm" data-testid="can-make" title={facts.swaps ? "With a substitute from Supply" : undefined}>
+                {facts.swaps ? "CAN MAKE · SWAPS" : "CAN MAKE"}
               </Badge>
             ) : facts.supplyFraction !== undefined && facts.supplyFraction >= 0.85 ? (
               <Badge className="bg-base text-ink shadow-hard-sm">ALMOST</Badge>
