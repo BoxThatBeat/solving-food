@@ -55,6 +55,9 @@ sweets and plain sides are `none`.
 - Vague (no amount tracked): `pinch`, `dash`, `to taste`, `splash`, `handful`
 - Anything else is a count noun: `@egg{2}`, `@garlic{3%cloves}`, `@lemon{1}`. Common spellings work too
   (`Tbsp`, `teaspoons`, `lbs`, `T` = tablespoon).
+- Package and bundle words have no weight: `can`, `tin`, `jar`, `bottle`, `bag`, `box`, `packet`, `pack`, `package`, `pkg`, `container`, `carton`, `tub`, `bunch`, `sprig`. The app keeps
+  the line but can't count it against Supply or the grocery list until someone sets grams. Write the weight or volume
+  from the label instead: `@diced tomatoes{796%g}` (not `{1%can}`), `@cilantro{30%g}` (not `{1%bunch}`).
 
 ## Cookware names
 

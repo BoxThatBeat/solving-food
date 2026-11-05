@@ -20,6 +20,7 @@ import {
   formatMinutes,
   missingTools,
   toolLabel,
+  unitDef,
 } from "@solving-food/core";
 import { db } from "@/firebase/app";
 import { useLiveDoc } from "@/data/live";
@@ -532,7 +533,7 @@ function IngredientsTable({
           {recipe.ingredients.map((l, k) => {
             const ing = ingredients.get(l.ingredientId);
             const t = lineText(l, lookup, factor);
-            const hint = [l.optional ? "OPTIONAL" : "", ing?.freeUse ? "STAPLE" : "", ing ? ing.defaultLocation.toUpperCase() : "", signedIn && ing?.needsReview ? "NEEDS REVIEW" : ""].filter(Boolean).join(" · ");
+            const hint = [l.optional ? "OPTIONAL" : "", ing?.freeUse ? "STAPLE" : "", ing ? ing.defaultLocation.toUpperCase() : "", signedIn && ing?.needsReview ? "NEEDS REVIEW" : "", signedIn && l.amount > 0 && unitDef(l.measure).kind === "container" ? "NEEDS A WEIGHT" : ""].filter(Boolean).join(" · ");
             return (
               <li key={l.id} className={cn("flex items-center gap-2.5 px-3 py-2.5", k && "border-t-2 border-line")}>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">

@@ -31,8 +31,9 @@ const SECONDS: Record<string, number> = { s: 1, sec: 1, second: 1, m: 60, min: 6
 
 function timerSeconds(q: CookQuantity): number | null {
   if (q.amount === null || q.amount <= 0) return null;
-  const u = q.unit.toLowerCase().replace(/s$/, "");
-  const f = SECONDS[u] ?? (u === "" ? 60 : null);
+  // Whole word first: "s" is seconds, not a plural "" (which would read as minutes).
+  const raw = q.unit.trim().toLowerCase().replace(/\.$/, "");
+  const f = raw === "" ? 60 : (SECONDS[raw] ?? SECONDS[raw.replace(/s$/, "")] ?? null);
   return f === null ? null : Math.round(q.amount * f);
 }
 
@@ -52,7 +53,7 @@ interface Mention {
 /** A unit kind used for merging: amounts merge when they share a kind (count nouns only with the same noun). */
 function mergeKey(measure: string): string {
   const def = unitDef(measure);
-  if (def.kind === "count" && !UNITS[measure]) return `noun:${measure}`;
+  if ((def.kind === "count" || def.kind === "container") && !UNITS[measure]) return `noun:${measure}`;
   return def.kind;
 }
 
@@ -130,6 +131,8 @@ export function cooklangToRecipe(source: string, opts: ImportOptions): ImportRes
         });
         lineIndex = lines.length - 1;
         if (!hasAmount && item.quantity.text) warnings.push(`"${item.name}": couldn't read the amount "${item.quantity.text}"`);
+        if (hasAmount && def.kind === "container")
+          warnings.push(`"${item.name}": "${item.quantity.amount} ${item.quantity.unit}" has no weight; set grams in the editor so Supply and the grocery list count it`);
       }
       mentions.push({ stepIndex, itemIndex, lineIndex, part: hasAmount ? { amount: item.quantity.amount!, measure } : null });
     });

@@ -19,7 +19,11 @@ export interface ConvertibleIngredient {
   unitWeightG?: number | undefined;
 }
 
-export type UnitKind = "weight" | "volume" | "count" | "vague";
+/**
+ * `container` (M21): a package or bundle word ("can", "jar", "bunch") whose size varies. It has no canonical value: a
+ * count-weight guess would turn "1 can tomatoes" into one tomato. The line reads as written and asks for a weight.
+ */
+export type UnitKind = "weight" | "volume" | "count" | "vague" | "container";
 
 export interface UnitDef {
   /** Canonical key stored on recipe lines (`measure`). */
@@ -129,6 +133,31 @@ const SYNONYMS: Record<string, string> = {
   pcs: "count",
 };
 
+/**
+ * Package and bundle words (M21, §5): sizes vary, so they never convert through an ingredient's unit weight. Count nouns
+ * that name one natural piece ("clove", "slice", "stalk", "head", "fillet") stay counts. Singular forms; plurals are
+ * singularised before the lookup.
+ */
+export const CONTAINER_WORDS: ReadonlySet<string> = new Set([
+  "can",
+  "tin",
+  "jar",
+  "bottle",
+  "bag",
+  "box",
+  "packet",
+  "pack",
+  "package",
+  "pkg",
+  "container",
+  "carton",
+  "tub",
+  "bunch",
+  "sprig",
+]);
+
+const CONTAINER_DEF: UnitDef = { key: "container", kind: "container", factor: 0, label: ["", ""] };
+
 export interface ParsedUnit {
   def: UnitDef;
   /**
@@ -139,7 +168,10 @@ export interface ParsedUnit {
   measure: string;
 }
 
-/** Recognises a unit as written in a recipe ("Tbsp", "cups", "cloves", ""). Unknown words count pieces. */
+/**
+ * Recognises a unit as written in a recipe ("Tbsp", "cups", "cloves", ""). Package words ("cans", "jar") are
+ * `container`; other unknown words count pieces.
+ */
 export function parseUnit(text: string | undefined | null): ParsedUnit {
   const raw = (text ?? "").trim();
   // "T" is tablespoon in American recipes; "t" teaspoon. Everything else is case-insensitive.
@@ -147,7 +179,9 @@ export function parseUnit(text: string | undefined | null): ParsedUnit {
   const t = raw.toLowerCase().replace(/\.$/, "").replace(/\s+/g, " ");
   const key = UNITS[t] ? t : SYNONYMS[t];
   if (key && UNITS[key]) return { def: UNITS[key], measure: key };
-  return { def: UNITS.count!, measure: t.split(" ").map(singularize).join(" ") };
+  const measure = t.split(" ").map(singularize).join(" ");
+  if (CONTAINER_WORDS.has(measure)) return { def: CONTAINER_DEF, measure };
+  return { def: UNITS.count!, measure };
 }
 
 /** The unit definition behind a stored measure (count nouns are counts). */
@@ -174,16 +208,18 @@ export function unitLabel(measure: string, amount: number): string {
 
 export type CanonicalResult =
   | { ok: true; canonicalAmount: number; canonicalUnit: "g" | "count" }
-  | { ok: false; reason: "vague" | "missingDensity" | "missingUnitWeight" | "measureNotAllowed" };
+  | { ok: false; reason: "vague" | "container" | "missingDensity" | "missingUnitWeight" | "measureNotAllowed" };
 
 /**
  * `toCanonical(amount, measure, ingredient)`: grams (or a count, for count-canonical ingredients).
- * Weight converts by the static table, volume by density, count by unit weight. Vague amounts have no canonical value.
+ * Weight converts by the static table, volume by density, count by unit weight. Vague and container amounts ("a
+ * pinch", "1 can") have no canonical value.
  */
 export function toCanonical(amount: number, measure: string, ingredient: ConvertibleIngredient): CanonicalResult {
   const def = unitDef(measure);
   const a = Math.max(0, amount);
   if (def.kind === "vague") return { ok: false, reason: "vague" };
+  if (def.kind === "container") return { ok: false, reason: "container" };
   if (ingredient.canonicalUnit === "count") {
     if (def.kind === "count") return { ok: true, canonicalAmount: a, canonicalUnit: "count" };
     // A count-canonical ingredient can still accept weights if it knows a unit weight.
@@ -216,7 +252,7 @@ function volumeToGrams(ml: number, ingredient: ConvertibleIngredient): number | 
 export function fromCanonical(canonical: number, measure: string, ingredient: ConvertibleIngredient): number | null {
   const def = unitDef(measure);
   const c = Math.max(0, canonical);
-  if (def.kind === "vague") return null;
+  if (def.kind === "vague" || def.kind === "container") return null;
   const grams = ingredient.canonicalUnit === "count" ? (ingredient.unitWeightG ? c * ingredient.unitWeightG : null) : c;
   if (ingredient.canonicalUnit === "count" && def.kind === "count") return c;
   if (grams === null) return null;
@@ -386,7 +422,7 @@ export function formatRecipeAmount(amount: number, measure: string, _ingredient?
   const original = formatOriginal(amount, measure);
   if (def.kind === "vague") return original;
   if (amount <= 0) return "";
-  if (METRIC.has(def.key) || def.kind === "count" || KITCHEN.has(def.key)) return original;
+  if (METRIC.has(def.key) || def.kind === "count" || def.kind === "container" || KITCHEN.has(def.key)) return original;
   if (def.kind === "weight") return convertedGrams(amount * def.factor);
   return formatMl(amount * def.factor);
 }
@@ -401,8 +437,11 @@ const DEG = String.raw`(?:\s*(?:°|º|˚|degrees?|deg\.?)\s*)`;
 const F_THEN_C = new RegExp(String.raw`(\d{2,3}${DEG}F(?:ahrenheit)?\b|\d{2,3}F\b)\s*[(/]\s*-?\d{2,3}${DEG}?C(?:elsius)?\b\s*\)?`, "g");
 /** A Celsius temperature followed by a bracketed Fahrenheit one: "180°C (350°F)". The Fahrenheit one is kept. */
 const C_THEN_F = new RegExp(String.raw`\d{2,3}${DEG}C(?:elsius)?\b\s*[(/]\s*(\d{2,3}${DEG}?F(?:ahrenheit)?)\b\s*\)?`, "g");
-/** A Celsius temperature on its own: "200°C", "200 degrees C", "200C". */
-const CELSIUS = new RegExp(String.raw`(\d{2,3})(?:${DEG}C(?:elsius)?|C)\b`, "g");
+/**
+ * A Celsius temperature on its own: "200°C", "200 degrees C", "200C", "-18°C". A minus sign counts only when no digit
+ * comes before it ("180-200°C" is a range, not -200).
+ */
+const CELSIUS = new RegExp(String.raw`((?:(?<!\d)[-−])?\d{2,3})(?:${DEG}C(?:elsius)?|C)\b`, "g");
 
 /**
  * Recipe text with temperatures in Fahrenheit only (R8.13 v3, no Celsius ever): "Preheat to 200°C" → "Preheat to
@@ -412,7 +451,7 @@ export function fahrenheitOnly(text: string): string {
   return text
     .replace(F_THEN_C, (_m: string, f: string) => f)
     .replace(C_THEN_F, (_m: string, f: string) => f)
-    .replace(CELSIUS, (_m: string, c: string) => `${celsiusToFahrenheit(Number(c))}°F`);
+    .replace(CELSIUS, (_m: string, c: string) => `${celsiusToFahrenheit(Number(c.replace("−", "-"))) || 0}°F`);
 }
 
 /** Original wording of an amount: "1½ cups", "2 cloves", "8 oz", "2" (count), "a pinch", "" (no amount). */

@@ -400,6 +400,7 @@ Each ingredient declares the **measurements it allows** (R8.3) and one **canonic
 | Volume (`tsp`, `tbsp`, `cup`, `ml`, `L`, `fl oz`) | → ml × `densityGPerMl` | `volume` allowed + density |
 | Count ("2 potatoes") | × `unitWeightG` | `count` allowed + unit weight |
 | Vague ("to taste", "a pinch") | none; `optional: true`, no supply effect | — |
+| Package or bundle ("1 can", "2 jars", "1 bunch"; `CONTAINER_WORDS` in `units.ts`, M21) | none: `toCanonical` reports `container`, so the line keeps its wording but has `canonicalAmount` 0 (no Supply deduction, no grocery need, protein approximate). The importer warns and the recipe page marks the line **NEEDS A WEIGHT**; the editor asks for another unit. Natural pieces ("clove", "slice", "stalk", "head") stay counts | — |
 
 ```
 "2 medium potatoes" → potato (unitWeightG 213)  → 426 g

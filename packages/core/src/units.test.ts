@@ -50,6 +50,14 @@ describe("parseUnit", () => {
     expect(parseUnit("lemons").measure).toBe("lemon");
     expect(parseUnit("clove").measure).toBe("clove");
   });
+
+  it("package and bundle words are containers, not counts (M21)", () => {
+    for (const [text, key] of [["cans", "can"], ["can", "can"], ["jar", "jar"], ["bunches", "bunch"], ["boxes", "box"], ["Packages", "package"], ["sprigs", "sprig"], ["tins", "tin"]] as const) {
+      expect(parseUnit(text)).toMatchObject({ measure: key, def: { kind: "container" } });
+    }
+    for (const noun of ["slices", "stalks", "heads", "fillets"]) expect(parseUnit(noun).def.kind).toBe("count");
+  });
+
 });
 
 describe("toCanonical (spec §5 examples)", () => {
@@ -75,6 +83,11 @@ describe("toCanonical (spec §5 examples)", () => {
     expect(toCanonical(1, "cup", potato)).toEqual({ ok: false, reason: "missingDensity" });
     expect(toCanonical(1, "count", flour)).toEqual({ ok: false, reason: "missingUnitWeight" });
     expect(toCanonical(1, "pinch", flour)).toEqual({ ok: false, reason: "vague" });
+    // "1 can tomatoes" is not one tomato's weight (M21).
+    expect(toCanonical(1, "can", potato)).toEqual({ ok: false, reason: "container" });
+    expect(toCanonical(1, "bunch", garlic)).toEqual({ ok: false, reason: "container" });
+    expect(fromCanonical(100, "jar", potato)).toBeNull();
+    expect(formatRecipeAmount(2, "can")).toBe("2 cans");
   });
   it("weights convert by the static table", () => {
     const r = toCanonical(1, "lb", potato);
@@ -211,6 +224,11 @@ describe("formatting (R8.13)", () => {
     expect(fahrenheitOnly("Roast at 180°C (350°F) until golden")).toBe("Roast at 350°F until golden");
     expect(fahrenheitOnly("Add 2 C-shaped pieces and 3 cups water.")).toBe("Add 2 C-shaped pieces and 3 cups water.");
     expect(fahrenheitOnly("Cook 10 min.")).toBe("Cook 10 min.");
+  });
+  it("negative Celsius stays negative; ranges are not negatives (M21)", () => {
+    expect(fahrenheitOnly("Freeze at -18°C.")).toBe("Freeze at 0°F.");
+    expect(fahrenheitOnly("Chill to −20°C")).toBe("Chill to -5°F");
+    expect(fahrenheitOnly("Bake at 180-200°C")).toBe("Bake at 180-390°F");
   });
   it("count-only ingredients show the count", () => {
     expect(formatAmount(2, bayLeaf, { original: "2 bay leaves" })).toBe("2 bay leaves");
