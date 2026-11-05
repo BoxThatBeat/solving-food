@@ -211,7 +211,8 @@ export function discardLot(lots: readonly LedgerLot[], lotId: string, amount?: n
 
 /**
  * Freezes `amount` of a lot (R8.6). Part of a lot splits off into a new frozen lot `<lotId>-f<n>` (both expiries
- * kept); the whole lot is frozen in place. 0-delta transaction.
+ * kept); the whole lot is frozen in place. Any "Still good" / Set date is cleared so the frozen expiry applies (the
+ * fresh part of a split keeps it). 0-delta transaction.
  */
 export function freezeLot(lots: readonly LedgerLot[], lotId: string, amount: number | undefined, nowMs: number, frozenExpiresMs: number | null): LedgerResult & { frozenLotId: string | null } {
   const out = clone(lots);
@@ -219,7 +220,8 @@ export function freezeLot(lots: readonly LedgerLot[], lotId: string, amount: num
   if (!lot || lot.frozenAtMs) return { lots: out, txs: [], frozenLotId: null };
   const a = amount === undefined ? lot.amount : Math.min(lot.amount, Math.max(0, amount));
   if (a <= EPS) return { lots: out, txs: [], frozenLotId: null };
-  const frozen = { frozenAtMs: nowMs, expiresFrozenMs: frozenExpiresMs, location: "freezer" as StorageLocation };
+  // A "Still good" or Set date (R8.15, R8.18) was about the fresh lot; once frozen the frozen expiry applies.
+  const frozen = { frozenAtMs: nowMs, expiresFrozenMs: frozenExpiresMs, location: "freezer" as StorageLocation, expiryExtendedToMs: null };
   if (lot.amount - a <= EPS) {
     Object.assign(lot, frozen);
     return { lots: out, txs: [{ delta: 0, kind: "freeze", lotId }], frozenLotId: lotId };

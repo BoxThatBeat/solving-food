@@ -121,6 +121,15 @@ describe("corrections, discards, freezing", () => {
     expect(activeExpiry(frozen)).toBe(NOW + 180 * DAY);
     expect(sum(r.txs)).toBe(0);
   });
+  it("freezing after Still good uses the frozen expiry, not the short extension (M21)", () => {
+    const extended = extendExpiry([lot("a", 300, -1)], "a", NOW + 2 * DAY).lots;
+    const whole = freezeLot(extended, "a", undefined, NOW, NOW + 90 * DAY).lots[0]!;
+    expect(whole.expiryExtendedToMs).toBeNull();
+    expect(activeExpiry(whole)).toBe(NOW + 90 * DAY);
+    const split = freezeLot(extended, "a", 100, NOW, NOW + 90 * DAY).lots;
+    expect(activeExpiry(split.find((l) => l.lotId === "a-f1")!)).toBe(NOW + 90 * DAY);
+    expect(activeExpiry(split.find((l) => l.lotId === "a")!)).toBe(NOW + 2 * DAY);
+  });
   it("thaws back to the fridge with a short fresh life", () => {
     const frozen = lot("f", 500, -10, { frozenAtMs: NOW - 20 * DAY, expiresFrozenMs: NOW + 100 * DAY, location: "freezer" });
     const r = thawLot([frozen], "f", undefined, NOW + 2 * DAY);
