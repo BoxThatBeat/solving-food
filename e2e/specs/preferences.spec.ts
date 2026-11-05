@@ -1,5 +1,6 @@
 // preferences.spec.ts (Planning/M5 "settings", "plan"): food preferences (likes, dislikes, diets as hard filters),
-// protein goals per meal type with on/off, and the Plan page's protein summary against the goal.
+// protein goals per meal type with on/off (Settings → Nutrition goals since M20), and the Plan page's protein summary
+// against the goal.
 import { adminDb } from "../fixtures/admin";
 import { expect, test } from "../fixtures/test";
 import { makePlanRecipe, PlanPage, seedPeriod, seedPlanItem } from "../pages/plan";
@@ -44,7 +45,7 @@ test("protein goals per meal type, each on or off; the plan shows its average ne
   const r = await makePlanRecipe("Protein check");
   const pid = await seedPeriod(household.hid);
   await seedPlanItem(household.hid, pid, [r.id]);
-  await page.goto("/settings/preferences");
+  await page.goto("/settings/nutrition");
   const dinner = page.getByRole("switch", { name: "Dinner protein goal" });
   await expect(dinner).toHaveAttribute("aria-checked", "false");
   await dinner.click();
@@ -59,7 +60,7 @@ test("protein goals per meal type, each on or off; the plan shows its average ne
   await expect(page.getByTestId("protein-breakfast")).toContainText("no goal");
 
   // Off again.
-  await page.goto("/settings/preferences");
+  await page.goto("/settings/nutrition");
   await expect(page.getByRole("switch", { name: "Dinner protein goal" })).toHaveAttribute("aria-checked", "true");
   await page.getByRole("switch", { name: "Dinner protein goal" }).click();
   await expect.poll(async () => (await adminDb.doc(`households/${household.hid}`).get()).data()?.settings?.proteinGoals).toEqual({});
@@ -69,7 +70,7 @@ test("fibre goals per meal type, like protein; the plan shows the fibre average 
   const r = await makePlanRecipe("Fibre check", { lines: "Simmer @pearl barley{200%g} with @chicken thigh{600%g}." });
   const pid = await seedPeriod(household.hid);
   await seedPlanItem(household.hid, pid, [r.id]);
-  await page.goto("/settings/preferences");
+  await page.goto("/settings/nutrition");
   const dinner = page.getByRole("switch", { name: "Dinner fibre goal" });
   await expect(dinner).toHaveAttribute("aria-checked", "false");
   await dinner.click();
@@ -89,7 +90,7 @@ test("one switch hides protein and fibre everywhere and keeps the goals; switchi
   await seedPlanItem(household.hid, pid, [r.id]);
   await adminDb.doc(`households/${household.hid}`).update({ "settings.proteinGoals": { dinner: 40 }, "settings.fibreGoals": { dinner: 8 } });
 
-  await page.goto("/settings/preferences");
+  await page.goto("/settings/nutrition");
   const sw = page.getByRole("switch", { name: "Track protein and fibre" });
   await expect(sw).toHaveAttribute("aria-checked", "true");
   await sw.click();
@@ -123,7 +124,7 @@ test("one switch hides protein and fibre everywhere and keeps the goals; switchi
   await expect(page.getByTestId("meta-fibre")).toHaveCount(0);
 
   // Back on: everything returns, with the goals as they were.
-  await page.goto("/settings/preferences");
+  await page.goto("/settings/nutrition");
   await expect(page.getByRole("switch", { name: "Track protein and fibre" })).toHaveAttribute("aria-checked", "false");
   await page.getByRole("switch", { name: "Track protein and fibre" }).click();
   await expect(page.getByRole("switch", { name: "Dinner protein goal" })).toHaveAttribute("aria-checked", "true");

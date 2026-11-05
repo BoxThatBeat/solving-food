@@ -28,11 +28,13 @@ import { Route as AppRecipesNewRouteImport } from './routes/_app/recipes/new'
 import { Route as AppRecipesTrashRouteImport } from './routes/_app/recipes/trash'
 import { Route as AppReviewEventIdRouteImport } from './routes/_app/review/$eventId'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
+import { Route as AppSettingsAccountRouteImport } from './routes/_app/settings/account'
 import { Route as AppSettingsBrandsRouteImport } from './routes/_app/settings/brands'
 import { Route as AppSettingsDataRouteImport } from './routes/_app/settings/data'
 import { Route as AppSettingsGeminiRouteImport } from './routes/_app/settings/gemini'
 import { Route as AppSettingsHouseholdRouteImport } from './routes/_app/settings/household'
 import { Route as AppSettingsMembersRouteImport } from './routes/_app/settings/members'
+import { Route as AppSettingsNutritionRouteImport } from './routes/_app/settings/nutrition'
 import { Route as AppSettingsPreferencesRouteImport } from './routes/_app/settings/preferences'
 import { Route as AppSettingsSidesRouteImport } from './routes/_app/settings/sides'
 import { Route as AppSettingsStoresRouteImport } from './routes/_app/settings/stores'
@@ -142,6 +144,11 @@ const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
   path: '/settings/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsAccountRoute = AppSettingsAccountRouteImport.update({
+  id: '/settings/account',
+  path: '/settings/account',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsBrandsRoute = AppSettingsBrandsRouteImport.update({
   id: '/settings/brands',
   path: '/settings/brands',
@@ -165,6 +172,11 @@ const AppSettingsHouseholdRoute = AppSettingsHouseholdRouteImport.update({
 const AppSettingsMembersRoute = AppSettingsMembersRouteImport.update({
   id: '/settings/members',
   path: '/settings/members',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsNutritionRoute = AppSettingsNutritionRouteImport.update({
+  id: '/settings/nutrition',
+  path: '/settings/nutrition',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSettingsPreferencesRoute = AppSettingsPreferencesRouteImport.update({
@@ -253,11 +265,13 @@ export interface FileRoutesByFullPath {
   '/recipes/new': typeof AppRecipesNewRoute
   '/recipes/trash': typeof AppRecipesTrashRoute
   '/review/$eventId': typeof AppReviewEventIdRoute
+  '/settings/account': typeof AppSettingsAccountRoute
   '/settings/brands': typeof AppSettingsBrandsRoute
   '/settings/data': typeof AppSettingsDataRoute
   '/settings/gemini': typeof AppSettingsGeminiRoute
   '/settings/household': typeof AppSettingsHouseholdRoute
   '/settings/members': typeof AppSettingsMembersRoute
+  '/settings/nutrition': typeof AppSettingsNutritionRoute
   '/settings/preferences': typeof AppSettingsPreferencesRoute
   '/settings/sides': typeof AppSettingsSidesRoute
   '/settings/stores': typeof AppSettingsStoresRoute
@@ -292,11 +306,13 @@ export interface FileRoutesByTo {
   '/recipes/new': typeof AppRecipesNewRoute
   '/recipes/trash': typeof AppRecipesTrashRoute
   '/review/$eventId': typeof AppReviewEventIdRoute
+  '/settings/account': typeof AppSettingsAccountRoute
   '/settings/brands': typeof AppSettingsBrandsRoute
   '/settings/data': typeof AppSettingsDataRoute
   '/settings/gemini': typeof AppSettingsGeminiRoute
   '/settings/household': typeof AppSettingsHouseholdRoute
   '/settings/members': typeof AppSettingsMembersRoute
+  '/settings/nutrition': typeof AppSettingsNutritionRoute
   '/settings/preferences': typeof AppSettingsPreferencesRoute
   '/settings/sides': typeof AppSettingsSidesRoute
   '/settings/stores': typeof AppSettingsStoresRoute
@@ -333,11 +349,13 @@ export interface FileRoutesById {
   '/_app/recipes/new': typeof AppRecipesNewRoute
   '/_app/recipes/trash': typeof AppRecipesTrashRoute
   '/_app/review/$eventId': typeof AppReviewEventIdRoute
+  '/_app/settings/account': typeof AppSettingsAccountRoute
   '/_app/settings/brands': typeof AppSettingsBrandsRoute
   '/_app/settings/data': typeof AppSettingsDataRoute
   '/_app/settings/gemini': typeof AppSettingsGeminiRoute
   '/_app/settings/household': typeof AppSettingsHouseholdRoute
   '/_app/settings/members': typeof AppSettingsMembersRoute
+  '/_app/settings/nutrition': typeof AppSettingsNutritionRoute
   '/_app/settings/preferences': typeof AppSettingsPreferencesRoute
   '/_app/settings/sides': typeof AppSettingsSidesRoute
   '/_app/settings/stores': typeof AppSettingsStoresRoute
@@ -374,11 +392,13 @@ export interface FileRouteTypes {
     | '/recipes/new'
     | '/recipes/trash'
     | '/review/$eventId'
+    | '/settings/account'
     | '/settings/brands'
     | '/settings/data'
     | '/settings/gemini'
     | '/settings/household'
     | '/settings/members'
+    | '/settings/nutrition'
     | '/settings/preferences'
     | '/settings/sides'
     | '/settings/stores'
@@ -413,11 +433,13 @@ export interface FileRouteTypes {
     | '/recipes/new'
     | '/recipes/trash'
     | '/review/$eventId'
+    | '/settings/account'
     | '/settings/brands'
     | '/settings/data'
     | '/settings/gemini'
     | '/settings/household'
     | '/settings/members'
+    | '/settings/nutrition'
     | '/settings/preferences'
     | '/settings/sides'
     | '/settings/stores'
@@ -453,11 +475,13 @@ export interface FileRouteTypes {
     | '/_app/recipes/new'
     | '/_app/recipes/trash'
     | '/_app/review/$eventId'
+    | '/_app/settings/account'
     | '/_app/settings/brands'
     | '/_app/settings/data'
     | '/_app/settings/gemini'
     | '/_app/settings/household'
     | '/_app/settings/members'
+    | '/_app/settings/nutrition'
     | '/_app/settings/preferences'
     | '/_app/settings/sides'
     | '/_app/settings/stores'
@@ -622,6 +646,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/account': {
+      id: '/_app/settings/account'
+      path: '/settings/account'
+      fullPath: '/settings/account'
+      preLoaderRoute: typeof AppSettingsAccountRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/brands': {
       id: '/_app/settings/brands'
       path: '/settings/brands'
@@ -655,6 +686,13 @@ declare module '@tanstack/react-router' {
       path: '/settings/members'
       fullPath: '/settings/members'
       preLoaderRoute: typeof AppSettingsMembersRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings/nutrition': {
+      id: '/_app/settings/nutrition'
+      path: '/settings/nutrition'
+      fullPath: '/settings/nutrition'
+      preLoaderRoute: typeof AppSettingsNutritionRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/settings/preferences': {
@@ -768,11 +806,13 @@ interface AppRouteChildren {
   AppRecipesNewRoute: typeof AppRecipesNewRoute
   AppRecipesTrashRoute: typeof AppRecipesTrashRoute
   AppReviewEventIdRoute: typeof AppReviewEventIdRoute
+  AppSettingsAccountRoute: typeof AppSettingsAccountRoute
   AppSettingsBrandsRoute: typeof AppSettingsBrandsRoute
   AppSettingsDataRoute: typeof AppSettingsDataRoute
   AppSettingsGeminiRoute: typeof AppSettingsGeminiRoute
   AppSettingsHouseholdRoute: typeof AppSettingsHouseholdRoute
   AppSettingsMembersRoute: typeof AppSettingsMembersRoute
+  AppSettingsNutritionRoute: typeof AppSettingsNutritionRoute
   AppSettingsPreferencesRoute: typeof AppSettingsPreferencesRoute
   AppSettingsSidesRoute: typeof AppSettingsSidesRoute
   AppSettingsStoresRoute: typeof AppSettingsStoresRoute
@@ -803,11 +843,13 @@ const AppRouteChildren: AppRouteChildren = {
   AppRecipesNewRoute: AppRecipesNewRoute,
   AppRecipesTrashRoute: AppRecipesTrashRoute,
   AppReviewEventIdRoute: AppReviewEventIdRoute,
+  AppSettingsAccountRoute: AppSettingsAccountRoute,
   AppSettingsBrandsRoute: AppSettingsBrandsRoute,
   AppSettingsDataRoute: AppSettingsDataRoute,
   AppSettingsGeminiRoute: AppSettingsGeminiRoute,
   AppSettingsHouseholdRoute: AppSettingsHouseholdRoute,
   AppSettingsMembersRoute: AppSettingsMembersRoute,
+  AppSettingsNutritionRoute: AppSettingsNutritionRoute,
   AppSettingsPreferencesRoute: AppSettingsPreferencesRoute,
   AppSettingsSidesRoute: AppSettingsSidesRoute,
   AppSettingsStoresRoute: AppSettingsStoresRoute,

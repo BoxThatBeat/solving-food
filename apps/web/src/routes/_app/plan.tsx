@@ -357,7 +357,7 @@ function ProteinCard({
           {fibre[t] || fibreGoals[t] !== undefined ? bar(`fibre-${t}`, `${MEAL_LABEL[t]} · fibre`, fibre[t], fibreGoals[t]) : null}
         </div>
       ))}
-      <Link to="/settings/preferences" className="text-[0.75rem] font-bold text-ink underline">
+      <Link to="/settings/nutrition" className="text-[0.75rem] font-bold text-ink underline">
         Protein and fibre goals
       </Link>
     </section>
