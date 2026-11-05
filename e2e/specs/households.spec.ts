@@ -168,16 +168,18 @@ test("invite by email: the newcomer signs up on their phone, sees the invite, jo
 test("invite by name: someone with an account gets a banner on any page, joins, and switches between households", { tag: ["@R2.4", "@R2.2", "@R11.8"] }, async ({ page, household: _owner, browser, uniqueEmail }) => {
   const email = uniqueEmail("kim");
   await allowlist(email);
-  const kim = await newDevice(browser, email, "Kimberly Quinn");
-  await seedHousehold(kim.uid, "Kimberly Quinn", "Quinn Flat");
+  // The directory is global and both projects share one emulator: a name of her own, so only she matches.
+  const kimName = `Kimberly Quinn ${email.split("@")[0]!.slice(-6)}`;
+  const kim = await newDevice(browser, email, kimName);
+  await seedHousehold(kim.uid, kimName, "Quinn Flat");
   await expect(kim.page).toHaveURL(/\/recipes$/, { timeout: 20_000 });
 
   await openMembers(page);
   await page.getByLabel("Search people by name").fill("kimberly q");
   const people = page.getByRole("list", { name: "People" });
-  await people.getByRole("button", { name: "Invite Kimberly Quinn" }).click();
-  await expect(page.getByText("Invite sent to Kimberly Quinn.")).toBeVisible();
-  await expect(people.getByRole("button", { name: "Kimberly Quinn invited" })).toBeDisabled();
+  await people.getByRole("button", { name: `Invite ${kimName}` }).click();
+  await expect(page.getByText(`Invite sent to ${kimName}.`)).toBeVisible();
+  await expect(people.getByRole("button", { name: `${kimName} invited` })).toBeDisabled();
   await expect(page.getByRole("list", { name: "Pending invites" })).toContainText("invited by name");
 
   // Kim is on Recipes in her own household; the banner appears there without a reload.
@@ -199,11 +201,12 @@ test("invite by name: someone with an account gets a banner on any page, joins, 
 test("an invite can be declined, or cancelled by the household", { tag: ["@R2.4"] }, async ({ page, household, browser, uniqueEmail }) => {
   const email = uniqueEmail("dee");
   await allowlist(email);
-  const dee = await newDevice(browser, email, "Deedee");
+  const deeName = `Deedee ${email.split("@")[0]!.slice(-6)}`; // the directory is shared by both projects' runs
+  const dee = await newDevice(browser, email, deeName);
   await expect(dee.page).toHaveURL(/\/welcome\/household$/);
   await openMembers(page);
-  await page.getByLabel("Search people by name").fill("Deedee");
-  await page.getByRole("button", { name: "Invite Deedee" }).click();
+  await page.getByLabel("Search people by name").fill(deeName);
+  await page.getByRole("button", { name: `Invite ${deeName}` }).click();
   await page.getByLabel("Email address").fill("someone.new@example.com");
   await page.getByRole("button", { name: "Invite", exact: true }).click();
   const pending = page.getByRole("list", { name: "Pending invites" });

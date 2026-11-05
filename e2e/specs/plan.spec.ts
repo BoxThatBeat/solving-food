@@ -1,7 +1,7 @@
 // plan.spec.ts, M2 parts (TECHNICAL_SPECS §14.1): Create meal with one recipe, with several, and from a saved meal;
 // the Add to plan shortcut; remove; default servings; meal types; the coverage strip; the budget meter; landing.
 // Expiry badges, protein goals, and receiving are later milestones.
-import { adminDb } from "../fixtures/admin";
+import { adminDb, eventually } from "../fixtures/admin";
 import { forgetIngredients, seedRecipeId } from "../fixtures/recipes";
 import { expect, test } from "../fixtures/test";
 import { CHICKEN_LINES, cook, makePlanRecipe, PlanPage, planItems, seedPeriod, seedPlanItem } from "../pages/plan";
@@ -18,7 +18,7 @@ test.describe("Create meal (R5.7)", () => {
     await expect(page.getByRole("region", { name: "Lunch" })).toContainText(r.title);
     await expect(plan.item(r.title)).toContainText("2 servings");
 
-    const [it] = await planItems(household.hid);
+    const [it] = await eventually(() => planItems(household.hid), (x) => x.length === 1);
     expect(it).toMatchObject({ kind: "meal", mealType: "lunch", servings: 2, status: "planned", recipes: [{ recipeId: r.id, servingsMultiplier: 1 }], coverage: { lunch: 1 }, addedBy: household.uid });
     expect(it!.savedMealId).toBeUndefined();
   });
@@ -38,7 +38,7 @@ test.describe("Create meal (R5.7)", () => {
     await plan.createMeal({ recipes: [b.title], mealType: "Snack" });
     await expect(page.getByRole("region", { name: "Snack" })).toContainText(b.title);
     await expect(plan.stripCount("dinner")).toHaveText("1/7");
-    const items = await planItems(household.hid);
+    const items = await eventually(() => planItems(household.hid), (x) => x.length === 2);
     expect(items.find((i) => i.mealType === "snack")!.coverage).toEqual({});
     expect(items.find((i) => i.mealType === "dinner")!.recipes).toHaveLength(2);
   });
@@ -60,11 +60,13 @@ test.describe("Create meal (R5.7)", () => {
     await expect(page.getByRole("dialog", { name: "Add to plan" }).getByTestId("create-meal-title")).toHaveText(r.title);
     await plan.finish({ mealType: "Dinner" });
     await expect(page.getByTestId("notifications")).toContainText("Added to plan · dinner");
+    // The sheet closes on the local write (M23); let it reach the server before a full page load.
+    await expect.poll(async () => (await planItems(household.hid)).length).toBe(1);
 
     await page.goto(`/recipes?q=${encodeURIComponent(r.title)}`);
     await page.getByRole("button", { name: `Add ${r.title} to plan` }).click();
     await plan.finish({ mealType: "Lunch" });
-    expect((await planItems(household.hid)).map((i) => i.mealType).sort()).toEqual(["dinner", "lunch"]);
+    await expect.poll(async () => (await planItems(household.hid)).map((i) => i.mealType).sort()).toEqual(["dinner", "lunch"]);
   });
 
   test("a trashed recipe has no Add to plan, and existing items show it as in Trash (R4.26)", async ({ page, household }) => {
@@ -316,7 +318,7 @@ test.describe("eating out (M9)", () => {
     await expect(plan.stripCount("dinner")).toHaveText("2/7");
     // Nothing to buy: the budget is untouched.
     await expect(plan.budgetLeft()).toHaveText("$100.00");
-    const items = await planItems(household.hid);
+    const items = await eventually(() => planItems(household.hid), (x) => x.some((i) => i.kind === "out"));
     expect(items.find((i) => i.kind === "out")).toMatchObject({ kind: "out", mealType: "dinner", recipes: [], servings: 1, coverage: { dinner: 1 }, status: "planned", name: "Pizza at Mom's" });
     await page.goto("/grocery");
     await expect(page.getByText("Building the list…")).toHaveCount(0);

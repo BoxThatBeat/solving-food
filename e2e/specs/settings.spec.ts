@@ -152,6 +152,8 @@ test("brand mappings: add one by hand; the grocery list uses its name and pack (
   await page.getByRole("button", { name: "Save brand" }).click();
   const row = page.getByTestId("brand-row").filter({ hasText: "Organic baby spinach clamshell" });
   await expect(row).toContainText("142 g");
+  // Saved on the local write (M23): let it reach the server before a full page load.
+  await expect.poll(async () => (await adminDb.doc(`households/${household.hid}/brandMappings/baby-spinach`).get()).exists).toBe(true);
   await page.goto("/grocery");
   const line = page.getByTestId("grocery-line").filter({ hasText: "Organic baby spinach clamshell" });
   await expect(line).toContainText("×1"); // 140 g needed, 142 g pack

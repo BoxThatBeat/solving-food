@@ -1,7 +1,7 @@
 // meals.spec.ts, M2 parts (TECHNICAL_SPECS §14.1): the saved meals list with edit, favourite, share; "Save as meal"
 // from Create meal and from the plan; a saved meal picked in Create meal remembers which one. Recipe order while
 // cooking and the review flow's "Save this meal?" and ratings are M3; here ratings only show from stats.
-import { adminDb } from "../fixtures/admin";
+import { adminDb, eventually } from "../fixtures/admin";
 import { expect, test } from "../fixtures/test";
 import { makePlanRecipe, PlanPage, planItems, seedPeriod, seedPlanItem } from "../pages/plan";
 
@@ -23,16 +23,16 @@ test("Save as meal while creating it; then plan the saved meal again from the Sa
   await expect(plan.item(name)).toBeVisible();
   await expect(plan.item(name)).toContainText("Saved meal");
 
-  const [meal] = await mealsNamed(name);
+  const [meal] = await eventually(() => mealsNamed(name), (x) => x.length === 1);
   expect(meal).toMatchObject({ name, createdBy: household.uid });
   expect(meal!.recipes.map((r) => r.recipeId)).toEqual([a.id, b.id, c.id]);
-  const first = (await planItems(household.hid))[0]!;
+  const first = (await eventually(() => planItems(household.hid), (x) => x.length === 1))[0]!;
   expect(first.savedMealId).toBe(meal!.id);
 
   // The saved meal is in the Meals list and can be picked in Create meal; the new item remembers it.
   await plan.createMeal({ savedMeal: name, mealType: "Dinner" });
   await expect(plan.item(name)).toHaveCount(2);
-  const items = await planItems(household.hid);
+  const items = await eventually(() => planItems(household.hid), (x) => x.length === 2);
   expect(items.every((i) => i.savedMealId === meal!.id)).toBe(true);
   await expect(plan.stripCount("dinner")).toHaveText("2/7");
 });
@@ -50,7 +50,7 @@ test("Save as meal later, from a planned item (R5.8)", { tag: ["@R5.8"] }, async
   await sheet.getByLabel("Meal name").fill(name);
   await sheet.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByTestId("notifications")).toContainText(`Saved “${name}” to Meals`);
-  const [meal] = await mealsNamed(name);
+  const [meal] = await eventually(() => mealsNamed(name), (x) => x.length === 1);
   expect(meal!.recipes).toHaveLength(2);
   await expect.poll(async () => (await adminDb.doc(`households/${household.hid}/planItems/${id}`).get()).data()?.savedMealId).toBe(meal!.id);
 });

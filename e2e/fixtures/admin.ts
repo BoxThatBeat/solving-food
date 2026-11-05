@@ -86,3 +86,17 @@ export async function loadSeed(docs: Record<string, Record<string, unknown>>, va
   for (const [path, data] of Object.entries(docs)) batch.set(adminDb.doc(sub(path)), conv(data) as Record<string, unknown>);
   await batch.commit();
 }
+
+/**
+ * An admin read after a write the app doesn't wait for (M23: sheets close on the local write, so the server may not have
+ * it yet): reads again until `ready` holds, then returns the value. Times out like `expect.poll`.
+ */
+export async function eventually<T>(read: () => Promise<T>, ready: (v: T) => boolean, timeoutMs = 15_000): Promise<T> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const v = await read();
+    if (ready(v)) return v;
+    if (Date.now() > deadline) throw new Error(`eventually: still not ready after ${timeoutMs} ms: ${JSON.stringify(v)?.slice(0, 300)}`);
+    await new Promise((r) => setTimeout(r, 200));
+  }
+}

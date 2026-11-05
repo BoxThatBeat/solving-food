@@ -10,7 +10,7 @@ import {
   deleteDoc,
   deleteField,
   doc,
-  getDocFromServer,
+  runTransaction,
   getDocsFromServer,
   query,
   serverTimestamp,
@@ -141,42 +141,44 @@ async function writeNextVersion(
 ): Promise<number> {
   if (!isOnline()) throw new OfflineError();
   const ref = doc(db, "recipes", id);
-  const snap = await getDocFromServer(ref);
-  if (!snap.exists()) throw new Error("This recipe no longer exists");
-  const current = snap.data() as StoredRecipe;
-  if (opts.expectedVersion !== undefined && current.version !== opts.expectedVersion) throw new EditedElsewhereError(current);
+  // A transaction reads the server's copy (M23): getDocFromServer can answer from a listener already open on the same
+  // document before another member's save has reached it, so the version check missed their save under load.
+  return runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) throw new Error("This recipe no longer exists");
+    const current = snap.data() as StoredRecipe;
+    if (opts.expectedVersion !== undefined && current.version !== opts.expectedVersion) throw new EditedElsewhereError(current);
 
-  const content = opts.content ?? contentOf(current);
-  const derived = deriveRecipe(content, lookup);
-  const status = opts.change?.status ?? current.status;
-  const next: Record<string, unknown> = {
-    ...content,
-    ...derived,
-    status,
-    createdBy: current.createdBy,
-    createdAt: current.createdAt,
-    updatedBy: uid,
-    updatedAt: serverTimestamp(),
-    version: current.version + 1,
-  };
-  if (current.possibleDuplicateOf && !opts.change?.clearDuplicate && status === "pendingDuplicateReview") next.possibleDuplicateOf = current.possibleDuplicateOf;
-  if (status === "trashed") {
-    if (opts.change?.trash === "set" || !current.trashedAt) {
-      next.trashedAt = serverTimestamp();
-      next.trashedBy = uid;
-    } else {
-      next.trashedAt = current.trashedAt;
-      next.trashedBy = current.trashedBy;
+    const content = opts.content ?? contentOf(current);
+    const derived = deriveRecipe(content, lookup);
+    const status = opts.change?.status ?? current.status;
+    const next: Record<string, unknown> = {
+      ...content,
+      ...derived,
+      status,
+      createdBy: current.createdBy,
+      createdAt: current.createdAt,
+      updatedBy: uid,
+      updatedAt: serverTimestamp(),
+      version: current.version + 1,
+    };
+    if (current.possibleDuplicateOf && !opts.change?.clearDuplicate && status === "pendingDuplicateReview") next.possibleDuplicateOf = current.possibleDuplicateOf;
+    if (status === "trashed") {
+      if (opts.change?.trash === "set" || !current.trashedAt) {
+        next.trashedAt = serverTimestamp();
+        next.trashedBy = uid;
+      } else {
+        next.trashedAt = current.trashedAt;
+        next.trashedBy = current.trashedBy;
+      }
     }
-  }
-  const write: Record<string, unknown> = { ...next };
-  for (const k of OPTIONAL_KEYS) if (!(k in next)) write[k] = deleteField();
+    const write: Record<string, unknown> = { ...next };
+    for (const k of OPTIONAL_KEYS) if (!(k in next)) write[k] = deleteField();
 
-  const b = writeBatch(db);
-  b.set(ref, write, { merge: true });
-  b.set(doc(db, "recipes", id, "versions", String(next.version)), { ...next, editedBy: uid, editedAt: serverTimestamp() });
-  await b.commit();
-  return next.version as number;
+    tx.set(ref, write, { merge: true });
+    tx.set(doc(db, "recipes", id, "versions", String(next.version)), { ...next, editedBy: uid, editedAt: serverTimestamp() });
+    return next.version as number;
+  });
 }
 
 /** Creates a recipe (version 1 + snapshot). Returns its ID. */
