@@ -139,6 +139,8 @@ where the bytes were.
 - **Design-compare:** Plan (phone and desktop: same shell, tab bar and side nav with badges) and the recipe page's
   servings stepper (now `<Stepper compact>`: Lucide minus/plus instead of text glyphs, same size) against the prototype;
   no other layout changed. History's Show more uses the standard secondary button.
+- **CI fix after the push (M24 start):** `pwa.spec.ts` failed on phone-android: with one navigation per width the
+  phone mounted no `SyncStatus`, so nothing said OFFLINE on a phone. The phone header now shows an OFFLINE badge.
 - **Verification:** typecheck and lint clean; unit 698 → 701 (core) and 37 → 48 (web); `pnpm e2e:coverage` green. The
   full two-project run was stopped twice by memory pressure (7.6 GB machine), so e2e ran in batches with
   `--workers=2` on phone-android and desktop-1080p. The coordinator's rerun of 14 specs found three regressions, fixed:

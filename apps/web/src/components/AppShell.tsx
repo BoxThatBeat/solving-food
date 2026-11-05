@@ -99,11 +99,23 @@ function SyncStatus() {
 
 // ---------- phone
 
+/** Phones have no side navigation (M23 mounts one navigation per width), so the header says when the app is offline. */
+function PhoneOffline() {
+  const online = useOnline();
+  if (online) return null;
+  return (
+    <span role="status" className="flex items-center gap-1 rounded-ui border-2 border-line bg-peach px-1.5 py-0.5 font-mono text-[0.625rem] font-bold text-onc" data-testid="phone-offline">
+      OFFLINE
+    </span>
+  );
+}
+
 function PhoneHeader() {
   const { name, memberNames } = useHouseholdSummary();
   return (
     <header className="flex flex-none items-center justify-between gap-2 px-4 pt-[max(0.375rem,env(safe-area-inset-top))] pb-2">
       <Wordmark />
+      <PhoneOffline />
       <HouseholdSheet>
         <SheetTrigger
           className="cursor-pointer whitespace-nowrap rounded-ui border-2 border-line bg-base px-2.5 py-2 font-mono text-[0.6875rem] font-bold text-ink uppercase shadow-hard-sm"
