@@ -237,9 +237,11 @@ export async function removeMember(hid: string, uid: string): Promise<void> {
 
 export async function leaveHousehold(hid: string, me: { uid: string }, otherHouseholds: readonly string[]): Promise<void> {
   const next = nextActiveHousehold(hid, otherHouseholds);
-  // Switch first, so the shell doesn't flash the household that's going away.
-  await updateDoc(doc(db, "users", me.uid), { activeHouseholdId: next });
+  // Leave first, then switch (M23): a failed delete leaves the person in the household they still belong to, instead of
+  // switching away from it. The membership listener drops the household as soon as the delete is written locally, so
+  // the shell moves on by itself; the profile write just records the choice.
   await deleteDoc(doc(db, "households", hid, "members", me.uid));
+  await updateDoc(doc(db, "users", me.uid), { activeHouseholdId: next });
 }
 
 /**
