@@ -1,8 +1,8 @@
 # M4 — Households
 
-Status: in progress
+Status: done (owner sign-off 2026-11-05)
 
-Waiting on the owner: invite the spouse by email and see them join Silbrass Pvt on their phone; a second household planned independently (no shared Supply); export one household and import it into a fresh one; last-member leave in a throwaway household (never Silbrass Pvt). Pushing `master` and the CI matrix are done.
+Owner checks (signed off 2026-11-05; the milestone was marked done by the owner): invite the spouse by email and see them join Silbrass Pvt on their phone; a second household planned independently (no shared Supply); export one household and import it into a fresh one; last-member leave in a throwaway household (never Silbrass Pvt). Pushing `master` and the CI matrix are done.
 
 ## Verification (2026-10-10)
 

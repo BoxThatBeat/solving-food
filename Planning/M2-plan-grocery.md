@@ -1,8 +1,8 @@
 # M2 — Plan + Grocery
 
-Status: in progress
+Status: done (owner sign-off 2026-11-05)
 
-Waiting on the owner: the timed 7-day plan on a real phone (three dinners, a saved taco night, one dinner from it; 5/7 and the budget going down) and pasting the copied list into ChatGPT. Pushing `master` and the CI matrix are done.
+Owner checks (signed off 2026-11-05; the milestone was marked done by the owner): the timed 7-day plan on a real phone (three dinners, a saved taco night, one dinner from it; 5/7 and the budget going down) and pasting the copied list into ChatGPT. Pushing `master` and the CI matrix are done.
 
 All 27 work-breakdown tasks are built and verified (2026-10-10), deployed, and every M2 requirement ID has a passing,
 tagged Playwright test. Only owner-side checks remain (see "What's left for the owner"); then set `Status: done` and

@@ -1,8 +1,8 @@
 # M1 — Recipes
 
-Status: in progress
+Status: done (owner sign-off 2026-11-05)
 
-Waiting on the owner: import 20 real family recipes through the Claude skill and the drop folder (all arrive with images), and sign off the recipe pages on a real phone. Pushing `master` and the CI matrix are done.
+Owner checks (signed off 2026-11-05; the milestone was marked done by the owner): import 20 real family recipes through the Claude skill and the drop folder (all arrive with images), and sign off the recipe pages on a real phone. Pushing `master` and the CI matrix are done.
 
 All 30 work-breakdown tasks are built and verified (2026-10-10). The 28 household recipes and the 475-ingredient
 seed are live, the app is deployed, and every M1 requirement ID has a passing, tagged Playwright test.
