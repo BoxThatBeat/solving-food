@@ -28,6 +28,7 @@ import {
   type CommandType,
   type CookEventDoc,
   type LedgerLot,
+  type PeriodDoc,
   type ProjectedDoc,
   type RatingDoc,
   type TransactionDoc,
@@ -216,25 +217,41 @@ export function useLedger(hid: string, supplyId: string) {
 
 export type StoredEvent = CookEventDoc & { cookedAt: { toMillis(): number } };
 
-export function useCookEvents(hid: string | null) {
-  return useLiveQuery<StoredEvent>(hid ? query(collection(db, "households", hid, "cookEvents"), orderBy("cookedAt", "desc"), limit(300)) : null, hid ? `${hh(hid, "cookEvents")}?recent` : null);
+/** The newest cook events (suggestions read the last 300; History pages through them with Show more). */
+export function useCookEvents(hid: string | null, max = 300) {
+  return useLiveQuery<StoredEvent>(hid ? query(collection(db, "households", hid, "cookEvents"), orderBy("cookedAt", "desc"), limit(max)) : null, hid ? `${hh(hid, "cookEvents")}?recent=${max}` : null);
 }
 
 export function useCookEvent(hid: string, id: string | null) {
   return useLiveDoc<StoredEvent>(id ? doc(db, "households", hid, "cookEvents", id) : null, id ? hh(hid, "cookEvents", id) : null);
 }
 
-export function useRatings(hid: string | null) {
-  return useLiveQuery<RatingDoc>(hid ? collection(db, "households", hid, "ratings") : null, hid ? hh(hid, "ratings") : null);
+/** The newest ratings (M23: bounded; History's per-cuisine averages read these). */
+export const RATINGS_LIMIT = 500;
+export function useRatings(hid: string | null, max = RATINGS_LIMIT) {
+  return useLiveQuery<RatingDoc>(hid ? query(collection(db, "households", hid, "ratings"), orderBy("createdAt", "desc"), limit(max)) : null, hid ? `${hh(hid, "ratings")}?newest=${max}` : null);
+}
+
+/** The ratings of some cook events (the review, pending reviews): at most 30 events (Firestore's `in` limit). */
+export function useEventRatings(hid: string | null, eventIds: readonly string[]) {
+  const ids = useMemo(() => [...new Set(eventIds)].sort().slice(0, 30), [eventIds]);
+  const key = ids.join(",");
+  return useLiveQuery<RatingDoc>(hid && ids.length ? query(collection(db, "households", hid, "ratings"), where("cookEventId", "in", ids)) : null, hid && ids.length ? `${hh(hid, "ratings")}?events=${key}` : null);
 }
 
 export function useCadence(hid: string | null) {
   return useLiveQuery<CadenceDoc>(hid ? collection(db, "households", hid, "cadence") : null, hid ? hh(hid, "cadence") : null);
 }
 
-export function useReceivedLists(hid: string | null) {
+/** The newest received grocery lists (only received lists have `receivedAt`; History's spend chart shows 6 periods). */
+export function useReceivedLists(hid: string | null, max = 60) {
   return useLiveQuery<StoredList & { receivedAt?: { toMillis(): number }; receivedCents?: number }>(
-    hid ? query(collection(db, "households", hid, "groceryLists"), where("status", "==", "received")) : null,
-    hid ? `${hh(hid, "groceryLists")}?received` : null,
+    hid ? query(collection(db, "households", hid, "groceryLists"), orderBy("receivedAt", "desc"), limit(max)) : null,
+    hid ? `${hh(hid, "groceryLists")}?received=${max}` : null,
   );
+}
+
+/** The newest periods (History's spend per period). */
+export function useRecentPeriods(hid: string | null, max = 12) {
+  return useLiveQuery<PeriodDoc>(hid ? query(collection(db, "households", hid, "periods"), orderBy("start", "desc"), limit(max)) : null, hid ? `${hh(hid, "periods")}?newest=${max}` : null);
 }

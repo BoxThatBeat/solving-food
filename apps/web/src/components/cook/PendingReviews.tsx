@@ -4,14 +4,14 @@ import { MealThumb } from "@/components/recipes/RecipeThumb";
 import { useRecipeIndex } from "@/search/useRecipeSearch";
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
-import { useRatings } from "@/data/supply";
+import { useEventRatings } from "@/data/supply";
 import { usePendingReviews } from "./helpers";
 import { useMemberNames } from "@/data/households";
 import { cn } from "@/lib/utils";
 
 export function PendingReviews({ hid, uid }: { hid: string; uid: string }) {
   const list = usePendingReviews(hid, uid);
-  const ratings = useRatings(list.length ? hid : null);
+  const ratings = useEventRatings(hid, React.useMemo(() => list.map((e) => e.id), [list]));
   const members = useMemberNames(hid);
   const index = useRecipeIndex(list.length > 0);
   const thumbs = React.useMemo(() => new Map((index ?? []).map((r) => [r.id, r])), [index]);

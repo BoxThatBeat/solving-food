@@ -5,7 +5,6 @@
 import { MealThumb } from "@/components/recipes/RecipeThumb";
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { collection } from "firebase/firestore";
 import {
   applyCollection,
   avgRatingByCuisine,
@@ -26,17 +25,18 @@ import {
   toSearchParams,
   type CollectionSearch,
   type HouseholdFacts,
-  type PeriodDoc,
   type RecipeSummary,
 } from "@solving-food/core";
-import { db } from "@/firebase/app";
 import { EmptyState, PageBody } from "@/components/AppShell";
 import { CollectionView } from "@/components/CollectionView";
 import { Badge } from "@/components/ui/chip";
 import { useActiveHousehold, useMemberNames } from "@/data/households";
-import { useLiveQuery } from "@/data/live";
 import { millis, useRecipeDocs } from "@/data/plan";
-import { useCookEvents, useRatings, useReceivedLists, type StoredEvent } from "@/data/supply";
+import { useCookEvents, useRatings, useReceivedLists, useRecentPeriods, type StoredEvent } from "@/data/supply";
+import { Button } from "@/components/ui/button";
+
+/** Cook events per page of History (M23). */
+const HISTORY_PAGE = 100;
 import { useIngredientsById } from "@/data/ingredients";
 import { useRecipeIndex } from "@/search/useRecipeSearch";
 import { useReadySession } from "@/session/useSession";
@@ -56,10 +56,12 @@ function HistoryPage() {
   const navigate = useNavigate();
   const hh = useActiveHousehold();
   const tz = hh.data?.timezone ?? "America/Toronto";
-  const events = useCookEvents(hh.id);
+  // M23: the newest HISTORY_PAGE cook events, more with Show more; ratings, received lists and periods are bounded too.
+  const [shown, setShown] = React.useState(HISTORY_PAGE);
+  const events = useCookEvents(hh.id, shown);
   const ratings = useRatings(hh.id);
   const lists = useReceivedLists(hh.id);
-  const periods = useLiveQuery<PeriodDoc>(collection(db, "households", hh.id, "periods"), `households/${hh.id}/periods`);
+  const periods = useRecentPeriods(hh.id);
   const members = useMemberNames(hh.id);
   const summaries = useRecipeIndex();
   const byId = React.useMemo(() => new Map((summaries ?? []).map((r) => [r.id, r])), [summaries]);
@@ -182,6 +184,11 @@ function HistoryPage() {
             })}
           </ol>
         )}
+        {events.docs !== undefined && events.docs.length >= shown ? (
+          <Button variant="secondary" className="self-center" onClick={() => setShown((n) => n + HISTORY_PAGE)}>
+            Show more
+          </Button>
+        ) : null}
       </CollectionView>
     </PageBody>
   );

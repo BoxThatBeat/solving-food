@@ -5,6 +5,7 @@ import {
   deleteDoc,
   doc,
   increment,
+  limit,
   onSnapshot,
   query,
   serverTimestamp,
@@ -114,9 +115,10 @@ export interface DirectoryRow {
   displayName: string;
 }
 
-/** The whole user directory (with friends and family it's a handful of docs; §10 "Invite by name"). */
+/** The user directory (with friends and family it's a handful of docs; §10 "Invite by name"), capped at 500 (M23). */
+export const DIRECTORY_LIMIT = 500;
 export function useDirectory(enabled: boolean): DirectoryRow[] | undefined {
-  const q = useLiveQuery<DirectoryDoc>(enabled ? collection(db, "directory") : null, enabled ? "directory" : null);
+  const q = useLiveQuery<DirectoryDoc>(enabled ? query(collection(db, "directory"), limit(DIRECTORY_LIMIT)) : null, enabled ? `directory?limit=${DIRECTORY_LIMIT}` : null);
   return useMemo(() => q.docs?.map((d) => ({ uid: d.id, displayName: d.data.displayName })), [q.docs]);
 }
 

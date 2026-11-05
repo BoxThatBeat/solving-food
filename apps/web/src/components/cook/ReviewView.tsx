@@ -23,7 +23,7 @@ import { IngredientPicker } from "@/components/recipes/IngredientPicker";
 import { useNotify } from "@/components/notifications-context";
 import { useAllIngredients, useIngredientsById, type IngredientEntry } from "@/data/ingredients";
 import { saveMealFromReview, useRecipeDocs } from "@/data/plan";
-import { sendCommand, useCookEvent, usePendingCommands, useRatings, useSupply } from "@/data/supply";
+import { sendCommand, useCookEvent, usePendingCommands, useEventRatings, useSupply } from "@/data/supply";
 import { useMemberNames } from "@/data/households";
 import { cn } from "@/lib/utils";
 import { HandsFreeToggle } from "@/voice/HandsFreeToggle";
@@ -139,7 +139,7 @@ function ReviewFlow({
 }) {
   const rateOnly = source.reviewStatus === "done";
   const [step, setStep] = React.useState<Step>(1);
-  const ratingsQ = useRatings(hid);
+  const ratingsQ = useEventRatings(hid, [eventId]);
   const mine = React.useMemo(() => new Map((ratingsQ.docs ?? []).filter((r) => r.data.cookEventId === eventId && r.data.uid === uid).map((r) => [`${r.data.targetType}:${r.data.targetId}`, r.data.score])), [ratingsQ.docs, eventId, uid]);
   const others = (ratingsQ.docs ?? []).filter((r) => r.data.cookEventId === eventId && r.data.uid !== uid);
   const [scores, setScores] = React.useState<Map<string, number>>(new Map());
