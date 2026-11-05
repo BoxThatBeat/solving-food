@@ -22,9 +22,18 @@ export interface StapleInput {
   /** `dismissedStaples` of the draft: ingredient → until (ms). */
   dismissed?: Readonly<Record<string, number>> | undefined;
   nowMs: number;
+  /**
+   * M27 (R7.19): pull a staple forward when its product is on sale (`deals`: on-sale ingredient IDs), it would be due
+   * within SALE_PULL_PERIODS periods, and the budget meter has room for one pack (`headroomCents`: budget − spent,
+   * shared by every staple pulled forward, in the order they're listed).
+   */
+  sale?: { deals: ReadonlySet<string> | ReadonlyMap<string, unknown>; periodDays: number; headroomCents: number } | undefined;
 }
 
-export type StapleReason = "cadence" | "plan" | "out";
+export type StapleReason = "cadence" | "plan" | "out" | "sale";
+
+/** An on-sale staple is pulled forward when it would be due within this many periods (M27, R7.19). */
+export const SALE_PULL_PERIODS = 2;
 
 /** Free-use ingredients the planned, uncooked items use with an amount (optional and vague lines don't count). */
 export function freeUseNeeded(items: readonly PlanItemInput[], ctx: { recipes: BuildContext["recipes"]; ingredients: (id: string) => Pick<GroceryIngredient, "freeUse"> | undefined }): Set<string> {
@@ -68,6 +77,8 @@ export function dueStaples(input: StapleInput, ctx: { recipes: BuildContext["rec
     if (bought && isDue(c, ing, input.nowMs)) out.push({ ingredientId: id, reason: "cadence", rank: ratio });
     else if (ing.freeUse && usedByPlan.has(id) && !bought) out.push({ ingredientId: id, reason: "plan", rank: 0 });
     else if (!ing.freeUse && bought && (ctx.supply.get(id) ?? 0) <= EPS) out.push({ ingredientId: id, reason: "out", rank: ratio });
+    // On sale and due soon (M27): after every staple that's due, cheapest-to-wait last.
+    else if (input.sale && bought && days && input.sale.deals.has(id) && isDue(c, ing, input.nowMs + SALE_PULL_PERIODS * input.sale.periodDays * DAY_MS)) out.push({ ingredientId: id, reason: "sale", rank: ratio - 10 });
   }
   const name = (id: string) => ctx.ingredients(id)?.name ?? id;
   return out.sort((a, b) => b.rank - a.rank || name(a.ingredientId).localeCompare(name(b.ingredientId))).map(({ ingredientId, reason }) => ({ ingredientId, reason }));
@@ -79,8 +90,15 @@ export const stapleKey = (ingredientId: string) => `staple_${ingredientId}`;
 /** The staple lines (one default pack each, priced and store-resolved like a manual line), keyed `staple_<id>`. */
 export function stapleLines(input: StapleInput, ctx: Omit<BuildContext, "ingredients"> & { ingredients: (id: string) => StapleIngredient | undefined }): Record<string, GroceryItem> {
   const out: Record<string, GroceryItem> = {};
+  let headroom = input.sale?.headroomCents ?? 0;
   for (const { ingredientId, reason } of dueStaples(input, ctx)) {
-    out[stapleKey(ingredientId)] = { ...manualItem({ ingredientId, packs: 1 }, ctx), source: "staple", stapleReason: reason };
+    const line: GroceryItem = { ...manualItem({ ingredientId, packs: 1 }, ctx), source: "staple", stapleReason: reason };
+    if (reason === "sale") {
+      // Only while the budget has room for it (M27): a priced pack that fits what's left.
+      if (line.estPriceCents === null || line.estPriceCents > headroom) continue;
+      headroom -= line.estPriceCents;
+    }
+    out[stapleKey(ingredientId)] = line;
   }
   return out;
 }

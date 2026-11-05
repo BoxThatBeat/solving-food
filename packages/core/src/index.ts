@@ -25,6 +25,7 @@ export * from "./period";
 export * from "./plan";
 export * from "./pricing";
 export * from "./pricingSchema";
+export * from "./priceHistory";
 export * from "./grocery";
 export * from "./budget";
 export * from "./meal";

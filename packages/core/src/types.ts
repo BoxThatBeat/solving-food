@@ -355,6 +355,11 @@ export const brandMappingSchema = z.object({
   /** The last price paid for one pack, from a receipt (M25, R7.17), and when; written by receiveGroceries. */
   lastPaidCents: z.number().int().min(0).optional(),
   lastPaidAt: timestamp.optional(),
+  /**
+   * M27 (R6.32): the last PRICE_HISTORY_MAX prices of one pack, oldest first: the weekly PC Express observation
+   * (maintenance) and paid prices from receipts. Function-written; a client edit keeps it or (new product) drops it.
+   */
+  priceHistory: z.array(z.object({ atMs: z.number(), cents: z.number().int().min(0), source: z.enum(["pcx", "receipt"]) })).optional(),
 });
 export type BrandMappingDoc = z.infer<typeof brandMappingSchema>;
 
@@ -485,7 +490,7 @@ export const groceryItemSchema = z.object({
   /** `staple` (M10, R7.12): added by the list itself for a staple that's due; `cadence`: a pre-M10 "Yes, add it". */
   source: z.enum(["plan", "manual", "cadence", "staple"]),
   /** Why a staple line is on the list (M10): due by the cadence, used by planned meals, or none left in Supply. */
-  stapleReason: z.enum(["cadence", "plan", "out"]).optional(),
+  stapleReason: z.enum(["cadence", "plan", "out", "sale"]).optional(),
   checked: z.boolean(),
   checkedBy: z.string().optional(),
   /**

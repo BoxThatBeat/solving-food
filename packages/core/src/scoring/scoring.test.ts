@@ -15,6 +15,7 @@ import {
   historicalPref,
   meetsProteinGoal,
   missingIngredients,
+  onSale,
   PRESETS,
   presetOf,
   preferencesFactor,
@@ -449,5 +450,50 @@ describe("weights saved before the fibre factor (M9)", () => {
     void _f;
     expect(presetOf(resolveWeights(cheap))).toBe("Cheap week");
     expect(resolveWeights({ ...cheap, variety: 4 }).fibreGoal).toBe(DEFAULT_WEIGHTS.fibreGoal);
+  });
+});
+
+describe("on sale (M27, R6.34)", () => {
+  // 600 g chicken (1.5 ¢/g = $9) and 400 g pasta (0.5 ¢/g = $2) to buy at 4 servings.
+  const r = recipe("r", { lines: { "chicken-breast": 150, pasta: 100 } });
+  const cpu = (id: string) => (id === "chicken-breast" ? 1.5 : id === "pasta" ? 0.5 : null);
+  const deals = new Map([["chicken-breast", { dealPct: 0.2 }]]);
+
+  it("is the share of the to-buy cost that is on sale; skipped while nothing is on sale", () => {
+    const needs = recipeNeeds(r, ctx());
+    expect(onSale(needs, ctx({ centsPerUnit: cpu, deals }))).toBeCloseTo(900 / 1100);
+    expect(onSale(needs, ctx({ centsPerUnit: cpu }))).toBeNull();
+    expect(onSale(needs, ctx({ centsPerUnit: cpu, deals: new Map() }))).toBeNull();
+    // What projected Supply already covers isn't bought: no sale counts for it.
+    expect(onSale(needs, ctx({ centsPerUnit: cpu, deals, projected: new Map([["chicken-breast", 600]]) }))).toBe(0);
+    // Half the chicken in Supply: 300 g to buy, $4.50 of $6.50.
+    expect(onSale(needs, ctx({ centsPerUnit: cpu, deals, projected: new Map([["chicken-breast", 300]]) }))).toBeCloseTo(450 / 650);
+  });
+
+  it("explains itself in the reasons and marks the card's Deal (the main protein or the costliest to buy)", () => {
+    const w = { ...DEFAULT_WEIGHTS, onSale: 5 };
+    const s = score(r, ctx({ centsPerUnit: cpu, deals }), w);
+    expect(s.factors.onSale).toBeCloseTo(900 / 1100);
+    expect(s.reasons.map((x) => x.label)).toContain("Chicken breast 20% below usual");
+    expect(s.deal).toMatchObject({ ingredientId: "chicken-breast", label: "Chicken breast 20% below usual" });
+    // A cheap side ingredient on sale isn't the card's Deal (pasta is neither protein nor the costliest).
+    const pasta = score(r, ctx({ centsPerUnit: cpu, deals: new Map([["pasta", { dealPct: 0.3 }]]) }), w);
+    expect(pasta.deal).toBeUndefined();
+    expect(pasta.factors.onSale).toBeCloseTo(200 / 1100);
+    // A recipe on sale ranks above the same recipe without the sale.
+    const plain = score(r, ctx({ centsPerUnit: cpu, deals: new Map([["rice", { dealPct: 0.3 }]]) }), w);
+    expect(s.raw).toBeGreaterThan(plain.raw);
+  });
+
+  it("weights saved before M27 keep their preset; the default weight is 2", () => {
+    expect(DEFAULT_WEIGHTS.onSale).toBe(2);
+    expect(FACTORS.find((f) => f.key === "onSale")).toMatchObject({ sign: 1, label: "On sale" });
+    const { onSale: _o, ...cheap } = PRESETS["Cheap week"];
+    void _o;
+    expect(presetOf(resolveWeights(cheap))).toBe("Cheap week");
+    const { onSale: _o2, fibreGoal: _f2, ...old } = PRESETS.Adventurous;
+    void _o2;
+    void _f2;
+    expect(presetOf(resolveWeights(old))).toBe("Adventurous");
   });
 });

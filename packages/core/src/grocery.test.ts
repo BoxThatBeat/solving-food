@@ -501,6 +501,25 @@ describe("staples on the list (M10, R7.12)", () => {
     expect(stapleDismissUntil({ defaultCadenceDays: 60 }, null, NOW, NOW + 6 * DAY)).toBe(NOW + 60 * DAY);
   });
 
+  it("M27 (R7.19): an on-sale staple due within two periods is pulled forward while the budget has room", () => {
+    const cadence = [{ ingredientId: "milk", c: { ...bought(2, 3), avgIntervalDays: 10 } }]; // due at 8.5 days: not yet
+    const sale = (headroomCents: number) => ({ deals: new Set(["milk"]), periodDays: 7, headroomCents });
+    const supply = new Map([["milk", 1000]]);
+    expect(dueStaples({ items: [], cadence, onList: new Set(), nowMs: NOW }, sctx({ supply }))).toEqual([]);
+    const lines = stapleLines({ items: [], cadence, onList: new Set(), nowMs: NOW, sale: sale(5000) }, sctx({ supply }));
+    expect(lines.staple_milk).toMatchObject({ stapleReason: "sale", packs: 1, estPriceCents: 699 });
+    // No room in the budget, or not on sale: stays off.
+    expect(stapleLines({ items: [], cadence, onList: new Set(), nowMs: NOW, sale: sale(500) }, sctx({ supply }))).toEqual({});
+    expect(stapleLines({ items: [], cadence, onList: new Set(), nowMs: NOW, sale: { ...sale(5000), deals: new Set<string>() } }, sctx({ supply }))).toEqual({});
+    // Due later than two periods (a 60-day interval bought yesterday): not pulled forward.
+    const far = [{ ingredientId: "milk", c: { ...bought(1, 3), avgIntervalDays: 60 } }];
+    expect(stapleLines({ items: [], cadence: far, onList: new Set(), nowMs: NOW, sale: sale(5000) }, sctx({ supply }))).toEqual({});
+    // Headroom is shared: the second pulled staple must fit what the first left.
+    const two = [...cadence, { ingredientId: "oil", c: { ...bought(2, 3), avgIntervalDays: 10 } }];
+    const both = stapleLines({ items: [], cadence: two, onList: new Set(), nowMs: NOW, sale: { deals: new Set(["milk", "oil"]), periodDays: 7, headroomCents: 800 } }, sctx({ supply, prices: { estimates: { ...ctx().prices.estimates, oil: { priceCents: 500, packAmount: 1000, packMeasure: "volume" } } } }));
+    expect(Object.keys(both)).toHaveLength(1);
+  });
+
   it("regeneration manages staple lines like plan lines (ticks kept, stale ones removed)", () => {
     const line = stapleLines({ items: [plan("a", "pasta")], cadence: [], onList: new Set(), nowMs: NOW }, sctx()).staple_oil!;
     const existing = { staple_oil: { ...line, checked: true }, staple_salt: { ...line, ingredientId: "salt" }, manual_x: { ...line, source: "manual" as const } };
@@ -512,5 +531,21 @@ describe("staples on the list (M10, R7.12)", () => {
   it("groups staples after plan lines and before manual ones", () => {
     const items = { m: { ...manualItem({ freeText: "napkins", packs: 1 }, ctx()) }, s: { ...manualItem({ ingredientId: "oil", packs: 1 }, ctx()), source: "staple" as const }, p: buildList([plan("a", "curry")], ctx()).items.tomato! };
     expect(groupByStore(items, STORES)[0]!.items.map(([k]) => k)).toEqual(["p", "s", "m"]);
+  });
+});
+
+describe("deal prices reach the budget and the optimiser (M27, R6.21)", () => {
+  it("a mapped product's live sale price is what the list, the meter and the marginal cost (optimiser) use", async () => {
+    const { marginalCostFn, needsFor } = await import("./grocery");
+    const NOW = Date.UTC(2026, 10, 9);
+    const mappings = new Map<string, MappingEntry>([["chicken", { productName: "PC chicken thighs", productCode: "C1", packAmount: 900, packMeasure: "weight", storeId: "pc-express" }]]);
+    const sale = { priceCents: 999, packAmount: 900, packMeasure: "weight" as const, fetchedAtMs: NOW };
+    const c = ctx({ mappings, prices: { ...ctx().prices, live: () => sale, nowMs: NOW } });
+    const built = buildList([plan("a", "curry", 2)], c);
+    expect(built.items.chicken).toMatchObject({ estPriceCents: 999, priceSource: "live" });
+    expect(budgetState(5000, built).spentCents).toBe(built.totalCents);
+    expect(built.totalCents).toBe(999 + 299);
+    // The optimiser's set cost is marginalCostFn: the same sale price.
+    expect(marginalCostFn([], c)(needsFor([plan("a", "curry", 2)], c)).cents).toBe(999 + 299);
   });
 });

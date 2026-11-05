@@ -22,11 +22,13 @@ import {
   missingIds,
   missingIngredients,
   missingToolsOf,
+  onSale,
   preferencesFactor,
   proteinGoal,
   ratingFactor,
   recentlyCooked,
   recipeNeeds,
+  saleUses,
   sameCuisine,
   sameProtein,
   supplyUtilisation,
@@ -36,6 +38,7 @@ import {
   type ScoreRecipe,
 } from "./factors";
 import { FACTORS, type FactorKey, type Weights } from "./weights";
+import { dealLabel } from "../priceHistory";
 import { FLOAT_EPS } from "../math";
 
 export * from "./factors";
@@ -69,6 +72,11 @@ export interface ScoreResult {
   costCents: number | null;
   /** Soonest spare expiring ingredient it uses (for "Expiring first" and the alert row). */
   expiring: { ingredientId: string; daysLeft: number; used: number } | null;
+  /**
+   * M27 (R6.33): the card's "Deal" chip: an on-sale ingredient the recipe has to buy that is its main protein (a meat
+   * or fish ingredient) or its most expensive one to buy. Absent otherwise.
+   */
+  deal?: { ingredientId: string; dealPct: number; label: string };
 }
 
 const short = (ctx: ScoreContext, id: string) => (ctx.ingredient(id)?.name ?? id.replace(/-/g, " ")).split(/[,(]/)[0]!.trim();
@@ -96,6 +104,9 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
   if (pg !== null) f.proteinGoal = pg;
   const fg = fibreGoal(r, ctx);
   if (fg !== null) f.fibreGoal = fg;
+  const os = onSale(needs, ctx);
+  if (os !== null) f.onSale = os;
+  const sale = os !== null ? saleUses(needs, ctx) : { uses: [], costliest: null };
 
   let raw = 0;
   let max = 0;
@@ -140,6 +151,10 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
         return `${Math.round(r.proteinPerServingG ?? 0)} g protein`;
       case "fibreGoal":
         return `${Math.round(r.fibrePerServingG ?? 0)} g fibre`;
+      case "onSale": {
+        const u = sale.uses[0];
+        return u ? `${capital(short(ctx, u.ingredientId))} ${dealLabel(u)}` : "On sale";
+      }
       case "missingIngredients": {
         const m = missingIds(needs, ctx).slice(0, 2).map((id) => short(ctx, id));
         return m.length ? `Missing ${m.join(", ")}` : "Missing some";
@@ -168,6 +183,7 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
   const neg = contrib.filter(([, c]) => c < -0.05).sort((a, b) => a[1] - b[1])[0];
   if (neg && !blocked) reasons.push({ key: neg[0], label: label(neg[0]), tone: "bad" });
 
+  const dealUse = sale.uses.find((u) => u.ingredientId === sale.costliest || PROTEIN_CATEGORIES.has(ctx.ingredient(u.ingredientId)?.category ?? ""));
   return {
     id: r.id,
     score: Math.max(0, Math.min(100, Math.round((raw / (max || 1)) * 100))),
@@ -180,8 +196,13 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
     reasons,
     costCents: cost,
     expiring: exp,
+    ...(dealUse ? { deal: { ingredientId: dealUse.ingredientId, dealPct: dealUse.dealPct, label: `${capital(short(ctx, dealUse.ingredientId))} ${dealLabel(dealUse)}` } } : {}),
   };
 }
+
+/** Ingredient categories that count as a recipe's main protein for the Deal chip (M27). */
+const PROTEIN_CATEGORIES = new Set(["meat", "fish"]);
+const capital = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
 
 /** Where a result sorts: suggestions first, then blocked ones, then recipes already in the plan at the very bottom. */
 const tier = (x: ScoreResult) => (x.planned ? 2 : x.blocked ? 1 : 0);

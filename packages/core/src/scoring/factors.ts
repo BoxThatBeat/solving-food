@@ -69,6 +69,10 @@ export interface ScoreContext {
   costOf: (recipe: ScoreRecipe) => number | null;
   /** Budget left for the period (budget − spent), cents. */
   remainingBudgetCents: number;
+  /** M27 (R6.34): products on sale, by ingredient ID. Absent or empty: the "on sale" factor is skipped. */
+  deals?: ReadonlyMap<string, { dealPct: number }> | undefined;
+  /** M27: cents per canonical unit of an ingredient at the price the grocery list uses (null when unknown). */
+  centsPerUnit?: ((ingredientId: string) => number | null) | undefined;
 }
 
 /** Cooked within this many days counts fully as "recently cooked"; it fades out by RECENT_FADE_DAYS. */
@@ -279,4 +283,48 @@ export function recentlyCooked(s: RecipeStats | undefined, nowMs: number): numbe
 export function missingToolsOf(r: ScoreRecipe, ctx: Pick<ScoreContext, "tools">): string[] {
   if (!ctx.tools.length) return [];
   return missingTools(r.tools ?? [], ctx.tools);
+}
+
+export interface SaleUse {
+  ingredientId: string;
+  /** What buying the shortfall costs at the current (sale) price, cents, without pack rounding. */
+  cents: number;
+  /** Its share of the recipe's to-buy cost. */
+  share: number;
+  dealPct: number;
+}
+
+/**
+ * The on-sale ingredients a recipe would have to buy (projected Supply doesn't cover them), each with its share of the
+ * cost of everything the recipe has to buy (unrounded shortfall × the line's price; unknown prices left out), biggest
+ * share first; `costliest` is the most expensive ingredient to buy, on sale or not.
+ */
+export function saleUses(needs: ReadonlyMap<string, number>, ctx: Pick<ScoreContext, "projected" | "deals" | "centsPerUnit">): { uses: SaleUse[]; costliest: string | null } {
+  if (!ctx.deals?.size || !ctx.centsPerUnit) return { uses: [], costliest: null };
+  const buy: Array<{ id: string; cents: number }> = [];
+  let total = 0;
+  for (const [id, n] of needs) {
+    const short = n - Math.max(0, ctx.projected.get(id) ?? 0);
+    if (!(short > FLOAT_EPS)) continue;
+    const cpu = ctx.centsPerUnit(id);
+    if (cpu === null || !(cpu > 0)) continue;
+    buy.push({ id, cents: short * cpu });
+    total += short * cpu;
+  }
+  if (!(total > 0)) return { uses: [], costliest: null };
+  const costliest = buy.reduce((a, b) => (b.cents > a.cents ? b : a)).id;
+  const uses = buy
+    .filter((b) => ctx.deals!.has(b.id))
+    .map((b) => ({ ingredientId: b.id, cents: b.cents, share: b.cents / total, dealPct: ctx.deals!.get(b.id)!.dealPct }))
+    .sort((a, b) => b.share - a.share || a.ingredientId.localeCompare(b.ingredientId));
+  return { uses, costliest };
+}
+
+/**
+ * onSale (M27, R6.34): the share of what the recipe has to buy (by cost) that is on sale. Null (skipped, like a goal
+ * that's off) while nothing the household buys is on sale, so it never dilutes the other factors.
+ */
+export function onSale(needs: ReadonlyMap<string, number>, ctx: Pick<ScoreContext, "projected" | "deals" | "centsPerUnit">): number | null {
+  if (!ctx.deals?.size || !ctx.centsPerUnit) return null;
+  return clamp01(saleUses(needs, ctx).uses.reduce((t, u) => t + u.share, 0));
 }
