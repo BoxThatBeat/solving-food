@@ -6,8 +6,8 @@
 
 import { addDays, localDate, localMidnight } from "./period";
 import type { StorageLocation } from "./taxonomy";
+import { DAY_MS } from "./math";
 
-export const DAY_MS = 86_400_000;
 
 /** Leftover portions (R6.10): fixed shelf lives, not per ingredient. */
 export const LEFTOVER_FRIDGE_DAYS = 4;

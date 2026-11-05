@@ -4,8 +4,7 @@
 import type { GroceryItem } from "../types";
 import { cadenceInterval, isDue, type CadenceLike } from "../cadence";
 import { manualItem, type BuildContext, type GroceryIngredient, type PlanItemInput } from "./builder";
-
-const EPS = 1e-9;
+import { DAY_MS, FLOAT_EPS as EPS } from "../math";
 
 
 export interface StapleIngredient extends GroceryIngredient {
@@ -65,7 +64,7 @@ export function dueStaples(input: StapleInput, ctx: { recipes: BuildContext["rec
     if (c?.snoozedUntilMs && input.nowMs < c.snoozedUntilMs) continue; // "Not yet" from a pre-M10 prompt
     const bought = !!c?.lastPurchasedAtMs;
     const days = cadenceInterval(c, ing.defaultCadenceDays);
-    const ratio = bought && days ? (input.nowMs - c!.lastPurchasedAtMs!) / (days * 86_400_000) : 0;
+    const ratio = bought && days ? (input.nowMs - c!.lastPurchasedAtMs!) / (days * DAY_MS) : 0;
     if (bought && isDue(c, ing, input.nowMs)) out.push({ ingredientId: id, reason: "cadence", rank: ratio });
     else if (ing.freeUse && usedByPlan.has(id) && !bought) out.push({ ingredientId: id, reason: "plan", rank: 0 });
     else if (!ing.freeUse && bought && (ctx.supply.get(id) ?? 0) <= EPS) out.push({ ingredientId: id, reason: "out", rank: ratio });
@@ -89,5 +88,5 @@ export function stapleLines(input: StapleInput, ctx: Omit<BuildContext, "ingredi
 /** Until when a removed staple stays off the list: its usual interval, and at least to the end of the period. */
 export function stapleDismissUntil(ingredient: { defaultCadenceDays?: number | undefined }, cadence: Pick<CadenceLike, "avgIntervalDays" | "purchaseCount"> | null, nowMs: number, periodEndMs: number | null): number {
   const days = cadenceInterval(cadence, ingredient.defaultCadenceDays) ?? 7;
-  return Math.max(nowMs + days * 86_400_000, periodEndMs ?? 0);
+  return Math.max(nowMs + days * DAY_MS, periodEndMs ?? 0);
 }

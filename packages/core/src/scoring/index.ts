@@ -36,6 +36,7 @@ import {
   type ScoreRecipe,
 } from "./factors";
 import { FACTORS, type FactorKey, type Weights } from "./weights";
+import { FLOAT_EPS } from "../math";
 
 export * from "./factors";
 export * from "./weights";
@@ -215,7 +216,7 @@ export function expiringSpare(
   const out = new Map<string, ExpiringSpare & { lotIds: string[] }>();
   for (const [id, lots] of lotsByIngredient) {
     const live = lots
-      .filter((l) => l.amount > 1e-9 && !isExpired(l, nowMs))
+      .filter((l) => l.amount > FLOAT_EPS && !isExpired(l, nowMs))
       .map((l) => ({ l, e: activeExpiry(l) }))
       .sort((a, b) => (a.e ?? Infinity) - (b.e ?? Infinity));
     let use = plannedUse.get(id) ?? 0;
@@ -226,12 +227,12 @@ export function expiringSpare(
       const take = Math.min(use, l.amount);
       use -= take;
       const left = l.amount - take;
-      if (e === null || e > untilMs || left <= 1e-9) continue;
+      if (e === null || e > untilMs || left <= FLOAT_EPS) continue;
       amount += left;
       lotIds.push(l.lotId);
       if (first === null || e < first) first = e;
     }
-    if (amount > 1e-9 && first !== null) out.set(id, { amount, expiresMs: first, daysLeft: Math.max(0, daysLeftOf(first, nowMs, tz)), lotIds });
+    if (amount > FLOAT_EPS && first !== null) out.set(id, { amount, expiresMs: first, daysLeft: Math.max(0, daysLeftOf(first, nowMs, tz)), lotIds });
   }
   return out;
 }

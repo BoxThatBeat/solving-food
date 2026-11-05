@@ -12,8 +12,8 @@
 // - Lots that reach zero are removed from the document; their transactions remain.
 
 import type { StorageLocation } from "./taxonomy";
+import { EPS, round6 } from "./math";
 
-export const EPS = 1e-6;
 
 export interface LedgerLot {
   lotId: string;
@@ -47,7 +47,7 @@ export interface ConsumeResult extends LedgerResult {
   short: number;
 }
 
-const round = (n: number) => Math.round(n * 1e6) / 1e6;
+const round = round6;
 const clone = (lots: readonly LedgerLot[]) => lots.map((l) => ({ ...l }));
 const prune = (lots: LedgerLot[]) => lots.filter((l) => l.amount > EPS);
 

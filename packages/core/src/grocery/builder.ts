@@ -16,6 +16,7 @@ import type { ConvertibleIngredient } from "../units";
 import type { GroceryItem } from "../types";
 import { packToCanonical, resolvePrice, type LivePrice, type PriceEstimate, type PriceSource } from "../pricing";
 import type { RecipeRef } from "../plan";
+import { FLOAT_EPS as EPS, round3 } from "../math";
 
 export interface GroceryIngredient extends ConvertibleIngredient {
   id: string;
@@ -86,7 +87,6 @@ export interface BuildContext {
 }
 
 export const UNASSIGNED_STORE = "unassigned";
-const EPS = 1e-9;
 
 /** Canonical requirements of the planned items and their sides, free-use, optional, and vague lines excluded (R8.14). */
 export function needsFor(items: readonly PlanItemInput[], ctx: { recipes: BuildContext["recipes"]; ingredients: (id: string) => Pick<GroceryIngredient, "freeUse"> | undefined }): Map<string, number> {
@@ -202,9 +202,6 @@ export function lineFor(ingredientId: string, need: number, ctx: BuildContext): 
   return item;
 }
 
-function round3(n: number): number {
-  return Math.round(n * 1000) / 1000;
-}
 
 function capitalise(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);

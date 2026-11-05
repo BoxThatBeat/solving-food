@@ -5,7 +5,8 @@
 
 import type { MealType } from "../taxonomy";
 import { MEAL_TYPES } from "../taxonomy";
-import { DAY_MS, minSpare } from "../expiry";
+import { minSpare } from "../expiry";
+import { DAY_MS, FLOAT_EPS } from "../math";
 import { missingTools } from "../tools";
 import { matchingPrefs, type IngredientMetaOf, type PrefRecipe, type Preferences } from "../preferences";
 
@@ -145,7 +146,7 @@ export function supplyUtilisation(needs: ReadonlyMap<string, number>, ctx: Pick<
 
 /** Tracked ingredients projected supply doesn't fully cover. */
 export function missingIds(needs: ReadonlyMap<string, number>, ctx: Pick<ScoreContext, "projected">): string[] {
-  return [...needs].filter(([id, n]) => Math.max(0, ctx.projected.get(id) ?? 0) + 1e-9 < n).map(([id]) => id);
+  return [...needs].filter(([id, n]) => Math.max(0, ctx.projected.get(id) ?? 0) + FLOAT_EPS < n).map(([id]) => id);
 }
 
 /**

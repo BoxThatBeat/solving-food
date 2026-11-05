@@ -4,7 +4,8 @@
 import type { MealType, PlannableMealType } from "./taxonomy";
 import { isPlannable, type Coverage, type RecipeRef } from "./plan";
 import { needsFor, type BuildContext, type GroceryIngredient, type PlanItemInput, type RecipeLines, type SideRef } from "./grocery";
-import { activeExpiry, EPS, isExpired, type LedgerLot } from "./ledger";
+import { activeExpiry, isExpired, type LedgerLot } from "./ledger";
+import { DAY_MS, EPS } from "./math";
 
 export type IngredientsOf = (id: string) => Pick<GroceryIngredient, "freeUse"> | undefined;
 export type RecipesOf = BuildContext["recipes"];
@@ -155,7 +156,7 @@ export function earliestExpiringUse(needs: ReadonlyMap<string, number>, lotsOf: 
  */
 export function soonestUseDays(needs: ReadonlyMap<string, number>, lotsOf: (ingredientId: string) => readonly LedgerLot[] | undefined, nowMs: number): { days: number; ingredientId: string } | null {
   const e = earliestExpiringUse(needs, lotsOf, nowMs);
-  return e ? { days: (e.expiresMs - nowMs) / 86_400_000, ingredientId: e.ingredientId } : null;
+  return e ? { days: (e.expiresMs - nowMs) / DAY_MS, ingredientId: e.ingredientId } : null;
 }
 
 // ---------- pending reviews (R9.4)
@@ -175,7 +176,7 @@ export function pendingReviews<T extends ReviewableEvent>(events: readonly T[], 
   const out: Array<T & { reason: "review" | "rate" }> = [];
   for (const e of events) {
     if (e.reviewStatus === "pending") out.push({ ...e, reason: "review" });
-    else if (!e.ratedBy.includes(uid) && nowMs - e.cookedAtMs < RATE_PROMPT_DAYS * 86_400_000) out.push({ ...e, reason: "rate" });
+    else if (!e.ratedBy.includes(uid) && nowMs - e.cookedAtMs < RATE_PROMPT_DAYS * DAY_MS) out.push({ ...e, reason: "rate" });
   }
   return out.sort((a, b) => b.cookedAtMs - a.cookedAtMs);
 }

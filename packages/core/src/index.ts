@@ -1,4 +1,5 @@
 export * from "./config";
+export * from "./math";
 export * from "./taxonomy";
 export * from "./theme";
 export * from "./types";

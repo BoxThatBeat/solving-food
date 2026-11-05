@@ -2,10 +2,11 @@
 // moving everything that names a duplicate ingredient onto the ingredient it means. The `mergeIngredient` function
 // does the reads and writes; this module decides what changes, so it is unit-tested without Firestore.
 
-import { EPS, type LedgerLot, type LedgerTx } from "./ledger";
+import type { LedgerLot, LedgerTx } from "./ledger";
 import { normalizeName } from "./names";
 import { needsReview } from "./ingredient";
 import type { GroceryItem, IngredientDoc, MealSide } from "./types";
+import { EPS, round6 } from "./math";
 
 /** What `mergeIngredient` moved (or, for a dry run, would move): the confirm dialog's counts. */
 export interface MergeReport {
@@ -28,7 +29,7 @@ export interface MergeReport {
   aliasesAdded: string[];
 }
 
-const round = (n: number) => Math.round(n * 1e6) / 1e6;
+const round = round6;
 
 /**
  * The factor that turns the duplicate's canonical amounts into the target's: 1 for the same unit, the unit weight

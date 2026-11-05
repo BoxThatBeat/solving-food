@@ -5,6 +5,7 @@
 import { z } from "zod";
 import { MEASURES, type Measure } from "./taxonomy";
 import { toCanonical, type ConvertibleIngredient } from "./units";
+import { DAY_MS } from "./math";
 
 export const LIVE_PRICE_MAX_AGE_DAYS = 14;
 
@@ -60,7 +61,7 @@ export function resolvePrice(
   estimates: Readonly<Record<string, PriceEstimate>>,
   nowMs = Date.now(),
 ): ResolvedPrice {
-  if (mapping?.productCode && live && nowMs - live.fetchedAtMs <= LIVE_PRICE_MAX_AGE_DAYS * 86_400_000) {
+  if (mapping?.productCode && live && nowMs - live.fetchedAtMs <= LIVE_PRICE_MAX_AGE_DAYS * DAY_MS) {
     const c = packToCanonical(live.packAmount, live.packMeasure, ingredient);
     if (c) return { centsPerUnit: live.priceCents / c, source: "live" };
   }

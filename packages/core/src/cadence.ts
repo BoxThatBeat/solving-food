@@ -4,6 +4,8 @@
 // milk?" once 85 % of the interval has passed since the last purchase; "Not yet" snoozes for a quarter interval
 // (the `snoozeCadence` command: cadence is function-only).
 
+import { DAY_MS } from "./math";
+
 export const CADENCE_ALPHA = 0.5;
 /** Repeat purchases closer together than this are the same shop (a second delivery the same day). */
 export const CADENCE_MIN_GAP_DAYS = 1;
@@ -17,7 +19,7 @@ export interface CadenceState {
 /** Updates the exponential moving average of purchase gaps with a purchase at `nowMs`. */
 export function updateCadence(prev: CadenceState | null, nowMs: number): CadenceState {
   if (!prev || prev.lastPurchasedAtMs === null) return { avgIntervalDays: prev?.avgIntervalDays ?? null, lastPurchasedAtMs: nowMs, purchaseCount: (prev?.purchaseCount ?? 0) + 1 };
-  const gap = (nowMs - prev.lastPurchasedAtMs) / 86_400_000;
+  const gap = (nowMs - prev.lastPurchasedAtMs) / DAY_MS;
   if (gap < CADENCE_MIN_GAP_DAYS) return { ...prev, lastPurchasedAtMs: Math.max(prev.lastPurchasedAtMs, nowMs) };
   const avg = prev.avgIntervalDays && prev.purchaseCount >= 2 ? CADENCE_ALPHA * gap + (1 - CADENCE_ALPHA) * prev.avgIntervalDays : gap;
   return { avgIntervalDays: Math.round(avg * 100) / 100, lastPurchasedAtMs: nowMs, purchaseCount: prev.purchaseCount + 1 };
@@ -27,7 +29,7 @@ export function updateCadence(prev: CadenceState | null, nowMs: number): Cadence
 export function expectedRunOut(state: Pick<CadenceState, "avgIntervalDays" | "lastPurchasedAtMs" | "purchaseCount"> | null, defaultCadenceDays: number | undefined): number | null {
   if (!state?.lastPurchasedAtMs) return null;
   const days = state.purchaseCount >= 2 && state.avgIntervalDays ? state.avgIntervalDays : defaultCadenceDays;
-  return days ? state.lastPurchasedAtMs + days * 86_400_000 : null;
+  return days ? state.lastPurchasedAtMs + days * DAY_MS : null;
 }
 
 /** Ask once this share of the interval has passed since the last purchase. */
@@ -54,13 +56,13 @@ export function isDue(c: CadenceLike | null, ingredient: { defaultCadenceDays?: 
   if (c.snoozedUntilMs && nowMs < c.snoozedUntilMs) return false;
   const days = cadenceInterval(c, ingredient.defaultCadenceDays);
   if (!days) return false;
-  return nowMs - c.lastPurchasedAtMs >= CADENCE_DUE_SHARE * days * 86_400_000;
+  return nowMs - c.lastPurchasedAtMs >= CADENCE_DUE_SHARE * days * DAY_MS;
 }
 
 /** When "Not yet" stops asking: now + a quarter of the interval (at least a day). */
 export function snoozeUntil(c: Pick<CadenceState, "avgIntervalDays" | "purchaseCount"> | null, ingredient: { defaultCadenceDays?: number | undefined }, nowMs: number): number {
   const days = cadenceInterval(c, ingredient.defaultCadenceDays) ?? 4;
-  return nowMs + Math.max(1, CADENCE_SNOOZE_SHARE * days) * 86_400_000;
+  return nowMs + Math.max(1, CADENCE_SNOOZE_SHARE * days) * DAY_MS;
 }
 
 export interface CadencePrompt {
@@ -87,7 +89,7 @@ export function duePrompts(
     if (!ing || !(ing.isStaple || ing.freeUse) || onList.has(ingredientId)) continue;
     if (!isDue(c, ing, nowMs)) continue;
     const days = cadenceInterval(c, ing.defaultCadenceDays)!;
-    const since = (nowMs - c.lastPurchasedAtMs!) / 86_400_000;
+    const since = (nowMs - c.lastPurchasedAtMs!) / DAY_MS;
     out.push({ ingredientId, intervalDays: days, lastPurchasedAtMs: c.lastPurchasedAtMs!, daysSince: Math.floor(since), ratio: since / days });
   }
   return out.sort((a, b) => b.ratio - a.ratio || a.ingredientId.localeCompare(b.ingredientId)).map(({ ratio: _r, ...p }) => (void _r, p));

@@ -4,7 +4,7 @@
 // the start date ("2026-10-10"), so two members rolling over at the same moment compute the same document and the
 // transaction stays idempotent. No date library: offsets come from Intl, which handles DST.
 
-const DAY_MS = 86_400_000;
+import { DAY_MS } from "./math";
 
 /** "YYYY-MM-DD" */
 export type LocalDate = string;

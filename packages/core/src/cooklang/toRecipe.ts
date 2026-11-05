@@ -11,6 +11,7 @@ import { ingredientSlug } from "../names";
 import { parseUnit, unitDef, UNITS } from "../units";
 import { CooklangError, parseCooklang, type CookItem, type CookQuantity } from "./parse";
 import { validateFrontMatter, type FrontMatter } from "./frontMatter";
+import { round3 as round } from "../math";
 
 export interface ImportOptions {
   /** Resolves a recipe's ingredient wording to an existing ingredient ID, or null when unknown. */
@@ -210,6 +211,3 @@ export function cooklangToRecipe(source: string, opts: ImportOptions): ImportRes
   return { content, frontMatter: fm, newIngredients: [...newIngredients.values()], warnings };
 }
 
-function round(n: number): number {
-  return Math.round(n * 1000) / 1000;
-}

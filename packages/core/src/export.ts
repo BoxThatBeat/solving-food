@@ -15,6 +15,7 @@ import { z } from "zod";
 import { cooklangFilename, recipeToCooklang } from "./cooklang";
 import type { RecipeContent } from "./recipe";
 import { ratingId, statsId } from "./commands";
+import { EPS, round6 } from "./math";
 
 export const EXPORT_SCHEMA = "solving-food/household";
 export const EXPORT_VERSION = 1;
@@ -417,7 +418,7 @@ export interface ReconciledSupply {
   reconciled: boolean;
 }
 
-const round = (n: number) => Math.round(n * 1e6) / 1e6;
+const round = round6;
 
 /**
  * Keeps the ledger invariant on import (§6): canonicalAmount is Σ lots, and Σ transactions equals it. An export taken
@@ -428,7 +429,7 @@ export function reconcileSupply(s: SupplyExport, nowMs: number): ReconciledSuppl
   const txSum = round(s.transactions.reduce((t, x) => t + x.data.delta, 0));
   const data = { ...s.data, canonicalAmount: lotsSum };
   const diff = round(lotsSum - txSum);
-  if (Math.abs(diff) < 1e-6) return { data, transactions: s.transactions, reconciled: false };
+  if (Math.abs(diff) < EPS) return { data, transactions: s.transactions, reconciled: false };
   const fix = {
     id: "import-reconcile",
     data: {

@@ -7,6 +7,7 @@ import { recipeIngredientSchema, recipeStepSchema, prepTaskSchema, type RecipeDo
 import { formatRecipeAmount, fahrenheitOnly, toCanonical, unitDef, type ConvertibleIngredient } from "./units";
 import { slugify } from "./names";
 import { NUTRITION_KEYS, type NutritionKey, type Nutrients } from "./nutrition";
+import { round3 } from "./math";
 
 export type RecipeIngredient = z.infer<typeof recipeIngredientSchema>;
 export type RecipeStep = z.infer<typeof recipeStepSchema>;
@@ -98,9 +99,6 @@ export function lineCanonical(line: Pick<RecipeIngredient, "amount" | "measure" 
   return r.ok ? round3(r.canonicalAmount) : 0;
 }
 
-function round3(n: number): number {
-  return Math.round(n * 1000) / 1000;
-}
 
 export interface ProteinResult {
   /** Grams per serving from the lines that could be counted; null when nothing could be counted. */

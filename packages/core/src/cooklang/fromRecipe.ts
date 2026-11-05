@@ -4,6 +4,7 @@
 import { stringify } from "yaml";
 import { PLACEHOLDER, type RecipeContent, type RecipeIngredient } from "../recipe";
 import { unitDef, pluralize, UNITS } from "../units";
+import { round3 } from "../math";
 
 export interface ExportOptions {
   /** Absolute URL of the hero image, written as `image:` (exports never point at a local path). */
@@ -11,7 +12,7 @@ export interface ExportOptions {
 }
 
 function numberText(n: number): string {
-  return String(Math.round(n * 1000) / 1000);
+  return String(round3(n));
 }
 
 /** The unit as written inside `{amount%unit}`. */

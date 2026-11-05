@@ -6,7 +6,6 @@ import {
   applyPurchase,
   consumeFEFO,
   discardLot,
-  EPS,
   expiredLots,
   extendExpiry,
   fefoOrder,
@@ -21,6 +20,7 @@ import {
   type LedgerLot,
   type LedgerTx,
 } from "./ledger";
+import { EPS } from "./math";
 
 const DAY = 86_400_000;
 const NOW = Date.UTC(2026, 9, 10, 16);
