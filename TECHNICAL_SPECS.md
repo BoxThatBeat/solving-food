@@ -489,8 +489,10 @@ Firestore writes queue up offline, but callable functions don't. So every action
 Ingredient IDs are referenced from recipes, their version snapshots, saved meals and every household's Supply, plan,
 grocery lists and settings, and Supply is function-only, so **Merge into…** is a callable, `mergeIngredient({ fromId,
 intoId, dryRun? })` (`functions/src/ingredients.ts`; the pure decisions are `packages/core/src/ingredientMerge.ts`).
-Verified, allowlisted callers only (the gate for editing an ingredient). `dryRun` reads and counts only; the confirm
-sheet shows its counts ("1 recipe, 1 Supply row") before the real call.
+**The app's owner only** (M22, `OWNER_UID`: a merge rewrites every household's Supply, plan and grocery lines), signed
+in with a verified, allowlisted address. The client passes its current household as `hid`, which only the emulator's stub
+owner uses (§10 "Callables"); anyone else gets "Only the app's owner can merge ingredients", which the Ingredients page
+shows (R4.35). `dryRun` reads and counts only.
 
 1. **Refusals** (`mergeRefusal`): itself, unknown IDs, a target that was itself merged ("merge into that one"), a
    duplicate already merged elsewhere, a shipped catalogue ingredient (no `createdBy`) into one that isn't, and a
@@ -1051,6 +1053,14 @@ match /prices/{id}       { allow read: if allowed(); }       // write: functions
 
 **Verified email (M0 decision):** `allowed()` also requires `email_verified`. The Email/Password provider must be enabled for email-link sign-in, which would otherwise let anyone register an allowlisted address they don't own with a password. Email-link sign-in always verifies the address, so real users are unaffected. The collection-group `members` rule checks the duplicated `uid` *field* rather than the document ID, because Firestore can only prove a query safe from the fields it filters on. A collection-group single-field index on `members.uid` is declared in `firestore.indexes.json`.
 
+**Callables (M22):** every callable (`scheduleTimer`, `cancelTimer`, the PC Express and Gemini callables,
+`addRecipeWithGemini`, `mergeIngredient`) first runs `requireAllowed` (`functions/src/ingredients.ts`): a verified token
+**and** an allowlisted address. A verified token alone isn't enough, since email-link sign-in verifies any address.
+Owner-only callables (`pcxSetKey`, `aiSetKey`, `checkIngredientNames`, `mergeIngredient`) then compare the caller with
+the `OWNER_UID` param (`functions/src/owner.ts`). The emulator's per-household stub owner (`_stubPcx/{hid}.ownerUid`) is
+honoured only when `FUNCTIONS_EMULATOR === "true"` (set by the emulator itself), never because of `PCX_STUB`, which only
+picks the PC Express and Gemini stubs.
+
 **Merged ingredients (M8):** `mergedInto` is not among `validIngredient`'s keys, so clients can neither set it nor edit
 a merged ingredient (which carries it); only the `mergeIngredient` function writes tombstones. Supply stays
 function-only, so the merge's Supply moves happen in the function.
@@ -1209,7 +1219,9 @@ in us-east1). Scheduling writes `users/{uid}/timers/{timerId}` with the task nam
 the handler sends only if the record still holds its task name, then deletes the record. The push is a data-only FCM
 web push (`{ kind, title, body, link, timerId }`, Urgency high, TTL 10 min); `apps/web/public/push-sw.js`, imported by
 the Workbox worker, shows it with an "Open" action that focuses or opens the app at `<cook page>?recipe=<id>&step=<n>`.
-Dead tokens are pruned. Queue and push sit behind two small adapters; under the Functions emulator a stub queue
+Dead tokens are pruned. Since M22 both callables require an allowlisted caller (§10 "Callables"; a verified token
+alone isn't enough) and `scheduleTimer` is limited to 60 calls per person per hour (`timerRate/{uid}`, the PC Express
+rate-limit helper); a refused call leaves the timer running in the page, as offline does. Queue and push sit behind two small adapters; under the Functions emulator a stub queue
 records tasks in `_stubTasks/{taskName}` (`scheduled` → `deleted`) and a stub pusher records payloads in
 `_stubPushes` (never sent). Unit tests drive the handler directly with an in-memory queue. Device registration happens
 on the first timer (permission, then `getToken` with the VAPID key on the app's service worker).

@@ -2,7 +2,7 @@
 // (the functions' stub here, `_stubLlm/config`) about names the matcher can't place, before creating anything: one it
 // places uses the existing ingredient and teaches it the wording; new and unsure ones are created and say so. The owner
 // sets the Gemini key and runs Check names, which merges the waiting names Gemini is sure about (Supply moves); anyone
-// can Copy for Claude and paste its answer. No review cards, banners or counts. Test runs share the stub doc, so each
+// can Copy for Claude and paste its answer (merges are the owner's, M22). No review cards, banners or counts. Test runs share the stub doc, so each
 // test merges in answers for its own unique names.
 import type { Page } from "@playwright/test";
 import { newIngredientId } from "../../packages/core/src/index";
@@ -105,8 +105,8 @@ test("Check with Gemini (owner only) merges what Gemini is sure about, moving Su
   await expect(page.getByRole("status").filter({ hasText: "Merged into" })).toContainText("strawberry jam");
 });
 
-test("Copy for Claude, then paste its answer: sure answers are merged or kept, the rest wait (R4.35)", { tag: ["@R4.35"] }, async ({ page, household: _ }) => {
-  test.setTimeout(120_000);
+test("Copy for Claude, then paste its answer: sure answers are merged (owner only) or kept, the rest wait (R4.35)", { tag: ["@R4.35"] }, async ({ page, household }) => {
+  test.setTimeout(150_000);
   const w = word();
   const [dup, own] = [`strawberry jam ${w}`, `${w} leaf`];
   const dupId = await waitingIngredient(dup);
@@ -115,16 +115,32 @@ test("Copy for Claude, then paste its answer: sure answers are merged or kept, t
   const card = page.getByTestId("waiting-names");
   await expect(card.getByRole("link", { name: dup })).toBeVisible({ timeout: 20_000 });
   await expect(card.getByRole("button", { name: "Copy for Claude" })).toBeEnabled();
-  await card.getByRole("button", { name: "Paste Claude's answer" }).click();
-  const answer = `Here you go:\n\`\`\`json\n${JSON.stringify({ answers: [{ name: dup, verdict: "same", id: "strawberry-jam" }, { name: own, verdict: "new" }, { name: "something else", verdict: "same", id: "nope" }] })}\n\`\`\``;
-  await card.getByLabel("Claude's answer").fill(answer);
+  const paste = async () => {
+    await card.getByRole("button", { name: "Paste Claude's answer" }).click();
+    const answer = `Here you go:\n\`\`\`json\n${JSON.stringify({ answers: [{ name: dup, verdict: "same", id: "strawberry-jam" }, { name: own, verdict: "new" }, { name: "something else", verdict: "same", id: "nope" }] })}\n\`\`\``;
+    await card.getByLabel("Claude's answer").fill(answer);
+  };
+
+  // Not the owner (M22): merges are refused with a reason; the new name is still kept.
+  await paste();
   await expect(card.getByTestId("claude-plan")).toContainText(/Merge 1 · keep 1 as new/i);
-  await expect(card).toContainText(`${dup} → strawberry jam`);
+  await expect(card.getByTestId("merge-owner-only")).toBeVisible();
   await card.getByRole("button", { name: "Apply" }).click();
-  await expect(statusBanner(page, "1 merged, 1 kept as new")).toBeVisible({ timeout: 90_000 });
-  expect((await adminDb.doc(`ingredients/${dupId}`).get()).data()).toMatchObject({ mergedInto: "strawberry-jam" });
+  await expect(page.getByTestId("notifications").getByRole("alert").filter({ hasText: "0 merged, 1 kept as new" })).toContainText("Only the app's owner can merge ingredients", { timeout: 90_000 });
+  expect((await adminDb.doc(`ingredients/${dupId}`).get()).data()?.mergedInto).toBeUndefined();
   expect((await adminDb.doc(`ingredients/${ownId}`).get()).data()).toMatchObject({ nameCheck: "new" });
   await expect(card.getByRole("link", { name: own })).toHaveCount(0);
+
+  // The owner applies the merge.
+  await adminDb.doc(`_stubPcx/${household.hid}`).set({ ownerUid: household.uid });
+  await page.reload();
+  await expect(card.getByRole("link", { name: dup })).toBeVisible({ timeout: 20_000 });
+  await paste();
+  await expect(card).toContainText(`${dup} → strawberry jam`);
+  await expect(card.getByTestId("merge-owner-only")).toHaveCount(0);
+  await card.getByRole("button", { name: "Apply" }).click();
+  await expect(statusBanner(page, "1 merged, 0 kept as new")).toBeVisible({ timeout: 90_000 });
+  expect((await adminDb.doc(`ingredients/${dupId}`).get()).data()).toMatchObject({ mergedInto: "strawberry-jam" });
 });
 
 test("the More sheet links to Ingredients on phones", { tag: ["@R4.27"] }, async ({ page, household: _ }) => {

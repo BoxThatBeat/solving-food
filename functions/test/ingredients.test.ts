@@ -5,7 +5,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { Timestamp } from "firebase-admin/firestore";
 import { clearFirestore, db } from "./helpers";
-import { mergeIngredient, MergeError, requireAllowed } from "../src/ingredients";
+import { mergeIngredient, MergeError, ownerMergeIngredient, requireAllowed } from "../src/ingredients";
 import { prepareCookRecipe, resetIngredientCache } from "../src/dropFolder";
 
 const UID = "merger";
@@ -103,6 +103,16 @@ describe("mergeIngredient", () => {
     await db.doc("allowlist/ok@example.com").set({ addedBy: "test" });
     await expect(requireAllowed({ uid: "y", token: { email: "OK@example.com", email_verified: false } })).rejects.toThrow(/Sign in/);
     await expect(requireAllowed({ uid: "y", token: { email: "OK@example.com", email_verified: true } })).resolves.toBe("y");
+  });
+
+  it("the callable is the owner's only (M22): anyone else is refused before anything is read", async () => {
+    await db.doc("_stubPcx/h-merge").set({ ownerUid: "someone" }); // honoured only under the Functions emulator
+    await expect(ownerMergeIngredient("someone", { hid: "h-merge", fromId: "frozen-tater-tot", intoId: "tater-tot", dryRun: true }, "the-owner")).rejects.toMatchObject({
+      code: "permission-denied",
+      message: "Only the app's owner can merge ingredients",
+    });
+    const r = await ownerMergeIngredient("the-owner", { hid: "h-merge", fromId: "frozen-tater-tot", intoId: "tater-tot", dryRun: true }, "the-owner");
+    expect(r.dryRun).toBe(true);
   });
 
   it("refuses a catalogue ingredient into a new one, itself, unknown IDs, and unconvertible units", async () => {

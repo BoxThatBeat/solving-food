@@ -135,7 +135,7 @@ function WaitingNames({ hid, waiting, ing, ai }: { hid: string; waiting: Ingredi
       const x = v.get(w.name);
       try {
         if (x?.verdict === "same") {
-          await mergeIngredient(w.id, finalId(x.id, ing.byId));
+          await mergeIngredient(hid, w.id, finalId(x.id, ing.byId));
           merged++;
         } else if (x?.verdict === "new") {
           await markNameNew(w.id, s.user.uid);
@@ -188,6 +188,11 @@ function WaitingNames({ hid, waiting, ing, ai }: { hid: string; waiting: Ingredi
               <p role="status" data-testid="claude-plan" className="m-0 font-mono text-[0.6875rem] font-bold uppercase">
                 Merge {plan.same} · keep {plan.new} as new · {plan.unsure} still unsure
               </p>
+              {plan.same && !ai?.canEditKey ? (
+                <p className="m-0 text-[0.8125rem] font-semibold" data-testid="merge-owner-only">
+                  Only the app&apos;s owner can merge ingredients: Apply keeps the new ones; ask the owner to apply the merges.
+                </p>
+              ) : null}
               {plan.same ? (
                 <ul className="m-0 flex list-none flex-col gap-1 p-0 text-[0.8125rem] font-bold">
                   {[...verdicts].flatMap(([name, v]) => (v.verdict === "same" ? [<li key={name}>{`${name} → ${ing.byId.get(v.id)?.name ?? v.id}`}</li>] : []))}

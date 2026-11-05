@@ -1,7 +1,7 @@
 // Timer push (R4.23, §12): schedule/cancel/reschedule against the stub queue, and the task handler's push payload
 // through the stub pusher. The real adapters (Cloud Tasks, FCM) are a few lines each in src/timers.ts.
 import { beforeAll, describe, expect, it } from "vitest";
-import { cancelTimer, fireTimer, scheduleTimer, stubPusher, stubQueue, type TaskQueue } from "../src/timers";
+import { cancelTimer, fireTimer, scheduleTimer, stubPusher, stubQueue, timerRateLimit, TIMERS_PER_HOUR, type TaskQueue } from "../src/timers";
 import { clearFirestore, db } from "./helpers";
 
 const UID = "timer-user";
@@ -66,5 +66,13 @@ describe("cooking timer push", () => {
     expect((await db.doc(`_stubTasks/${id}`).get()).data()?.state).toBe("scheduled");
     await cancelTimer(UID, "t5", stubQueue);
     expect((await db.doc(`_stubTasks/${id}`).get()).data()?.state).toBe("deleted");
+  });
+
+  it("scheduleTimer is rate limited per person per hour (M22)", async () => {
+    const t0 = Date.now();
+    for (let i = 0; i < TIMERS_PER_HOUR; i++) await timerRateLimit("busy-cook", t0);
+    await expect(timerRateLimit("busy-cook", t0 + 1000)).rejects.toMatchObject({ code: "resource-exhausted" });
+    await expect(timerRateLimit("other-cook", t0)).resolves.toBeUndefined();
+    await expect(timerRateLimit("busy-cook", t0 + 3_600_001)).resolves.toBeUndefined();
   });
 });

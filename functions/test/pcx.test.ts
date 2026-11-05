@@ -121,9 +121,16 @@ describe("callables", () => {
     expect((await db.doc(configDoc(HID)).get()).data()?.apiKey).toBeUndefined();
   });
 
-  it("under the emulator a test names the owner in _stubPcx/{hid}", async () => {
+  it("under the Functions emulator (only) a test names the owner in _stubPcx/{hid}", async () => {
     await db.doc(`_stubPcx/${HID}`).set({ ownerUid: UID });
-    expect((await pcxStatus(UID, { hid: HID }, "someone-else")).canEditKey).toBe(true);
+    // PCX_STUB alone (the stubs, not the emulator) never honours it (M22).
+    expect((await pcxStatus(UID, { hid: HID }, "someone-else")).canEditKey).toBeUndefined();
+    process.env.FUNCTIONS_EMULATOR = "true";
+    try {
+      expect((await pcxStatus(UID, { hid: HID }, "someone-else")).canEditKey).toBe(true);
+    } finally {
+      delete process.env.FUNCTIONS_EMULATOR;
+    }
   });
 
   it("rate limits per member per hour", async () => {

@@ -41,10 +41,11 @@ export async function markNameNew(id: string, uid: string): Promise<void> {
 }
 
 /** Merges a duplicate into the ingredient it means (M8; since M15 used by the Claude answer, R4.35): the mergeIngredient
- * function; `dryRun` returns what would move. Needs a connection. */
-export async function mergeIngredient(fromId: string, intoId: string, dryRun = false): Promise<MergeReport> {
-  const fn = httpsCallable<{ fromId: string; intoId: string; dryRun: boolean }, MergeReport>(functions, "mergeIngredient");
-  return (await fn({ fromId, intoId, dryRun })).data;
+ * function, the app's owner only (M22; `hid` names the caller's household, which the emulator's stub owner needs);
+ * `dryRun` returns what would move. Needs a connection. */
+export async function mergeIngredient(hid: string, fromId: string, intoId: string, dryRun = false): Promise<MergeReport> {
+  const fn = httpsCallable<{ hid: string; fromId: string; intoId: string; dryRun: boolean }, MergeReport>(functions, "mergeIngredient");
+  return (await fn({ hid, fromId, intoId, dryRun })).data;
 }
 
 /** Specific ingredients by ID, each its own live document (works signed out). */

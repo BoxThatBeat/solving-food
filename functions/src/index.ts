@@ -14,12 +14,12 @@ import { DROP_PREFIX, handleDropObject } from "./dropFolder";
 import { runMaintenance } from "./maintenance";
 import { applyCommand } from "./commands";
 import { cleanupIfEmpty } from "./households";
-import { cancelTimer as cancelTimerLogic, fireTimer, scheduleTimer as scheduleTimerLogic, type TimerTask } from "./timers";
+import { cancelTimer as cancelTimerLogic, fireTimer, scheduleTimer as scheduleTimerLogic, timerRateLimit, type TimerTask } from "./timers";
 import { defineString } from "firebase-functions/params";
 import { CallError, pcxStatus as pcxStatusLogic, searchProducts, searchStores, setKey } from "./pcx";
 import { aiSetKey as aiSetKeyLogic, aiStatus as aiStatusLogic, checkIngredientNames as checkNamesLogic } from "./ai";
 import { addRecipeWithGemini as addRecipeLogic } from "./ai/addRecipe";
-import { MergeError, mergeIngredient as mergeIngredientLogic, requireAllowed } from "./ingredients";
+import { MergeError, ownerMergeIngredient, requireAllowed } from "./ingredients";
 
 // Keep every function small and cheap: free tier is a hard requirement (PRD NFR2).
 setGlobalOptions({ region: REGION, maxInstances: 2, memory: "256MiB" });
@@ -71,30 +71,34 @@ export const maintenance = onSchedule({ schedule: "every monday 04:00", timeZone
   logger.info("maintenance", report);
 });
 
-function memberUid(auth: { uid: string; token: { email_verified?: boolean } } | undefined): string {
-  if (!auth || auth.token.email_verified !== true) throw new HttpsError("unauthenticated", "Sign in first");
-  return auth.uid;
-}
+type Auth = { uid: string; token: { email?: string; email_verified?: boolean } } | undefined;
 
-async function pcxCall<T>(fn: () => Promise<T>): Promise<T> {
+/** Maps the modules' own errors to HttpsError (the message reaches the person). */
+async function call<T>(fn: () => Promise<T>): Promise<T> {
   try {
     return await fn();
   } catch (e) {
-    if (e instanceof CallError) throw new HttpsError(e.code, e.message);
+    if (e instanceof CallError || e instanceof MergeError) throw new HttpsError(e.code, e.message);
     throw e;
   }
 }
 
+/**
+ * Every callable runs `fn` for a verified, allowlisted caller only (M22): email-link sign-in verifies any address, so a
+ * verified token alone would let a stranger call PC Express, Gemini or Cloud Tasks.
+ */
+const allowedCall = <T>(auth: Auth, fn: (uid: string) => Promise<T>) => call(async () => fn(await requireAllowed(auth)));
+
 /** PC Express store search for the store picker (R6.22). */
-export const pcxSearchStores = onCall({ cors: true }, (req) => pcxCall(() => searchStores(memberUid(req.auth), req.data)));
+export const pcxSearchStores = onCall({ cors: true }, (req) => allowedCall(req.auth, (uid) => searchStores(uid, req.data)));
 /** PC Express product search for brand mappings (R7.10); writes the results' prices. */
-export const pcxSearchProducts = onCall({ cors: true }, (req) => pcxCall(() => searchProducts(memberUid(req.auth), req.data)));
+export const pcxSearchProducts = onCall({ cors: true }, (req) => allowedCall(req.auth, (uid) => searchProducts(uid, req.data)));
 /** Whether PC Express is connected (Settings). */
-export const pcxStatus = onCall({ cors: true }, (req) => pcxCall(() => pcxStatusLogic(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
+export const pcxStatus = onCall({ cors: true }, (req) => allowedCall(req.auth, (uid) => pcxStatusLogic(uid, req.data, OWNER_UID.value() || null)));
 /** Gemini for the ingredient judge (R4.27, R4.36): status, the owner's key, and Check names (5 minutes: merges). */
-export const aiStatus = onCall({ cors: true }, (req) => pcxCall(() => aiStatusLogic(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
-export const aiSetKey = onCall({ cors: true }, (req) => pcxCall(() => aiSetKeyLogic(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
-export const checkIngredientNames = onCall({ cors: true, timeoutSeconds: 300 }, (req) => pcxCall(() => checkNamesLogic(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
+export const aiStatus = onCall({ cors: true }, (req) => allowedCall(req.auth, (uid) => aiStatusLogic(uid, req.data, OWNER_UID.value() || null)));
+export const aiSetKey = onCall({ cors: true }, (req) => allowedCall(req.auth, (uid) => aiSetKeyLogic(uid, req.data, OWNER_UID.value() || null)));
+export const checkIngredientNames = onCall({ cors: true, timeoutSeconds: 300 }, (req) => allowedCall(req.auth, (uid) => checkNamesLogic(uid, req.data, OWNER_UID.value() || null)));
 function safeHost(url: string): string | undefined {
   try {
     return new URL(url).hostname;
@@ -118,23 +122,20 @@ export const addRecipeWithGemini = onCall({ cors: true, timeoutSeconds: 240, mem
   }
 });
 /** Saves the PC Express API key (owner only, R6.28). */
-export const pcxSetKey = onCall({ cors: true }, (req) => pcxCall(() => setKey(memberUid(req.auth), req.data, OWNER_UID.value() || null)));
+export const pcxSetKey = onCall({ cors: true }, (req) => allowedCall(req.auth, (uid) => setKey(uid, req.data, OWNER_UID.value() || null)));
 
 /**
- * "Merge into…" (§6 "Merging ingredients", R4.27, R8.16): moves a duplicate ingredient's recipes, meals, Supply, plan
- * and grocery lines onto the ingredient it means. Allowlisted callers; rare (the review page), so 5 minutes is plenty.
+ * "Merge into…" (§6 "Merging ingredients", R4.27, R4.35, R8.16): moves a duplicate ingredient's recipes, meals, Supply,
+ * plan and grocery lines onto the ingredient it means, in every household. The owner only (M22): it rewrites everyone's
+ * data. Rare (Claude's answer on the Ingredients page), so 5 minutes is plenty.
  */
-export const mergeIngredient = onCall({ cors: true, timeoutSeconds: 300 }, async (req) => {
-  try {
-    const uid = await requireAllowed(req.auth);
-    const report = await mergeIngredientLogic(uid, req.data);
+export const mergeIngredient = onCall({ cors: true, timeoutSeconds: 300 }, (req) =>
+  allowedCall(req.auth, async (uid) => {
+    const report = await ownerMergeIngredient(uid, req.data, OWNER_UID.value() || null);
     if (!report.dryRun) logger.info("ingredient merged", report);
     return report;
-  } catch (e) {
-    if (e instanceof MergeError) throw new HttpsError(e.code, e.message);
-    throw e;
-  }
-});
+  }),
+);
 
 /**
  * Supply commands (§6): every supply change, cook event, rating, and stat goes through here. 512 MiB and 5 minutes
@@ -151,29 +152,27 @@ export const householdCleanup = onDocumentDeleted({ document: "households/{hid}/
   if (r.status !== "kept") logger.info("household cleanup", { hid: event.params.hid, ...r });
 });
 
-function timerUid(auth: { uid: string; token: { email_verified?: boolean } } | undefined): string {
-  if (!auth || auth.token.email_verified !== true) throw new HttpsError("unauthenticated", "Sign in first");
-  return auth.uid;
-}
-
-/** Cooking timers (§12): schedule or reschedule the push for a running timer. */
-export const scheduleTimer = onCall({ cors: true }, async (req) => {
-  const uid = timerUid(req.auth);
-  const d = (req.data ?? {}) as Record<string, unknown>;
-  try {
-    const taskId = await scheduleTimerLogic(uid, { timerId: String(d.timerId ?? ""), endsAt: Number(d.endsAt), label: String(d.label ?? "Timer"), title: d.title ? String(d.title) : undefined, link: String(d.link ?? "/") });
-    return { taskId };
-  } catch (e) {
-    throw new HttpsError("invalid-argument", (e as Error).message);
-  }
-});
+/** Cooking timers (§12): schedule or reschedule the push for a running timer. Allowlisted, rate limited (M22). */
+export const scheduleTimer = onCall({ cors: true }, (req) =>
+  allowedCall(req.auth, async (uid) => {
+    await timerRateLimit(uid);
+    const d = (req.data ?? {}) as Record<string, unknown>;
+    try {
+      const taskId = await scheduleTimerLogic(uid, { timerId: String(d.timerId ?? ""), endsAt: Number(d.endsAt), label: String(d.label ?? "Timer"), title: d.title ? String(d.title) : undefined, link: String(d.link ?? "/") });
+      return { taskId };
+    } catch (e) {
+      throw new HttpsError("invalid-argument", (e as Error).message);
+    }
+  }),
+);
 
 /** Pause or cancel a timer: its push won't fire. */
-export const cancelTimer = onCall({ cors: true }, async (req) => {
-  const uid = timerUid(req.auth);
-  await cancelTimerLogic(uid, String((req.data as { timerId?: unknown })?.timerId ?? ""));
-  return { ok: true };
-});
+export const cancelTimer = onCall({ cors: true }, (req) =>
+  allowedCall(req.auth, async (uid) => {
+    await cancelTimerLogic(uid, String((req.data as { timerId?: unknown })?.timerId ?? ""));
+    return { ok: true };
+  }),
+);
 
 /** The `timers` Cloud Tasks queue's handler: sends the push when a timer ends. */
 export const timers = onTaskDispatched({ retryConfig: { maxAttempts: 3, minBackoffSeconds: 10 }, rateLimits: { maxConcurrentDispatches: 6 } }, async (req) => {

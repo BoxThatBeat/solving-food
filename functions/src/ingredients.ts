@@ -46,6 +46,7 @@ import {
 import { db } from "./admin";
 import { contentOf, derivedUpdate, loadIngredients, lookupOf } from "./recipes";
 import { toMs } from "./commands/store";
+import { isOwner } from "./owner";
 
 export class MergeError extends Error {
   constructor(
@@ -64,6 +65,19 @@ export async function requireAllowed(auth: { uid: string; token: { email?: strin
   if (!ok.exists) throw new MergeError("permission-denied", "Not on the allowlist");
   return auth.uid;
 }
+
+/**
+ * The `mergeIngredient` callable (M22): the owner only, since a merge rewrites every household's Supply, plan and
+ * grocery lines. `hid` (the caller's current household) names the emulator's stub owner (owner.ts); checkIngredientNames
+ * makes its own owner check and calls `mergeIngredient` directly.
+ */
+export async function ownerMergeIngredient(uid: string, data: unknown, ownerUid: string | null): Promise<MergeReport> {
+  const hid = typeof (data as { hid?: unknown } | null)?.hid === "string" ? (data as { hid: string }).hid : "";
+  if (!(await isOwner(uid, hid, ownerUid))) throw new MergeError("permission-denied", OWNER_ONLY_MERGE);
+  return mergeIngredient(uid, data);
+}
+
+export const OWNER_ONLY_MERGE = "Only the app's owner can merge ingredients";
 
 function parse(data: unknown): { fromId: string; intoId: string; dryRun: boolean } {
   const d = (data ?? {}) as Record<string, unknown>;

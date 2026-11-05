@@ -11,6 +11,7 @@ import { getFunctions } from "firebase-admin/functions";
 import { getMessaging } from "firebase-admin/messaging";
 import { REGION, timerPushData, timerTaskId } from "@solving-food/core";
 import { db } from "./admin";
+import { rateLimit } from "./pcx";
 
 export interface TimerTask {
   uid: string;
@@ -89,6 +90,14 @@ export interface ScheduleInput {
 }
 
 const MAX_AHEAD_MS = 24 * 3600_000;
+
+/** scheduleTimer calls per person per hour (M22): a long cook starts, pauses and adjusts maybe 20; each is a Cloud Task. */
+export const TIMERS_PER_HOUR = 60;
+
+/** A fixed hourly window in `timerRate/{uid}` (function-only), the same helper as the PC Express searches. */
+export function timerRateLimit(uid: string, now = Date.now()): Promise<void> {
+  return rateLimit(uid, now, { collection: "timerRate", limit: TIMERS_PER_HOUR, message: `That's ${TIMERS_PER_HOUR} timers this hour; the timer still runs on this screen` });
+}
 
 /** Schedules (or reschedules) a timer's push. Returns the task name. */
 export async function scheduleTimer(uid: string, input: ScheduleInput, queue: TaskQueue = defaultQueue(), nowMs = Date.now()): Promise<string> {
