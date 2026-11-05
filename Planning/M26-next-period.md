@@ -77,6 +77,8 @@ that followed `currentPeriodId` (a new periodId restores removed lines).
 - **Staples**: the next list asks which staples are due at its start and leaves out any already on this period's list
   or ordered, so one isn't bought twice.
 - **No prototype screen**: `<PeriodSwitch>` reuses the Create meal sheet's segmented tabs (accent on the chosen one).
+- **CI after the last commit (21fc3f1)** failed on the @R3.4 note test on every project: item 10 made "400 g" non-breaking,
+  and the test's regex had a plain space. The test now accepts either (fixed during M27, own commit).
 - **Screenshot check, not design-compare**: the owner retired design-compare during this milestone (4c3e19a); item 10
   is the new screenshot check.
 

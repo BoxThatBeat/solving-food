@@ -491,7 +491,7 @@ test.describe("the next period (M26)", () => {
     // 1 kg, good until two days into the next period: 400 g left at its start, which nothing there uses.
     await seedSupply(household.hid, "chicken-thigh", [{ amount: 1000, expiresInDays: 9 }]);
     await page.goto("/plan?period=next");
-    await expect(page.getByTestId("at-start-note")).toHaveText(/Projected at period start: 1 lot expiring · chicken thigh 400 g/);
+    await expect(page.getByTestId("at-start-note")).toHaveText(/Projected at period start: 1 lot expiring · chicken thigh 400\s?g/);
     // Planning it there uses it up.
     const plan = new PlanPage(page);
     await plan.createMeal({ recipes: [r.title] });
