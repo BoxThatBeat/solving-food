@@ -139,3 +139,8 @@ where the bytes were.
 - **Design-compare:** Plan (phone and desktop: same shell, tab bar and side nav with badges) and the recipe page's
   servings stepper (now `<Stepper compact>`: Lucide minus/plus instead of text glyphs, same size) against the prototype;
   no other layout changed. History's Show more uses the standard secondary button.
+- **Verification:** typecheck and lint clean; unit 698 → 701 (core) and 37 → 48 (web); `pnpm e2e:coverage` green. The
+  full e2e run on phone-android and desktop-1080p was stopped by Claude Code after 32 tests (all passed: a11y, auth,
+  cadence, cooking, core-loop, data-transfer, drop-folder) because the machine ran low on memory. It still has to be run
+  (`pnpm e2e --project=phone-android --project=desktop-1080p`), especially notifications, grocery, offline, households,
+  history, responsive, recipe-edit and plan, before this is pushed.
