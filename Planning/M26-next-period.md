@@ -1,6 +1,6 @@
 # M26 — Plan the next period
 
-Status: in progress
+Status: in progress (verification left: the e2e regression run was stopped by the machine running low on memory; see Verification)
 
 ## Goal
 
@@ -53,7 +53,7 @@ that followed `currentPeriodId` (a new periodId restores removed lines).
 - [x] **8. E2E**: plan.spec (@R3.2 create a next-period meal, absent from this period's strip and budget; @R3.4 the
       note), grocery.spec (@R7.18 next draft from projected Supply, its order in the next view only), rollover.spec
       (@R3.3 adoption with no copies and the draft; restart moves it), optimiser.spec (@R3.4 accept into the next period).
-- [ ] **9. Docs**: PRD, spec, README row, this plan.
+- [x] **9. Docs**: PRD, spec, README row, this plan.
 - [ ] **10. Design-compare** Plan and Grocery (both views) on phone and desktop.
 
 ## Deviations
@@ -73,3 +73,14 @@ that followed `currentPeriodId` (a new periodId restores removed lines).
 - **Staples**: the next list asks which staples are due at its start and leaves out any already on this period's list
   or ordered, so one isn't bought twice.
 - **No prototype screen**: `<PeriodSwitch>` reuses the Create meal sheet's segmented tabs (accent on the chosen one).
+
+## Verification
+
+- Typecheck and lint (whole repo): clean. `pnpm e2e:coverage`: green, M26 7/7 tagged.
+- Unit: core 717 → 732 (`upcoming.test.ts` 15), web 48. Rules: 103 → 104 (the next period).
+- E2E, new tests (`--workers=1`, phone-android and desktop-1080p): plan @R3.2 @R3.4, grocery @R7.18, rollover @R3.3 ×2:
+  10/10 passed (one fix: the R3.2 test read the item before the write reached the emulator; now polls).
+- E2E regression plan + rollover + grocery on both projects: **stopped at 72 passed, 0 failed** when the session was
+  killed for low memory (not a test failure). Still to run: the rest of that run, suggestions, optimiser (incl. the new
+  @R3.4 test, not run yet), receive and a11y; `pnpm test:functions` (no function code changed).
+- Design-compare: not done yet (needs the dev emulators and two browsers; deferred with the runs above).
