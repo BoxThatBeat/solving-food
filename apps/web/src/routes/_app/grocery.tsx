@@ -121,16 +121,26 @@ function GroceryPage() {
     try {
       await sync(); // the stored draft must hold what's shown
       const lines = Object.fromEntries(Object.entries(items).filter(([, it]) => it.storeId === storeId));
-      const n = Object.keys(lines).length;
-      const listId = await orderDraft(m.hid, m.periodId, storeId, lines, s.user.uid);
-      if (how === "shopped") {
-        setReceiving(listId);
+      const done = await orderDraft(m.hid, m.periodId, storeId, lines, s.user.uid);
+      if (!done) {
+        notify({ kind: "info", message: `${storeName(storeId)} was just marked ordered on another device` });
         return;
       }
+      const n = done.count;
+      if (how === "shopped") {
+        setReceiving(done.listId);
+        return;
+      }
+      const undo = () =>
+        void undoOrder(m.hid, done.listId)
+          .then((r) => {
+            if (r === "received") notify({ kind: "info", message: "That order has already been received" });
+          })
+          .catch((e) => notify({ kind: "error", message: `Couldn't undo: ${(e as Error).message}` }));
       notify({
         kind: "success",
         message: how === "copied" ? `Copied ${n} item${n === 1 ? "" : "s"} for ChatGPT · ${storeName(storeId)} marked ordered` : `${storeName(storeId)} marked ordered`,
-        action: { label: "Undo", run: () => void undoOrder(m.hid, listId).catch((e) => notify({ kind: "error", message: `Couldn't undo: ${(e as Error).message}` })) },
+        action: { label: "Undo", run: undo },
       });
     } catch (e) {
       notify({ kind: "error", message: `Couldn't mark it ordered: ${(e as Error).message}` });
@@ -266,7 +276,11 @@ function GroceryPage() {
                 receiving={receivingIds.has(l.id)}
                 onReceive={() => setReceiving(l.id)}
                 onTick={(id, on) => tick(l.id, id, on)}
-                onUndo={() => void undoOrder(m.hid, l.id).then(() => notify({ kind: "success", message: "Order undone · items back on the list" }))}
+                onUndo={() =>
+                  void undoOrder(m.hid, l.id)
+                    .then((r) => notify(r === "undone" ? { kind: "success", message: "Order undone · items back on the list" } : { kind: "info", message: r === "received" ? "That order has already been received" : "That order was already undone" }))
+                    .catch((e) => notify({ kind: "error", message: `Couldn't undo: ${(e as Error).message}` }))
+                }
               />
             ))}
         </section>

@@ -30,6 +30,7 @@ import {
   carriedItemId,
   cleanSides,
   mergeDraft,
+  orderableLines,
   carryOver,
   DEFAULT_STORE_ID,
   DEFAULT_STORES,
@@ -548,40 +549,51 @@ export function tickItem(hid: string, listId: string, itemId: string, checked: b
 }
 
 /**
- * The Copy button (R7.5): the draft's items move into a new list with status `ordered` (who and when), and the draft
- * empties (except for removed lines, M17). Ordered items count as incoming, so regenerating doesn't add them again (§8).
- */
-/**
  * Orders one store's lines (R7.14): they move from the draft into a new ordered list for that store; every other line
- * (other stores, and the removed lines of M17) stays on the draft.
+ * (other stores, and the removed lines of M17) stays on the draft. The Copy button (R7.5) and "Mark ordered" both come
+ * here. M23: a transaction that re-reads the draft and orders only the lines still on it (core `orderableLines`), so two
+ * members pressing at once can't put the same lines on two ordered lists. Returns null when nothing was left to order
+ * (someone else just ordered it). Needs a connection.
  */
-export async function orderDraft(hid: string, periodId: string, storeId: string, items: Record<string, GroceryItem>, uid: string): Promise<string> {
-  const b = writeBatch(db);
+export async function orderDraft(hid: string, periodId: string, storeId: string, shown: Record<string, GroceryItem>, uid: string): Promise<{ listId: string; count: number } | null> {
   const ref = doc(collection(db, "households", hid, "groceryLists"));
-  b.set(ref, { periodId, status: "ordered", storeId, createdAt: serverTimestamp(), orderedAt: serverTimestamp(), orderedBy: uid, items });
-  const ids = Object.keys(items);
-  if (ids.length) {
+  return runTransaction(db, async (tx) => {
+    const draft = (await tx.get(draftRef(hid))).data() as StoredList | undefined;
+    const items = orderableLines(draft?.items, shown);
+    const ids = Object.keys(items);
+    if (!ids.length) return null;
+    tx.set(ref, { periodId, status: "ordered", storeId, createdAt: serverTimestamp(), orderedAt: serverTimestamp(), orderedBy: uid, items });
     const [first, ...rest] = ids;
-    b.update(draftRef(hid), new FieldPath("items", first!), deleteField(), ...rest.flatMap((id) => [new FieldPath("items", id), deleteField()]));
-  }
-  await b.commit();
-  return ref.id;
+    tx.update(draftRef(hid), new FieldPath("items", first!), deleteField(), ...rest.flatMap((id) => [new FieldPath("items", id), deleteField()]));
+    return { listId: ref.id, count: ids.length };
+  });
 }
 
-/** Undo: the order wasn't placed. Its items go back into the draft (ticks kept) and the ordered list is deleted. */
-export async function undoOrder(hid: string, listId: string): Promise<void> {
+/**
+ * Undo: the order wasn't placed. Its items go back into the draft (ticks kept) and the ordered list is deleted, in one
+ * transaction (M23): a list already undone elsewhere or received meanwhile is left alone ("gone" / "received").
+ */
+export async function undoOrder(hid: string, listId: string): Promise<"undone" | "gone" | "received"> {
   const ref = doc(db, "households", hid, "groceryLists", listId);
-  const snap = await getDoc(ref);
-  const list = snap.data() as StoredList | undefined;
-  const b = writeBatch(db);
-  if (list && Object.keys(list.items).length) {
-    const args: unknown[] = [];
-    for (const [id, it] of Object.entries(list.items)) args.push(new FieldPath("items", id), it);
-    const [f, v, ...rest] = args as [FieldPath, unknown, ...unknown[]];
-    b.update(draftRef(hid), f, v, ...rest);
-  }
-  b.delete(ref);
-  await b.commit();
+  return runTransaction(db, async (tx) => {
+    const list = (await tx.get(ref)).data() as StoredList | undefined;
+    if (!list) return "gone";
+    if (list.status !== "ordered") return "received";
+    const draft = await tx.get(draftRef(hid));
+    const entries = Object.entries(list.items ?? {});
+    if (entries.length) {
+      if (draft.exists()) {
+        const args: unknown[] = [];
+        for (const [id, it] of entries) args.push(new FieldPath("items", id), it);
+        const [f, v, ...rest] = args as [FieldPath, unknown, ...unknown[]];
+        tx.update(draftRef(hid), f, v, ...rest);
+      } else {
+        tx.set(draftRef(hid), { periodId: list.periodId, status: "draft", createdAt: serverTimestamp(), items: list.items });
+      }
+    }
+    tx.delete(ref);
+    return "undone";
+  });
 }
 
 /**

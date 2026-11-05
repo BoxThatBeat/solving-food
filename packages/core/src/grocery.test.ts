@@ -11,6 +11,7 @@ import {
   itemCosts,
   manualItem,
   mergeDraft,
+  orderableLines,
   isRemoved,
   removedLineIds,
   withoutRemoved,
@@ -165,6 +166,37 @@ describe("marginal costs", () => {
     ]);
     expect(Object.fromEntries(incoming)).toEqual({ chicken: 900 });
     expect(buildList([plan("a", "curry", 4)], ctx({ incoming })).totalCents).toBe(299);
+  });
+});
+
+describe("orderableLines (M23: marking a store ordered in a transaction)", () => {
+  it("orders only the shown lines the stored draft still holds, with the stored ticks", () => {
+    const c = ctx();
+    const gen = buildList([plan("a", "curry", 4)], c).items;
+    const stored = { ...gen, tomato: { ...gen.tomato!, checked: true, checkedBy: "u2" } };
+    const out = orderableLines(stored, gen);
+    expect(Object.keys(out).sort()).toEqual(Object.keys(gen).sort());
+    expect(out.tomato).toMatchObject({ checked: true, checkedBy: "u2" });
+  });
+
+  it("a line another member already ordered (gone from the draft) or took off isn't ordered again", () => {
+    const c = ctx();
+    const gen = buildList([plan("a", "curry", 4)], c).items;
+    const { tomato, ...rest } = gen;
+    expect(Object.keys(orderableLines(rest, gen))).not.toContain("tomato");
+    expect(tomato).toBeDefined();
+    const removed = { ...gen, chicken: { ...gen.chicken!, removed: true } };
+    expect(Object.keys(orderableLines(removed, gen))).not.toContain("chicken");
+    expect(orderableLines(undefined, gen)).toEqual({});
+    expect(orderableLines({}, gen)).toEqual({});
+  });
+
+  it("an unticked stored line drops a stale checkedBy from the shown copy", () => {
+    const c = ctx();
+    const gen = buildList([plan("a", "curry", 4)], c).items;
+    const shown = { ...gen, tomato: { ...gen.tomato!, checked: true, checkedBy: "u1" } };
+    expect(orderableLines(gen, shown).tomato).toMatchObject({ checked: false });
+    expect(orderableLines(gen, shown).tomato!.checkedBy).toBeUndefined();
   });
 });
 

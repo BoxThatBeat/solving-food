@@ -80,3 +80,22 @@ export function withoutRemoved(built: BuiltList, removed: ReadonlySet<string>): 
   }
   return { items, totalCents, unknownPrices, sources };
 }
+
+/**
+ * Marking a store ordered (R7.14) inside a transaction (M23): of the lines the page shows for that store, the ones the
+ * stored draft still holds (and that weren't taken off with their ×). A line another member has just ordered is gone
+ * from the draft, so pressing at the same time can't put it on two ordered lists.
+ */
+export function orderableLines(
+  stored: Readonly<Record<string, GroceryItem>> | undefined,
+  shown: Readonly<Record<string, GroceryItem>>,
+): Record<string, GroceryItem> {
+  const out: Record<string, GroceryItem> = {};
+  for (const [id, it] of Object.entries(shown)) {
+    const s = stored?.[id];
+    if (!s || isRemoved(s)) continue;
+    out[id] = { ...it, checked: s.checked, ...(s.checkedBy ? { checkedBy: s.checkedBy } : {}) };
+    if (!s.checkedBy) delete out[id]!.checkedBy;
+  }
+  return out;
+}
