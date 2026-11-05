@@ -1,6 +1,9 @@
 # Deploy to the `solvingfood` project after Checks pass on master (Planning/M0 §6).
 # Auth: the service-account key in FIREBASE_SERVICE_ACCOUNT_SOLVINGFOOD (created by `firebase init hosting:github`;
-# extra deploy roles granted 2026-10-09, see SETUP.md).
+# extra deploy roles granted 2026-10-09, see SETUP.md). SETUP.md "Deploy without a long-lived key" has the owner's steps
+# to switch to Workload Identity Federation.
+# Order (M22): rules and indexes, then functions, then hosting, so a new client never meets old functions or rules. No
+# --force: a deploy that would delete a function stops instead of deleting it.
 name: Deploy
 
 on:
@@ -16,6 +19,10 @@ concurrency:
 
 permissions:
   contents: read
+
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
 
 jobs:
   deploy:
@@ -39,8 +46,12 @@ jobs:
       - uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SOLVINGFOOD }}
-      - name: firebase deploy
-        run: nix develop -c firebase deploy --only hosting,functions,firestore,storage --project solvingfood --non-interactive --force
+      - name: Deploy rules and indexes
+        run: nix develop -c firebase deploy --only firestore,storage --project solvingfood --non-interactive
+      - name: Deploy functions
+        run: nix develop -c firebase deploy --only functions --project solvingfood --non-interactive
+      - name: Deploy hosting
+        run: nix develop -c firebase deploy --only hosting --project solvingfood --non-interactive
       - name: Smoke check
         run: |
           curl -fsS https://solvingfood.web.app/ | grep -q "<title>Solving Food</title>"

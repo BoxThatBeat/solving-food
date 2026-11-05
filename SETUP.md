@@ -260,13 +260,96 @@ Created with `firebase apps:create web "Solving Food"`. Re-fetch any time with
   "Listen while reading aloud" choice is `localStorage sf.handsFree.talkOver` ("1" always, "0" never, unset = not on
   iPhone/iPad).
 
+## M22 backend hardening (2026-11-05)
+
+- **Callables:** every callable now needs an allowlisted, verified address (`requireAllowed`), not just a verified
+  token. `mergeIngredient` is the owner's only (`OWNER_UID`); the web app passes `hid`. `scheduleTimer` is limited to 60
+  calls per person per hour (function-only `timerRate/{uid}`). New function-only doc `system/maintenance` (the weekly
+  job's run record). No new indexes. Rules deploy needed (`firestore.rules`, `storage.rules`).
+- **Emulator owner:** the per-household stub owner `_stubPcx/{hid}.ownerUid` is honoured only when
+  `FUNCTIONS_EMULATOR=true` (set by the Functions emulator). `PCX_STUB=1` (functions unit tests) picks the stubs only.
+- **Keys in Firestore.** The Gemini key (`aiSession/config.apiKey`) and the PC Express key (`pcxSession/config.apiKey`)
+  are stored in plain text in function-only documents: no rule matches `aiSession/*` or `pcxSession/*`, so no client can
+  read or write them; only functions (Admin SDK) and project owners in the console can. Accepted because neither is a
+  billing secret: the PC Express key is the website's public key, and the Gemini key belongs to a Google project with
+  no billing (it can't cost money; at worst someone with console access uses its free quota). Secret Manager would add
+  a cost line and a redeploy per key change. If either ever becomes a paid key, move it to Secret Manager
+  (`defineSecret`).
+
+## Backups and alerts (owner, once; M22)
+
+Run these in a normal terminal (`cd ~/git/solving-food` so direnv sets the project). None of them is run by CI or by
+Claude.
+
+1. **Weekly Firestore backup, kept 14 days** (the one paid item NFR2 accepts: backup storage is billed per GiB-month,
+   under one cent a month at this data size; TECHNICAL_SPECS §2):
+   ```
+   gcloud firestore backups schedules create --database='(default)' --recurrence=weekly --day-of-week=MON --retention=14d
+   gcloud firestore backups schedules list --database='(default)'     # check
+   gcloud firestore backups list --location=us-east1                   # after the first Monday
+   ```
+   Restore (never in place; into a new database, then point the app at it or copy back):
+   `gcloud firestore databases restore --source-backup=projects/solvingfood/locations/us-east1/backups/<ID> --destination-database=restored`.
+2. **An email channel for alerts** (the owner's address):
+   ```
+   gcloud beta monitoring channels create --display-name="Owner email" --type=email --channel-labels=email_address=buitenwerfa@gmail.com
+   gcloud beta monitoring channels list --format="value(name,displayName)"   # note the channel name
+   ```
+3. **Log-based metrics** for "maintenance failed twice" (logged by the weekly job on its second failure in a row; the
+   owner also gets a banner) and for Cloud Functions errors (2nd gen functions run on Cloud Run):
+   ```
+   gcloud logging metrics create maintenance_failed_twice --description="Weekly maintenance failed twice in a row" \
+     --log-filter='resource.type="cloud_run_revision" AND (jsonPayload.message="maintenance failed twice" OR textPayload:"maintenance failed twice")'
+   gcloud logging metrics create function_errors --description="Cloud Functions errors" \
+     --log-filter='resource.type="cloud_run_revision" AND severity>=ERROR'
+   ```
+4. **Alert policies** on them (Console → Monitoring → Alerting → Create policy is the same thing by hand): save each as
+   a file and create it with `gcloud alpha monitoring policies create --policy-from-file=<file>`, putting the channel
+   name from step 2 in `notificationChannels`:
+   ```json
+   { "displayName": "Maintenance failed twice", "combiner": "OR", "notificationChannels": ["projects/solvingfood/notificationChannels/<ID>"],
+     "conditions": [{ "displayName": "maintenance_failed_twice > 0", "conditionThreshold": {
+       "filter": "metric.type=\"logging.googleapis.com/user/maintenance_failed_twice\" AND resource.type=\"cloud_run_revision\"",
+       "comparison": "COMPARISON_GT", "thresholdValue": 0, "duration": "0s",
+       "aggregations": [{ "alignmentPeriod": "3600s", "perSeriesAligner": "ALIGN_SUM" }] } }] }
+   ```
+   and the same with `function_errors`, `"thresholdValue": 4` and `"alignmentPeriod": "3600s"` (five or more errors in
+   an hour; single errors happen when a command is refused). The existing "pcx refresh failed twice" metric (M5 above)
+   can share the channel.
+
+## Deploy without a long-lived key (owner, once; M22)
+
+`deploy.yml` still authenticates with the service-account JSON key in `FIREBASE_SERVICE_ACCOUNT_SOLVINGFOOD`. Workload
+Identity Federation lets GitHub Actions get short-lived credentials instead, so no key can leak. Steps:
+
+```
+PROJECT=solvingfood; NUM=28493041173; REPO=<github-owner>/solving-food
+SA=github-action-1409507284@solvingfood.iam.gserviceaccount.com
+gcloud iam workload-identity-pools create github --project=$PROJECT --location=global --display-name="GitHub Actions"
+gcloud iam workload-identity-pools providers create-oidc github --project=$PROJECT --location=global \
+  --workload-identity-pool=github --issuer-uri="https://token.actions.githubusercontent.com" \
+  --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref" \
+  --attribute-condition="assertion.repository=='$REPO' && assertion.ref=='refs/heads/master'"
+gcloud iam service-accounts add-iam-policy-binding $SA --project=$PROJECT --role=roles/iam.workloadIdentityUser \
+  --member="principalSet://iam.googleapis.com/projects/$NUM/locations/global/workloadIdentityPools/github/attribute.repository/$REPO"
+```
+
+Then in `deploy.yml` replace `credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SOLVINGFOOD }}` with
+`workload_identity_provider: projects/28493041173/locations/global/workloadIdentityPools/github/providers/github` and
+`service_account: github-action-1409507284@solvingfood.iam.gserviceaccount.com`, add `id-token: write` to the job's
+`permissions`, run Deploy once, and when it passes delete the old key
+(`gcloud iam service-accounts keys list --iam-account=$SA`, then `keys delete <KEY_ID>`) and the GitHub secret.
+
 ## CI/CD (GitHub Actions)
 
 - `.github/workflows/checks.yml`: on PRs and pushes to `master`: lint, typecheck, unit tests, build, requirement-tag
   coverage, rules + functions tests on the emulators, the Playwright suite (one job per browser project, each with its own Emulator Suite), and a Hosting preview channel
   for PRs from this repo. Every step runs in the Nix dev shell, so CI has the same toolchain and browsers as local.
-- `.github/workflows/deploy.yml`: after Checks succeed on a push to `master` (or by manual dispatch), builds and runs
-  `firebase deploy --only hosting,functions,firestore,storage`, then smoke-checks the site and `healthcheck`.
+- `.github/workflows/deploy.yml`: after Checks succeed on a push to `master` (or by manual dispatch), builds (any build
+  error stops it), then deploys in order (M22): `firestore,storage` rules and indexes, then `functions`, then `hosting`,
+  so a new client never talks to old functions or rules; then smoke-checks the site and `healthcheck`. No `--force`:
+  a deploy that would delete a function stops instead, so removing one is a deliberate
+  `firebase functions:delete <name> --project solvingfood` by the owner.
 - **Deploy service account roles (owner, once):** `firebase init hosting:github` created
   `github-action-1409507284@solvingfood.iam.gserviceaccount.com` with Hosting rights only; M0 added Cloud Functions
   Admin, Cloud Run Admin, Firebase Rules Admin and Datastore Index Admin. The first CI deploy (2026-10-11) still
@@ -333,5 +416,7 @@ free) for Firestore and Storage.
 - ~~VAPID key~~ recorded above, 2026-10-09.
 - ~~**GitHub deploy**~~: the generated workflows were replaced by `checks.yml` and `deploy.yml` in M0 (see CI/CD above).
 - **Branch protection** on `master`: owner to set up (see CI/CD above).
+- **M22, owner:** the backup schedule and the two alerts ("Backups and alerts" above); optionally Workload Identity
+  Federation for deploys ("Deploy without a long-lived key").
 - ~~gcloud login~~ done 2026-10-09: `gcloud auth list` shows `buitenwerfa@gmail.com` active, project `solvingfood`.
   (Interactive logins must run in a normal terminal, not through the Claude session, which has no stdin.)
