@@ -73,6 +73,10 @@ describe("parser", () => {
     expect(parseAmount("2-3")).toBe(2.5);
     expect(parseAmount("0.25")).toBe(0.25);
     expect(parseAmount("a few")).toBeNull();
+    expect(parseAmount("1,5")).toBe(1.5);
+    expect(parseAmount("1,000")).toBe(1000);
+    expect(parseAmount("2,500.5")).toBe(2500.5);
+    expect(parseAmount("12,345,678")).toBe(12345678);
   });
 
   it("durations", () => {
@@ -113,6 +117,30 @@ comment -]
     expect(r.content.ingredients[0]!.amount).toBeCloseTo(1.125);
     expect(r.content.ingredients[0]!.measure).toBe("cup");
     expect(r.content.steps.map((s) => s.text)).toEqual(["Add {{ing:l1|1|cup}}.", "Add {{ing:l1|2|tbsp}} and {{ing:l1|0|}} again."]);
+  });
+
+  it("timers read their unit: seconds, minutes, hours (M21)", () => {
+    const fm = `---\ntitle: T\nservings: 2\ncuisine: other\nmain_protein: none\nprep_time: 1 minutes\ncook_time: 1 minutes\ntags: [snack]\n---\n`;
+    const secs = (t: string) => cooklangToRecipe(`${fm}Stir @water{1%cup} for ~{${t}}.`, bySlug).content.steps[0]!.timerSeconds;
+    expect(secs("30%s")).toBe(30);
+    expect(secs("30%sec")).toBe(30);
+    expect(secs("45%seconds")).toBe(45);
+    expect(secs("5%min")).toBe(300);
+    expect(secs("5%minutes")).toBe(300);
+    expect(secs("2%h")).toBe(7200);
+    expect(secs("1%hour")).toBe(3600);
+    expect(secs("2%hours")).toBe(7200);
+    expect(secs("10")).toBe(600);
+  });
+
+  it("package words keep the line but give it no weight and a warning (M21)", () => {
+    const fm = `---\ntitle: T\nservings: 2\ncuisine: other\nmain_protein: none\nprep_time: 1 minutes\ncook_time: 1 minutes\ntags: [snack]\n---\n`;
+    const r = cooklangToRecipe(`${fm}Add @diced tomatoes{2%cans} and @cilantro{1%bunch}.`, bySlug);
+    expect(r.content.ingredients.map((l) => [l.amount, l.measure, l.optional, l.canonicalAmount])).toEqual([
+      [2, "can", false, 0],
+      [1, "bunch", false, 0],
+    ]);
+    expect(r.warnings.join("\n")).toMatch(/diced tomatoes.*no weight/);
   });
 
   it("rejects bad files with a readable reason", () => {

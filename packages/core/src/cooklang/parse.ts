@@ -60,9 +60,15 @@ const VULGAR: Record<string, number> = {
   "⅞": 0.875,
 };
 
-/** "2", "0.5", "1/2", "1 1/2", "1½", "½", "2-3" (→ 2.5), "1,5" (→ 1.5). Null when not a number. */
+/**
+ * "2", "0.5", "1/2", "1 1/2", "1½", "½", "2-3" (→ 2.5), "1,5" (→ 1.5), "1,000" (→ 1000). A comma followed by exactly
+ * three digits is a thousands separator; any other comma between digits is a decimal comma. Null when not a number.
+ */
 export function parseAmount(text: string): number | null {
-  const t = text.trim().replace(/(\d),(\d)/g, "$1.$2");
+  const t = text
+    .trim()
+    .replace(/(\d),(?=\d{3}(?!\d))/g, "$1")
+    .replace(/(\d),(\d)/g, "$1.$2");
   if (!t) return null;
   const range = /^(.+?)\s*[-–]\s*(.+)$/.exec(t);
   if (range) {
