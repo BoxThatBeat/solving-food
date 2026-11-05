@@ -2,9 +2,12 @@
 // themselves when they're due (R7.12): the cadence says they're probably running low (85 % of the usual interval, the
 // seed's typical interval until bought twice; R7.7), or a planned meal uses a free-use staple the household has never
 // bought (R8.14). Not when already on a list; removing one keeps it off for its usual interval. No more prompt.
+// M27: a staple on sale and due soon is pulled forward while the budget has room (R7.19).
 import { adminDb } from "../fixtures/admin";
 import { expect, test } from "../fixtures/test";
 import { makePlanRecipe, seedPeriod, seedPlanItem } from "../pages/plan";
+import { ownPcxStore, seedPriceHistory } from "../pages/prices";
+import { seedSupply } from "../pages/supply";
 import type { Page } from "@playwright/test";
 
 const DAY = 86_400_000;
@@ -68,4 +71,22 @@ test("a free-use staple a planned meal uses is listed until bought; removing a s
   await page.getByRole("button", { name: "Regenerate" }).click();
   await expect(line(page, /olive oil/i)).toHaveCount(0);
   await expect(line(page, /whole wheat bread/i)).toHaveCount(0);
+});
+
+test("a staple on sale that will be due within two periods is pulled forward, while the budget has room (R7.19)", { tag: ["@R7.19", "@R7.12"] }, async ({ page, household }) => {
+  const store = await ownPcxStore(household.hid);
+  await seedPeriod(household.hid, { budgetCents: 20000 });
+  const now = Date.now();
+  // Milk: bought every 10 days, last 2 days ago, some in Supply: due in ~6 days, not yet. On sale today.
+  await adminDb.doc(`households/${household.hid}/cadence/milk`).set({ avgIntervalDays: 10, lastPurchasedAt: new Date(now - 2 * DAY), purchaseCount: 3 });
+  await seedSupply(household.hid, "milk", [{ amount: 2000, expiresInDays: 6 }], { label: "milk" });
+  await seedPriceHistory(household.hid, "milk", { productName: "Lactantia 2% Milk", productCode: "E2E-MILK-4L", packAmount: 4000, packMeasure: "volume", weekly: [699, 699, 699], liveCents: 549, store });
+  await page.goto("/grocery");
+  const milk = line(page, /Lactantia 2% Milk/);
+  await expect(milk).toContainText("on sale, due soon", { timeout: 20_000 });
+  await expect(milk.getByTestId("deal-chip")).toHaveText(/21% below usual/i);
+  await expect.poll(async () => (await draft(household.hid))?.items?.staple_milk?.stapleReason).toBe("sale");
+  // No room in the budget: it waits for its usual time.
+  await adminDb.doc(`households/${household.hid}/periods/${(await adminDb.doc(`households/${household.hid}`).get()).data()!.currentPeriodId}`).update({ budgetCents: 100 });
+  await expect(milk).toHaveCount(0, { timeout: 20_000 });
 });

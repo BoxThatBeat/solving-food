@@ -1,10 +1,12 @@
 // history.spec.ts (TECHNICAL_SPECS §14.1): the cooked list (date, meal, ratings, who cooked, notes, deviations, deleted
 // titles), the shared filter and sort, and the stats: most cooked, average rating by cuisine, spend per period.
+// M27: Prices, this week's biggest moves against usual (R10.4).
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { adminDb } from "../fixtures/admin";
 import { seedRecipeId } from "../fixtures/recipes";
 import { expect, test } from "../fixtures/test";
 import { seedPeriod } from "../pages/plan";
+import { ownPcxStore, seedPriceHistory } from "../pages/prices";
 
 const DAY = 86_400_000;
 
@@ -108,4 +110,25 @@ test("stats: most cooked, average rating by cuisine, spend per period from recei
   await expect(page.getByTestId("stat-cuisine")).toContainText(/9\.0/); // (8 + 10) / 2 for its cuisine
   await expect(page.getByTestId("stat-spend")).toContainText("$57.10");
   await expect(page.getByTestId("stat-spend")).toContainText("budget $100.00");
+});
+
+test("Prices: this week's biggest moves against the usual price, up and down; nothing yet without history (R10.4)", { tag: ["@R10.4"] }, async ({ page, household }) => {
+  await ownPcxStore(household.hid);
+  await seedPeriod(household.hid);
+  await page.goto("/history");
+  await expect(page.getByTestId("stat-prices").getByTestId("stat-empty")).toContainText("Settings → Brands", { timeout: 20_000 });
+  // Rice up 30 % this week, chicken down 20 %, milk unchanged; olive oil's last price is two weeks old (not this week).
+  await seedPriceHistory(household.hid, "jasmine-rice", { productName: "PC Jasmine Rice 2 kg", productCode: "E2E-RICE", packAmount: 2000, packMeasure: "weight", weekly: [500, 500, 500, 650], lastDaysAgo: 1 });
+  await seedPriceHistory(household.hid, "chicken-thigh", { productName: "PC Chicken Thighs", productCode: "E2E-CHX", packAmount: 900, packMeasure: "weight", weekly: [1000, 1000, 1000, 800], lastDaysAgo: 2 });
+  await seedPriceHistory(household.hid, "milk", { productName: "Lactantia 2% Milk", productCode: "E2E-MILK", packAmount: 4000, packMeasure: "volume", weekly: [679, 679, 679, 679], lastDaysAgo: 1 });
+  await seedPriceHistory(household.hid, "olive-oil", { productName: "PC Olive Oil", productCode: "E2E-OIL", packAmount: 1000, packMeasure: "volume", weekly: [1000, 1000, 1000, 500], lastDaysAgo: 14 });
+  const tile = page.getByTestId("stat-prices");
+  const rows = tile.getByTestId("price-mover");
+  await expect(rows).toHaveCount(2, { timeout: 20_000 });
+  await expect(rows.nth(0)).toContainText("PC Jasmine Rice 2 kg");
+  await expect(rows.nth(0)).toContainText("$6.50");
+  await expect(rows.nth(0)).toContainText("+30%");
+  await expect(rows.nth(0)).toContainText(/usual \$5\.00/i);
+  await expect(rows.nth(1)).toContainText("PC Chicken Thighs");
+  await expect(rows.nth(1)).toContainText("−20%");
 });

@@ -1,9 +1,11 @@
 // prices.spec.ts (TECHNICAL_SPECS §14.1, Planning/M5): the PC Express store picker (default Loblaws Greenbank Road),
 // product search on brand mappings (name, pack, image, price), live prices in the budget with the estimate fallback,
 // the "not connected" state, and the owner's API key setting (R6.28). Everything runs against the functions' PC Express stub, never the real API.
+// M27: price history and deals on the brand, the grocery line and the planned meal (R6.32, R6.33).
 import { adminDb } from "../fixtures/admin";
 import { expect, test } from "../fixtures/test";
 import { makePlanRecipe, PlanPage, seedPeriod, seedPlanItem } from "../pages/plan";
+import { ownPcxStore, seedPriceHistory } from "../pages/prices";
 
 test("store picker: default Greenbank Road, in-app store search, pick another; PC Express data is tagged (R6.22, R6.29)", { tag: ["@R6.22", "@R6.29"] }, async ({ page, household }) => {
   await page.goto("/settings/stores");
@@ -98,4 +100,40 @@ test("API key: only the owner sees it; saving tries the key and a rotated one ca
 
   await card.getByRole("button", { name: /Remove key/ }).click();
   await expect(card.getByTestId("pcx-key-hint")).toHaveText("None: PC Express is off");
+});
+
+test("price history: a PC Express price drop 15 % below usual is a deal on the brand, the grocery line and the planned meal (R6.32, R6.33)", { tag: ["@R6.32", "@R6.33"] }, async ({ page, household }) => {
+  const store = await ownPcxStore(household.hid);
+  // Three weeks at $1.99; this week PC Express (the stub) says $1.59: 20 % below usual.
+  await seedPriceHistory(household.hid, "canned-diced-tomato", { productName: "No Name Diced Tomatoes", productCode: "STUB-TOM-796", packAmount: 796, packMeasure: "volume", weekly: [199, 199, 199] });
+  await adminDb.doc(`_stubPcx/${household.hid}`).set({ prices: { "STUB-TOM-796": 1.59 } });
+  const r = await makePlanRecipe("Deal tomato soup", { lines: "Simmer @canned diced tomato{800%ml} until thick." });
+  const pid = await seedPeriod(household.hid);
+  await seedPlanItem(household.hid, pid, [r.id]);
+
+  await page.goto("/settings/brands");
+  const row = page.getByTestId("brand-row").filter({ hasText: "No Name Diced Tomatoes" });
+  await expect(row).toBeVisible({ timeout: 20_000 });
+  await expect(row.getByTestId("deal-chip")).toHaveCount(0); // no current price yet
+  // Looking the product up again fetches today's price (the weekly refresh does the same).
+  await row.getByRole("button", { name: /^Edit brand for/ }).click();
+  const search = page.getByTestId("pcx-product-search");
+  await search.getByLabel("Search PC Express products").fill("diced tomatoes");
+  await search.getByRole("button", { name: "Search" }).click();
+  const result = search.getByRole("button", { name: "Use No Name Diced Tomatoes" });
+  await expect(result).toContainText("$1.59", { timeout: 20_000 });
+  await result.click();
+  await page.getByRole("button", { name: "Save brand" }).click();
+  await expect(row.getByTestId("brand-price")).toContainText(/\$1\.59 · live today/i);
+  await expect(row.getByTestId("deal-chip")).toHaveText(/20% below usual · usual \$1\.99/i);
+  // Saving the same product keeps its history (the function-written fields survive a member's edit).
+  await expect.poll(async () => ((await adminDb.doc(`households/${household.hid}/brandMappings/canned-diced-tomato`).get()).data()?.priceHistory ?? []).length).toBe(3);
+  expect((await adminDb.doc(`households/${household.hid}`).get()).data()?.pcxStoreId).toBe(store);
+
+  // The grocery line and the planned meal say so too.
+  await page.goto("/grocery");
+  const line = page.getByTestId("grocery-line").filter({ hasText: "No Name Diced Tomatoes" });
+  await expect(line.getByTestId("deal-chip")).toHaveText(/20% below usual/i, { timeout: 20_000 });
+  await new PlanPage(page).goto();
+  await expect(page.getByTestId("plan-item").filter({ hasText: r.title }).getByTestId("deal-chip")).toHaveText(/Deal · Canned diced tomatoes? 20% below usual/i, { timeout: 20_000 });
 });

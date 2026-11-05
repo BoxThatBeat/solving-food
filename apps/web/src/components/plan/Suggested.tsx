@@ -95,7 +95,7 @@ export function SuggestedSection({
                   {x.costCents !== null ? ` · +${formatCents(x.costCents)}` : ""}
                 </span>
                 {x.deal ? (
-                  <Badge className="w-fit bg-acc text-onc uppercase" data-testid="deal-chip" aria-label={`Deal: ${x.deal.label}`}>
+                  <Badge className="w-fit bg-acc whitespace-normal text-onc uppercase" data-testid="deal-chip">
                     Deal{x.reasons.some((rr) => rr.key === "onSale") ? "" : ` · ${x.deal.label}`}
                   </Badge>
                 ) : null}

@@ -117,6 +117,7 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | PC Express callables (`pcxSearchStores`, `pcxSearchProducts`, `pcxStatus`, M5; `pcxSetKey`, R6.28) | counted in the 2M above | Settings → Stores / Brands only: < 300 / month; searches are capped at 30 per member per hour (`pcxRate/{uid}`: 1 read + 1 write each) | — |
 | Outbound requests from functions (PC Express, M5) | Cloud Run egress to the internet: 1 GiB / month free (North America) | one or two small JSON requests per search, plus one per mapped product per week (~50): < 2,000 requests, < 50 MB / month | 20× |
 | Price writes (M5) | in the 20,000 writes / day | ≤ 12 per product search (each result's price) + one per mapped product per week; prices nobody refreshed for 60 days are deleted weekly | — |
+| Price history (M27, R6.32) | in the 20,000 writes / day and 1 GiB | the weekly refresh also writes each brand mapping of a refreshed product once (its `priceHistory`, ≤ 16 entries, < 1 kB): ≤ one write per mapping per week (~50 at the design scale; the mappings were already read by the refresh, so no extra reads). A receipt's paid price joins the mapping it already updates (M25): no extra writes. The client reads nothing new: the mappings listener and the live prices it already has; the worker snapshot carries only the products on sale | — |
 | Suggestions and optimiser (M5) | no functions | client-only, in Web Workers; the scoring snapshot reuses the plan model's listeners plus cook events (shared with History) and `prices` at the household's store | — |
 | Hands-free mode (M11, R4.31–R4.34) | no Firebase use | speech runs on the device. The speech model (M13: Moonshine base, ~63 MB q8; Whisper tiny.en ~41 MB before) comes from the Hugging Face Hub and ONNX Runtime's WASM (~5.5 MB) from cdn.jsdelivr.net, once per device, kept in the browser's Cache API; neither is on Hosting (the build drops onnxruntime-web's 27 MB WASM copy). Hosting serves only the ~550 kB worker script to those who switch it on (not precached): < 10 MB / month. M12: the service worker also keeps ONNX Runtime's WASM from jsDelivr (browser storage only, nothing on Firebase) | — |
 | Cloud Build (function deploys) | 2,500 build-minutes / month | ~10 deploys × ~2 min | 100× |
@@ -290,8 +291,12 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
   sourcingRules/{id}             // id = cat_<category> or ing_<ingredientId>: one rule per target
   sourcingRules/{id}             match: { category? | ingredientId? }, storeId
   brandMappings/{ingredientId}   productName, productCode?, packAmount, packMeasure, storeId,
-                                 lastPaidCents?, lastPaidAt?   // M25: one pack's paid price from a receipt (function-written;
-                                                               // the client's save replaces the doc, so a relink clears it)
+                                 lastPaidCents?, lastPaidAt?   // M25: one pack's paid price from a receipt (function-written)
+                                 priceHistory?: [{ atMs, cents, source: "pcx"|"receipt" }]   // M27 (R6.32): one pack's
+                                     // price, oldest first, ≤ 16 (PRICE_HISTORY_MAX): the weekly refresh and receipts.
+                                     // Function-written; a member's save of the same product (code and pack) merges and
+                                     // keeps these three fields, a different product replaces the doc and drops them
+                                     // (rules: kept unchanged or absent, never set by a client)
 
   favourites/{type_targetId}     type: "recipe"|"meal", targetId
   notes/{recipeId}               text, updatedBy                            // household's recipe notes
@@ -613,7 +618,7 @@ Each plan item has a `coverage` map: how many slots of each meal type it fills. 
 
 `spent = Σ marginal cost of planned items`, where marginal cost prices only the **shortfall packs** the grocery builder would buy (§8). Ingredients already in supply, or **incoming** on an ordered-but-not-received list, cost nothing. Manual and staple items are excluded (R6.4). The meter shows `budget − spent` and turns red below zero. Adding meals is never blocked.
 
-By design the meter is a *"what will the next order cost"* gauge (R6.3): after a grocery list is confirmed as received, the planned meals are covered and `spent` drops back toward zero. Pack rounding makes the cost order-dependent (the first recipe that needs flour pays for the whole bag), which is accepted. Each plan item shows its own share in `addedAt` order ("+$3.91 to buy"); the shares sum to `spent`. Actual spend for a period is the Σ of the period's received lists, each its `spendCents` when a receipt filled its confirmation (M25: paid prices, estimates for lines without one) else its `receivedCents` estimate (`listSpend`, `spendPerPeriod` in core `history.ts`), and is shown on History (R10.3) labelled actual / estimated / part actual. The meter itself keeps using estimates and live prices (a paid price is only recorded, on the brand mapping, for M27's price history).
+By design the meter is a *"what will the next order cost"* gauge (R6.3): after a grocery list is confirmed as received, the planned meals are covered and `spent` drops back toward zero. Pack rounding makes the cost order-dependent (the first recipe that needs flour pays for the whole bag), which is accepted. Each plan item shows its own share in `addedAt` order ("+$3.91 to buy"); the shares sum to `spent`. Actual spend for a period is the Σ of the period's received lists, each its `spendCents` when a receipt filled its confirmation (M25: paid prices, estimates for lines without one) else its `receivedCents` estimate (`listSpend`, `spendPerPeriod` in core `history.ts`), and is shown on History (R10.3) labelled actual / estimated / part actual. The meter itself keeps using estimates and live prices; a paid price joins the brand mapping's price history (M27, §8 "Price history and deals"), where it counts toward the usual price.
 
 ### Suggestion score
 
@@ -633,6 +638,7 @@ score(r) = Σ wᵢ · fᵢ(r, plan, supply)     each fᵢ ∈ [0, 1]
 | preferences | likes matched; dislikes/diets act as a strong penalty or filter | ± |
 | proteinGoal | 1 if `proteinPerServingG` ≥ the goal for the meal type, scaled down linearly below it; skipped when the goal is off | + |
 | fibreGoal (M9) | the same for `fibrePerServingG` and the fibre goal; both goal factors are skipped while nutrition tracking is off (R6.27) | + |
+| onSale (M27) | share of the recipe's to-buy cost (shortfall against projected supply × the list's price per unit, unrounded) that is on sale (§8 "Price history and deals"); skipped while nothing is on sale | + |
 | missingIngredients | share not covered by supply | − |
 | cost | marginal cost / remaining budget | − |
 | sameProtein / sameCuisine | already present in the plan | − |
@@ -662,6 +668,15 @@ Suggested sort. Likes and dislikes are typed strings (`cuisine:`, `protein:`, `i
 expiry factor first when it counts, then the strongest raising factors (two in all), and the strongest lowering one.
 Collections also sort by **Expiring first** and filter **Uses expiring**; a saved meal or plan item scores as the mean
 of its recipes.
+
+**M27 (R6.33, R6.34).** `onSale(needs, ctx)` and `saleUses` in `scoring/factors.ts` read two optional context fields:
+`deals` (on-sale ingredient → `dealPct`) and `centsPerUnit` (the worker's `linePricing(id, build).centsPerUnit`, i.e. the
+live sale price for a mapped product). The snapshot carries only `deals: [id, { dealPct }]` for products on sale (a
+handful), never the history. Weight `onSale`: Balanced 2, Use it up 1, Cheap week 4, Adventurous 1; stored weights
+without it (or without fibreGoal) take it from the preset the rest matches (`LATER_FACTORS`). Its reason reads
+"Chicken thighs 20% below usual" (the biggest share). `ScoreResult.deal` is the card's Deal chip: an on-sale ingredient
+to buy that is meat or fish (`PROTEIN_CATEGORIES`) or the costliest to buy; planned meals get theirs from `mealDeal`
+over the built list's lines.
 
 **M24.** *Stub recipes:* `needsIngredients(summary)` (core `collection.ts`) is true when the summary's `lines` (canonical
 amount per serving of every non-optional line with an amount) has nothing above zero, i.e. only vague, package
@@ -816,7 +831,7 @@ PC Express has **no official public API**. Third-party scrapers exist, but they'
 
 **Price refresh & resolution:**
 
-1. A **weekly scheduled maintenance function** (the project's one Cloud Scheduler job, shared with the trash purge in §4.4) collects every distinct `(pcxStoreId, productCode)` pair across households and refreshes `prices/{pcxStoreId}_{productCode}`.
+1. A **weekly scheduled maintenance function** (the project's one Cloud Scheduler job, shared with the trash purge in §4.4) collects every distinct `(pcxStoreId, productCode)` pair across households and refreshes `prices/{pcxStoreId}_{productCode}`, then appends the price to the `priceHistory` of each brand mapping of that product (M27, "Price history and deals" below).
 2. Prices are resolved in this order: **live price** for the household's store (fetched ≤ 14 days ago) → **`data/price-estimates.json`** (per-ingredient price of a pack: `priceCents`, `packAmount`, `packMeasure`, plus a derived `centsPerUnit`) → unknown. Unknown prices count as $0, and the item is marked "price unknown" on the meter. The estimates are bundled into the web app (no Firestore reads, works offline); `pnpm prices:check` keeps them complete for the seed.
 3. If a fetch fails, the function logs it, leaves old prices in place, and posts an error notification to the **project owner**, whose uid is set in the function's config (`OWNER_UID` parameter). The app falls back to estimates automatically as prices age.
 
@@ -826,10 +841,34 @@ is resolved by searching for "Greenbank" once and cached), `stub.ts` (fixtures a
 emulator and in tests), `index.ts` (callables and `refreshPrices`). The module is on only while a key is saved
 (`pcxSession/config`); otherwise everything answers "not connected" and estimates are used.
 The product search writes each result's price (with a readable pack) to `prices/*`, so a picked product is priced at
-once; the weekly refresh walks every household's mapped products, keeps old prices on failure, notifies the owner, and
+once; the weekly refresh walks every household's mapped products (M27: and appends each price to the mappings' price history), keeps old prices on failure, notifies the owner, and
 logs `pcx refresh failed twice` on a second bad week in a row (the log-based alert, SETUP.md). The Loblaws Greenbank
 Road store ID is not committed: it is resolved at runtime (deviation from "kept in `packages/core` config"). The budget
 meter shows the source mix ("3 live · 9 estimated · 1 price unknown"); brand rows show the live price and its age.
+
+### Price history and deals (M27, R6.32–R6.34, R7.19, R10.4)
+
+`packages/core/src/priceHistory.ts`. Each brand mapping keeps `priceHistory` (§4.2): one pack's price per observation.
+**Writers:** `refreshPrices` (weekly maintenance) appends `{ atMs: now, cents: priceCents, source: "pcx" }` to every
+mapping of each refreshed (store, product) pair (`appendObservation`: a PC Express price within 3 days of the previous one
+replaces it, so a re-run counts once; oldest dropped past `PRICE_HISTORY_MAX` = 16); `receiveGroceries` appends the paid
+price per pack (`lastPaidPerPack`, source `receipt`) in the same update as `lastPaidCents`. **Usual and deal**
+(`priceDeal(history, current?, now)`): the current price is the live price at the household's store (`prices/*`, fetched ≤
+14 days ago), and the observations before it count; without one, the newest observation is current and the rest count.
+`usualCents` = median of the counted ones; `dealPct = (usual − current) / usual`; **on sale** when `dealPct ≥
+DEAL_THRESHOLD` (0.15), observations (current included) ≥ `DEAL_MIN_OBSERVATIONS` (4), the current price ≤ 14 days old and
+from PC Express (a receipt is what was paid then, so it counts toward usual but is never "on sale"). **Use:** the plan
+model computes `deals = dealsFromMappings(mapping docs, live prices, now)` once for both views (every 10 minutes);
+`<DealChip>` ("20% below usual · usual $1.99") on Settings → Brands rows and the grocery list's lines; the Deal chip on
+suggestion cards (`ScoreResult.deal`) and planned meals (`mealDeal`); the scoring factor (§7). **Budget and optimiser:**
+nothing changes: the builder already prices a mapped product at its live (sale) price, and `marginalCostFn` (the
+optimiser's set cost) uses the same lines (core test "deal prices reach the budget and the optimiser").
+**History → Prices** (`priceMovers`): mappings whose current price is ≤ 7 days old with ≥ 4 observations, sorted by
+|current − usual| / usual, top five; from the mappings and live prices the shell already loads (no reads).
+**Staples on sale (R7.19):** `stapleLines` takes `sale: { deals, periodDays, headroomCents }`; a bought staple with a
+known interval, on sale, and `isDue` at `now + SALE_PULL_PERIODS (2) × periodDays` is due with reason `sale` (after every
+other due staple); its line is kept only while its price fits `headroomCents` (the meter's `remainingCents`), shared by
+every staple pulled forward in list order. It is not in the budget, like every staple.
 
 **Staples on the list (M10, R7.12, R7.7, R8.14):** `dueStaples()` / `stapleLines()` in `packages/core/src/grocery/staples.ts`.
 A staple (`isStaple` or `freeUse`) is due when (1) **cadence**: bought before and `isDue()` (85 % of the interval since
@@ -1552,6 +1591,7 @@ update applies by itself when the session ends. Hosting serves `/`, `index.html`
 - **CI/CD:** GitHub Actions runs lint, type-check, unit, property, rules, and functions (emulator) tests, the requirement-tag coverage check, and the Playwright suite (§14.1) on every PR. The repo is public, so Actions minutes are unlimited. Merging to `master` deploys to the project. PRs get Hosting preview channels.
 - **Monitoring:** Cloud Functions logs and error reporting, the $1 budget alert, and an alert if the weekly maintenance job fails twice in a row. As built (M22): `runScheduledMaintenance` records every run in the function-only `system/maintenance` (`lastRunAt`, `lastStatus`, `lastError`, `consecutiveFailures`); the second failure in a row logs `maintenance failed twice` and posts an error banner to the owner (`OWNER_UID`), and a success resets the count. A log-based metric on that message (and one on Cloud Functions errors) emails the owner: the owner sets these up once, `SETUP.md` "Backups and alerts".
 - **Backups (M22):** a weekly Firestore scheduled backup kept 14 days, created once by the owner (`SETUP.md` "Backups and alerts"). It is the one paid item NFR2 accepts (cents a month at this size, §2). Household download (below) stays the per-household copy.
+- **Price history (M27, weekly maintenance):** the price refresh also appends each product's price to its brand mappings' `priceHistory` (bounded at 16, so nothing to prune; §8 "Price history and deals").
 - **Retention (M22, weekly maintenance):** applied and failed commands older than 30 days (by `appliedAt`; nothing reads them once their banner has shown, and the ledger lives in Supply transactions) and notifications dismissed more than 30 days ago are deleted; stuck commands (pending or running for 2 hours, §6) are failed; uploads unclaimed for 3 days are deleted: `recipe-photos/` (Add with Gemini deletes its photo after the call), `imports/` (a failed import keeps its zip, §13 below) and `recipes/{id}/…` images whose recipe doesn't exist. Cook events, ratings, stats, Supply transactions, received grocery lists and periods are History (§4.2, R10) and are never pruned; drop-import logs go after 30 days and the trash after 30 days, as before.
 - **Source maps (M23):** built as `hidden` (no `sourceMappingURL` in the bundles) and left off Hosting by `firebase.json`'s `**/*.map` ignore, so a deploy doesn't upload ~12 MB nobody loads; they stay in `apps/web/dist` for decoding a stack trace by hand.
 - **Secrets:** none. PC Express needs only its public web API key, an owner setting (R6.28). The emulators use the PC Express stub (§14.1), never the real site.
@@ -1633,16 +1673,16 @@ Besides the weekly scheduled backup of the whole database (M22, above; restoring
 | `plan.spec.ts` | Create meal with one recipe, with several recipes, and from a saved meal; Add to plan shortcut from a recipe; remove items; default servings; meal types (R5.5, R5.7); coverage strip shows only planned meal types, fills left to right, shows n/N and overflow, cells not clickable; budget meter goes down, ignores incoming and in-supply ingredients, goes back up after receiving, goes negative and turns red, never blocks; expiry badges; protein summary; landing page redirect; eating out; expiring meals first (M9) (R6.1–R6.7, R6.17, R6.23, R6.24, R11.12–R11.13); M26: plan the next period, absent from this period's strip and budget (R3.2), the projected-at-start note (R3.4) |
 | `rollover.spec.ts` | Uncooked items carry over at period end; two members opening at once creates one period (R6.6); restart (R3.1); M26: the rollover adopts next-period items and the next draft with no copies, a restart moves them (R3.3) |
 | `leftovers.spec.ts` | Meal-prep batch fills lunch cells when planned; confirmed ▲/▼ count replaces the estimate; leftover supply item with expiry; leftover plan items roll over; mark eaten; a cooked meal's review marks it eaten (M9) (R6.8–R6.10, R9.5) |
-| `suggestions.spec.ts` | Ranking reflects expiry, supply, ratings, variety, and protein goal; weight sliders and presets change the order; expiry alerts; use it up before ordering (M9, R6.25) (R6.11–R6.14, R6.16) |
+| `suggestions.spec.ts` | Ranking reflects expiry, supply, ratings, variety, and protein goal; weight sliders and presets change the order; expiry alerts; use it up before ordering (M9, R6.25); on sale: reason, Deal chip, the On sale weight (M27, R6.34) (R6.11–R6.14, R6.16) |
 | `optimiser.spec.ts` | "n dinners under $x" respects the budget; Next gives a different good set; Back restores the previous one; "No more good combinations" when exhausted; Accept adds all; protein-goal toggle (R6.18–R6.20); M26: from the next-period view it plans the next period (R3.4) |
-| `prices.spec.ts` | Store picker (defaults to Loblaws Greenbank Road); in-app product search links a brand mapping; live price used when fresh; falls back to estimates when stale or failed; "price unknown" marker (R6.21–R6.22, R7.10) |
+| `prices.spec.ts` | Store picker (defaults to Loblaws Greenbank Road); in-app product search links a brand mapping; live price used when fresh; falls back to estimates when stale or failed; "price unknown" marker; a stubbed price drop against the history is a deal on the brand row, the grocery line and the planned meal, and saving the same product keeps the history (M27, R6.32, R6.33) (R6.21–R6.22, R7.10) |
 | `grocery.spec.ts` | List built from plan − supply − incoming with pack rounding (mapping, default pack, or raw); expired lots treated as missing; free-use ingredients excluded (R8.14); brand names applied; grouped by store with mapping winning over category rule; copy button copies only the PC Express section and marks the list ordered (with undo); regenerating doesn't re-add ordered items; manual additions; free-use olive oil as a staple line, not a plan line (R8.14, M10) (R7.1–R7.6); M26: the next period's list from its meals and the Supply left after this period, its order under the next view only (R7.18) |
-| `cadence.spec.ts` | (M10) Staples on the list by themselves: due by the cadence, a free-use staple a planned meal uses, not when bought recently or already listed; the Staples group; removing one keeps it off; no "Are you out of" prompt (R7.7, R7.12, R8.14) |
+| `cadence.spec.ts` | (M10) Staples on the list by themselves: due by the cadence, a free-use staple a planned meal uses, not when bought recently or already listed; the Staples group; removing one keeps it off; no "Are you out of" prompt; (M27) an on-sale staple due within two periods pulled forward, and not without budget room (R7.7, R7.12, R7.19, R8.14) |
 | `receive.spec.ts` | Confirm unchanged = everything bought; edit quantities and substitutions; freeze prompt for bulk freezable items; supply updated (R7.8–R7.9) |
 | `receipt.spec.ts` | (M25) From a receipt with the Gemini stub's canned receipt: the order email's text and a photo are read; a matched line (packs, paid price), a substitution, a didn't-come line and a not-on-the-list line prefilled and marked "from receipt", editable, nothing written before Confirm; Confirm stores paid prices and extras; History's spend says actual; Back; not set up (R7.15–R7.17) |
 | `supply.spec.ts` | Search by name and alias (R8.17, M9); starts empty; add via ingredient picker in each allowed measurement; current (projected, only when the plan uses some) display in the unit it was added in (R8.13); Filter sheet with no repeated options (R8.12); Staples group for free-use items (R8.14); per-lot expiry flags; expired lot excluded from amounts and "can make" until Still good / Threw it out (R8.15); freeze/thaw; ±5/±25 + Apply corrections; discard; filters; transaction history with infinite scroll (R8.1–R8.12) |
 | `review.spec.ts` | Done cooking deducts recipe defaults and adds estimated leftovers immediately; review opens when all recipes are checked off and on early "Done cooking"; per-user ratings; adjusting used ingredients posts corrections for the difference; pending reviews completed later by another member (R9.1–R9.4) |
-| `history.spec.ts` | Cooked list, filters, stats (R10.1–R10.3) |
+| `history.spec.ts` | Cooked list, filters, stats; Prices: this week's biggest moves (M27) (R10.1–R10.4) |
 | `sides.spec.ts` | (M6) Sides from the Create meal search dropdown, plan row title and budget impact, plan item sheet edits; grocery line = portion × servings rounded to packs, covered by supply; Done cooking deducts the portions and the review corrects them; saved meals keep sides; Settings → Sides portion override for later meals, flagging an ingredient, free-use refused; History lists sides (R5.9, R5.10, R7.11, R11.14) |
 | `settings.spec.ts` | Tools, preferences, weights, protein goals, (M9: fibre goals and the nutrition switch are in `preferences.spec.ts`, R6.26, R6.27), plan period, budget, timezone, default servings, planned meal types, brand mappings, stores and sourcing rules; theme accent persists per user only (Latte only, M9) (R11.1–R11.9, R11.11–R11.13) |
 | `settings-nav.spec.ts` | (M20) Settings groups under headings, the search ("costco" → Stores only, nonsense → No settings match, Enter opens the first), Nutrition goals and Preferences split, the Account page with Sign out, the invites banner only with an open invite, Instructions for ChatGPT in Stores in sync with Grocery (R11.16–R11.19) |
@@ -1701,6 +1741,7 @@ Besides the weekly scheduled backup of the whole database (M22, above; restoring
 | M24 | UX polish | Plan alerts fold to one line once seen (phones); Suggested meal-type tabs opening on the emptiest strip row; stub recipes (no weighable line) never suggested and marked "needs ingredients"; Supply's filter sheet a draft like Recipes (`<FilterSheet>`); 44 px touch targets with an a11y check; step mode's arrow a button and one live region; History stats load before saying "Nothing yet"; use-it-up copy as a sentence; phone OFFLINE badge |
 | M25 | Receipt import | From a receipt on the confirm sheet: a receipt photo (downscaled, inline, never stored) or the order email's text read by Gemini with a JSON schema (`readReceipt`, 10 per person per hour); lines matched to the order (product name, ingredient matcher, Gemini's line); packs, substitutions, didn't-come and paid prices prefilled and marked "from receipt"; lines not on the list added or ignored; paid prices on the received list, its lines and the brand mapping; History spend actual / estimated |
 | M26 | Next period | This period · Next period on the Plan and Grocery pages: the next period's ID computed from the current one, its own strip, list, budget, Create meal, Suggested and optimiser on the Supply projected at its start, a projected-at-start note; its own draft (`draft-next`) and orders; the rollover adopts its items and draft with no copies, a restart moves them |
+| M27 | Deal awareness | Price history per brand mapping (weekly PC Express price and receipts, ≤ 16), usual price (median) and on sale (≥ 15 % below, ≥ 4 prices); Deal chips on brands, grocery lines, suggestion and plan cards; the On sale suggestion factor and weight; on-sale staples due within two periods pulled forward while the budget has room; History → Prices |
 
 Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix. The detailed, task-level plan for each milestone lives in `Planning/`.
 

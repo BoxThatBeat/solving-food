@@ -4,6 +4,7 @@ import { adminDb } from "../fixtures/admin";
 import { expect, test } from "../fixtures/test";
 import { makePlanRecipe, PlanPage, seedPeriod, seedPlanItem } from "../pages/plan";
 import { seedSupply } from "../pages/supply";
+import { ownPcxStore, seedPriceHistory } from "../pages/prices";
 
 test("salmon expiring in two days: the Plan page says so and the top suggestion uses it (R6.11, R6.13)", { tag: ["@R6.11", "@R6.13", "@smoke"] }, async ({ page, household }) => {
   await makePlanRecipe("Salmon use-up", { lines: "Roast @salmon fillet{340%g} with @lemon{1}." });
@@ -177,4 +178,28 @@ test("a recipe with no weighable ingredients is never suggested and its card say
   await expect(page.getByTestId("suggestion").first()).toBeVisible({ timeout: 20_000 });
   await expect(page.getByTestId("suggestion").filter({ hasText: stub.title })).toHaveCount(0);
   void household;
+});
+
+test("on sale: a recipe whose ingredients to buy are on sale is boosted, says why, and shows a Deal chip; the weight is in Settings (R6.34, R6.33)", { tag: ["@R6.34", "@R6.33"] }, async ({ page, household }) => {
+  const store = await ownPcxStore(household.hid);
+  // Chicken thighs: $14.99 for three weeks, $11.99 at PC Express today (20 % below usual).
+  await seedPriceHistory(household.hid, "chicken-thigh", { productName: "PC Chicken Thighs", productCode: "E2E-CHX-900", packAmount: 900, packMeasure: "weight", weekly: [1499, 1499, 1499], lastDaysAgo: 7, liveCents: 1199, store });
+  const r = await makePlanRecipe("Sale roast thighs", { lines: "Roast @chicken thigh{800%g} until crisp." });
+  await seedPeriod(household.hid);
+  // Only the new factor counts, so the sale decides the order.
+  const zero = Object.fromEntries(["expiryUrgency", "supplyUtilisation", "rating", "historicalPref", "variety", "preferences", "proteinGoal", "fibreGoal", "missingIngredients", "cost", "sameProtein", "sameCuisine", "recentlyCooked"].map((k) => [k, 0]));
+  await adminDb.doc(`households/${household.hid}`).update({ "settings.scoreWeights": { ...zero, onSale: 5 } });
+
+  await new PlanPage(page).goto();
+  // Top score (other runs' copies of this recipe tie with it, so find it by its title).
+  const top = page.getByTestId("suggestion").filter({ hasText: r.title });
+  await expect(top).toBeVisible({ timeout: 30_000 });
+  await expect(top.getByLabel("Score 100")).toBeVisible();
+  await expect(top.getByLabel("Why")).toContainText(/Chicken thighs? 20% below usual/i);
+  await expect(top.getByTestId("deal-chip")).toHaveText(/^Deal/i);
+
+  await page.goto("/settings/weights");
+  const w = page.getByTestId("weight-onSale");
+  await expect(w).toContainText("On sale");
+  await expect(w.getByRole("radio", { name: "5" })).toHaveAttribute("aria-checked", "true");
 });

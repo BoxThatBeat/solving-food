@@ -264,9 +264,9 @@ function PriceRow({ name, m }: { name: string; m: PriceMover }) {
         <span className="font-mono text-[0.5625rem] font-bold text-sub uppercase">usual {formatCents(m.usualCents)}</span>
       </span>
       <span className="font-mono text-[0.75rem] font-extrabold">{formatCents(m.cents)}</span>
-      <Badge className={cn("w-[3.25rem] flex-none text-center", down ? "bg-acc text-onc" : "bg-red-soft text-onc")} aria-label={`${pct}% ${down ? "below" : "above"} usual`}>
+      <Badge className={cn("w-[3.25rem] flex-none text-center", down ? "bg-acc text-onc" : "bg-red-soft text-onc")}>
         {down ? "−" : "+"}
-        {pct}%
+        {pct}%<span className="sr-only"> {down ? "below" : "above"} usual</span>
       </Badge>
     </div>
   );

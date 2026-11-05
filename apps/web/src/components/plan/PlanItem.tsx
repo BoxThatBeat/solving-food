@@ -147,7 +147,7 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
           ))}
           {trashed ? <Badge className="bg-red-soft text-onc uppercase">Recipe in Trash</Badge> : null}
           {v.deal && status === "planned" ? (
-            <Badge className="bg-acc text-onc uppercase" data-testid="deal-chip">
+            <Badge className="bg-acc whitespace-normal text-onc uppercase" data-testid="deal-chip">
               Deal · {v.deal}
             </Badge>
           ) : null}
