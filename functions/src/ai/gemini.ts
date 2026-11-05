@@ -123,6 +123,32 @@ async function stubGenerate(uid: string, system: string, contents: GeminiTurn[])
 /** Gemini's text answer to `contents` under `system`. Throws AiError when there's no key or Gemini fails. */
 export async function geminiGenerate(uid: string, system: string, contents: GeminiTurn[]): Promise<string> {
   if (isEmulator()) return stubGenerate(uid, system, contents);
+  return callGenerate(system, contents, { temperature: 0.2 });
+}
+
+/**
+ * The stub's receipt (M25): `_stubLlm/{uid}` (falling back to `_stubLlm/config`) `receipt`, an object or JSON text;
+ * `mode` "down" / "off" as above. No receipt saved answers `{"lines": []}` (not a receipt).
+ */
+async function stubJson(uid: string, system: string, contents: GeminiTurn[]): Promise<string> {
+  const own = ((await db.doc(`_stubLlm/${uid}`).get().catch(() => null))?.data() ?? {}) as { mode?: string; receipt?: unknown };
+  const s = { ...(await stubConfig()), ...own } as { mode?: string; receipt?: unknown };
+  if (s.mode === "off") throw new AiError(AI_NOT_SET_UP);
+  if (s.mode === "down") throw new AiError("Gemini answered 503");
+  stubGenerateRequests.push({ uid, system, contents });
+  return typeof s.receipt === "string" ? s.receipt : JSON.stringify(s.receipt ?? { lines: [] });
+}
+
+/**
+ * Gemini's JSON answer (as text) to `contents` under `system`, constrained by `generationConfig`'s response schema
+ * (M25: reading a receipt). Throws AiError when there's no key or Gemini fails.
+ */
+export async function geminiJson(uid: string, system: string, contents: GeminiTurn[], generationConfig: Record<string, unknown>): Promise<string> {
+  if (isEmulator()) return stubJson(uid, system, contents);
+  return callGenerate(system, contents, generationConfig);
+}
+
+async function callGenerate(system: string, contents: GeminiTurn[], generationConfig: Record<string, unknown>): Promise<string> {
   const key = await storedGeminiKey();
   if (!key) throw new AiError(AI_NOT_SET_UP);
   const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
@@ -132,7 +158,7 @@ export async function geminiGenerate(uid: string, system: string, contents: Gemi
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, generationConfig: { temperature: 0.2 } }),
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, generationConfig }),
       signal: ctl.signal,
     });
     const json: unknown = await res.json().catch(() => null);

@@ -56,8 +56,10 @@ export function eventAverage(ratings: readonly HistoryRating[]): number | null {
 
 export interface ReceivedList {
   receivedAtMs: number;
-  /** Σ estimated cost of what arrived, cents (prices known at the time, R10.3). */
+  /** What the list cost, cents: paid prices where a receipt gave them (M25), else the estimate at the time (R10.3). */
   cents: number;
+  /** How much of `cents` was read from a receipt: "all" (every arrived line paid), "some", or "none" (estimates). */
+  paid?: "all" | "some" | "none";
 }
 
 export interface PeriodRange {
@@ -67,14 +69,30 @@ export interface PeriodRange {
   budgetCents: number;
 }
 
+/** A period's spend is "actual" when every list in it was paid from a receipt, "estimated" when none was. */
+export type SpendBasis = "actual" | "estimated" | "mixed";
+
 /**
- * Spend per period (R10.3): Σ estimated cost of every grocery list confirmed as received during the period. Periods
- * newest last; periods with no spend are included (so a quiet week shows $0).
+ * Spend per period (R10.3, M25 R7.17): Σ of every grocery list confirmed as received during the period, at paid prices
+ * where a receipt gave them and estimates elsewhere. Periods newest last; periods with no spend are included (so a
+ * quiet week shows $0) and read "estimated".
  */
-export function spendPerPeriod(lists: readonly ReceivedList[], periods: readonly PeriodRange[]): Array<PeriodRange & { cents: number }> {
+export function spendPerPeriod(lists: readonly ReceivedList[], periods: readonly PeriodRange[]): Array<PeriodRange & { cents: number; basis: SpendBasis }> {
   return [...periods]
     .sort((a, b) => a.startMs - b.startMs)
-    .map((p) => ({ ...p, cents: lists.filter((l) => l.receivedAtMs >= p.startMs && l.receivedAtMs < p.endMs).reduce((s, l) => s + l.cents, 0) }));
+    .map((p) => {
+      const inP = lists.filter((l) => l.receivedAtMs >= p.startMs && l.receivedAtMs < p.endMs);
+      const all = inP.length > 0 && inP.every((l) => l.paid === "all");
+      const none = inP.every((l) => (l.paid ?? "none") === "none");
+      return { ...p, cents: inP.reduce((s, l) => s + l.cents, 0), basis: all ? "actual" : none ? "estimated" : "mixed" };
+    });
+}
+
+/** A received list's spend for History (M25): its `spendCents` when a receipt was read, else the estimate. */
+export function listSpend(l: { receivedCents?: number | undefined; spendCents?: number | undefined; paidCents?: number | undefined; paidComplete?: boolean | undefined; items: Readonly<Record<string, { estPriceCents?: number | null }>> }): { cents: number; paid: "all" | "some" | "none" } {
+  const est = l.receivedCents ?? Object.values(l.items).reduce((a, it) => a + (it.estPriceCents ?? 0), 0);
+  if (l.spendCents === undefined || !l.paidCents) return { cents: est, paid: "none" };
+  return { cents: l.spendCents, paid: l.paidComplete ? "all" : "some" };
 }
 
 /**

@@ -2,7 +2,7 @@
 // Gemini (a recipe from a link or a photo).
 import { httpsCallable } from "firebase/functions";
 import { ref, uploadBytes } from "firebase/storage";
-import type { PcxStatus } from "@solving-food/core";
+import type { MatchedLine, PcxStatus } from "@solving-food/core";
 import { functions, storage } from "@/firebase/app";
 import { useCallableStatus } from "./callableStatus";
 
@@ -68,4 +68,22 @@ export async function addRecipeFromPhoto(uid: string, file: File, text = ""): Pr
   const path = `recipe-photos/${uid}/${crypto.randomUUID().replace(/-/g, "")}.${ext}`;
   await uploadBytes(ref(storage, path), file, { contentType: type });
   return addRecipe(text.trim() ? { source: "photo", path, text: text.trim() } : { source: "photo", path });
+}
+
+
+export interface ReceiptResult {
+  store: string | null;
+  date: string | null;
+  totalCents: number | null;
+  lines: MatchedLine[];
+  /** Ordered lines nothing on the receipt says arrived. */
+  missing: string[];
+}
+
+/**
+ * From a receipt (M25, R7.15): Gemini reads a receipt photo (downscaled here, sent inline, never stored) or an order
+ * email's text, and the function matches its lines to the ordered list. Writes nothing.
+ */
+export function readReceipt(hid: string, listId: string, input: { image: { mimeType: string; data: string } } | { text: string }): Promise<ReceiptResult> {
+  return httpsCallable<{ hid: string; listId: string } & typeof input, ReceiptResult>(functions, "readReceipt", { timeout: 120_000 })({ hid, listId, ...input }).then((r) => r.data);
 }

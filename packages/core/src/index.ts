@@ -13,6 +13,7 @@ export * from "./ingredient";
 export * from "./ingredientMerge";
 export * from "./ingredientJudge";
 export * from "./recipeFromGemini";
+export * from "./receipt";
 export * from "./recipe";
 export * from "./nutrition";
 export * from "./dedupe";

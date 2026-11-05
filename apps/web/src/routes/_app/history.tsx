@@ -19,7 +19,9 @@ import {
   mostCooked,
   optionCount,
   SORT_LABELS,
+  listSpend,
   spendPerPeriod,
+  type SpendBasis,
   tagCounts,
   taxonomyLabel,
   toSearchParams,
@@ -118,7 +120,7 @@ function HistoryPage() {
     (id) => byId.get(id)?.cuisine ?? missingDocs.get(id)?.cuisine,
   );
   const spend = spendPerPeriod(
-    (lists.docs ?? []).map((l) => ({ receivedAtMs: millis(l.data.receivedAt) ?? 0, cents: l.data.receivedCents ?? Object.values(l.data.items).reduce((a, it) => a + (it.estPriceCents ?? 0), 0) })),
+    (lists.docs ?? []).map((l) => ({ receivedAtMs: millis(l.data.receivedAt) ?? 0, ...listSpend(l.data) })),
     (periods.docs ?? []).map((p) => ({ id: p.id, startMs: millis(p.data.start) ?? 0, endMs: millis(p.data.end) ?? 0, budgetCents: p.data.budgetCents })),
   ).slice(-6);
 
@@ -161,12 +163,21 @@ function HistoryPage() {
               <StatTile title={`Spend per period${hh.data ? ` · budget ${formatCents(hh.data.budgetCents)}` : ""}`} testId="stat-spend">
                 {spend.some((p) => p.cents > 0) ? (
                   spend.map((p) => (
-                    <Bar key={p.id} label={formatPeriodRange(p.startMs, p.endMs, tz)} value={formatCents(p.cents)} fraction={p.budgetCents ? Math.min(1, p.cents / p.budgetCents) : 0} over={p.budgetCents > 0 && p.cents > p.budgetCents} inline mono />
+                    <Bar
+                      key={p.id}
+                      label={formatPeriodRange(p.startMs, p.endMs, tz)}
+                      value={formatCents(p.cents)}
+                      tag={p.cents > 0 ? SPEND_TAG[p.basis] : undefined}
+                      fraction={p.budgetCents ? Math.min(1, p.cents / p.budgetCents) : 0}
+                      over={p.budgetCents > 0 && p.cents > p.budgetCents}
+                      inline
+                      mono
+                    />
                   ))
                 ) : (
                   <Empty loading={lists.docs === undefined || periods.docs === undefined}>Confirm a grocery order as received and each period&apos;s spend shows up here.</Empty>
                 )}
-                {spend.some((p) => p.cents > 0) ? <span className="text-[0.6875rem] font-semibold text-sub">Estimated cost of the groceries confirmed as received in each period.</span> : null}
+                {spend.some((p) => p.cents > 0) ? <span className="text-[0.6875rem] font-semibold text-sub">The groceries confirmed as received in each period: what was paid where a receipt was read (actual), the estimate otherwise.</span> : null}
               </StatTile>
             </div>
             <div className="flex items-baseline justify-between gap-2">
@@ -218,7 +229,10 @@ function Empty({ loading, children }: { loading: boolean; children: React.ReactN
   );
 }
 
-function Bar({ label, value, fraction, teal, inline, over, mono }: { label: string; value: string; fraction: number; teal?: boolean; inline?: boolean; over?: boolean; mono?: boolean }) {
+/** Spend per period (M25, R7.17): read from receipts, estimated, or some of each. */
+const SPEND_TAG: Record<SpendBasis, string> = { actual: "actual", estimated: "estimated", mixed: "part actual" };
+
+function Bar({ label, value, tag, fraction, teal, inline, over, mono }: { label: string; value: string; tag?: string | undefined; fraction: number; teal?: boolean; inline?: boolean; over?: boolean; mono?: boolean }) {
   const bar = (
     <span className="block h-3 flex-1 overflow-hidden rounded-sm border-2 border-line bg-mantle" aria-hidden>
       <span className={cn("block h-full", over ? "bg-red" : teal ? "bg-[#8bd5ca]" : "bg-acc")} style={{ width: `${Math.max(0, Math.min(1, fraction)) * 100}%` }} />
@@ -229,7 +243,14 @@ function Bar({ label, value, fraction, teal, inline, over, mono }: { label: stri
       <div className="flex items-center gap-2.5">
         <span className={cn("w-[7.5rem] flex-none truncate text-[0.8125rem] font-bold", mono && "font-mono text-[0.6875rem] uppercase")}>{label}</span>
         {bar}
-        <span className="w-12 flex-none text-right font-mono text-[0.75rem] font-extrabold">{value}</span>
+        {tag ? (
+          <span className="flex w-[4.75rem] flex-none flex-col items-end leading-tight" data-testid="spend-value">
+            <span className="font-mono text-[0.75rem] font-extrabold">{value}</span>
+            <span className="font-mono text-[0.5625rem] font-bold text-sub uppercase">{tag}</span>
+          </span>
+        ) : (
+          <span className="w-12 flex-none text-right font-mono text-[0.75rem] font-extrabold">{value}</span>
+        )}
       </div>
     );
   return (

@@ -38,6 +38,14 @@ export const receiveItemPayload = z.object({
   /** Canonical amount to put straight in the freezer (R7.9). */
   freezeAmount: amount.optional(),
   missing: z.boolean().optional(),
+  /** What the line cost, read from a receipt (M25, R7.17): the line total paid, cents. Absent = only the estimate. */
+  paidCents: z.number().int().min(0).max(10_000_000).optional(),
+  /**
+   * A line that wasn't on the list, added from a receipt (M25, R7.16): `itemId` is "receipt-<n>", not a list key; `name`
+   * is the receipt's wording. It goes into Supply like any line and is recorded on the list's `receiptExtras`.
+   */
+  extra: z.boolean().optional(),
+  name: z.string().max(200).optional(),
 });
 
 /** Lines per receiveGroceries command: a grocery list holds at most 400 (firestore.rules). */
@@ -46,6 +54,8 @@ export const RECEIVE_ITEMS_MAX = 400;
 export const receiveGroceriesPayload = z.object({
   listId: id,
   items: z.array(receiveItemPayload).max(RECEIVE_ITEMS_MAX),
+  /** Set when the sheet was prefilled from a receipt (M25): the total it printed, cents, for the record. */
+  receipt: z.object({ totalCents: z.number().int().min(0).max(10_000_000).optional() }).optional(),
 });
 
 /**

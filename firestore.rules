@@ -350,7 +350,7 @@ service cloud.firestore {
     // payload's keys per type.
     function payloadKeys(t) {
       return t == 'addSupply' ? ['ingredientId', 'amount', 'location', 'entered', 'until', 'unit']
-        : t == 'receiveGroceries' ? ['listId', 'items']
+        : t == 'receiveGroceries' ? ['listId', 'items', 'receipt']
         : t == 'finishCooking' ? ['cookEventId', 'planItemId', 'savedMealId', 'recipes', 'servings', 'mealType', 'title', 'sides']
         : t == 'submitReview' ? ['cookEventId', 'ratings', 'used', 'leftoverPortions', 'savedMealId', 'note']
         : t == 'correctSupply' ? ['supplyId', 'target', 'ingredientId', 'note']

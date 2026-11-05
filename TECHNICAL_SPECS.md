@@ -108,6 +108,7 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Ingredients page names to decide (M15) | in the 50,000 reads / day | none extra: the waiting names come from the full ingredient list the Ingredients page already reads; `aiStatus` reads the household-made ingredients (~100) once per page view. The M8 needs-review listener (Settings count, Recipes banner, More sheet, Drop page) was removed | — |
 | Gemini (M15, R4.27) | outside Firebase: the Gemini API free tier, key from a Google project **without billing** (so it can't be charged; at the limit a call fails and names wait) | one request per import with unknown names (≤ 20 names each) and per 20 names on Check with Gemini: < 100 / month. Callables `aiStatus`, `aiSetKey`, `checkIngredientNames` counted in the 2M above; outbound requests in the egress row below | — |
 | Add with Gemini (M16, R4.37) | Gemini free tier as above; Storage 5 GB / 1 GB-day egress (us-east1); callable in the 2M invocations | one Gemini request per added recipe (plus one repair round when the file fails the checks), ~20 / month, each ~20k input tokens (the skill is the prompt); 10 per person per hour (`aiRate/{uid}`: 1 read + 1 write). Photos (≤ 10 MB) live in `recipe-photos/{uid}/` only for the call (deleted after): no lasting storage. The function's own page fetch is ≤ 3 MB: < 100 MB / month egress-in. `addRecipeWithGemini` runs at 512 MiB for up to 240 s: ~20 × 60 s × 0.5 GiB = 600 GiB-s / month of the 360k | — |
+| From a receipt (M25, R7.15) | Gemini free tier as above (key from a project without billing); callable `readReceipt` in the 2M invocations; Cloud Run 360k GiB-s | **one Gemini request per receipt** (no repair round): a photo downscaled in the browser to ≤ 2048 px on its long side, JPEG (~0.3–1 MB, ≤ 4 MB), sent inline in the call and in the Gemini request (an image is ~1–2k input tokens at that size; a pasted email ~2–5k), plus the instruction with the ordered lines (< 2k tokens); the JSON answer is ~1–4k output tokens. ~10 receipts / month per household, < 50 / month at the design scale, far inside the free tier's daily request cap. 10 per person per hour (`receiptRate/{uid}`: 1 read + 1 write). Reads per call: the member doc, the list, and the ingredient catalogue once per warm instance (~480 reads, cached 5 minutes, shared with the drop-folder importer). Writes nothing: the photo is never stored (no Storage, no Firestore). 512 MiB for up to 120 s, ~15 s typical: 50 × 15 s × 0.5 GiB ≈ 400 GiB-s / month. The confirm then sends the usual `receiveGroceries` command (+1 brand-mapping write per paid line that has a mapping) | — |
 | Nutrition facts (M10, R4.30) | in the 1 GiB storage, 20,000 writes and 50,000 reads / day | ingredients gain `nutrients` (~250 bytes × 480) and recipes `nutrition` (~250 bytes each); the recipe index summaries are unchanged (the panel isn't on cards). The one-off `pnpm ingredients:upload` after deploy writes ≤ 480 ingredients; each fires `ingredientRecipes`, which re-derives the recipes using it (one query + one ingredient `getAll` per recipe): about recipes × ingredients-per-recipe × 11 reads, < 10,000 reads and one write per recipe at today's library (~50 recipes), done once | 5× on that day |
 | Timer callables (`scheduleTimer`, `cancelTimer`, M3) | counted in the 2M above | one per timer start, pause, adjust, cancel: < 3,000 / month | — |
 | Cloud Tasks (queue `timers`, created by the `timers` task function's deploy, M3) | 1M operations / month | < 2,000 (cooking timers: enqueue + delete) | 500× |
@@ -234,6 +235,7 @@ prices/{pcxStoreId}_{productCode}                 // PC Express price at one sto
                                                   // default placeholder included), written by the product search and the
                                                   // weekly refresh; deleted after 60 days without a refresh
 aiRate/{uid}                                      // function-only (M16, R4.37): Add with Gemini this hour
+receiptRate/{uid}                                 // function-only (M25, R7.15): receipts read this hour
 aiSession/config                                  // function-only (R4.36): { apiKey, updatedAt, updatedBy }, the
                                                   // Gemini API key the owner saved
 pcxSession/config                                 // function-only (R6.28): { apiKey, updatedAt, updatedBy }, the
@@ -287,7 +289,9 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
                                  // bootstrap for households created before M2)
   sourcingRules/{id}             // id = cat_<category> or ing_<ingredientId>: one rule per target
   sourcingRules/{id}             match: { category? | ingredientId? }, storeId
-  brandMappings/{ingredientId}   productName, productCode?, packAmount, packMeasure, storeId
+  brandMappings/{ingredientId}   productName, productCode?, packAmount, packMeasure, storeId,
+                                 lastPaidCents?, lastPaidAt?   // M25: one pack's paid price from a receipt (function-written;
+                                                               // the client's save replaces the doc, so a relink clears it)
 
   favourites/{type_targetId}     type: "recipe"|"meal", targetId
   notes/{recipeId}               text, updatedBy                            // household's recipe notes
@@ -330,9 +334,14 @@ households/{hid}                 name, createdBy, periodDays, budgetCents, curre
                                           packs, productName, storeId, estPriceCents, priceSource?,
                                           source: plan|manual|cadence|staple, checked, checkedBy?,
                                           removed?,                                              // M17: taken off with its ×
-                                          receivedAmount?, receivedIngredientId? } }               // set on receiving (M3)
+                                          receivedAmount?, receivedIngredientId?,                  // set on receiving (M3)
+                                          paidCents? } }                                           // M25: line total paid
                                  // received lists also have receivedBy and receivedCents (estimated cost of what arrived:
                                  // the period's spend, R10.3); clients can't edit or delete a received list
+                                 // M25 (R7.16, R7.17), when a receipt filled the confirmation: paidCents (Σ paid),
+                                 // spendCents (paid where known, the estimate elsewhere: History's spend), paidComplete
+                                 // (every arrived line paid → "actual"), receiptTotalCents, receiptExtras: { [receipt-n]:
+                                 // { name, ingredientId?, receivedAmount, paidCents? } } (lines not on the list, added)
                                  // the current draft is groceryLists/draft; ordering a store (M18, R7.14: Copy or Mark
                                  // ordered for PC Express, Done shopping for an in-store store) moves that store's lines
                                  // into a new list with status ordered and its storeId (Undo moves them back and deletes it)
@@ -460,7 +469,7 @@ Firestore writes queue up offline, but callable functions don't. So every action
 | Command | Effect |
 |---|---|
 | `addSupply` | Manual add (R8.2): `purchase` (+) lot with estimated expiry, or `until` (ms, optional) as its use-by when picked in the sheet (R8.18; stored as `expiryExtendedTo`) |
-| `receiveGroceries` | `purchase` (+) per confirmed item → new lots; optional `freeze` split (R7.9); grocery list → received; update cadence |
+| `receiveGroceries` | `purchase` (+) per confirmed item → new lots; optional `freeze` split (R7.9); grocery list → received; update cadence. M25: optional per-line `paidCents`, extra lines (`extra: true`, `name`, item ID `receipt-<n>`) and `receipt.totalCents` from a receipt (R7.16, R7.17) |
 | `finishCooking` | Issued by **Done cooking**, before any review (R9.3). `cook` (−) per recipe ingredient at the planned servings and per side at portion × servings (M6, R5.10; the payload's `sides`, else the plan item's) (FEFO, skipping free-use ingredients); `leftover` (+) lot of `defaultLeftoverPortions`; leftover plan items (§7); plan item → cooked; cook event with `reviewStatus: pending` |
 | `submitReview` | Per-user rating for the meal and/or its recipes; updates `stats/*`. When the reviewer also confirms **used amounts and leftovers**, the function writes `correction` (±) transactions for the difference between the recipe defaults already deducted and the confirmed amounts, adjusts the leftover lot and its plan items to the confirmed count, marks the review `done`, and (M9, R9.5) sets the cooked plan item to `eaten` (status only; no Supply change). Later ratings from other members only add ratings |
 | `correctSupply` | `correction` (± delta to reach the stated amount). Recorded as-is: the app doesn't ask why or try to infer unplanned consumption |
@@ -487,6 +496,13 @@ Firestore writes queue up offline, but callable functions don't. So every action
 - Leftover plan items have `recipes: []` (their food is already cooked, so they add nothing to the grocery list or budget), `name` = the meal's title, `leftoverSupplyId`, ID `<cookEventId>_lo<n>`, and go into the household's current period.
 - `markEaten`: leftover → one portion out of its lot; cooked meal → status only (since M9 the review does this; the Plan card offers Mark eaten only for a cooked meal whose review is already done, i.e. older data); a planned snack → its recipe amounts come out of supply (kind `eaten`); a planned non-snack meal is refused ("cook it first").
 - `receiveGroceries`: lines not mentioned arrived as listed (R7.8); missing lines have amount 0. Each bought tracked ingredient gets a lot `<commandId>-<itemId>` in its default location (frozen from the start when that is the freezer), plus the freeze split. The list gets `receivedAt`, `receivedBy`, `receivedCents` (estimated cost of what arrived, pro rata) and per-line `receivedAmount`. Cadence keeps `purchaseCount` alongside the EMA; `avgIntervalDays` is null until the second purchase.
+- `receiveGroceries` from a receipt (M25): a line's `paidCents` is stored as the line's `paidCents` (only when something
+  arrived); the list gets `paidCents`, `spendCents` (Σ paid, else the line's pro-rata estimate), `paidComplete` and
+  `receiptTotalCents`. Extra lines (`extra: true`, an ID that isn't a list key) go into Supply like any line and are
+  recorded under `receiptExtras`. A paid line that arrived as ordered (same ingredient, a pack size on the line) sets the
+  household's existing brand mapping's `lastPaidCents` (paid × pack ÷ amount) and `lastPaidAt`; the mappings are read
+  with the other reads, before any write. Commands without these fields behave as before. Rules: `receipt` is an allowed
+  payload key.
 - Thawing gives the lot a fresh expiry of 2 days from thawing (the original fresh date has usually passed); the frozen expiry stays on the lot.
 - **Payload IDs (M22)** are document IDs: 1–200 characters, no `/`, not `.` / `..` or `__…__`
   (`COMMAND_ID_PATTERN` in `packages/core/src/commands.ts`), since many become path segments (`supply/{ingredientId}`,
@@ -577,7 +593,7 @@ Each plan item has a `coverage` map: how many slots of each meal type it fills. 
 
 `spent = Σ marginal cost of planned items`, where marginal cost prices only the **shortfall packs** the grocery builder would buy (§8). Ingredients already in supply, or **incoming** on an ordered-but-not-received list, cost nothing. Manual and staple items are excluded (R6.4). The meter shows `budget − spent` and turns red below zero. Adding meals is never blocked.
 
-By design the meter is a *"what will the next order cost"* gauge (R6.3): after a grocery list is confirmed as received, the planned meals are covered and `spent` drops back toward zero. Pack rounding makes the cost order-dependent (the first recipe that needs flour pays for the whole bag), which is accepted. Each plan item shows its own share in `addedAt` order ("+$3.91 to buy"); the shares sum to `spent`. Actual spend for a period is `Σ estPriceCents` of the period's received lists and is shown on History (R10.3).
+By design the meter is a *"what will the next order cost"* gauge (R6.3): after a grocery list is confirmed as received, the planned meals are covered and `spent` drops back toward zero. Pack rounding makes the cost order-dependent (the first recipe that needs flour pays for the whole bag), which is accepted. Each plan item shows its own share in `addedAt` order ("+$3.91 to buy"); the shares sum to `spent`. Actual spend for a period is the Σ of the period's received lists, each its `spendCents` when a receipt filled its confirmation (M25: paid prices, estimates for lines without one) else its `receivedCents` estimate (`listSpend`, `spendPerPeriod` in core `history.ts`), and is shown on History (R10.3) labelled actual / estimated / part actual. The meter itself keeps using estimates and live prices (a paid price is only recorded, on the brand mapping, for M27's price history).
 
 ### Suggestion score
 
@@ -738,6 +754,31 @@ Default to No Name or President's Choice brands if not specified.
 ```
 
 **Confirming a purchase** (R7.8): the confirmation screen lists the items as bought. Edits are optional. When a confirmed item comes from a `bulk` store and its ingredient is `freezable`, the screen asks how much to freeze (R7.9). Everything is submitted as one `receiveGroceries` command.
+
+**From a receipt** (M25, R7.15–R7.17; `<ReceiveSheet>`'s receipt step, `functions/src/ai/receipt.ts`,
+`packages/core/src/receipt.ts`): the confirm sheet's **From a receipt** opens a step with Upload a photo, Take a photo
+(`capture="environment"`) and a box for the order email's text. A photo is shrunk in the browser (`photoForGemini` in
+`lib/images.ts`: long side ≤ 2048 px, JPEG ≤ 4 MB; an undecodable HEIC goes as it is when small enough) and sent
+**inline** to the callable `readReceipt({ hid, listId, image: { mimeType, data } } | { …, text })` (allowlisted,
+members of the household, a list still `ordered`, Gemini set up, `RECEIPTS_PER_HOUR` = 10 per person per hour in
+`receiptRate/{uid}`, 512 MiB, 120 s). The photo lives only in the function's memory and the one Gemini request; nothing is
+uploaded or written. Gemini (`geminiJson`: `generateContent` with `receiptGenerationConfig()`, a JSON response schema,
+temperature 0) gets `receiptInstruction(ordered)`: what to list (product lines only; discounts folded into their line;
+subtotals, tax, deposits, payments left out), the fields (`description`, `name`, `quantity`, `packSize`, `unitPrice`,
+`lineTotal`, `substitutedFor`, `notAvailable`, `listLine`; `store`, `date`, `total`) and the ordered lines as `L1…Ln`.
+`readReceipt()` normalises the answer (dollars → cents, a missing total from unit price × quantity, a bare negative
+discount line folded into the line above, ≤ 150 lines). `matchReceipt()` matches each line to an ordered line: the
+product name on the list (`productScore`: every word of the shorter wording in the longer, or ≥ 0.6 shared words), then
+`matchIngredient` on Gemini's plain `name` (else the printed description) → the list line with that ingredient, then
+Gemini's `listLine` if it is a real key; a substitution is matched by what it replaced, and its own ingredient becomes
+the swap. Ordered lines no arriving line covers are `missing`. Logged: counts only (`receipt read`: lines, matched, not on
+the list, missing). The sheet then prefills (`receiptArrival()`: the printed sizes × quantities in canonical units, whole
+packs within 10 %, else the exact amount; quantities as packs without sizes; Σ line totals as the paid price), marks each
+field it set **From receipt** (a peach chip naming them and a dashed outline on the control; an edit removes the mark),
+adds an editable **Paid $** field per line, and lists the rest under **Not on the list** (`extraAmount()`: printed size,
+else the ingredient's default pack, else a count; **Add to Supply** toggles one in, the default is ignored; a line without
+a matched ingredient can pick one). Confirm sends `receiveGroceries` with `paidCents`, the extras and `receipt.totalCents`.
+Under the emulator the stub answers `_stubLlm/{uid}` (or `config`) `receipt` (an object or JSON text; none = no lines).
 
 **Staples cadence:** the `receiveGroceries` handler updates `cadence/{ingredientId}.avgIntervalDays` (an exponential moving average of the gaps between purchases). Until an item has been bought twice there's no gap to average, so the client uses `ingredient.defaultCadenceDays` from the seed data (e.g. milk 7, eggs 14, olive oil 60). The client raises an "Are you out of X?" prompt when `daysSinceLastPurchase ≥ 0.85 × interval`. *Yes* adds the item to the draft list; *Not yet* snoozes it.
 
@@ -1096,7 +1137,7 @@ match /prices/{id}       { allow read: if allowed(); }       // write: functions
 **Verified email (M0 decision):** `allowed()` also requires `email_verified`. The Email/Password provider must be enabled for email-link sign-in, which would otherwise let anyone register an allowlisted address they don't own with a password. Email-link sign-in always verifies the address, so real users are unaffected. The collection-group `members` rule checks the duplicated `uid` *field* rather than the document ID, because Firestore can only prove a query safe from the fields it filters on. A collection-group single-field index on `members.uid` is declared in `firestore.indexes.json`.
 
 **Callables (M22):** every callable (`scheduleTimer`, `cancelTimer`, the PC Express and Gemini callables,
-`addRecipeWithGemini`, `mergeIngredient`) first runs `requireAllowed` (`functions/src/ingredients.ts`): a verified token
+`addRecipeWithGemini`, `readReceipt` (M25), `mergeIngredient`) first runs `requireAllowed` (`functions/src/ingredients.ts`): a verified token
 **and** an allowlisted address. A verified token alone isn't enough, since email-link sign-in verifies any address.
 Owner-only callables (`pcxSetKey`, `aiSetKey`, `checkIngredientNames`, `mergeIngredient`) then compare the caller with
 the `OWNER_UID` param (`functions/src/owner.ts`). The emulator's per-household stub owner (`_stubPcx/{hid}.ownerUid`) is
@@ -1224,6 +1265,7 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 - **`<AddWithGemini>`** (M16, R4.37): in the Add recipe sheet, above Manual entry and Drop a .cook file: a link field,
   **Upload a photo of a recipe** (`accept="image/*"`) and **Take a photo of a recipe** (`capture="environment"`), a
   status line while Gemini works, the error in a dashed alert, then the new recipe opens.
+- **`<ReceiveSheet>`** (M3, R7.8–R7.9; M25 R7.15–R7.17): the confirm groceries sheet (prototype "conf"): pack steppers, Got it / Didn't come, Got something else instead, the freeze prompt; since M25 a **From a receipt** step (upload, camera, pasted email text) that prefills it, with "from receipt" marks, Paid $ fields and a **Not on the list** section (§8 "From a receipt").
 - **`<FromPcx>`** (R6.29): the "From PC Express" tag on store and product search results, the current store, a brand's
   linked product and live price; the budget meter says "N live from PC Express".
 - **`<NotificationBanners>`**: the app-wide notification system. Banners stack at the bottom of every page, above the bottom tab bar on phones. Fed by a live listener on `users/{uid}/notifications` (undismissed) plus local, client-only messages. Success and info banners auto-dismiss after ~6 s on the device showing them only (M23, `components/notificationsSeen.ts`): this device remembers it showed them (localStorage, 30 days) and the person's other devices still show them; `dismissedAt` is written only by an explicit dismiss (×, Dismiss all, the banner's link or action), or by whichever device sees a success or info notification more than a day old. Errors stay until dismissed. Each can link to the related page. At most three show at once, with a "+N more · Dismiss all" row for the rest (a bulk drop reports one per file). The stack is always mounted as an `aria-live` region above sheets, so banners stay visible and announced while a sheet is open.
@@ -1574,6 +1616,7 @@ Besides the weekly scheduled backup of the whole database (M22, above; restoring
 | `grocery.spec.ts` | List built from plan − supply − incoming with pack rounding (mapping, default pack, or raw); expired lots treated as missing; free-use ingredients excluded (R8.14); brand names applied; grouped by store with mapping winning over category rule; copy button copies only the PC Express section and marks the list ordered (with undo); regenerating doesn't re-add ordered items; manual additions; free-use olive oil as a staple line, not a plan line (R8.14, M10) (R7.1–R7.6) |
 | `cadence.spec.ts` | (M10) Staples on the list by themselves: due by the cadence, a free-use staple a planned meal uses, not when bought recently or already listed; the Staples group; removing one keeps it off; no "Are you out of" prompt (R7.7, R7.12, R8.14) |
 | `receive.spec.ts` | Confirm unchanged = everything bought; edit quantities and substitutions; freeze prompt for bulk freezable items; supply updated (R7.8–R7.9) |
+| `receipt.spec.ts` | (M25) From a receipt with the Gemini stub's canned receipt: the order email's text and a photo are read; a matched line (packs, paid price), a substitution, a didn't-come line and a not-on-the-list line prefilled and marked "from receipt", editable, nothing written before Confirm; Confirm stores paid prices and extras; History's spend says actual; Back; not set up (R7.15–R7.17) |
 | `supply.spec.ts` | Search by name and alias (R8.17, M9); starts empty; add via ingredient picker in each allowed measurement; current (projected, only when the plan uses some) display in the unit it was added in (R8.13); Filter sheet with no repeated options (R8.12); Staples group for free-use items (R8.14); per-lot expiry flags; expired lot excluded from amounts and "can make" until Still good / Threw it out (R8.15); freeze/thaw; ±5/±25 + Apply corrections; discard; filters; transaction history with infinite scroll (R8.1–R8.12) |
 | `review.spec.ts` | Done cooking deducts recipe defaults and adds estimated leftovers immediately; review opens when all recipes are checked off and on early "Done cooking"; per-user ratings; adjusting used ingredients posts corrections for the difference; pending reviews completed later by another member (R9.1–R9.4) |
 | `history.spec.ts` | Cooked list, filters, stats (R10.1–R10.3) |
@@ -1633,6 +1676,7 @@ Besides the weekly scheduled backup of the whole database (M22, above; restoring
 | M22 | Backend hardening | Every callable allowlisted (`requireAllowed`), `mergeIngredient` owner-only, `scheduleTimer` rate limited, stub owner only under the Functions emulator; stuck commands failed (dispatcher fast path + weekly), receives applied in ≤ 100-line transactions, path-safe payload IDs; write-then-delete import keeping a failed upload; `safeFetch` (DNS-checked, pinned, redirect-checked) for recipe pages and images; rules for plan `addedBy`, list `createdAt`, version snapshots and images of existing recipes; retention (commands, notifications) and orphaned-upload sweeps; `system/maintenance` and the owner alert; weekly Firestore backup (the accepted paid item), alerts and keyless deploy steps for the owner; deploy order rules → functions → hosting |
 | M23 | Web data layer and bundle | Listener layer: diffed per-ID listeners, metadata snapshots opt-in, listener errors reported (banner), listener accounting; only the current width's navigation mounted; one shared plan model; cheap pending-review and badge reads; connectivity from Firestore's cache state; writes never wait for the server; `useNow`; grocery order/Undo transactions; recipe editor watches less and auto-saves in place; bounded History reads with Show more; instant landing redirect; per-device success banners; leave deletes the membership first; one plan worker on core subpath exports; hidden source maps; dead code and duplicates removed |
 | M24 | UX polish | Plan alerts fold to one line once seen (phones); Suggested meal-type tabs opening on the emptiest strip row; stub recipes (no weighable line) never suggested and marked "needs ingredients"; Supply's filter sheet a draft like Recipes (`<FilterSheet>`); 44 px touch targets with an a11y check; step mode's arrow a button and one live region; History stats load before saying "Nothing yet"; use-it-up copy as a sentence; phone OFFLINE badge |
+| M25 | Receipt import | From a receipt on the confirm sheet: a receipt photo (downscaled, inline, never stored) or the order email's text read by Gemini with a JSON schema (`readReceipt`, 10 per person per hour); lines matched to the order (product name, ingredient matcher, Gemini's line); packs, substitutions, didn't-come and paid prices prefilled and marked "from receipt"; lines not on the list added or ignored; paid prices on the received list, its lines and the brand mapping; History spend actual / estimated |
 
 Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix. The detailed, task-level plan for each milestone lives in `Planning/`.
 

@@ -19,6 +19,7 @@ import { defineString } from "firebase-functions/params";
 import { CallError, pcxStatus as pcxStatusLogic, searchProducts, searchStores, setKey } from "./pcx";
 import { aiSetKey as aiSetKeyLogic, aiStatus as aiStatusLogic, checkIngredientNames as checkNamesLogic } from "./ai";
 import { addRecipeWithGemini as addRecipeLogic } from "./ai/addRecipe";
+import { readReceiptCall } from "./ai/receipt";
 import { MergeError, ownerMergeIngredient, requireAllowed } from "./ingredients";
 
 // Keep every function small and cheap: free tier is a hard requirement (PRD NFR2).
@@ -124,6 +125,23 @@ export const addRecipeWithGemini = onCall({ cors: true, timeoutSeconds: 240, mem
     throw e;
   }
 });
+/**
+ * From a receipt (M25, R7.15): Gemini reads a receipt photo or an order confirmation's text and the lines are matched to
+ * the ordered list. Writes nothing; the photo is only in memory. A photo is a few hundred kB to a few MB, so 512 MiB.
+ */
+export const readReceipt = onCall({ cors: true, timeoutSeconds: 120, memory: "512MiB" }, async (req) => {
+  try {
+    const uid = await requireAllowed(req.auth);
+    return await readReceiptCall(uid, req.data);
+  } catch (e) {
+    // Logged without the receipt (no lines, text or photo), so a failure can be read later.
+    logger.warn("read receipt failed", { uid: req.auth?.uid, source: (req.data as { image?: unknown } | null)?.image ? "photo" : "text", error: (e as Error).message });
+    if (e instanceof MergeError) throw new HttpsError(e.code, e.message);
+    if (e instanceof CallError) throw new HttpsError(e.code, e.message);
+    throw e;
+  }
+});
+
 /** Saves the PC Express API key (owner only, R6.28). */
 export const pcxSetKey = onCall({ cors: true }, (req) => allowedCall(req.auth, (uid) => setKey(uid, req.data, OWNER_UID.value() || null)));
 

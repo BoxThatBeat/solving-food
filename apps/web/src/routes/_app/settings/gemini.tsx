@@ -1,6 +1,6 @@
 // Settings → Gemini (PRD R11.15, R4.36; Planning/M16): the one place for the app's Gemini setup. The owner pastes the
 // API key here (it moved from the Ingredients page); everyone else sees whether it's set up. Gemini decides new
-// ingredient names (R4.27) and adds recipes from a link or a photo (R4.37).
+// ingredient names (R4.27), adds recipes from a link or a photo (R4.37) and reads receipts (R7.15, M25).
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { ApiKeyCard } from "@/components/settings/ApiKeyCard";
@@ -25,6 +25,9 @@ function GeminiPage() {
               Adds a recipe from a web link or a photo (Recipes → <span className="font-extrabold">+ Add recipe</span>).
             </li>
             <li>
+              Reads a receipt or an order email to fill in the groceries&apos; confirmation (Grocery → <span className="font-extrabold">From a receipt</span>).
+            </li>
+            <li>
               Decides whether a new ingredient name from an import is one the app already has (
               <Link to="/ingredients" className="font-extrabold text-ink underline">
                 Ingredients
@@ -47,7 +50,7 @@ function GeminiPage() {
             </p>
             <p className="m-0 rounded-ui border-2 border-dashed border-line px-2.5 py-2 font-bold">
               Create the key in a new Google Cloud project with no billing, never in the app&apos;s own project (it has billing on, so its key would be charged). On the
-              free tier Google may use what&apos;s sent (ingredient names, and the recipe pages and photos you add) to improve its products.
+              free tier Google may use what&apos;s sent (ingredient names, the recipe pages and photos you add, and the receipts you read) to improve its products.
             </p>
           </ApiKeyCard>
         ) : null}

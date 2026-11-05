@@ -137,7 +137,8 @@ export async function receiveGroceries(ctx: Ctx, p: CommandPayload<"receiveGroce
   const listData = list.data()!;
   if (listData.status === "received") return "already received";
   if (listData.status !== "ordered") throw new CommandError("Only an ordered list can be received");
-  const items = (listData.items ?? {}) as Record<string, { amount?: number; estPriceCents?: number | null }>;
+  const items = (listData.items ?? {}) as Record<string, { amount?: number; estPriceCents?: number | null; ingredientId?: string; packAmount?: number | null }>;
+  const final = !part || part.last;
 
   const bought = (part?.items ?? p.items).filter((i) => i.ingredientId && !i.missing && i.amount > 0);
   const ings = await ingredientsFor(ctx, bought.map((i) => i.ingredientId!));
@@ -146,6 +147,11 @@ export async function receiveGroceries(ctx: Ctx, p: CommandPayload<"receiveGroce
   const cadenceRefs = cadenceIds.map((id) => hh(ctx, `cadence/${id}`));
   const cadenceSnaps = cadenceRefs.length ? await ctx.tx.getAll(...cadenceRefs) : [];
   await ctx.store.load(tracked.map((i) => i.ingredientId!));
+  // A paid price from a receipt (M25, R7.17) becomes the brand mapping's last paid price for one pack, when the product
+  // that came is the mapped one (no substitution). Read before anything is written (a transaction's reads come first).
+  const paidPack = final ? lastPaidPerPack(p.items, items) : new Map<string, number>();
+  const mappingRefs = [...paidPack.keys()].map((id) => hh(ctx, `brandMappings/${id}`));
+  const mappingSnaps = mappingRefs.length ? await ctx.tx.getAll(...mappingRefs) : [];
 
   for (const it of tracked) {
     const ing = ings.get(it.ingredientId!)!;
@@ -166,9 +172,14 @@ export async function receiveGroceries(ctx: Ctx, p: CommandPayload<"receiveGroce
     return undefined;
   }
 
-  // The list: received, with what arrived and its estimated cost (the period's spend, R10.3).
+  // The list: received, with what arrived and its estimated cost (the period's spend, R10.3); with a receipt (M25,
+  // R7.17) also what each line cost, the lines that weren't on the list, and the spend at paid prices.
   const update: Record<string, unknown> = { status: "received", receivedAt: ts(ctx.nowMs), receivedBy: ctx.uid };
   let cents = 0;
+  let paid = 0;
+  let spend = 0;
+  let anyPaid = false;
+  let allPaid = true;
   const byItem = new Map(p.items.map((i) => [i.itemId, i]));
   for (const [itemId, it] of Object.entries(items)) {
     const got = byItem.get(itemId);
@@ -178,12 +189,51 @@ export async function receiveGroceries(ctx: Ctx, p: CommandPayload<"receiveGroce
       update[`items.${itemId}.receivedAmount`] = received;
       if (got.ingredientId) update[`items.${itemId}.receivedIngredientId`] = got.ingredientId;
     }
-    if (it.estPriceCents) cents += amount > 0 ? Math.round((it.estPriceCents * received) / amount) : got?.missing ? 0 : it.estPriceCents;
+    const est = it.estPriceCents ? (amount > 0 ? Math.round((it.estPriceCents * received) / amount) : got?.missing ? 0 : it.estPriceCents) : 0;
+    cents += est;
+    if (got?.paidCents !== undefined && received > 0) {
+      update[`items.${itemId}.paidCents`] = got.paidCents;
+      paid += got.paidCents;
+      spend += got.paidCents;
+      anyPaid = true;
+    } else {
+      spend += est;
+      if (received > 0) allPaid = false;
+    }
   }
   update.receivedCents = Math.max(0, cents);
+  const extras = p.items.filter((i) => i.extra && !(i.itemId in items) && !i.missing && i.amount > 0);
+  for (const x of extras) {
+    update[`receiptExtras.${x.itemId}`] = { name: x.name ?? "", ...(x.ingredientId ? { ingredientId: x.ingredientId } : {}), receivedAmount: x.amount, ...(x.paidCents !== undefined ? { paidCents: x.paidCents } : {}) };
+    if (x.paidCents !== undefined) {
+      paid += x.paidCents;
+      spend += x.paidCents;
+      anyPaid = true;
+    }
+  }
+  if (anyPaid) Object.assign(update, { paidCents: paid, spendCents: Math.max(0, spend), paidComplete: allPaid });
+  if (p.receipt?.totalCents !== undefined) update.receiptTotalCents = p.receipt.totalCents;
+  mappingSnaps.forEach((snap, i) => {
+    if (snap.exists) ctx.tx.update(mappingRefs[i]!, { lastPaidCents: [...paidPack.values()][i]!, lastPaidAt: ts(ctx.nowMs) });
+  });
   ctx.store.commit();
   ctx.tx.update(listRef, update);
   return undefined;
+}
+
+/**
+ * The price of one pack paid per ingredient (M25): a list line that arrived as ordered (same ingredient, a known pack
+ * size) with a paid price → paid × pack ÷ amount received, by ingredient ID (the brand mapping's ID).
+ */
+function lastPaidPerPack(sent: CommandPayload<"receiveGroceries">["items"], items: Record<string, { ingredientId?: string; packAmount?: number | null }>): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const g of sent) {
+    const it = items[g.itemId];
+    if (!it?.ingredientId || g.paidCents === undefined || g.missing || !(g.amount > 0) || !it.packAmount) continue;
+    if (g.ingredientId && g.ingredientId !== it.ingredientId) continue; // a substitution: not the mapped product
+    out.set(it.ingredientId, Math.round((g.paidCents * it.packAmount) / g.amount));
+  }
+  return out;
 }
 
 // ---------- finishCooking (R9.3, R6.8–R6.10)

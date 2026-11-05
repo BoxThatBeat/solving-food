@@ -58,3 +58,51 @@ export async function uploadRecipeImage(recipeId: string, file: File, base = new
     bitmap.close();
   }
 }
+
+const GEMINI_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
+
+function toBase64(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+
+/**
+ * A photo for Gemini to read (M25, a receipt): its longest side at most `maxEdge` px (2048 keeps a long till receipt's
+ * small print readable), JPEG, as base64 for a callable. Never uploaded anywhere. A photo the browser can't decode (HEIC
+ * outside Safari) goes as it is when it's small enough.
+ */
+export async function photoForGemini(file: File, maxEdge = 2048, maxBytes = 4 * 1024 * 1024): Promise<{ mimeType: string; data: string }> {
+  let bitmap: ImageBitmap | null;
+  try {
+    bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  } catch {
+    bitmap = null;
+  }
+  if (!bitmap) {
+    const type = file.type || "image/jpeg";
+    if (!GEMINI_TYPES.has(type)) throw new Error("That isn't a photo the app can read (JPEG, PNG, WebP, HEIC)");
+    if (file.size > maxBytes) throw new Error("That photo is too large; take it again or crop it");
+    return { mimeType: type, data: toBase64(await file.arrayBuffer()) };
+  }
+  try {
+    const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("No canvas");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    for (const q of [0.85, 0.7, 0.55]) {
+      const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", q));
+      if (blob && blob.size <= maxBytes) return { mimeType: "image/jpeg", data: toBase64(await blob.arrayBuffer()) };
+    }
+    throw new Error("That photo is too large even after shrinking it");
+  } finally {
+    bitmap.close();
+  }
+}

@@ -352,6 +352,9 @@ export const brandMappingSchema = z.object({
   packAmount: z.number().positive(),
   packMeasure: z.enum(MEASURES),
   storeId: id,
+  /** The last price paid for one pack, from a receipt (M25, R7.17), and when; written by receiveGroceries. */
+  lastPaidCents: z.number().int().min(0).optional(),
+  lastPaidAt: timestamp.optional(),
 });
 export type BrandMappingDoc = z.infer<typeof brandMappingSchema>;
 
@@ -493,6 +496,8 @@ export const groceryItemSchema = z.object({
   /** Set by receiveGroceries: canonical amount that arrived (0 = didn't arrive) and the ingredient actually bought. */
   receivedAmount: z.number().min(0).optional(),
   receivedIngredientId: id.optional(),
+  /** What the line cost, from a receipt (M25, R7.17): the line total paid, cents. M27's price history reads these. */
+  paidCents: cents.min(0).optional(),
 });
 export type GroceryItem = z.infer<typeof groceryItemSchema>;
 
@@ -509,6 +514,17 @@ export const groceryListSchema = z.object({
   receivedBy: z.string().optional(),
   /** Σ estimated cost of what arrived (prices at the time): the period's spend (R10.3). */
   receivedCents: z.number().int().min(0).optional(),
+  /**
+   * From a receipt (M25, R7.17): Σ paid on the lines that have a paid price (and the extras added); `spendCents` is
+   * what the list cost with paid prices where known and the estimate elsewhere; `paidComplete` when every line that
+   * arrived has a paid price (History says "actual"). `receiptTotalCents`: what the receipt printed as its total.
+   */
+  paidCents: z.number().int().min(0).optional(),
+  spendCents: z.number().int().min(0).optional(),
+  paidComplete: z.boolean().optional(),
+  receiptTotalCents: z.number().int().min(0).optional(),
+  /** Lines that weren't on the list, added to Supply from the receipt (M25, R7.16). */
+  receiptExtras: z.record(z.string(), z.object({ name: z.string(), ingredientId: id.optional(), receivedAmount: z.number().min(0), paidCents: cents.min(0).optional() })).optional(),
   items: z.record(z.string(), groceryItemSchema),
   /** Staples removed from the draft (M10, R7.12): ingredient ID → epoch ms until which the list doesn't add it again. */
   dismissedStaples: z.record(z.string(), z.number()).optional(),

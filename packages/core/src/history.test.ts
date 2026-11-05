@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { avgRatingByCuisine, deviations, eventAverage, mostCooked, spendPerPeriod } from "./history";
+import { avgRatingByCuisine, deviations, eventAverage, listSpend, mostCooked, spendPerPeriod } from "./history";
 import { parseCommand, ratingId } from "./commands";
 import { projectPending, type ProjectedDoc } from "./projection";
 
@@ -40,10 +40,31 @@ describe("history stats (R10.3)", () => {
       ],
       periods,
     );
-    expect(out.map((p) => [p.id, p.cents])).toEqual([
-      ["p1", 750],
-      ["p2", 1],
+    expect(out.map((p) => [p.id, p.cents, p.basis])).toEqual([
+      ["p1", 750, "estimated"],
+      ["p2", 1, "estimated"],
     ]);
+  });
+  it("spend at paid prices from receipts: actual, mixed, estimated (M25, R7.17)", () => {
+    const periods = [
+      { id: "p1", startMs: 0, endMs: 7 * DAY, budgetCents: 100 },
+      { id: "p2", startMs: 7 * DAY, endMs: 14 * DAY, budgetCents: 100 },
+      { id: "p3", startMs: 14 * DAY, endMs: 21 * DAY, budgetCents: 100 },
+    ];
+    const out = spendPerPeriod(
+      [
+        { receivedAtMs: DAY, cents: 500, paid: "all" },
+        { receivedAtMs: 8 * DAY, cents: 300, paid: "all" },
+        { receivedAtMs: 9 * DAY, cents: 200 },
+      ],
+      periods,
+    );
+    expect(out.map((p) => p.basis)).toEqual(["actual", "mixed", "estimated"]);
+    const items = { a: { estPriceCents: 400 }, b: { estPriceCents: 100 } };
+    expect(listSpend({ items })).toEqual({ cents: 500, paid: "none" });
+    expect(listSpend({ items, receivedCents: 450 })).toEqual({ cents: 450, paid: "none" });
+    expect(listSpend({ items, receivedCents: 450, spendCents: 480, paidCents: 380, paidComplete: false })).toEqual({ cents: 480, paid: "some" });
+    expect(listSpend({ items, receivedCents: 450, spendCents: 470, paidCents: 470, paidComplete: true })).toEqual({ cents: 470, paid: "all" });
   });
   it("deviations: confirmed vs. recipe, noise ignored", () => {
     expect(

@@ -49,7 +49,7 @@ export function parseDropPath(name: string): { uid: string; file: string } | nul
 let cache: { at: number; byId: Map<string, IngredientDoc>; index: IngredientIndex } | null = null;
 const CACHE_MS = 5 * 60_000;
 
-async function ingredientData(): Promise<NonNullable<typeof cache>> {
+export async function ingredientData(): Promise<NonNullable<typeof cache>> {
   if (cache && Date.now() - cache.at < CACHE_MS) return cache;
   const snap = await db.collection("ingredients").get();
   const byId = new Map(snap.docs.map((d) => [d.id, d.data() as IngredientDoc]));

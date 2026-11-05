@@ -175,6 +175,52 @@ describe("receiveGroceries", () => {
   });
 });
 
+describe("receiveGroceries from a receipt (M25, R7.16, R7.17)", () => {
+  it("stores paid prices on the lines and the list, records extras, spends at paid prices, updates the mapping's last paid price", async () => {
+    await db.doc(`households/${HID}/brandMappings/rice`).set({ productName: "Rice 2 kg", packAmount: 2000, packMeasure: "weight", storeId: "pc-express" });
+    await db.doc("ingredients/lentils").set({ ...ING.rice, name: "red lentils", isStaple: false });
+    await db.doc(`households/${HID}/groceryLists/ordR`).set({
+      periodId: "2026-10-05",
+      status: "ordered",
+      createdAt: new Date(),
+      orderedAt: new Date(),
+      orderedBy: UID,
+      items: {
+        rice: { ingredientId: "rice", amount: 2000, measure: "g", packAmount: 2000, packs: 1, productName: "Rice 2 kg", storeId: "pc-express", estPriceCents: 600, source: "plan", checked: false },
+        spinach: { ingredientId: "spinach", amount: 312, measure: "g", packAmount: 312, packs: 1, productName: "Baby spinach", storeId: "pc-express", estPriceCents: 499, source: "plan", checked: false },
+        chicken: { ingredientId: "chicken", amount: 2000, measure: "g", packAmount: 2000, packs: 1, productName: "Kirkland thighs", storeId: "pc-express", estPriceCents: 2000, source: "plan", checked: false },
+      },
+    });
+    const r = await command("receiveGroceries", {
+      listId: "ordR",
+      items: [
+        { itemId: "rice", ingredientId: "rice", amount: 4000, paidCents: 1100 }, // two bags at $5.50
+        { itemId: "spinach", ingredientId: "spinach", amount: 0, missing: true },
+        { itemId: "chicken", ingredientId: "chicken", amount: 2000 }, // no price on the receipt
+        { itemId: "receipt-1", ingredientId: "lentils", amount: 900, extra: true, name: "PC RED LENTILS 900G", paidCents: 399 },
+        { itemId: "receipt-2", amount: 0, extra: true, name: "IGNORED", missing: true },
+      ],
+      receipt: { totalCents: 3499 },
+    });
+    expect(r.status).toBe("applied");
+    const list = (await db.doc(`households/${HID}/groceryLists/ordR`).get()).data()!;
+    expect(list.items.rice.paidCents).toBe(1100);
+    expect(list.items.chicken.paidCents).toBeUndefined();
+    expect(list.receiptExtras).toEqual({ "receipt-1": { name: "PC RED LENTILS 900G", ingredientId: "lentils", receivedAmount: 900, paidCents: 399 } });
+    expect(list.paidCents).toBe(1100 + 399);
+    expect(list.spendCents).toBe(1100 + 2000 + 399); // chicken at its estimate
+    expect(list.paidComplete).toBe(false);
+    expect(list.receiptTotalCents).toBe(3499);
+    expect(list.receivedCents).toBe(1200 + 0 + 2000);
+    expect((await supply("lentils"))!.canonicalAmount).toBe(900);
+    const mapping = (await db.doc(`households/${HID}/brandMappings/rice`).get()).data()!;
+    expect(mapping.lastPaidCents).toBe(550);
+    expect(mapping.lastPaidAt).toBeDefined();
+    // No mapping for chicken: nothing created.
+    expect((await db.doc(`households/${HID}/brandMappings/chicken`).get()).exists).toBe(false);
+  });
+});
+
 describe("receiveGroceries: a 400-line list (M22)", () => {
   it("applies in transactions of ≤ 100 lines (none near the 500-write limit), counting cadence once per ingredient", async () => {
     // 40 ingredients × 10 lines, each frozen in part: one transaction would write 40 + 40 + 800 + 2 documents.
