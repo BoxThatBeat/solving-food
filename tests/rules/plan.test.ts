@@ -250,3 +250,25 @@ describe("saved meals (R5.2): global, public get for share links", () => {
     await assertFails(setDoc(doc(dbAs(EVE), "meals/m5"), meal(EVE.uid)));
   });
 });
+
+describe("the next period (M26, R3.2, R7.18): plan items and lists carry its ID before its document exists", () => {
+  it("members plan the next period, re-key it on a restart, and keep its own draft and orders", async () => {
+    const db = dbAs(ALICE);
+    // No periods/2026-10-12 document: the ID is computed from the current period until the rollover creates it.
+    await assertSucceeds(setDoc(doc(db, "households/h-alice/planItems/n1"), planItem({ periodId: "2026-10-12" })));
+    // A restart moves the next period: the item's periodId changes, nothing else.
+    await assertSucceeds(updateDoc(doc(db, "households/h-alice/planItems/n1"), { periodId: "2026-10-09" }));
+    await assertFails(updateDoc(doc(db, "households/h-alice/planItems/n1"), { periodId: "" }));
+    await assertSucceeds(setDoc(doc(db, "households/h-alice/groceryLists/draft-next"), { periodId: "2026-10-12", status: "draft", createdAt: serverTimestamp(), items: { tomato: groceryItem } }));
+    await assertSucceeds(
+      setDoc(doc(db, "households/h-alice/groceryLists/o1"), { periodId: "2026-10-12", status: "ordered", storeId: "pc-express", createdAt: serverTimestamp(), orderedAt: serverTimestamp(), orderedBy: ALICE.uid, items: { tomato: groceryItem } }),
+    );
+    await assertSucceeds(updateDoc(doc(db, "households/h-alice/groceryLists/o1"), { periodId: "2026-10-09" }));
+    // The rollover adopting the next draft: a new current draft, the next one deleted.
+    await assertSucceeds(setDoc(doc(db, "households/h-alice/groceryLists/draft"), { periodId: "2026-10-12", status: "draft", createdAt: serverTimestamp(), items: { tomato: groceryItem }, dismissedStaples: { milk: 1 } }));
+    await assertSucceeds(deleteDoc(doc(db, "households/h-alice/groceryLists/draft-next")));
+    // Still members only.
+    await assertFails(setDoc(doc(dbAs(BOB), "households/h-alice/planItems/n2"), planItem({ periodId: "2026-10-12", addedBy: BOB.uid })));
+    await assertFails(setDoc(doc(dbAs(BOB), "households/h-alice/groceryLists/draft-next"), { periodId: "2026-10-12", status: "draft", createdAt: serverTimestamp(), items: {} }));
+  });
+});

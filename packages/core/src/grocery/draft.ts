@@ -99,3 +99,24 @@ export function orderableLines(
   }
   return out;
 }
+
+/** The next period's draft (M26, R7.18): `groceryLists/draft-next`, next to the current period's `groceryLists/draft`. */
+export const NEXT_DRAFT_ID = "draft-next";
+
+/**
+ * The rollover adopting the next period's draft (M26, R3.3, R7.18): the new current draft is the next one (its lines,
+ * ticks, removed lines and dismissed staples, as the household left them) plus the lines added by hand to the old
+ * draft that were never ordered. The old draft's generated lines go (regeneration rebuilds them from the new plan) and
+ * its removed flags with them, as with any new period. A staple dismissed on both keeps the later date.
+ */
+export function adoptDraft(
+  current: { items?: Readonly<Record<string, GroceryItem>>; dismissedStaples?: Readonly<Record<string, number>> } | undefined,
+  next: { items?: Readonly<Record<string, GroceryItem>>; dismissedStaples?: Readonly<Record<string, number>> },
+): { items: Record<string, GroceryItem>; dismissedStaples: Record<string, number> } {
+  const items: Record<string, GroceryItem> = {};
+  for (const [id, it] of Object.entries(current?.items ?? {})) if (!isGenerated(it) && !isRemoved(it)) items[id] = it;
+  Object.assign(items, next.items ?? {});
+  const dismissedStaples: Record<string, number> = { ...(current?.dismissedStaples ?? {}) };
+  for (const [id, until] of Object.entries(next.dismissedStaples ?? {})) dismissedStaples[id] = Math.max(until, dismissedStaples[id] ?? 0);
+  return { items, dismissedStaples };
+}

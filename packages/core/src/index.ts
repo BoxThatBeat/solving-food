@@ -41,6 +41,7 @@ export * from "./alerts";
 export * from "./history";
 export * from "./timers";
 export * from "./projection";
+export * from "./upcoming";
 export * from "./export";
 export * from "./pcx";
 export * from "./handsFree";
