@@ -297,7 +297,11 @@ function GroceryPage() {
           <h2 id="ordered-h" className="m-0 font-display text-[1.375rem] font-normal">
             {upcoming ? "Ordered for the next period" : "Ordered · waiting to arrive"}
           </h2>
-          <p className="m-0 text-[0.8125rem] font-semibold text-sub">Each store is its own order. These count as incoming, so they aren't added again. When they arrive, confirm them and they go into Supply.</p>
+          <p className="m-0 text-[0.8125rem] font-semibold text-sub">
+            {upcoming
+              ? "Each store is its own order. These count as incoming for the next period's list only. When they arrive, confirm them and they go into Supply."
+              : "Each store is its own order. These count as incoming, so they aren't added again. When they arrive, confirm them and they go into Supply."}
+          </p>
           {[...(m.ordered ?? [])]
             .sort((a, b) => (millis(b.data.orderedAt) ?? 0) - (millis(a.data.orderedAt) ?? 0))
             .map((l) => (

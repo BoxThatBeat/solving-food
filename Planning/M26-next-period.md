@@ -1,6 +1,6 @@
 # M26 — Plan the next period
 
-Status: in progress (verification left: the e2e regression run was stopped by the machine running low on memory; see Verification)
+Status: done (owner checks: plan and order a real next week, then open the app after the rollover; restart with next-period meals planned)
 
 ## Goal
 
@@ -54,7 +54,11 @@ that followed `currentPeriodId` (a new periodId restores removed lines).
       note), grocery.spec (@R7.18 next draft from projected Supply, its order in the next view only), rollover.spec
       (@R3.3 adoption with no copies and the draft; restart moves it), optimiser.spec (@R3.4 accept into the next period).
 - [x] **9. Docs**: PRD, spec, README row, this plan.
-- [ ] **10. Design-compare** Plan and Grocery (both views) on phone and desktop.
+- [x] **10. Screenshot check** of Plan and Grocery in the next-period view on phone (430×932) and desktop (1920×1080), dev
+      emulator with seeded next-period meals, a lot expiring in it and a next-period order. Fixed: the desktop budget card
+      said "Budget · this period" in the next view (now "Budget · next period", "for the next period"); the note could
+      break "900 g" between number and unit (non-breaking); the Ordered blurb in the next view says the orders count for
+      the next period's list only.
 
 ## Deviations
 
@@ -73,6 +77,8 @@ that followed `currentPeriodId` (a new periodId restores removed lines).
 - **Staples**: the next list asks which staples are due at its start and leaves out any already on this period's list
   or ordered, so one isn't bought twice.
 - **No prototype screen**: `<PeriodSwitch>` reuses the Create meal sheet's segmented tabs (accent on the chosen one).
+- **Screenshot check, not design-compare**: the owner retired design-compare during this milestone (4c3e19a); item 10
+  is the new screenshot check.
 
 ## Verification
 
@@ -80,7 +86,8 @@ that followed `currentPeriodId` (a new periodId restores removed lines).
 - Unit: core 717 → 732 (`upcoming.test.ts` 15), web 48. Rules: 103 → 104 (the next period).
 - E2E, new tests (`--workers=1`, phone-android and desktop-1080p): plan @R3.2 @R3.4, grocery @R7.18, rollover @R3.3 ×2:
   10/10 passed (one fix: the R3.2 test read the item before the write reached the emulator; now polls).
-- E2E regression plan + rollover + grocery on both projects: **stopped at 72 passed, 0 failed** when the session was
-  killed for low memory (not a test failure). Still to run: the rest of that run, suggestions, optimiser (incl. the new
-  @R3.4 test, not run yet), receive and a11y; `pnpm test:functions` (no function code changed).
-- Design-compare: not done yet (needs the dev emulators and two browsers; deferred with the runs above).
+- E2E regression (phone-android + desktop-1080p, `--workers=1`, run by the coordinator after a low-memory kill of the
+  first run): plan + rollover 57 passed / 1 skipped; grocery + receive 24 passed; suggestions + optimiser + a11y 39 passed
+  / 1 skipped (the new @R3.4 optimiser test included); receipt + history + supply 32 passed.
+- Functions: `pnpm test:functions` 93/93 (no function code changed).
+- Screenshot check: item 10.

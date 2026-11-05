@@ -315,7 +315,7 @@ function PlanPage() {
         </div>
 
         <div className="flex min-w-0 flex-col gap-3.5 [grid-area:c] lg:sticky lg:top-4">
-          <BudgetMeterCard b={m.budget} className="hidden lg:flex" />
+          <BudgetMeterCard b={m.budget} className="hidden lg:flex" {...(upcoming ? { period: "next period" } : {})} />
           {upcoming ? (
             <AtStartNote m={m} />
           ) : (
@@ -441,7 +441,8 @@ function AtStartNote({ m }: { m: PlanModel }) {
   const sum = atStartSummary(m.expiring);
   const names = sum.items.map((i) => {
     const ing = m.ingredients.get(i.ingredientId);
-    return `${ing?.name ?? i.ingredientId.replace(/-/g, " ")} ${formatCanonical(i.amount, ing?.canonicalUnit ?? "g", ing?.unitWeightG)}`;
+    // The amount never breaks between number and unit ("900 g").
+    return `${ing?.name ?? i.ingredientId.replace(/-/g, " ")} ${formatCanonical(i.amount, ing?.canonicalUnit ?? "g", ing?.unitWeightG).replace(/ /g, " ")}`;
   });
   return (
     <p role="status" className="m-0 rounded-ui border-2 border-dashed border-line bg-base px-3.5 py-2.5 text-[0.8125rem] font-semibold" data-testid="at-start-note">

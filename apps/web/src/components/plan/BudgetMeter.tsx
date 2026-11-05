@@ -39,15 +39,15 @@ export function BudgetMeterCompact({ b, className }: { b: BudgetState; className
 }
 
 /** The desktop card ("Budget · this period"). */
-export function BudgetMeterCard({ b, className }: { b: BudgetState; className?: string }) {
+export function BudgetMeterCard({ b, className, period = "this period" }: { b: BudgetState; className?: string; /** M26: "next period" in the next-period view. */ period?: string }) {
   return (
     <section aria-label="Budget" data-testid="budget-meter" data-over={b.over || undefined} className={cn("@container flex flex-col gap-2 rounded-ui border-bw bg-base p-4 shadow-hard", b.over && "bg-red", className)}>
-      <span className="font-mono text-[0.6875rem] font-bold tracking-[0.09rem] uppercase">Budget · this period</span>
+      <span className="font-mono text-[0.6875rem] font-bold tracking-[0.09rem] uppercase">Budget · {period}</span>
       <span className="font-display text-[2.25rem] leading-none @[22rem]:text-[2.5rem]" data-testid="budget-left">
         {formatCents(b.remainingCents)}
       </span>
       <span className="text-[0.8125rem] font-bold">
-        {b.over ? "over" : "left of"} {b.over ? `the ${formatCents(b.budgetCents)} budget` : `${formatCents(b.budgetCents)} for this period`}
+        {b.over ? "over" : "left of"} {b.over ? `the ${formatCents(b.budgetCents)} budget` : `${formatCents(b.budgetCents)} for ${period === "this period" ? "this period" : `the ${period}`}`}
       </span>
       <Bar b={b} />
       <span className="font-mono text-[0.625rem] leading-relaxed font-bold uppercase">
