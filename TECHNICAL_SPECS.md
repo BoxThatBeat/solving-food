@@ -740,7 +740,7 @@ dismissal). This **replaces** the M5 prompt: the "Are you out of X?" card (Groce
 `cadence_<id>` lines and `snoozedUntil` are still honoured. Decision: adding every staple in the catalogue (113 seed
 ingredients) to every list would bury it, so "auto appear" is read as "appear when the household probably needs it".
 
-**Staples cadence as built (M5):** `packages/core/src/cadence.ts`. Prompts are for staples and free-use ingredients
+**Staples cadence as built (M5):** `packages/core/src/cadence.ts` (the prompt helpers `duePrompts` / `snoozeUntil` were removed in M21; `updateCadence`, `cadenceInterval` and `isDue` remain). Prompts are for staples and free-use ingredients
 only, at most one at a time (most overdue first), not for anything already on the draft, the plan lines, or an
 ordered list. (M5–M9; retired in M10, see above) Yes added a `cadence_<ingredientId>` line (source `cadence`) to the draft; Not yet sent a `snoozeCadence`
 command (cadence is function-only) for a quarter interval, at least a day; the next purchase clears the snooze. Shown on

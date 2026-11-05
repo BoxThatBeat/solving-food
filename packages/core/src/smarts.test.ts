@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import { addPref, brokenDiets, DIETS, formatPref, matchesPref, parsePref, preferenceBlock, prefLabel, type PrefRecipe } from "./preferences";
-import { cadenceInterval, duePrompts, isDue, snoozeUntil, updateCadence } from "./cadence";
+import { cadenceInterval, isDue, updateCadence } from "./cadence";
 import { expiryAlerts, orderSpare, recipesUsing } from "./alerts";
 import { snoozeCadencePayload } from "./commands";
 
@@ -107,34 +107,6 @@ describe("staples cadence", () => {
     expect(isDue({ ...c, snoozedUntilMs: NOW + 9 * DAY }, milk, NOW + 9.1 * DAY)).toBe(true);
     expect(isDue(c, {}, NOW + 100 * DAY)).toBe(false);
     expect(isDue(null, milk, NOW)).toBe(false);
-  });
-
-  it("snooze is a quarter interval, at least a day", () => {
-    expect(snoozeUntil({ avgIntervalDays: 8, purchaseCount: 3 }, {}, NOW)).toBe(NOW + 2 * DAY);
-    expect(snoozeUntil(null, { defaultCadenceDays: 2 }, NOW)).toBe(NOW + DAY);
-  });
-
-  it("due prompts: staples and free-use only, not already on a list, most overdue first", () => {
-    const ings: Record<string, { defaultCadenceDays?: number; isStaple?: boolean; freeUse?: boolean }> = {
-      milk: { defaultCadenceDays: 7, isStaple: true },
-      "olive-oil": { defaultCadenceDays: 60, freeUse: true },
-      salmon: { defaultCadenceDays: 7 },
-      eggs: { defaultCadenceDays: 14, isStaple: true },
-    };
-    const at = (d: number) => ({ avgIntervalDays: null, lastPurchasedAtMs: NOW - d * DAY, purchaseCount: 1 });
-    const p = duePrompts(
-      [
-        { ingredientId: "milk", c: at(7) },
-        { ingredientId: "olive-oil", c: at(55) },
-        { ingredientId: "salmon", c: at(30) },
-        { ingredientId: "eggs", c: at(20) },
-      ],
-      (id) => ings[id],
-      new Set(["eggs"]),
-      NOW,
-    );
-    expect(p.map((x) => x.ingredientId)).toEqual(["milk", "olive-oil"]);
-    expect(p[0]).toMatchObject({ intervalDays: 7, daysSince: 7 });
   });
 
   it("the snooze command payload", () => {
