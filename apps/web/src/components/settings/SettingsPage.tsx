@@ -6,7 +6,7 @@ import { PageBody, PageHeader } from "@/components/AppShell";
 export function SettingsPage({ title, kicker, children, wide }: { title: string; kicker?: string; children: React.ReactNode; wide?: boolean }) {
   return (
     <PageBody className={wide ? "max-w-[93.75rem]" : "max-w-[60rem]"}>
-      <Link to="/settings" className="inline-flex items-center gap-1 self-start text-sm font-extrabold">
+      <Link to="/settings" className="inline-flex min-h-11 items-center gap-1 self-start text-sm font-extrabold">
         <ArrowLeft aria-hidden className="size-4" strokeWidth={3} />
         Settings
       </Link>

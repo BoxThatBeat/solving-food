@@ -148,21 +148,25 @@ function HistoryPage() {
                     <Bar key={m.recipeId} label={m.title + (statusOf(m.recipeId) === "deleted" ? " (deleted)" : "")} value={`${m.count}×`} fraction={m.count / (most[0]?.count ?? 1)} />
                   ))
                 ) : (
-                  <Empty />
+                  <Empty loading={events.docs === undefined}>The recipes you cook most show up here once you&apos;ve cooked a planned meal.</Empty>
                 )}
               </StatTile>
               <StatTile title="Avg rating by cuisine" testId="stat-cuisine">
-                {byCuisine.length ? byCuisine.map((c) => <Bar key={c.cuisine} label={taxonomyLabel(c.cuisine)} value={c.avg.toFixed(1)} fraction={c.avg / 10} teal inline />) : <Empty />}
+                {byCuisine.length ? (
+                  byCuisine.map((c) => <Bar key={c.cuisine} label={taxonomyLabel(c.cuisine)} value={c.avg.toFixed(1)} fraction={c.avg / 10} teal inline />)
+                ) : (
+                  <Empty loading={ratings.docs === undefined || !summaries}>Rate a meal after cooking it and each cuisine&apos;s average shows up here.</Empty>
+                )}
               </StatTile>
               <StatTile title={`Spend per period${hh.data ? ` · budget ${formatCents(hh.data.budgetCents)}` : ""}`} testId="stat-spend">
-                {spend.length ? (
+                {spend.some((p) => p.cents > 0) ? (
                   spend.map((p) => (
                     <Bar key={p.id} label={formatPeriodRange(p.startMs, p.endMs, tz)} value={formatCents(p.cents)} fraction={p.budgetCents ? Math.min(1, p.cents / p.budgetCents) : 0} over={p.budgetCents > 0 && p.cents > p.budgetCents} inline mono />
                   ))
                 ) : (
-                  <Empty />
+                  <Empty loading={lists.docs === undefined || periods.docs === undefined}>Confirm a grocery order as received and each period&apos;s spend shows up here.</Empty>
                 )}
-                <span className="text-[0.6875rem] font-semibold text-sub">Estimated cost of the groceries confirmed as received in each period.</span>
+                {spend.some((p) => p.cents > 0) ? <span className="text-[0.6875rem] font-semibold text-sub">Estimated cost of the groceries confirmed as received in each period.</span> : null}
               </StatTile>
             </div>
             <div className="flex items-baseline justify-between gap-2">
@@ -203,8 +207,15 @@ function StatTile({ title, children, testId }: { title: string; children: React.
   );
 }
 
-function Empty() {
-  return <span className="text-[0.8125rem] font-semibold text-sub">Nothing yet.</span>;
+/** M24: a stat with nothing to show says what will appear there; while its data loads it says so instead. */
+function Empty({ loading, children }: { loading: boolean; children: React.ReactNode }) {
+  if (loading) return <span className="text-[0.8125rem] font-semibold text-sub" role="status">Loading…</span>;
+  return (
+    <span className="flex flex-col gap-0.5 text-[0.8125rem] font-semibold text-sub" data-testid="stat-empty">
+      <span className="font-extrabold text-ink">Nothing yet.</span>
+      <span>{children}</span>
+    </span>
+  );
 }
 
 function Bar({ label, value, fraction, teal, inline, over, mono }: { label: string; value: string; fraction: number; teal?: boolean; inline?: boolean; over?: boolean; mono?: boolean }) {

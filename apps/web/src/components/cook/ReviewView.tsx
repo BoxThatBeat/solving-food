@@ -345,7 +345,7 @@ function ReviewFlow({
                 {rateOnly ? "Save rating" : last ? "Save & update supply" : "Next →"}
               </Button>
             </div>
-            <button type="button" onClick={onDone} className="cursor-pointer bg-transparent p-1 text-[0.8125rem] font-extrabold text-ink underline">
+            <button type="button" onClick={onDone} className="min-h-11 cursor-pointer bg-transparent px-1 text-[0.8125rem] font-extrabold text-ink underline">
               Review later
             </button>
           </div>

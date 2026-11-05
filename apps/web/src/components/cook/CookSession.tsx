@@ -213,7 +213,7 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
   return (
     <div className="fixed inset-0 z-30 flex flex-col bg-pg text-ink" role="region" aria-label={`Cooking ${target.title}`}>
       <header className="flex flex-none items-center gap-3 border-b-bw bg-base px-4 pt-[max(0.625rem,env(safe-area-inset-top))] pb-2.5">
-        <button type="button" onClick={() => void navigate({ to: target.exitTo })} aria-label="Stop cooking" className="grid size-10 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink shadow-hard-sm">
+        <button type="button" onClick={() => void navigate({ to: target.exitTo })} aria-label="Stop cooking" className="grid size-11 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink shadow-hard-sm">
           <X aria-hidden className="size-5" strokeWidth={3} />
         </button>
         <span className="flex min-w-0 flex-1 flex-col">

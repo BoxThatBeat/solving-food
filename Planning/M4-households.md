@@ -2,6 +2,8 @@
 
 Status: in progress
 
+Waiting on the owner: invite the spouse by email and see them join Silbrass Pvt on their phone; a second household planned independently (no shared Supply); export one household and import it into a fresh one; last-member leave in a throwaway household (never Silbrass Pvt). Pushing `master` and the CI matrix are done.
+
 ## Verification (2026-10-10)
 
 | Layer | Result |

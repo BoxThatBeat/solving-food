@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildEatingOut, buildPlanItem, carriedItemId, carriesOver, carryOver, cleanSides, coverageFor, createMealInputSchema, defaultMealName, planItemTitle, proteinSummary, sidesLine, stripCount, stripModel } from "./plan";
+import { buildEatingOut, buildPlanItem, carriedItemId, carriesOver, carryOver, cleanSides, coverageFor, createMealInputSchema, defaultMealName, planItemTitle, proteinSummary, sidesLine, emptiestMealType, stripCount, stripModel } from "./plan";
 import type { PlanItemDoc } from "./types";
 
 const recipes: Record<string, { defaultLeftoverPortions: number; leftoverMealType?: "breakfast" | "lunch" | "dinner" | "snack" }> = {
@@ -179,5 +179,15 @@ describe("eating out (M9, R6.23)", () => {
     expect(carriesOver({ status: "planned", kind: "out" })).toBe(false);
     expect(carriesOver({ status: "planned", kind: "meal" })).toBe(true);
     expect(carriesOver({ status: "cooked", kind: "meal" })).toBe(false);
+  });
+});
+
+describe("emptiestMealType (M24, R6.30)", () => {
+  it("picks the row with the most open cells, dinner on ties, null when everything is full", () => {
+    expect(emptiestMealType(stripModel([item({ dinner: 5 })], 7, ["breakfast", "lunch", "dinner"]))).toBe("lunch");
+    expect(emptiestMealType(stripModel([], 7, ["breakfast", "lunch", "dinner"]))).toBe("dinner");
+    expect(emptiestMealType(stripModel([item({ dinner: 3, lunch: 3 })], 3, ["lunch", "dinner"]))).toBeNull();
+    expect(emptiestMealType(stripModel([item({ dinner: 9 })], 7, ["dinner"]))).toBeNull();
+    expect(emptiestMealType([])).toBeNull();
   });
 });

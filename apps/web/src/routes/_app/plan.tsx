@@ -11,6 +11,9 @@ import {
   combinedSuggestion,
   NO_FACTS,
   dayOfPeriod,
+  emptiestMealType,
+  expiryAlerts,
+  orderDismissKey,
   imageVariant,
   daysLeft,
   earliestExpiringUse,
@@ -42,6 +45,7 @@ import { MEAL_LABEL, useCreateMeal } from "@/components/plan/plan-sheet-context"
 import { SuggestedSection } from "@/components/plan/Suggested";
 import { ExpiryAlerts } from "@/components/plan/ExpiryAlerts";
 import { UseItUp } from "@/components/plan/UseItUp";
+import { PlanAlerts } from "@/components/plan/PlanAlerts";
 import { OptimiserCard } from "@/components/plan/Optimiser";
 import { usePlanModel } from "@/data/planModel";
 import { dismissExpiryAlert, millis } from "@/data/plan";
@@ -169,10 +173,21 @@ function PlanPage() {
   const open = openItem ? (views.find((v) => v.id === openItem) ?? null) : null;
   const notify = useNotify();
   const wide = useMediaQuery("(min-width: 80rem)");
+  const lg = useMediaQuery("(min-width: 64rem)");
   const snapshot = useScoringSnapshot(m);
   const plannedIds = React.useMemo(() => new Set(m.items.filter((i) => i.data.status === "planned" || i.data.status === "cooked").flatMap((i) => i.data.recipes.map((r) => r.recipeId))), [m.items]);
   const goals = nutrition.proteinGoals;
+  // Suggested's tabs (M24, R6.30): the household's planned meal types in day order, and snacks (always available).
+  const suggestTypes = React.useMemo(() => MEAL_TYPES.filter((t) => t === "snack" || (m.household?.plannedMealTypes ?? []).includes(t as never)), [m.household?.plannedMealTypes]);
   const dismissed = React.useMemo(() => new Set(m.period?.dismissedLots ?? []), [m.period?.dismissedLots]);
+  // What the alerts column shows (M24: the fold needs the counts and a key per item).
+  const alertList = expiryAlerts(m.expiring, dismissed, (id) => m.ingredients.get(id)?.canonicalUnit);
+  const useUpList = m.ready ? m.useItUp.filter((i) => !dismissed.has(orderDismissKey(i.ingredientId))) : [];
+  const alertKeys = [
+    ...expired.map((e) => `x:${e.item.id}/${e.lot.lotId}`),
+    ...alertList.map((a) => `e:${a.ingredientId}:${a.lotIds.join(",")}`),
+    ...useUpList.map((u) => `u:${u.ingredientId}`),
+  ];
 
   // Offline (§12): warm the service worker's image cache with the planned recipes' photos.
   const imageKey = [...m.recipes.values()].map((r) => r.imagePaths[0] ?? "").filter(Boolean).sort().join("|");
@@ -197,7 +212,6 @@ function PlanPage() {
         <Button onClick={() => openCreateMeal()}>+ Create meal</Button>
       </div>
       <PendingReviews hid={m.hid} uid={s.user.uid} />
-      <ExpiredLotPrompts entries={expired} hid={m.hid} uid={s.user.uid} tz={tz} nowMs={supplyNow} />
       {ended && !online ? (
         <div role="status" className="rounded-ui border-2 border-dashed border-line bg-base p-3 text-sm font-bold">
           This period has ended. It will roll over when you're back online; uncooked meals carry into the next one.
@@ -254,7 +268,16 @@ function PlanPage() {
         </div>
 
         <div className="flex min-w-0 flex-col gap-3.5 [grid-area:b]">
-          <SuggestedSection ranked={suggestions.ranked} summaries={byId} plannedIds={plannedIds} weights={m.household?.settings?.scoreWeights} wide={wide} onAdd={(id) => openCreateMeal({ recipeIds: [id] })} />
+          <SuggestedSection
+            ranked={suggestions.ranked}
+            summaries={byId}
+            plannedIds={plannedIds}
+            weights={m.household?.settings?.scoreWeights}
+            wide={wide}
+            mealTypes={suggestTypes}
+            defaultMealType={emptiestMealType(rows)}
+            onAdd={(id) => openCreateMeal({ recipeIds: [id] })}
+          />
           {/* M7: the protein summary sits at the bottom, directly above the optimiser, at every width. */}
           {nutrition.on ? <ProteinCard protein={protein} fibre={fibre} plannedTypes={m.household?.plannedMealTypes ?? []} goals={goals} fibreGoals={nutrition.fibreGoals} /> : null}
           <OptimiserCard snapshot={snapshot} summaries={byId} hid={m.hid} periodId={m.periodId} uid={s.user.uid} servings={m.household?.defaultServings ?? 4} remainingCents={m.budget.remainingCents} goals={goals} />
@@ -262,28 +285,11 @@ function PlanPage() {
 
         <div className="flex min-w-0 flex-col gap-3.5 [grid-area:c] lg:sticky lg:top-4">
           <BudgetMeterCard b={m.budget} className="hidden lg:flex" />
-          <ExpiryAlerts
-            spare={m.expiring}
-            dismissed={dismissed}
-            ingredient={(id) => {
-              const i = m.ingredients.get(id);
-              return i ? { name: i.name, canonicalUnit: i.canonicalUnit, unitWeightG: i.unitWeightG } : undefined;
-            }}
-            summaries={summaries ?? []}
-            scores={suggestions.byId}
-            plannedIds={plannedIds}
-            servings={m.household?.defaultServings ?? 4}
-            nowMs={supplyNow}
-            tz={tz}
-            onAdd={(id) => openCreateMeal({ recipeIds: [id] })}
-            onDismiss={(lots) => {
-              if (m.periodId) void dismissExpiryAlert(m.hid, m.periodId, lots).catch((e) => notify({ kind: "error", message: `Couldn't dismiss it: ${(e as Error).message}` }));
-            }}
-          />
-          {/* M9 (R6.25): what the next order will bring that won't keep and no planned meal uses. */}
-          {m.ready ? (
-            <UseItUp
-              items={m.useItUp}
+          {/* M24 (R6.31): every alert in this column (on phones, above the strip), folded to one line once seen. */}
+          <PlanAlerts hid={m.hid} keys={alertKeys} foldable={!lg} counts={{ expired: expired.length, expiring: alertList.length, useUp: useUpList.length }}>
+            <ExpiredLotPrompts entries={expired} hid={m.hid} uid={s.user.uid} tz={tz} nowMs={supplyNow} />
+            <ExpiryAlerts
+              spare={m.expiring}
               dismissed={dismissed}
               ingredient={(id) => {
                 const i = m.ingredients.get(id);
@@ -293,12 +299,33 @@ function PlanPage() {
               scores={suggestions.byId}
               plannedIds={plannedIds}
               servings={m.household?.defaultServings ?? 4}
+              nowMs={supplyNow}
+              tz={tz}
               onAdd={(id) => openCreateMeal({ recipeIds: [id] })}
-              onDismiss={(key) => {
-                if (m.periodId) void dismissExpiryAlert(m.hid, m.periodId, [key]).catch((e) => notify({ kind: "error", message: `Couldn't dismiss it: ${(e as Error).message}` }));
+              onDismiss={(lots) => {
+                if (m.periodId) void dismissExpiryAlert(m.hid, m.periodId, lots).catch((e) => notify({ kind: "error", message: `Couldn't dismiss it: ${(e as Error).message}` }));
               }}
             />
-          ) : null}
+            {/* M9 (R6.25): what the next order will bring that won't keep and no planned meal uses. */}
+            {m.ready ? (
+              <UseItUp
+                items={m.useItUp}
+                dismissed={dismissed}
+                ingredient={(id) => {
+                  const i = m.ingredients.get(id);
+                  return i ? { name: i.name, canonicalUnit: i.canonicalUnit, unitWeightG: i.unitWeightG } : undefined;
+                }}
+                summaries={summaries ?? []}
+                scores={suggestions.byId}
+                plannedIds={plannedIds}
+                servings={m.household?.defaultServings ?? 4}
+                onAdd={(id) => openCreateMeal({ recipeIds: [id] })}
+                onDismiss={(key) => {
+                  if (m.periodId) void dismissExpiryAlert(m.hid, m.periodId, [key]).catch((e) => notify({ kind: "error", message: `Couldn't dismiss it: ${(e as Error).message}` }));
+                }}
+              />
+            ) : null}
+          </PlanAlerts>
         </div>
       </div>
 
@@ -358,7 +385,7 @@ function ProteinCard({
           {fibre[t] || fibreGoals[t] !== undefined ? bar(`fibre-${t}`, `${MEAL_LABEL[t]} · fibre`, fibre[t], fibreGoals[t]) : null}
         </div>
       ))}
-      <Link to="/settings/nutrition" className="text-[0.75rem] font-bold text-ink underline">
+      <Link to="/settings/nutrition" className="inline-flex min-h-11 items-center self-start text-[0.75rem] font-bold text-ink underline">
         Protein and fibre goals
       </Link>
     </section>

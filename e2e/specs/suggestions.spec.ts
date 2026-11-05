@@ -16,7 +16,7 @@ test("salmon expiring in two days: the Plan page says so and the top suggestion 
   await expect(alerts).toContainText(/Salmon fillet expires (tomorrow|in 2 days)/);
   await expect(alerts).toContainText("isn't covered by the plan");
   const using = alerts.getByRole("list", { name: "Recipes that use salmon fillet" });
-  await expect(using.getByRole("listitem").first()).toContainText(/uses \d+ g/);
+  await expect(using.getByRole("listitem").first()).toContainText(/uses \d+ g of the salmon fillet expiring (today|tomorrow|[A-Z][a-z]+day)/);
 
   // Ranked by the score, with why chips: the top one uses the salmon.
   const top = page.getByTestId("suggestion").first();
@@ -84,7 +84,7 @@ test("use it up before ordering: the next order's spare that won't keep, with re
   await expect(card.getByTestId("use-it-up-item").filter({ hasText: "Chicken thigh" })).toContainText(/Chicken thigh: 400 g spare/);
   const using = card.getByRole("list", { name: "Recipes that use up baby spinach" });
   await expect(using.getByRole("listitem").first()).toContainText(useUp.title);
-  await expect(using.getByRole("listitem").first()).toContainText("uses 170 g");
+  await expect(using.getByRole("listitem").first()).toContainText("uses 170 g of the spare baby spinach");
 
   // Add it before ordering: the spinach is used up and leaves the card; the chicken stays until dismissed.
   await using.getByRole("button", { name: `Add ${useUp.title} to plan` }).click();
@@ -131,4 +131,50 @@ test("a recipe already in the plan is never suggested: the Suggested sort lists 
   await new PlanPage(page).goto();
   await expect(page.getByTestId("suggestion").first()).toBeVisible({ timeout: 20_000 });
   await expect(page.getByTestId("suggestion").filter({ hasText: hot.title })).toHaveCount(0);
+});
+
+test("Suggested by meal type: opens on the emptiest meal type, tabs filter it, See more keeps the tab (R6.30)", { tag: ["@R6.30"] }, async ({ page, household }) => {
+  // Parsnip about to expire lifts these to the top; nothing else in the library uses parsnip.
+  const dinner = await makePlanRecipe("Parsnip roast", { lines: "Roast @parsnip{400%g}.", tags: ["dinner"] });
+  const breakfast = await makePlanRecipe("Parsnip hash", { lines: "Fry @parsnip{400%g} into a hash.", tags: ["breakfast"] });
+  const dessert = await makePlanRecipe("Parsnip cake", { lines: "Bake @parsnip{300%g} into a cake.", tags: ["dessert"] });
+  await seedPeriod(household.hid);
+  await seedSupply(household.hid, "parsnip", [{ amount: 2000, expiresInDays: 1.5 }], { label: "parsnip" });
+  const plan = new PlanPage(page);
+  await plan.goto();
+  const tabs = page.getByRole("group", { name: "Suggested meal type" });
+  const section = page.getByTestId("suggested");
+  // Nothing planned: every row is empty, so dinner.
+  await expect(tabs.getByRole("button", { name: "Dinner" })).toHaveAttribute("aria-pressed", "true");
+  await expect(tabs.getByRole("button")).toHaveText(["All", "Breakfast", "Lunch", "Dinner", "Snack"]);
+  await expect(section.getByTestId("suggestion").filter({ hasText: dinner.title })).toBeVisible({ timeout: 20_000 });
+  await expect(section.getByTestId("suggestion").filter({ hasText: breakfast.title })).toHaveCount(0);
+  await expect(section.getByTestId("suggestion").filter({ hasText: dessert.title })).toHaveCount(0);
+
+  await tabs.getByRole("button", { name: "Breakfast" }).click();
+  await expect(section.getByTestId("suggestion").filter({ hasText: breakfast.title })).toBeVisible();
+  await expect(section.getByTestId("suggestion").filter({ hasText: dinner.title })).toHaveCount(0);
+  // A dessert with no meal-type tag is planned as a snack, never as a dinner.
+  await tabs.getByRole("button", { name: "Snack" }).click();
+  await expect(section.getByTestId("suggestion").filter({ hasText: dessert.title })).toBeVisible();
+  await expect(section.getByRole("link", { name: "See more suggested recipes" })).toHaveAttribute("href", /meal=snack/);
+  await tabs.getByRole("button", { name: "All" }).click();
+  await expect(tabs.getByRole("button", { name: "All" })).toHaveAttribute("aria-pressed", "true");
+  await expect(section.getByTestId("suggestion").filter({ hasText: /Parsnip/ }).first()).toBeVisible();
+});
+
+test("a recipe with no weighable ingredients is never suggested and its card says it needs ingredients (R6.11)", { tag: ["@R6.11"] }, async ({ page, household }) => {
+  const stub = await makePlanRecipe("Nugget stub", { lines: "Cook the @chicken nuggets{} according to package directions.", tags: ["dinner"] });
+  await seedPeriod(household.hid);
+  await page.goto(`/recipes?q=${encodeURIComponent(stub.title)}`);
+  const card = page.getByTestId("recipe-card").filter({ hasText: stub.title });
+  await expect(card.getByTestId("needs-ingredients")).toHaveText(/Needs ingredients/i);
+  await expect(card).not.toContainText(/\b0 g protein/i);
+  // Suggested sorts it with the blocked ones: never in the Plan page's Suggested.
+  const plan = new PlanPage(page);
+  await plan.goto();
+  await page.getByRole("group", { name: "Suggested meal type" }).getByRole("button", { name: "All" }).click();
+  await expect(page.getByTestId("suggestion").first()).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("suggestion").filter({ hasText: stub.title })).toHaveCount(0);
+  void household;
 });

@@ -3,11 +3,11 @@
 //   raw(r)   = Σ wᵢ · fᵢ(r)  over raising factors  −  Σ wⱼ · fⱼ(r)  over lowering factors      each f ∈ [0, 1]
 //   score(r) = round(100 · raw / Σ wᵢ over the raising factors that apply), clamped to 0..100 (the card's number)
 //
-// Ranking uses `raw`, which is monotone in every weight. Hard filters (missing kitchen tools, dislikes, diets) mark a
+// Ranking uses `raw`, which is monotone in every weight. Hard filters (missing kitchen tools, dislikes, diets, a side dish, M24: no weighable ingredients) mark a
 // recipe `blocked`: the Suggested row and the optimiser leave it out, and the Suggested sort lists it last.
 
 import { formatCents } from "../pricing";
-import { isSideOnly, taxonomyLabel } from "../collection";
+import { isSideOnly, needsIngredients, taxonomyLabel } from "../collection";
 import { toolLabel } from "../tools";
 import { activeExpiry, isExpired, type LedgerLot } from "../ledger";
 import { daysLeft as daysLeftOf } from "../expiry";
@@ -59,6 +59,8 @@ export interface ScoreResult {
   blocked: string | null;
   /** A side dish only (R4.28): blocked as a meal of its own, but fine inside a meal (combinedSuggestion ignores it). */
   side?: boolean;
+  /** No weighable ingredient lines (M24): blocked as a meal of its own; the card says "needs ingredients". */
+  stub?: boolean;
   /** Already in the current plan (R6.11): never suggested again; the Suggested sort lists it at the very bottom. */
   planned?: boolean;
   /** The top two raising factors and the strongest lowering one ("why" chips). */
@@ -111,9 +113,10 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
 
   const tools = missingToolsOf(r, ctx);
   const side = isSideOnly(r);
+  const stub = needsIngredients(r);
   const blocked = tools.length
     ? `Needs ${tools.map(toolLabel).join(", ")}`
-    : (preferenceBlock(r, ctx.preferences, ctx.ingredient, (id) => ctx.ingredient(id)?.name) ?? (side ? "Side dish" : null));
+    : (preferenceBlock(r, ctx.preferences, ctx.ingredient, (id) => ctx.ingredient(id)?.name) ?? (side ? "Side dish" : stub ? "Needs ingredients" : null));
   const uses = expiringUses(needs, ctx);
   const exp = uses[0] ?? null;
 
@@ -172,6 +175,7 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
     factors: f,
     blocked,
     ...(side ? { side } : {}),
+    ...(stub ? { stub } : {}),
     ...(ctx.plannedRecipeIds.has(r.id) ? { planned: true } : {}),
     reasons,
     costCents: cost,
@@ -289,8 +293,9 @@ export function combinedSuggestion(recipeIds: readonly string[], byId: ReadonlyM
   return {
     raw: rs.reduce((t, r) => t + r.raw, 0) / rs.length,
     score: Math.round(rs.reduce((t, r) => t + r.score, 0) / rs.length),
-    // A side recipe in a meal with a main is fine (R4.28); a meal of nothing but sides is not a meal.
-    blocked: rs.some((r) => !!r.blocked && !r.side) || rs.every((r) => !!r.side),
+    // A side recipe in a meal with a main is fine (R4.28); a meal of nothing but sides is not a meal. A stub recipe
+    // (M24) next to a real one doesn't block the meal either.
+    blocked: rs.some((r) => !!r.blocked && !r.side && !r.stub) || rs.every((r) => !!r.side || !!r.stub),
     // Every recipe of the meal is already planned (R6.11): it sorts at the very bottom.
     planned: rs.every((r) => !!r.planned),
     expiryDays: days.length ? Math.min(...days) : null,

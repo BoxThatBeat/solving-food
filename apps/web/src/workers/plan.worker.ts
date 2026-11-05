@@ -5,7 +5,7 @@
 // build-time virtual module that keeps only the fields scoring and costing read.
 import { rank, meetsGoals, type ScoreResult } from "@solving-food/core/scoring";
 import { Optimiser, type OptimiserSet } from "@solving-food/core/optimiser";
-import { mealTypesOf } from "@solving-food/core/collection";
+import { plannedMealTypesOf } from "@solving-food/core/collection";
 import type { MealType } from "@solving-food/core";
 import { PRICE_ESTIMATES } from "./prices";
 import { buildContexts, type ScoringSnapshot } from "./snapshot";
@@ -75,9 +75,8 @@ function optimise(m: OptimiserRequest): void {
   const ctx = { ...c.score, mealType: m.mealType };
   const pool = c.recipes.filter((r) => {
     if (ctx.plannedRecipeIds.has(r.id)) return false;
-    const types = mealTypesOf(r);
-    // Untagged recipes count as dinners.
-    if (types.length ? !types.includes(m.mealType) : m.mealType !== "dinner") return false;
+    // M24: the meal types it's planned as (untagged recipes are dinners, desserts and appetizers snacks).
+    if (!plannedMealTypesOf(r).includes(m.mealType)) return false;
     return !m.proteinOnly || meetsGoals(r, ctx);
   });
   // Recipes that alone cost more than the whole budget can't be in any set: leave them out before taking the best 80.

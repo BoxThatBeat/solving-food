@@ -142,6 +142,15 @@ test("filters: location, category, expiring soon, low stock, in a Filter sheet w
   await page.getByRole("button", { name: /^Filter/ }).click();
   await expect(sheet.getByRole("group", { name: "Location" }).getByRole("button", { name: "Pantry" })).toBeVisible();
   await expect(sheet.getByRole("group", { name: "Category" }).getByRole("button", { name: "Pantry" })).toHaveCount(0);
+  // M24: a draft, like Recipes: picking counts ("Show 1 item") but applies nothing until Show; closing discards it.
+  await sheet.getByRole("group", { name: "Location" }).getByRole("button", { name: "Freezer", exact: true }).click();
+  await expect(sheet.getByRole("button", { name: "Show 1 item" })).toBeVisible();
+  await expect(page).not.toHaveURL(/loc=/);
+  await page.keyboard.press("Escape");
+  await expect(sheet).toHaveCount(0);
+  await expect(names()).toHaveCount(4);
+  await page.getByRole("button", { name: /^Filter/ }).click();
+  await expect(sheet.getByRole("group", { name: "Location" }).getByRole("button", { name: "All", exact: true })).toHaveAttribute("aria-pressed", "true");
   await pick("Location", "Freezer");
   await expect(names()).toHaveCount(1);
   await expect(supply.row("Chicken thigh")).toBeVisible();

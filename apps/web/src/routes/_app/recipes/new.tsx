@@ -15,7 +15,7 @@ function NewRecipePage() {
   const [id] = React.useState(newRecipeId);
   return (
     <PageBody className="max-w-[48rem]">
-      <Link to="/recipes" className="inline-flex items-center gap-1 self-start text-sm font-extrabold">
+      <Link to="/recipes" className="inline-flex min-h-11 items-center gap-1 self-start text-sm font-extrabold">
         <ArrowLeft aria-hidden className="size-4" strokeWidth={3} />
         Recipes
       </Link>

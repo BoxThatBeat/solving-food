@@ -250,10 +250,10 @@ function GroceryPage() {
             {removedCount} removed · Regenerate puts {removedCount === 1 ? "it" : "them"} back
           </span>
         ) : null}
-        <Link to="/settings/brands" className="text-[0.8125rem] font-extrabold text-ink underline">
+        <Link to="/settings/brands" className="inline-flex min-h-11 min-w-11 items-center justify-center text-[0.8125rem] font-extrabold text-ink underline">
           Brands
         </Link>
-        <Link to="/settings/stores" className="text-[0.8125rem] font-extrabold text-ink underline">
+        <Link to="/settings/stores" className="inline-flex min-h-11 min-w-11 items-center justify-center text-[0.8125rem] font-extrabold text-ink underline">
           Stores
         </Link>
       </div>
@@ -382,7 +382,7 @@ function StoreCard({
               <span className="font-mono text-[0.625rem] font-semibold text-sub">{it.estPriceCents === null ? "price ?" : formatCents(it.estPriceCents)}</span>
             </span>
             {onRemove && !readOnlyRemove ? (
-              <button type="button" aria-label={`Remove ${it.productName}`} title="Remove from the list" onClick={() => onRemove(id)} className="grid size-11 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink sm:size-9">
+              <button type="button" aria-label={`Remove ${it.productName}`} title="Remove from the list" onClick={() => onRemove(id)} className="grid size-11 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink">
                 <X aria-hidden className="size-4" strokeWidth={3} />
               </button>
             ) : null}

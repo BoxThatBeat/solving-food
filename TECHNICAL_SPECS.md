@@ -627,6 +627,18 @@ expiry factor first when it counts, then the strongest raising factors (two in a
 Collections also sort by **Expiring first** and filter **Uses expiring**; a saved meal or plan item scores as the mean
 of its recipes.
 
+**M24.** *Stub recipes:* `needsIngredients(summary)` (core `collection.ts`) is true when the summary's `lines` (canonical
+amount per serving of every non-optional line with an amount) has nothing above zero, i.e. only vague, package
+(`1 can`, R8.13) or empty lines; summaries without `lines` (before M2) aren't stubs. `score()` blocks such a recipe
+("Needs ingredients", `stub: true`), so Suggested, the optimiser (`dropBlocked`), the alerts' proposals and Use it up
+leave it out and the Suggested sort lists it with the blocked ones; inside a meal with a real recipe it doesn't block
+the meal (`combinedSuggestion`, like a side). `<RecipeCard>` reads "Needs ingredients" instead of protein and fibre.
+*Meal types:* `plannedMealTypesOf(r)` = its meal-type tags without "side", else `snack` for an untagged recipe tagged
+dessert / appetizer / baking / treat / cookie(s), else `dinner` (side-only recipes: none). The Plan page's Suggested
+tabs (`<MealTypeTabs>`: All, the household's `plannedMealTypes`, Snack; R6.30) filter `ranked` with it, opening on
+`emptiestMealType(stripModel(…))` (core `plan.ts`: most open cells, ties dinner > lunch > breakfast, null = All when
+full); See more links to `/recipes?sort=suggested&meal=<tab>`. The optimiser's meal-type pool uses the same function.
+
 ### Expiry badges & alerts
 
 For each planned item, the client finds the earliest-expiring lot among its ingredients that the item would use, and shows a badge when it expires within the period (R6.7). **Plan order (M9, R6.24):** the Plan list's default sort is *Expiring first* over the same lookup, at any horizon: `soonestUseDays()` (core `cooking.ts`, fractional days to that lot's expiry, null when nothing it uses expires) feeds `expiryDays`, compared ascending with nulls last, ties by the combined suggestion score, then title; `<CollectionView defaultSort>` makes Expiring first the sheet's default on that page. Supply expiring with no planned use raises an alert with suggestions sorted by `expiryUrgency` (R6.13).
@@ -650,7 +662,15 @@ ingredients soonest first with the spare amount, the amount bought and roughly h
 `recipesUsing()` (not planned, not blocked: no side dishes), each + opening Create meal. Dismiss writes
 `order:<ingredientId>` into the period's `dismissedLots` (the alerts' field; no new data). Once the list is ordered its
 lines are incoming, the builder buys nothing more, and the card empties; when the order arrives the lots are the
-expiry alert's. Client-only; no reads beyond the plan model's listeners. Approximation: expiry is estimated from now,
+expiry alert's.
+
+**Folding (M24, R6.31).** Below `lg` the Plan page puts the expired-lot prompts, the expiry alerts and Use it up in one
+`<PlanAlerts>` block above the strip. It keeps a set of alert keys per household in `localStorage` (`sf.planAlertsSeen`:
+`x:<supplyId>/<lotId>`, `e:<ingredientId>:<lotIds>`, `u:<ingredientId>`, newest 300). Keys seen when the page opened fold
+the block into one `aria-expanded` summary button ("1 lot expired · 3 expiring soon · 2 things to use up"); any key not
+seen before shows the block in full, and everything shown is recorded for next time. Wide screens never fold. Recipe
+rows read "uses 450 g of the salmon fillet expiring tomorrow" (`expiringWhen()`, core `expiry.ts`: today, tomorrow, a
+weekday within the week, else a date) and "uses 170 g of the spare baby spinach". Client-only; no reads beyond the plan model's listeners. Approximation: expiry is estimated from now,
 not the delivery day.
 
 ### Optimiser ("n dinners under $x")
@@ -1566,7 +1586,7 @@ Besides the weekly scheduled backup of the whole database (M22, above; restoring
 | `pwa.spec.ts` | Manifest valid; service worker registers; app shell loads offline after first visit |
 | `responsive.spec.ts` | Expected layout per breakpoint (bottom bar vs. side nav, pane counts, Plan page columns); no horizontal scroll; text line length capped; correct image size chosen from `srcset` (NFR6) |
 | `visual.spec.ts` | `toHaveScreenshot()` baselines in Latte at phone, 1080p, and 4K (the Mocha baselines were removed in M9) |
-| `a11y.spec.ts` | `@axe-core/playwright` scan of every page with no serious or critical violations; keyboard-only navigation of the core loop |
+| `a11y.spec.ts` | `@axe-core/playwright` scan of every page with no serious or critical violations; keyboard-only navigation of the core loop; M24: no button, link or toggle under 44 × 44 px on the phone project (main pages, recipe page and editor, cooking views; `data-hit-exempt` opts out the step-mode edge strips) and one live region in step mode |
 | `core-loop.spec.ts` | Full journey: plan → optimiser accept → grocery list → confirm with freeze prompt → cook → review later → supply, stats, and history updated (`@smoke`) |
 
 #### Structure & practices
@@ -1606,12 +1626,13 @@ Besides the weekly scheduled backup of the whole database (M22, above; restoring
 | M14 | PC Express key | No PC Express account (sign-in and secrets removed); the public API key as an owner setting in Settings → Stores, tried on save |
 | M15 | LLM ingredients | Gemini (free tier) decides whether an imported name is an existing ingredient before anything is created; Check with Gemini merges waiting names; Copy for Claude fallback; the review/merge UI removed; "From PC Express" labels |
 | M16 | Add with Gemini | Settings → Gemini (status, the owner's key); Add recipe from a web link, an uploaded photo or the camera: Gemini follows the Claude skill (generated into the functions bundle) and the drop-folder importer imports its file |
-| M18 | Store orders, expiry dates | Each grocery store is its own order (Copy / Done shopping); Set date on any Supply lot; the confirm sheet scrolls; canned names guessed as pantry |
 | M17 | Grocery remove | An × on every grocery line; removed plan lines stay off (flag on the draft line) and out of the budget until Regenerate puts them all back |
+| M18 | Store orders, expiry dates | Each grocery store is its own order (Copy / Done shopping); Set date on any Supply lot; the confirm sheet scrolls; canned names guessed as pantry |
 | M20 | Settings groups | Settings sections under five group headings with a search box (name, description, keywords); Account (sign out, invites) and Nutrition goals as their own pages; the invites banner on Settings only with an open invite; Instructions for ChatGPT also in Settings → Stores |
 | M21 | Core fixes | Freeze clears Still good; package words (can, jar, bunch) have no weight; Cooklang timer units and thousands separators; negative °C; protein/fibre summary × servings multiplier; one minimum expiring spare for alerts, scoring and Use it up; `localMidnight` where DST skips midnight; `mergeDraft` keeps `removed: false`; marginal cost from a per-ingredient pricing table; `grocery/` split; shared `math.ts` and ingredient slice types; retired cadence prompt helpers removed; core `"sideEffects": false` |
-| M23 | Web data layer and bundle | Listener layer: diffed per-ID listeners, metadata snapshots opt-in, listener errors reported (banner), listener accounting; only the current width's navigation mounted; one shared plan model; cheap pending-review and badge reads; connectivity from Firestore's cache state; writes never wait for the server; `useNow`; grocery order/Undo transactions; recipe editor watches less and auto-saves in place; bounded History reads with Show more; instant landing redirect; per-device success banners; leave deletes the membership first; one plan worker on core subpath exports; hidden source maps; dead code and duplicates removed |
 | M22 | Backend hardening | Every callable allowlisted (`requireAllowed`), `mergeIngredient` owner-only, `scheduleTimer` rate limited, stub owner only under the Functions emulator; stuck commands failed (dispatcher fast path + weekly), receives applied in ≤ 100-line transactions, path-safe payload IDs; write-then-delete import keeping a failed upload; `safeFetch` (DNS-checked, pinned, redirect-checked) for recipe pages and images; rules for plan `addedBy`, list `createdAt`, version snapshots and images of existing recipes; retention (commands, notifications) and orphaned-upload sweeps; `system/maintenance` and the owner alert; weekly Firestore backup (the accepted paid item), alerts and keyless deploy steps for the owner; deploy order rules → functions → hosting |
+| M23 | Web data layer and bundle | Listener layer: diffed per-ID listeners, metadata snapshots opt-in, listener errors reported (banner), listener accounting; only the current width's navigation mounted; one shared plan model; cheap pending-review and badge reads; connectivity from Firestore's cache state; writes never wait for the server; `useNow`; grocery order/Undo transactions; recipe editor watches less and auto-saves in place; bounded History reads with Show more; instant landing redirect; per-device success banners; leave deletes the membership first; one plan worker on core subpath exports; hidden source maps; dead code and duplicates removed |
+| M24 | UX polish | Plan alerts fold to one line once seen (phones); Suggested meal-type tabs opening on the emptiest strip row; stub recipes (no weighable line) never suggested and marked "needs ingredients"; Supply's filter sheet a draft like Recipes (`<FilterSheet>`); 44 px touch targets with an a11y check; step mode's arrow a button and one live region; History stats load before saying "Nothing yet"; use-it-up copy as a sentence; phone OFFLINE badge |
 
 Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix. The detailed, task-level plan for each milestone lives in `Planning/`.
 

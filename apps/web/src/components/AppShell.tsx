@@ -118,7 +118,7 @@ function PhoneHeader() {
       <PhoneOffline />
       <HouseholdSheet>
         <SheetTrigger
-          className="cursor-pointer whitespace-nowrap rounded-ui border-2 border-line bg-base px-2.5 py-2 font-mono text-[0.6875rem] font-bold text-ink uppercase shadow-hard-sm"
+          className="min-h-11 cursor-pointer whitespace-nowrap rounded-ui border-2 border-line bg-base px-2.5 py-2 font-mono text-[0.6875rem] font-bold text-ink uppercase shadow-hard-sm"
           aria-label={`Household: ${name}. Switch household`}
         >
           <span className="inline-flex items-center gap-1">
@@ -133,7 +133,7 @@ function PhoneHeader() {
 
 const tabClass = (on: boolean) =>
   cn(
-    "relative flex min-w-0 flex-1 cursor-pointer items-center justify-center rounded-ui border-2 py-3 text-[0.78125rem] font-extrabold no-underline",
+    "relative flex min-h-11 min-w-0 flex-1 cursor-pointer items-center justify-center rounded-ui border-2 py-3 text-[0.78125rem] font-extrabold no-underline",
     on ? "border-line bg-acc text-onc shadow-hard-sm" : "border-transparent bg-transparent text-ink",
   );
 

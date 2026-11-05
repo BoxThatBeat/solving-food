@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { collectionSearchSchema } from "./collectionSchema";
-import { activeFilterCount, applyCollection, withoutNutrition, isSideOnly, mealTypesOf, NO_FACTS, optionCount, passes, tagCounts, taxonomyLabel, toSearchParams, type HouseholdFacts } from "./collection";
+import { activeFilterCount, applyCollection, withoutNutrition, isSideOnly, mealTypesOf, needsIngredients, plannedMealTypesOf, NO_FACTS, optionCount, passes, tagCounts, taxonomyLabel, toSearchParams, type HouseholdFacts } from "./collection";
 import type { RecipeSummary } from "./recipe";
 
 function r(id: string, over: Partial<RecipeSummary> = {}): RecipeSummary {
@@ -168,5 +168,22 @@ describe("fibre filter and sort; nutrition off (M9, R6.26, R6.27)", () => {
     const s = collectionSearchSchema.parse({ minFibre: 6, minProtein: 20, sort: "fibre", cuisine: "greek" });
     expect(withoutNutrition(s)).toEqual({ cuisine: ["greek"], sort: undefined });
     expect(withoutNutrition(collectionSearchSchema.parse({ sort: "name" })).sort).toBe("name");
+  });
+});
+
+describe("stub recipes and planned meal types (M24)", () => {
+  it("needsIngredients: no line with an amount (vague or package lines only) is a stub; no lines field isn't", () => {
+    expect(needsIngredients({ lines: {} })).toBe(true);
+    expect(needsIngredients({ lines: { "chicken-nuggets": 0 } })).toBe(true);
+    expect(needsIngredients({ lines: { lettuce: 50 } })).toBe(false);
+    expect(needsIngredients({})).toBe(false);
+  });
+  it("plannedMealTypesOf: meal tags, else snack for desserts and appetizers, else dinner; sides none", () => {
+    expect(plannedMealTypesOf({ tags: ["Breakfast", "muffins"] })).toEqual(["breakfast"]);
+    expect(plannedMealTypesOf({ tags: ["lunch", "side"] })).toEqual(["lunch"]);
+    expect(plannedMealTypesOf({ tags: ["dessert", "chocolate"] })).toEqual(["snack"]);
+    expect(plannedMealTypesOf({ tags: ["appetizer", "vegetables"] })).toEqual(["snack"]);
+    expect(plannedMealTypesOf({ tags: ["pork"] })).toEqual(["dinner"]);
+    expect(plannedMealTypesOf({ tags: ["side"] })).toEqual([]);
   });
 });

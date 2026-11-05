@@ -17,7 +17,7 @@ import {
 } from "./cooking";
 import { expectedRunOut, updateCadence } from "./cadence";
 import { consumeFEFO, refund, recomputeAmount, type LedgerLot } from "./ledger";
-import { addLocalDays, daysLeft, estimateExpiry, expiresPhrase, expiryFlag, leftoverExpiry, shortDuration } from "./expiry";
+import { addLocalDays, daysLeft, estimateExpiry, expiresPhrase, expiringWhen, expiryFlag, leftoverExpiry, shortDuration } from "./expiry";
 import { localDate } from "./period";
 
 const DAY = 86_400_000;
@@ -70,6 +70,12 @@ describe("expiry estimates (R8.5)", () => {
     expect(daysLeft(addLocalDays(NOW, 3, TZ), NOW, TZ)).toBe(2);
     expect(expiresPhrase(addLocalDays(NOW, 3, TZ), NOW, TZ)).toBe("expires in 2 days");
     expect(expiresPhrase(addLocalDays(NOW, 1, TZ), NOW, TZ)).toBe("expires today");
+    // M24: "uses 120 g of the broccoli expiring Friday".
+    expect(expiringWhen(addLocalDays(NOW, 1, TZ), NOW, TZ)).toBe("today");
+    expect(expiringWhen(addLocalDays(NOW, 2, TZ), NOW, TZ)).toBe("tomorrow");
+    expect(expiringWhen(addLocalDays(NOW, 4, TZ), NOW, TZ)).toBe(new Intl.DateTimeFormat("en-CA", { weekday: "long", timeZone: TZ }).format(addLocalDays(NOW, 3, TZ) + 3_600_000));
+    expect(expiringWhen(addLocalDays(NOW, 20, TZ), NOW, TZ)).toMatch(/^[A-Z][a-z]{2}\.? \d{1,2}$/);
+    expect(expiringWhen(NOW - 1, NOW, TZ)).toBe("already expired");
     expect(shortDuration(150)).toBe("5MO");
   });
 });

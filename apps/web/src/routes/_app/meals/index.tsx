@@ -83,10 +83,10 @@ function MealsPage() {
         tags={tags}
         header={
           <div className="grid grid-cols-2 overflow-hidden rounded-ui border-2 border-line bg-base md:hidden" role="navigation" aria-label="Library">
-            <Link to="/recipes" className="py-2.5 text-center text-[0.8125rem] font-extrabold text-ink no-underline">
+            <Link to="/recipes" className="flex min-h-11 items-center justify-center text-[0.8125rem] font-extrabold text-ink no-underline">
               Recipes
             </Link>
-            <Link to="/meals" aria-current="page" className="bg-acc py-2.5 text-center text-[0.8125rem] font-extrabold text-onc no-underline">
+            <Link to="/meals" aria-current="page" className="flex min-h-11 items-center justify-center bg-acc text-[0.8125rem] font-extrabold text-onc no-underline">
               Meals
             </Link>
           </div>

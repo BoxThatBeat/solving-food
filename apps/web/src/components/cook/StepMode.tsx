@@ -191,7 +191,7 @@ export function StepMode({
   const lines = s.ingredientRefs.map((id) => recipe.ingredients.find((l) => l.id === id)).filter((l): l is RecipeIngredient => !!l);
 
   const stepCard = (
-    <section aria-label={`Step ${i + 1} of ${n}`} aria-live="polite" className="flex min-h-0 flex-1 flex-col gap-4 rounded-ui border-bw bg-base p-[clamp(1rem,2.5vw,2.25rem)] shadow-hard" data-testid="step-card">
+    <section aria-label={`Step ${i + 1} of ${n}`} className="flex min-h-0 flex-1 flex-col gap-4 rounded-ui border-bw bg-base p-[clamp(1rem,2.5vw,2.25rem)] shadow-hard" data-testid="step-card">
       <span className="self-start rounded-ui border-2 border-line bg-acc px-2.5 py-1 font-display text-[0.8125rem] text-onc uppercase">
         Step {i + 1} of {n}
         {s.section ? ` · ${s.section}` : ""}
@@ -249,9 +249,15 @@ export function StepMode({
 
   return (
     <div ref={ref} className="relative flex min-h-0 flex-1 flex-col gap-3 px-4 pt-3 pb-4 md:px-8" onPointerDown={onPointerDown} onPointerUp={onPointerUp} data-layout={layout} data-testid="step-mode">
+      {/* M24: the one live region of step mode: the step number when it changes (the card itself isn't live, so the
+          ticking timers inside it aren't announced every second). */}
+      <p className="sr-only" aria-live="polite" aria-atomic="true" data-testid="step-announce">
+        Step {i + 1} of {n}
+        {s.section ? `, ${s.section}` : ""}
+      </p>
       {/* Tap the screen edges to move (R4.10); invisible but labelled for assistive tech. */}
-      <button type="button" aria-label="Previous step" onClick={() => go(-1)} disabled={i === 0} className="absolute inset-y-0 left-0 z-10 w-[6%] min-w-6 cursor-w-resize bg-transparent opacity-0 disabled:hidden" tabIndex={-1} />
-      <button type="button" aria-label="Next step" onClick={() => go(1)} disabled={i >= n - 1} className="absolute inset-y-0 right-0 z-10 w-[6%] min-w-6 cursor-e-resize bg-transparent opacity-0 disabled:hidden" tabIndex={-1} />
+      <button type="button" aria-label="Previous step" onClick={() => go(-1)} disabled={i === 0} className="absolute inset-y-0 left-0 z-10 w-[6%] min-w-6 cursor-w-resize bg-transparent opacity-0 disabled:hidden" tabIndex={-1} data-hit-exempt="full-height edge strip; Back and Next are the 44 px controls" />
+      <button type="button" aria-label="Next step" onClick={() => go(1)} disabled={i >= n - 1} className="absolute inset-y-0 right-0 z-10 w-[6%] min-w-6 cursor-e-resize bg-transparent opacity-0 disabled:hidden" tabIndex={-1} data-hit-exempt="full-height edge strip; Back and Next are the 44 px controls" />
       <div className={cn("mx-auto flex w-full min-h-0 flex-1 flex-col gap-3", layout === "wide" ? "max-w-[120rem]" : "max-w-[70rem]")}>
         {progress}
         {layout === "wide" ? (
@@ -445,13 +451,17 @@ function StepScroll({ resetKey, children }: { resetKey: unknown; children: React
         {children}
       </div>
       {more ? (
-        <div aria-hidden data-testid="step-more" className="pointer-events-none absolute inset-x-0 bottom-0 flex h-14 items-end justify-center bg-linear-to-t from-base from-35% to-transparent">
-          <span
+        // M24: the arrow is a real button (it was a clickable span); the fade behind it stays decorative.
+        <div data-testid="step-more" className="pointer-events-none absolute inset-x-0 bottom-0 flex h-14 items-end justify-center">
+          <div aria-hidden className="absolute inset-0 bg-linear-to-t from-base from-35% to-transparent" />
+          <button
+            type="button"
+            aria-label="Scroll down for more of this step"
             onClick={() => ref.current?.scrollBy({ top: ref.current.clientHeight * 0.8, behavior: "smooth" })}
-            className="pointer-events-auto grid size-10 cursor-pointer place-items-center rounded-full border-2 border-line bg-ink text-base shadow-hard-sm"
+            className="pointer-events-auto relative grid size-11 cursor-pointer place-items-center rounded-full border-2 border-line bg-ink text-base shadow-hard-sm"
           >
-            <ChevronDown className="size-6" strokeWidth={3} />
-          </span>
+            <ChevronDown aria-hidden className="size-6" strokeWidth={3} />
+          </button>
         </div>
       ) : null}
     </div>

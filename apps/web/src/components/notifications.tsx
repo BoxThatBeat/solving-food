@@ -189,7 +189,7 @@ export function NotificationBanners({ className }: { className?: string }) {
           <span>
             +{more} more notification{more === 1 ? "" : "s"}
           </span>
-          <button type="button" onClick={() => ctx.banners.forEach((b) => ctx.dismiss(b.id))} className="cursor-pointer bg-transparent p-1 text-inherit underline">
+          <button type="button" onClick={() => ctx.banners.forEach((b) => ctx.dismiss(b.id))} className="-my-2 min-h-11 cursor-pointer bg-transparent px-1 text-inherit underline">
             Dismiss all
           </button>
         </div>
@@ -211,7 +211,7 @@ export function NotificationBanners({ className }: { className?: string }) {
                 key={k}
                 to={l.to.split("?")[0]}
                 search={Object.fromEntries(new URLSearchParams(l.to.split("?")[1] ?? "")) as never}
-                className="flex-none text-inherit underline"
+                className="-my-2 inline-flex min-h-11 flex-none items-center text-inherit underline"
                 onClick={() => ctx.dismiss(b.id)}
               >
                 {l.label}
@@ -225,7 +225,7 @@ export function NotificationBanners({ className }: { className?: string }) {
                 b.action!.run();
                 ctx.dismiss(b.id);
               }}
-              className="flex-none cursor-pointer rounded-ui border-2 border-current bg-transparent px-2 py-1 text-inherit"
+              className="-my-1.5 min-h-11 flex-none cursor-pointer rounded-ui border-2 border-current bg-transparent px-2 py-1 text-inherit"
             >
               {b.action.label}
             </button>
@@ -234,7 +234,7 @@ export function NotificationBanners({ className }: { className?: string }) {
             type="button"
             aria-label="Dismiss"
             onClick={() => ctx.dismiss(b.id)}
-            className="grid size-8 flex-none cursor-pointer place-items-center bg-transparent text-inherit"
+            className="-my-2 -mr-2 grid size-11 flex-none cursor-pointer place-items-center bg-transparent text-inherit"
           >
             <X aria-hidden className="size-4" strokeWidth={3} />
           </button>

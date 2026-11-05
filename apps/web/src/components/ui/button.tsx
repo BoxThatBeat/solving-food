@@ -17,10 +17,10 @@ const buttonVariants = cva(
         ghost: "bg-transparent text-ink border-0 underline underline-offset-2",
       },
       size: {
-        default: "px-4 py-3 text-[0.9375rem]",
+        default: "min-h-11 px-4 py-3 text-[0.9375rem]",
         lg: "px-4 py-[0.9375rem] text-[1rem]",
-        sm: "px-2.5 py-2 text-[0.8125rem]",
-        icon: "size-[2.375rem] p-0 text-[1rem]",
+        sm: "min-h-11 min-w-11 px-2.5 py-2 text-[0.8125rem]",
+        icon: "size-11 p-0 text-[1rem]",
       },
     },
     defaultVariants: { variant: "primary", size: "default" },

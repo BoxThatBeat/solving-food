@@ -160,7 +160,7 @@ export function RecipeDetail({
           <button
             type="button"
             onClick={onClose}
-            className="flex cursor-pointer items-center gap-1 rounded-ui border-2 border-line bg-base px-3 py-2 text-[0.8125rem] font-extrabold text-ink shadow-[3px_3px_0_var(--line)]"
+            className="min-h-11 flex cursor-pointer items-center gap-1 rounded-ui border-2 border-line bg-base px-3 py-2 text-[0.8125rem] font-extrabold text-ink shadow-[3px_3px_0_var(--line)]"
           >
             {closeLabel === "Close" ? <X aria-hidden className="size-4" strokeWidth={3} /> : <ArrowLeft aria-hidden className="size-4" strokeWidth={3} />}
             {closeLabel ?? "Back"}
@@ -175,7 +175,7 @@ export function RecipeDetail({
               aria-pressed={facts.favourite}
               onClick={toggleFav}
               className={cn(
-                "cursor-pointer rounded-ui border-2 border-line px-2.5 py-2 text-[0.8125rem] font-extrabold shadow-[3px_3px_0_var(--line)]",
+                "min-h-11 cursor-pointer rounded-ui border-2 border-line px-2.5 py-2 text-[0.8125rem] font-extrabold shadow-[3px_3px_0_var(--line)]",
                 facts.favourite ? "bg-yellow text-onc" : "bg-base text-ink",
               )}
             >
@@ -186,7 +186,7 @@ export function RecipeDetail({
             <button
               type="button"
               onClick={() => openCreateMeal({ recipeIds: [id], ...(recipe.tags.includes("breakfast") ? { mealType: "breakfast" as const } : recipe.tags.includes("lunch") && !recipe.tags.includes("dinner") ? { mealType: "lunch" as const } : {}) })}
-              className="cursor-pointer rounded-ui border-2 border-line bg-acc px-2.5 py-2 text-[0.8125rem] font-extrabold text-onc shadow-[3px_3px_0_var(--line)]"
+              className="min-h-11 cursor-pointer rounded-ui border-2 border-line bg-acc px-2.5 py-2 text-[0.8125rem] font-extrabold text-onc shadow-[3px_3px_0_var(--line)]"
             >
               + Plan
             </button>
@@ -196,7 +196,7 @@ export function RecipeDetail({
               to="/recipes/$id/cook"
               params={{ id }}
               search={{ servings } as never}
-              className="rounded-ui border-2 border-line bg-base px-2.5 py-2 text-[0.8125rem] font-extrabold text-ink no-underline shadow-[3px_3px_0_var(--line)]"
+              className="inline-flex min-h-11 items-center rounded-ui border-2 border-line bg-base px-2.5 py-2 text-[0.8125rem] font-extrabold text-ink no-underline shadow-[3px_3px_0_var(--line)]"
             >
               Cook →
             </Link>
@@ -471,8 +471,8 @@ export function RecipeDetail({
   );
 }
 
-/** The text actions under the recipe (Version history · Edit · Delete): underlined links, 24 px tall hit targets. */
-const FOOTER_ACTION = "inline-flex min-h-6 cursor-pointer items-center bg-transparent p-0 font-sans text-[0.8125rem] font-extrabold text-ink normal-case underline";
+/** The text actions under the recipe (Version history · Edit · Delete): underlined links, 44 px hit targets (M24). */
+const FOOTER_ACTION = "inline-flex min-h-11 min-w-11 justify-center cursor-pointer items-center bg-transparent p-0 font-sans text-[0.8125rem] font-extrabold text-ink normal-case underline";
 
 function timerLabel(s: number): string {
   if (s < 60) return `${s} SEC`;

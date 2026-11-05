@@ -224,3 +224,59 @@ test("M4 pages and dialogs: members with invites, the invite banner, data, the l
     await expectNoSeriousViolations(page, `/welcome/household, another household (${flavour})`);
   }
 });
+
+/** Every visible button, link and toggle under 44 × 44 px (a checkbox counts its label). Edge-tap strips opt out. */
+async function smallTargets(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const sel = "button, a[href], [role=button], [role=tab], [role=radio], [role=checkbox], [role=switch], input[type=checkbox], input[type=radio], select, summary";
+    const out: string[] = [];
+    for (const el of document.querySelectorAll<HTMLElement>(sel)) {
+      if (el.closest("[aria-hidden=true], [inert], [data-hit-exempt]")) continue;
+      const target = (el.matches("input[type=checkbox], input[type=radio]") && el.closest("label")) || el;
+      const r = target.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) continue;
+      const cs = getComputedStyle(el);
+      if (cs.visibility === "hidden" || cs.display === "none" || cs.opacity === "0") continue;
+      if (r.width < 43.5 || r.height < 43.5) out.push(`${el.tagName.toLowerCase()} ${Math.round(r.width)}×${Math.round(r.height)} "${(el.getAttribute("aria-label") || el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 40)}"`);
+    }
+    return [...new Set(out)];
+  });
+}
+
+test("every button and link is at least 44 px on a phone (M24)", { tag: ["@R12.2"] }, async ({ page, household }) => {
+  test.skip(page.viewportSize()!.width >= 768, "touch targets: the phone layout");
+  test.slow();
+  const { makePlanRecipe, seedPeriod, seedPlanItem } = await import("../pages/plan");
+  const { seedSupply } = await import("../pages/supply");
+  const r = await makePlanRecipe("Touch target dinner");
+  const pid = await seedPeriod(household.hid);
+  const itemId = await seedPlanItem(household.hid, pid, [r.id]);
+  await seedSupply(household.hid, "milk", [{ amount: 1000, expiresInDays: -1 }], { label: "milk" });
+  await seedSupply(household.hid, "salmon-fillet", [{ amount: 340, expiresInDays: 2 }], { label: "salmon fillet" });
+  const pages: Array<[string, () => Promise<void>]> = [
+    ["/plan", () => expect(page.getByTestId("plan-count")).not.toHaveText("LOADING…")],
+    ["/recipes", () => expect(page.getByTestId("recipe-card").first()).toBeVisible()],
+    [`/recipes/${r.id}`, () => expect(page.getByRole("heading", { name: r.title })).toBeVisible()],
+    [`/recipes/${r.id}/edit`, () => expect(page.getByRole("heading", { name: "Edit recipe" })).toBeVisible()],
+    ["/supply", () => expect(page.getByTestId("expired-prompts")).toBeVisible()],
+    ["/supply/milk", () => expect(page.getByTestId("ledger")).toBeVisible()],
+    ["/grocery", () => expect(page.getByText("Building the list…")).toHaveCount(0)],
+    ["/history", () => expect(page.getByTestId("history-count")).not.toHaveText("Loading…")],
+    ["/settings", () => expect(page.locator("h1")).toBeVisible()],
+    ["/settings/stores", () => expect(page.locator("h1")).toBeVisible()],
+    [`/plan/${itemId}/cook`, () => expect(page.getByRole("heading", { name: "Mise en place" })).toBeVisible()],
+  ];
+  const found: string[] = [];
+  for (const [path, ready] of pages) {
+    await page.goto(path);
+    await ready();
+    found.push(...(await smallTargets(page)).map((t) => `${path}: ${t}`));
+  }
+  // Step mode.
+  await page.getByRole("button", { name: "Start step mode →" }).click();
+  await expect(page.getByTestId("step-card")).toBeVisible();
+  found.push(...(await smallTargets(page)).map((t) => `step mode: ${t}`));
+  // One live region in step mode (M24): the step number, not the ticking timers inside the card.
+  await expect(page.getByTestId("step-mode").locator("[aria-live]:not([aria-live=off])")).toHaveCount(1);
+  expect(found).toEqual([]);
+});

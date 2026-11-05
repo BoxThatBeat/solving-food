@@ -24,7 +24,7 @@ import {
 } from "@solving-food/core";
 import { cn } from "@/lib/utils";
 import { SectionLabel, ToggleChip } from "./ui/chip";
-import { Sheet, SheetContent } from "./ui/sheet";
+import { FilterSheet } from "./FilterSheet";
 import { Input } from "./ui/input";
 import { useNutrition } from "@/data/nutrition";
 
@@ -190,24 +190,7 @@ export function CollectionView(p: CollectionViewProps) {
 
       {p.children}
 
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent
-          title="Filter & sort"
-          headerExtra={
-            <button type="button" onClick={() => setDraft({ q: search.q })} className="cursor-pointer bg-transparent p-1.5 text-[0.8125rem] font-extrabold text-ink underline">
-              Reset
-            </button>
-          }
-          footer={
-            <button
-              type="button"
-              onClick={apply}
-              className="press w-full cursor-pointer rounded-ui border-bw bg-acc p-4 text-[1rem] font-extrabold text-onc shadow-hard"
-            >
-              Show {p.countFor({ ...draft, q: search.q })} {p.noun}
-            </button>
-          }
-        >
+      <FilterSheet open={open} onOpenChange={setOpen} title="Filter & sort" onReset={() => setDraft({ q: search.q })} showLabel={`Show ${p.countFor({ ...draft, q: search.q })} ${p.noun}`} onShow={apply}>
           {/* M9 (owner review): meal type is the first filter. */}
           <Group title="Meal type" hint={draft.meal?.length ? `${draft.meal.length} on` : "Any"}>
             {courses.map((m) => (
@@ -356,8 +339,7 @@ export function CollectionView(p: CollectionViewProps) {
               ))}
             </Group>
           ) : null}
-        </SheetContent>
-      </Sheet>
+      </FilterSheet>
     </div>
   );
 }

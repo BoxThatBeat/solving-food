@@ -84,6 +84,20 @@ export function shortDuration(days: number): string {
   return "1Y+";
 }
 
+/**
+ * When a spare lot goes off, for "uses 120 g of the broccoli expiring Friday" (M24): "today", "tomorrow", a weekday
+ * within the week, else "Nov 14"; "already expired" once it has.
+ */
+export function expiringWhen(expiresMs: number, nowMs: number, tz: string): string {
+  if (nowMs >= expiresMs) return "already expired";
+  const d = daysLeft(expiresMs, nowMs, tz);
+  if (d <= 0) return "today";
+  if (d === 1) return "tomorrow";
+  const last = new Date(expiresMs - 1);
+  if (d < 7) return new Intl.DateTimeFormat("en-CA", { weekday: "long", timeZone: tz }).format(last);
+  return new Intl.DateTimeFormat("en-CA", { month: "short", day: "numeric", timeZone: tz }).format(last);
+}
+
 /** "Salmon expires today / tomorrow / in 2 days / expired" for badges (R6.7). */
 export function expiresPhrase(expiresMs: number, nowMs: number, tz: string): string {
   const d = daysLeft(expiresMs, nowMs, tz);

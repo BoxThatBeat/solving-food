@@ -23,7 +23,7 @@ import { EmptyState, PageBody } from "@/components/AppShell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge, ToggleChip } from "@/components/ui/chip";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { FilterSheet } from "@/components/FilterSheet";
 import { FilterIcon, Group } from "@/components/CollectionView";
 import { useNotify } from "@/components/notifications-context";
 import { AddSupplySheet } from "@/components/supply/AddSupplySheet";
@@ -65,6 +65,9 @@ interface Row {
   exp: ReturnType<typeof itemExpiry>;
   low: boolean;
 }
+
+/** The Filter sheet's options (location, expiring soon, low stock, category). */
+type Filters = Pick<SupplySearch, "loc" | "exp" | "low" | "cat">;
 
 const SEVERITY = { expired: 0, soon: 1, fresh: 2, none: 3 } as const;
 
@@ -125,16 +128,25 @@ function SupplyPage() {
 
   const leftovers = [...m.supply.items.values()].filter((i) => !i.ingredientId && recomputeAmount(i.lots) > 1e-6 && matchesQ([i.label]));
   const inStock = rows.filter((r) => r.current > 1e-6);
-  const shown = rows.filter((r) => {
-    if (!search.low && r.current <= 1e-6) return false;
-    if (!matchesQ([r.item.label, r.ing?.name, ...(r.ing?.aliases ?? [])])) return false;
-    const loc = search.loc ?? "all";
-    if (loc !== "all" && !r.locations.has(loc)) return false;
-    if (search.cat && catKey(r.category) !== catKey(search.cat)) return false;
-    if (search.exp && !(r.exp.flag === "expired" || r.exp.flag === "soon")) return false;
-    if (search.low && !r.low) return false;
-    return true;
-  });
+  const filterRows = (f: Filters) =>
+    rows.filter((r) => {
+      if (!f.low && r.current <= 1e-6) return false;
+      if (!matchesQ([r.item.label, r.ing?.name, ...(r.ing?.aliases ?? [])])) return false;
+      const loc = f.loc ?? "all";
+      if (loc !== "all" && !r.locations.has(loc)) return false;
+      if (f.cat && catKey(r.category) !== catKey(f.cat)) return false;
+      if (f.exp && !(r.exp.flag === "expired" || r.exp.flag === "soon")) return false;
+      if (f.low && !r.low) return false;
+      return true;
+    });
+  const shown = filterRows(search);
+  // The sheet edits a draft (M24, like Recipes): nothing applies until "Show N items".
+  const [draft, setDraft] = React.useState<Filters>({});
+  const openFilters = () => {
+    setDraft({ loc: search.loc, exp: search.exp, low: search.low, cat: search.cat });
+    setFiltering(true);
+  };
+  const draftCount = filterRows(draft).length;
   const cats = [...new Map(inStock.filter((r) => !SAME_AS_LOCATION.has(catKey(r.category))).map((r) => [catKey(r.category), r.category])).values()].sort((a, b) => taxonomyLabel(a).localeCompare(taxonomyLabel(b)));
   const loc = search.loc ?? "all";
   const applied = [
@@ -181,7 +193,7 @@ function SupplyPage() {
           <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search Supply…" aria-label="Search Supply" className="flex-1" />
           <button
             type="button"
-            onClick={() => setFiltering(true)}
+            onClick={openFilters}
             aria-label={applied.length ? `Filter, ${applied.length} filters on` : "Filter"}
             className="press relative grid w-[3.25rem] flex-none cursor-pointer place-items-center rounded-ui border-bw bg-acc shadow-hard"
           >
@@ -216,49 +228,45 @@ function SupplyPage() {
         ) : null}
       </div>
 
-      <Sheet open={filtering} onOpenChange={setFiltering}>
-        <SheetContent
-          title="Filter"
-          headerExtra={
-            <button type="button" onClick={() => set({ loc: undefined, exp: undefined, low: undefined, cat: undefined })} className="cursor-pointer bg-transparent p-1.5 text-[0.8125rem] font-extrabold text-ink underline">
-              Reset
-            </button>
-          }
-          footer={
-            <button type="button" onClick={() => setFiltering(false)} className="press w-full cursor-pointer rounded-ui border-bw bg-acc p-4 text-[1rem] font-extrabold text-onc shadow-hard">
-              Show {shown.length} {shown.length === 1 ? "item" : "items"}
-            </button>
-          }
-        >
-          <Group title="Location">
-            {(["all", ...STORAGE_LOCATIONS] as const).map((l) => (
-              <ToggleChip key={l} pressed={loc === l} onClick={() => set({ loc: l === "all" ? undefined : l })}>
-                {l === "all" ? "All" : LOCATION_LABEL[l]}
-              </ToggleChip>
-            ))}
-          </Group>
-          <Group title="Show" hint="Match all">
-            <ToggleChip pressed={!!search.exp} onClick={() => set({ exp: search.exp ? undefined : true })}>
-              Expiring soon
+      <FilterSheet
+        open={filtering}
+        onOpenChange={setFiltering}
+        title="Filter"
+        onReset={() => setDraft({})}
+        showLabel={`Show ${draftCount} ${draftCount === 1 ? "item" : "items"}`}
+        onShow={() => {
+          set({ loc: draft.loc, exp: draft.exp, low: draft.low, cat: draft.cat });
+          setFiltering(false);
+        }}
+      >
+        <Group title="Location">
+          {(["all", ...STORAGE_LOCATIONS] as const).map((l) => (
+            <ToggleChip key={l} pressed={(draft.loc ?? "all") === l} onClick={() => setDraft((d) => ({ ...d, loc: l === "all" ? undefined : l }))}>
+              {l === "all" ? "All" : LOCATION_LABEL[l]}
             </ToggleChip>
-            <ToggleChip pressed={!!search.low} onClick={() => set({ low: search.low ? undefined : true })}>
-              Low stock
-            </ToggleChip>
+          ))}
+        </Group>
+        <Group title="Show" hint="Match all">
+          <ToggleChip pressed={!!draft.exp} onClick={() => setDraft((d) => ({ ...d, exp: d.exp ? undefined : true }))}>
+            Expiring soon
+          </ToggleChip>
+          <ToggleChip pressed={!!draft.low} onClick={() => setDraft((d) => ({ ...d, low: d.low ? undefined : true }))}>
+            Low stock
+          </ToggleChip>
+        </Group>
+        {cats.length ? (
+          <Group title="Category">
+            {cats.map((c) => {
+              const on = !!draft.cat && catKey(draft.cat) === catKey(c);
+              return (
+                <ToggleChip key={c} pressed={on} onClick={() => setDraft((d) => ({ ...d, cat: on ? undefined : c }))}>
+                  {taxonomyLabel(c)}
+                </ToggleChip>
+              );
+            })}
           </Group>
-          {cats.length ? (
-            <Group title="Category">
-              {cats.map((c) => {
-                const on = !!search.cat && catKey(search.cat) === catKey(c);
-                return (
-                  <ToggleChip key={c} pressed={on} onClick={() => set({ cat: on ? undefined : c })}>
-                    {taxonomyLabel(c)}
-                  </ToggleChip>
-                );
-              })}
-            </Group>
-          ) : null}
-        </SheetContent>
-      </Sheet>
+        ) : null}
+      </FilterSheet>
 
       <ExpiredLotPrompts entries={expired} hid={m.hid} uid={s.user.uid} tz={tz} nowMs={now} />
 

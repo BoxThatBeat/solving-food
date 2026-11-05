@@ -26,3 +26,29 @@ export function MealTypePicker({ types, value, onChange, disabled }: { types: re
     </fieldset>
   );
 }
+
+/**
+ * The same choice as a row of tabs with "All" first (M24, R6.30: Suggested by meal type). `null` is All. Each tab is
+ * a pressed/unpressed toggle, at least 44 px tall.
+ */
+export function MealTypeTabs({ types, value, onChange, label }: { types: readonly MealType[]; value: MealType | null; onChange: (t: MealType | null) => void; label: string }) {
+  const opts: Array<MealType | null> = [null, ...types];
+  return (
+    <div role="group" aria-label={label} className="flex flex-wrap gap-1.5" data-testid="meal-type-tabs">
+      {opts.map((t) => (
+        <button
+          key={t ?? "all"}
+          type="button"
+          aria-pressed={value === t}
+          onClick={() => onChange(t)}
+          className={cn(
+            "min-h-11 flex-auto cursor-pointer rounded-ui border-2 border-line px-2.5 text-[0.8125rem] font-extrabold",
+            value === t ? "bg-acc text-onc" : "bg-base text-ink shadow-hard-sm",
+          )}
+        >
+          {t ? MEAL_LABEL[t] : "All"}
+        </button>
+      ))}
+    </div>
+  );
+}

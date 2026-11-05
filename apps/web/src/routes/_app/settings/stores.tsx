@@ -98,7 +98,7 @@ function StoresPage() {
                 <option value="inStore">In store</option>
                 <option value="pcExpress">PC Express</option>
               </Select>
-              <label className="flex items-center gap-2 text-sm font-extrabold">
+              <label className="min-h-11 flex items-center gap-2 text-sm font-extrabold">
                 <input type="checkbox" checked={newBulk} onChange={(e) => setNewBulk(e.target.checked)} className="size-5 accent-[var(--ink)]" />
                 Bulk
               </label>
@@ -203,13 +203,13 @@ function StoreRow({ name, kind, bulk, isDefault, canDelete, onSave, onDefault, o
           <option value="pcExpress">PC Express</option>
           <option value="inStore">In store</option>
         </Select>
-        <label className="flex items-center gap-1.5 text-sm font-extrabold">
+        <label className="min-h-11 flex items-center gap-1.5 text-sm font-extrabold">
           <input type="checkbox" checked={b} onChange={(e) => setB(e.target.checked)} className="size-5 accent-[var(--ink)]" aria-label={`${name} is a bulk store`} />
           Bulk
         </label>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <label className="flex items-center gap-1.5 text-[0.8125rem] font-extrabold">
+        <label className="min-h-11 flex items-center gap-1.5 text-[0.8125rem] font-extrabold">
           <input type="radio" name="default-store" checked={isDefault} onChange={onDefault} className="size-5 accent-[var(--ink)]" aria-label={`Make ${name} the default store`} />
           Default store
         </label>

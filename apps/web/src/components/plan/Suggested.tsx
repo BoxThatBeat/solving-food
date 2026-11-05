@@ -1,9 +1,14 @@
 // The Plan page's Suggested section (PRD R6.11, R6.12, R6.16; TECHNICAL_SPECS §7): the best-scoring recipes not yet
 // planned, each with its score, time · protein · what it adds to the order, and "why" chips (the top two raising
 // factors and the strongest lowering one), one tap from Create meal. The header links to the weights (prototype:
-// "WEIGHTS: BALANCED"); "See more" (M7) opens Recipes sorted by Suggested.
+// "WEIGHTS: BALANCED"); "See more" (M7) opens Recipes sorted by Suggested. M24 (R6.30): meal-type tabs (All and the
+// household's meal types, Snack always) filter the list; it opens on the meal type with the most open cells in the
+// coverage strip, and See more keeps the tab as a Meal type filter.
+import * as React from "react";
 import { Link } from "@tanstack/react-router";
-import { formatCents, formatMinutes, presetOf, resolveWeights, type Reason, type RecipeSummary, type ScoreResult } from "@solving-food/core";
+import { formatCents, formatMinutes, plannedMealTypesOf, presetOf, resolveWeights, type MealType, type Reason, type RecipeSummary, type ScoreResult } from "@solving-food/core";
+import { MealTypeTabs } from "./MealTypePicker";
+import { MEAL_LABEL } from "./plan-sheet-context";
 import { EmptyState } from "@/components/AppShell";
 import { RecipeThumb } from "@/components/recipes/RecipeThumb";
 import { cn } from "@/lib/utils";
@@ -35,6 +40,8 @@ export function SuggestedSection({
   plannedIds,
   weights,
   wide,
+  mealTypes,
+  defaultMealType,
   onAdd,
 }: {
   ranked: readonly ScoreResult[] | null;
@@ -42,9 +49,19 @@ export function SuggestedSection({
   plannedIds: ReadonlySet<string>;
   weights: Record<string, number> | undefined;
   wide: boolean;
+  /** The tabs after All: the household's planned meal types and snacks. */
+  mealTypes: readonly MealType[];
+  /** The tab it opens on (the emptiest strip row), null for All. */
+  defaultMealType: MealType | null;
   onAdd: (id: string) => void;
 }) {
-  const list = (ranked ?? []).filter((r) => !r.blocked && !plannedIds.has(r.id) && summaries.has(r.id)).slice(0, wide ? 6 : 4);
+  // The household's pick, until it leaves the page; until then the tab follows the strip as meals are added.
+  const [picked, setPicked] = React.useState<{ t: MealType | null } | null>(null);
+  const tab = picked ? picked.t : defaultMealType;
+  const list = (ranked ?? [])
+    .filter((r) => !r.blocked && !plannedIds.has(r.id) && summaries.has(r.id))
+    .filter((r) => !tab || plannedMealTypesOf(summaries.get(r.id)!).includes(tab))
+    .slice(0, wide ? 6 : 4);
   const preset = presetOf(resolveWeights(weights));
   return (
     <section aria-labelledby="suggested-h" className="flex flex-col gap-3" data-testid="suggested">
@@ -52,10 +69,11 @@ export function SuggestedSection({
         <h2 id="suggested-h" className="m-0 font-display text-[1.3125rem] font-normal">
           Suggested
         </h2>
-        <Link to="/settings/weights" className="font-mono text-[0.65625rem] font-bold text-ink uppercase underline">
+        <Link to="/settings/weights" className="inline-flex min-h-11 items-center font-mono text-[0.65625rem] font-bold text-ink uppercase underline">
           Weights: {preset}
         </Link>
       </div>
+      <MealTypeTabs types={mealTypes} value={tab} onChange={(t) => setPicked({ t })} label="Suggested meal type" />
       {ranked === null ? <EmptyState>Scoring recipes…</EmptyState> : null}
       {list.map((x) => {
         const r = summaries.get(x.id)!;
@@ -83,8 +101,12 @@ export function SuggestedSection({
           </div>
         );
       })}
-      {ranked && !list.length ? <EmptyState>No suggestions: every recipe is planned or filtered out by your preferences and tools.</EmptyState> : null}
-      <Link to="/recipes" search={{ sort: "suggested" }} aria-label="See more suggested recipes" className="self-end py-1 text-[0.8125rem] font-bold text-ink underline underline-offset-2">
+      {ranked && !list.length ? (
+        <EmptyState>
+          {tab ? `No ${MEAL_LABEL[tab].toLowerCase()} suggestions: every ${MEAL_LABEL[tab].toLowerCase()} recipe is planned or filtered out by your preferences and tools.` : "No suggestions: every recipe is planned or filtered out by your preferences and tools."}
+        </EmptyState>
+      ) : null}
+      <Link to="/recipes" search={(tab ? { sort: "suggested", meal: tab } : { sort: "suggested" }) as never} aria-label="See more suggested recipes" className="inline-flex min-h-11 items-center self-end text-[0.8125rem] font-bold text-ink underline underline-offset-2">
         See more →
       </Link>
     </section>

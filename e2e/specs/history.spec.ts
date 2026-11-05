@@ -92,6 +92,12 @@ test("the shared filter and sort apply to history (R10.2, R4.7)", { tag: ["@R10.
 test("stats: most cooked, average rating by cuisine, spend per period from received lists (R10.3)", { tag: ["@R10.3"] }, async ({ page, household }) => {
   const a = await seedRecipeId("Garlic Rice and Chicken");
   const pid = await seedPeriod(household.hid, { budgetCents: 10000 });
+  // M24: with nothing to show, each stat says what will appear there (not a bare "Nothing yet." while loading).
+  await page.goto("/history");
+  await expect(page.getByTestId("history-count")).toHaveText(/^0 entries/);
+  await expect(page.getByTestId("stat-most-cooked").getByTestId("stat-empty")).toContainText("cook");
+  await expect(page.getByTestId("stat-cuisine").getByTestId("stat-empty")).toContainText("Rate a meal");
+  await expect(page.getByTestId("stat-spend").getByTestId("stat-empty")).toContainText("received");
   await seedEvent(household.hid, "g1", { recipeIds: [a], titles: ["Garlic Rice and Chicken"], daysAgo: 1, cookedBy: household.uid, ratings: [[household.uid, 8]] });
   await seedEvent(household.hid, "g2", { recipeIds: [a], titles: ["Garlic Rice and Chicken"], daysAgo: 0, cookedBy: household.uid, ratings: [[household.uid, 10]] });
   await adminDb.doc(`households/${household.hid}/groceryLists/r1`).set({ periodId: pid, status: "received", createdAt: new Date(), receivedAt: new Date(), receivedCents: 4210, items: {} });

@@ -141,6 +141,13 @@
     box-shadow: none;
   }
 }
+/* M24: the same, on the visible face inside a larger (44 px) transparent hit area. */
+@utility press-face {
+  *:active > & {
+    transform: translate(var(--sh), var(--sh));
+    box-shadow: none;
+  }
+}
 @utility kicker {
   font-family: var(--font-mono);
   font-weight: 700;

@@ -402,3 +402,47 @@ test.describe("Recipe images next to recipe names (R4.29)", () => {
     await expect(confirm.getByTestId("recipe-thumb").first()).toHaveAttribute("data-photo", "true");
   });
 });
+
+test.describe("alerts fold once seen (M24)", () => {
+  test("expired lots and Use it or lose it fold into one line after the first view, so the strip and the plan are in the first screen on a phone", { tag: ["@R6.31"] }, async ({ page, household }) => {
+    test.skip(page.viewportSize()!.width >= 768, "phone layout: the alerts sit above the plan");
+    const { seedSupply } = await import("../pages/supply");
+    const r = await makePlanRecipe("Fold check chicken");
+    const salmon = await makePlanRecipe("Fold salmon", { lines: "Roast @salmon fillet{340%g} with @lemon{1}." });
+    const pid = await seedPeriod(household.hid);
+    await seedPlanItem(household.hid, pid, [r.id]);
+    await seedSupply(household.hid, "milk", [{ amount: 1000, expiresInDays: -1 }], { label: "milk" });
+    await seedSupply(household.hid, "salmon-fillet", [{ amount: 340, expiresInDays: 2 }], { label: "salmon fillet" });
+    const plan = new PlanPage(page);
+    await plan.goto();
+    // First view: both in full.
+    await expect(page.getByTestId("expired-prompts")).toContainText("Milk");
+    await expect(page.getByTestId("expiry-alerts").getByRole("list", { name: "Recipes that use salmon fillet" })).toContainText(salmon.title);
+    await expect(page.getByTestId("use-it-up")).toBeVisible({ timeout: 20_000 }); // the plan's chicken pack
+    await expect(page.getByTestId("plan-alerts-summary")).toHaveCount(0);
+
+    // Seen on this device: one line with a chevron; the strip and the plan's first meal fit the first screen.
+    await plan.goto();
+    const summary = page.getByTestId("plan-alerts-summary");
+    await expect(summary).toHaveText(/^1 lot expired · 1 expiring soon · \d things? to use up$/);
+    await expect(summary).toHaveAttribute("aria-expanded", "false");
+    await expect(page.getByTestId("expired-prompts")).toHaveCount(0);
+    await expect(plan.item(r.title)).toBeVisible();
+    const vh = page.viewportSize()!.height;
+    const strip = (await page.getByTestId("coverage-strip").boundingBox())!;
+    expect(strip.y + strip.height).toBeLessThanOrEqual(vh);
+    const heading = (await page.getByRole("heading", { name: "This period" }).boundingBox())!;
+    expect(heading.y + heading.height).toBeLessThanOrEqual(vh);
+    const first = (await plan.item(r.title).boundingBox())!;
+    expect(first.y).toBeLessThan(vh);
+
+    // The chevron opens them; something new shows them in full again.
+    await summary.click();
+    await expect(summary).toHaveAttribute("aria-expanded", "true");
+    await expect(page.getByTestId("expired-prompts")).toContainText("Milk");
+    await seedSupply(household.hid, "baby-spinach", [{ amount: 200, expiresInDays: -2 }], { label: "baby spinach" });
+    await plan.goto();
+    await expect(page.getByTestId("expired-prompts")).toContainText("Baby spinach");
+    await expect(page.getByTestId("plan-alerts-summary")).toHaveCount(0);
+  });
+});

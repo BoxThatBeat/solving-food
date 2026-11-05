@@ -73,7 +73,7 @@ export function UseItUp({
                   type="button"
                   onClick={() => onDismiss(orderDismissKey(a.ingredientId))}
                   aria-label={`Dismiss use it up for ${name}`}
-                  className="flex-none cursor-pointer rounded-ui border-2 border-line bg-base px-2.5 py-1.5 text-[0.75rem] font-extrabold text-ink"
+                  className="min-h-11 flex-none cursor-pointer rounded-ui border-2 border-line bg-base px-2.5 py-1.5 text-[0.75rem] font-extrabold text-ink"
                 >
                   Dismiss
                 </button>
@@ -88,8 +88,12 @@ export function UseItUp({
                         className="flex min-w-0 flex-1 items-center gap-2.5 rounded-ui border-2 border-line bg-base py-1.5 pr-2.5 pl-1.5 text-[0.8125rem] font-bold text-ink no-underline"
                       >
                         <RecipeThumb base={summaries.find((x) => x.id === recipe.id)?.thumb} cuisine={recipe.cuisine} className="min-h-10" />
-                        <span className="min-w-0 flex-1">{recipe.title}</span>
-                        <span className="flex-none font-mono text-[0.65625rem] font-bold">uses {amount(uses)}</span>
+                        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                          <span>{recipe.title}</span>
+                          <span className="font-mono text-[0.65625rem] font-bold" data-testid="use-it-up-uses">
+                            uses {amount(uses)} of the spare {name}
+                          </span>
+                        </span>
                       </Link>
                       <button type="button" onClick={() => onAdd(recipe.id)} aria-label={`Add ${recipe.title} to plan`} className="w-11 flex-none cursor-pointer rounded-ui border-2 border-line bg-acc text-[1rem] font-extrabold text-onc">
                         +
@@ -104,7 +108,7 @@ export function UseItUp({
           );
         })}
         {list.length > shown.length ? (
-          <button type="button" onClick={() => setAll(true)} className="cursor-pointer self-start bg-transparent p-0 text-[0.8125rem] font-extrabold text-ink underline">
+          <button type="button" onClick={() => setAll(true)} className="min-h-11 cursor-pointer self-start bg-transparent p-0 text-[0.8125rem] font-extrabold text-ink underline">
             {list.length - shown.length} more
           </button>
         ) : null}

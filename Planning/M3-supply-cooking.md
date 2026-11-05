@@ -2,6 +2,8 @@
 
 Status: in progress
 
+Waiting on the owner: a real PC Express order received through the confirmation screen with a Costco freeze split; cooking a two-recipe meal from a propped-up tablet with a timer alerting the locked phone; reviewing later from the phone (Supply, History, "made n times" update); an expired lot's Still good on a real device; finishing a meal in airplane mode and seeing it apply after reconnecting.
+
 All work-breakdown tasks are built, tested, and deployed (2026-10-10); every M3 requirement ID has a tagged Playwright
 test (40/40). The exit criteria need the owner's real kitchen, phone, and tablet (see "What's left for the owner");
 then set `Status: done` and `pnpm e2e:coverage` enforces the M3 IDs.

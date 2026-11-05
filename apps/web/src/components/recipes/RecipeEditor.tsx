@@ -35,7 +35,7 @@ import { useNotify } from "@/components/notifications-context";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SectionLabel, Textarea, ToggleChip } from "@/components/ui/chip";
+import { SectionLabel, Textarea } from "@/components/ui/chip";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import { lookupFromMap, useAllIngredients, type IngredientEntry } from "@/data/ingredients";
@@ -469,9 +469,11 @@ export function RecipeEditor({
                 type="button"
                 aria-label={`Remove photo ${k + 1}`}
                 onClick={() => setValue("imagePaths", values.imagePaths.filter((x) => x !== p), { shouldDirty: true })}
-                className="absolute top-1 right-1 grid size-7 cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink"
+                className="absolute top-0 right-0 grid size-11 cursor-pointer place-items-center bg-transparent p-0"
               >
-                <Trash2 aria-hidden className="size-3.5" />
+                <span aria-hidden className="grid size-7 place-items-center rounded-ui border-2 border-line bg-base text-ink">
+                  <Trash2 className="size-3.5" />
+                </span>
               </button>
             </div>
           ))}
@@ -509,10 +511,10 @@ export function RecipeEditor({
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => insertIngredient(l.id)}
-                  className="cursor-pointer rounded-ui border-2 border-line bg-mantle px-2 py-1 text-xs font-extrabold text-ink"
+                  className="inline-flex min-h-11 cursor-pointer items-center bg-transparent p-0"
                   aria-label={`Insert ${l.displayText}`}
                 >
-                  + {l.displayText}
+                  <span className="rounded-ui border-2 border-line bg-mantle px-2 py-1 text-xs font-extrabold text-ink">+ {l.displayText}</span>
                 </button>
               ))}
           </div>
@@ -724,8 +726,11 @@ function Field({ label, error, children }: { label: string; error?: string | und
 
 function IconBtn({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
   return (
-    <button type="button" aria-label={label} title={label} disabled={disabled} onClick={onClick} className="grid size-8 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink disabled:cursor-not-allowed disabled:opacity-40">
-      {children}
+    <button type="button" aria-label={label} title={label} disabled={disabled} onClick={onClick} className="group grid size-11 flex-none cursor-pointer place-items-center bg-transparent p-0 disabled:cursor-not-allowed disabled:opacity-40">
+      {/* M24: a 44 px hit area around the 32 px face. */}
+      <span aria-hidden className="grid size-8 place-items-center rounded-ui border-2 border-line bg-base text-ink">
+        {children}
+      </span>
     </button>
   );
 }
@@ -749,7 +754,7 @@ function ChipChoice<N extends "cuisine" | "mainProtein">({ label, control, name,
                 role="radio"
                 aria-checked={field.value === o}
                 onClick={() => field.onChange(o)}
-                className={cn("min-h-[2.375rem] cursor-pointer rounded-ui border-2 border-line px-3 py-2 text-[0.8125rem] font-extrabold", field.value === o ? "bg-acc text-onc" : "bg-base text-ink shadow-hard-sm")}
+                className={cn("min-h-11 cursor-pointer rounded-ui border-2 border-line px-3 py-2 text-[0.8125rem] font-extrabold", field.value === o ? "bg-acc text-onc" : "bg-base text-ink shadow-hard-sm")}
               >
                 {taxonomyLabel(o)}
               </button>
@@ -776,16 +781,18 @@ function ChipList({ label, hint, values, onChange, suggestions = [] }: { label: 
       </SectionLabel>
       <div className="flex flex-wrap gap-1.5">
         {values.map((v) => (
-          <button key={v} type="button" onClick={() => onChange(values.filter((x) => x !== v))} aria-label={`Remove ${label.toLowerCase()} ${v}`} className="flex cursor-pointer items-center gap-1.5 rounded-ui border-2 border-line bg-acc px-2 py-1 text-xs font-extrabold text-onc">
-            {v} <span aria-hidden>✕</span>
+          <button key={v} type="button" onClick={() => onChange(values.filter((x) => x !== v))} aria-label={`Remove ${label.toLowerCase()} ${v}`} className="inline-flex min-h-11 cursor-pointer items-center bg-transparent p-0">
+            <span className="flex items-center gap-1.5 rounded-ui border-2 border-line bg-acc px-2 py-1 text-xs font-extrabold text-onc">
+              {v} <span aria-hidden>✕</span>
+            </span>
           </button>
         ))}
         {suggestions
           .filter((s) => !values.includes(s))
           .map((s) => (
-            <ToggleChip key={s} pressed={false} onClick={() => add(s)} className="min-h-0 px-2 py-1 text-xs">
-              + {s}
-            </ToggleChip>
+            <button key={s} type="button" aria-pressed={false} onClick={() => add(s)} className="inline-flex min-h-11 cursor-pointer items-center bg-transparent p-0">
+              <span className="rounded-ui border-2 border-line bg-base px-2 py-1 text-xs font-extrabold text-ink shadow-hard-sm">+ {s}</span>
+            </button>
           ))}
       </div>
       <Input
@@ -872,7 +879,7 @@ function IngredientLine({
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Input {...register(`ingredients.${index}.displayText`)} aria-label={`Wording for ingredient ${index + 1}`} placeholder="Wording in the recipe (e.g. fresh basil)" className="min-w-0 flex-1 py-1.5 text-xs pointer-coarse:text-[1rem] shadow-none" />
-            <label className="flex items-center gap-1.5 text-xs font-bold">
+            <label className="min-h-11 flex items-center gap-1.5 text-xs font-bold">
               <input type="checkbox" {...register(`ingredients.${index}.optional`)} className="size-4 accent-[var(--ink)]" /> Optional
             </label>
           </div>

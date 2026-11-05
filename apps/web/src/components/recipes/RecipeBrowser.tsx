@@ -100,10 +100,10 @@ export function RecipeBrowser({
       tags={tags}
       header={
         <div className="grid grid-cols-2 overflow-hidden rounded-ui border-2 border-line bg-base md:hidden" role="navigation" aria-label="Library">
-          <Link to="/recipes" aria-current="page" className="bg-acc py-2.5 text-center text-[0.8125rem] font-extrabold text-onc no-underline">
+          <Link to="/recipes" aria-current="page" className="flex min-h-11 items-center justify-center bg-acc text-[0.8125rem] font-extrabold text-onc no-underline">
             Recipes
           </Link>
-          <Link to="/meals" className="py-2.5 text-center text-[0.8125rem] font-extrabold text-ink no-underline">
+          <Link to="/meals" className="flex min-h-11 items-center justify-center text-[0.8125rem] font-extrabold text-ink no-underline">
             Meals
           </Link>
         </div>
@@ -136,7 +136,7 @@ export function RecipeBrowser({
         <div className="flex flex-wrap items-center gap-2">
           <Link
             to="/recipes/trash"
-            className="rounded-ui px-1 py-2 text-[0.8125rem] font-extrabold text-ink underline underline-offset-2"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-ui px-1 text-[0.8125rem] font-extrabold text-ink underline underline-offset-2"
           >
             Trash
           </Link>
@@ -192,7 +192,7 @@ function AddRecipeSheet() {
   const navigate = useNavigate();
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger className="cursor-pointer rounded-ui border-2 border-line bg-base px-3 py-2.5 text-[0.8125rem] font-extrabold text-ink shadow-[3px_3px_0_var(--line)]">
+      <SheetTrigger className="min-h-11 cursor-pointer rounded-ui border-2 border-line bg-base px-3 py-2.5 text-[0.8125rem] font-extrabold text-ink shadow-[3px_3px_0_var(--line)]">
         + Add recipe
       </SheetTrigger>
       <SheetContent title="Add recipe">

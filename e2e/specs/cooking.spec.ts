@@ -178,9 +178,12 @@ test("a long step shows a down arrow while there's more text; it goes at the end
   const scroller = page.getByTestId("step-scroll");
   const arrow = page.getByTestId("step-more");
   await expect(arrow).toBeVisible();
-  await expect(arrow).toHaveAttribute("aria-hidden", "true");
+  // M24: the arrow is a labelled button, at least 44 px.
+  const button = arrow.getByRole("button", { name: "Scroll down for more of this step" });
+  const box = (await button.boundingBox())!;
+  expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(44);
   // Tapping the arrow scrolls down; at the end it's gone, scrolling back up brings it back.
-  await arrow.locator("span").click();
+  await button.click();
   await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
   await scroller.evaluate((el) => (el.scrollTop = el.scrollHeight));
   await expect(arrow).toHaveCount(0);

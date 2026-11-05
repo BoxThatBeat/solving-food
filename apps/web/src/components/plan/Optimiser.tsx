@@ -173,7 +173,7 @@ export function OptimiserCard({
           }} min={10} max={1000} step={5} format={(v) => `$${v}`} label="Budget for the set" decLabel="Lower the budget" incLabel="Raise the budget" />
       </div>
       {nutrition.on ? (
-        <label className={cn("flex cursor-pointer items-center gap-2.5 text-[0.8125rem] font-bold", !anyGoal && "opacity-60")}>
+        <label className={cn("flex min-h-11 cursor-pointer items-center gap-2.5 text-[0.8125rem] font-bold", !anyGoal && "opacity-60")}>
           <input type="checkbox" checked={proteinOnly} onChange={(e) => {
               setProteinOnly(e.target.checked);
               reset();

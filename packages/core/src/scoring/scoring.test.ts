@@ -405,6 +405,29 @@ describe("side recipes are never suggested as a meal (M9, R4.28)", () => {
   });
 });
 
+describe("stub recipes are never suggested (M24)", () => {
+  const main = recipe("main", { tags: ["dinner"] });
+  // "Cook the chicken nuggets according to package directions": a line with no amount, nothing weighable.
+  const stub = recipe("caesar", { tags: ["dinner"], lines: {}, ingredientIds: ["chicken-nuggets"] });
+  it("a recipe with no weighable line is blocked and left out of Suggested and the optimiser's ranking", () => {
+    const c = ctx();
+    expect(score(stub, c, DEFAULT_WEIGHTS)).toMatchObject({ blocked: "Needs ingredients", stub: true });
+    expect(score(main, c, DEFAULT_WEIGHTS).stub).toBeUndefined();
+    expect(suggest([main, stub], c, DEFAULT_WEIGHTS).map((x) => x.id)).toEqual(["main"]);
+    expect(rank([stub, main], c, DEFAULT_WEIGHTS, { dropBlocked: true }).map((x) => x.id)).toEqual(["main"]);
+  });
+  it("a summary written before M2 (no lines at all) isn't a stub", () => {
+    const old = recipe("old", { lines: undefined });
+    expect(score(old, ctx(), DEFAULT_WEIGHTS).blocked).toBeNull();
+  });
+  it("inside a meal with a real recipe, a stub doesn't block the meal; alone it does", () => {
+    const c = ctx();
+    const byId = new Map([main, stub].map((r) => [r.id, score(r, c, DEFAULT_WEIGHTS)]));
+    expect(combinedSuggestion(["main", "caesar"], byId)!.blocked).toBe(false);
+    expect(combinedSuggestion(["caesar"], byId)!.blocked).toBe(true);
+  });
+});
+
 describe("fibre goal (M9, R6.26)", () => {
   it("raises recipes at or above the goal; skipped when off; the optimiser filter needs both goals", () => {
     const hi = recipe("hi", { fibrePerServingG: 9 });

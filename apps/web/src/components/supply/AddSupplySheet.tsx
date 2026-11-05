@@ -95,7 +95,7 @@ function AddSupplyBody({ hid, uid, tz, nowMs, close }: { hid: string; uid: strin
               <Input aria-labelledby="add-amount" inputMode="decimal" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value)} className="min-w-0 flex-1 basis-32 font-mono text-[1.125rem] font-extrabold" />
               <div role="group" aria-label="Unit" className="flex flex-wrap gap-1">
                 {units.map((u) => (
-                  <button key={u} type="button" aria-pressed={unit === u} onClick={() => setUnit(u)} className={cn("min-h-11 cursor-pointer rounded-ui border-2 border-line px-3 font-mono text-[0.8125rem] font-extrabold", unit === u ? "bg-acc text-onc" : "bg-base text-ink")}>
+                  <button key={u} type="button" aria-pressed={unit === u} onClick={() => setUnit(u)} className={cn("min-h-11 min-w-11 cursor-pointer rounded-ui border-2 border-line px-3 font-mono text-[0.8125rem] font-extrabold", unit === u ? "bg-acc text-onc" : "bg-base text-ink")}>
                     {u === "count" ? "count" : unitLabel(u, 2)}
                   </button>
                 ))}

@@ -90,6 +90,21 @@ export function stripModel(
   });
 }
 
+/**
+ * The meal type Suggested opens on (M24, R6.30): the strip row with the most open cells; ties go to dinner, then lunch,
+ * then breakfast (later meals are the ones people plan). Null (All) when every row is full or there are no rows.
+ */
+export function emptiestMealType(rows: ReadonlyArray<Pick<StripRow, "mealType" | "filled" | "days">>): PlannableMealType | null {
+  const pref: Record<PlannableMealType, number> = { dinner: 0, lunch: 1, breakfast: 2 };
+  let best: { t: PlannableMealType; open: number } | null = null;
+  for (const r of rows) {
+    const open = Math.max(0, r.days - r.filled);
+    if (open <= 0) continue;
+    if (!best || open > best.open || (open === best.open && pref[r.mealType] < pref[best.t])) best = { t: r.mealType, open };
+  }
+  return best?.t ?? null;
+}
+
 /** "5/7", "8/7 · +1" */
 export function stripCount(row: Pick<StripRow, "filled" | "days" | "overflow">): string {
   return row.overflow ? `${row.filled}/${row.days} · +${row.overflow}` : `${row.filled}/${row.days}`;

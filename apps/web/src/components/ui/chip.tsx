@@ -14,7 +14,7 @@ export function ToggleChip({
       type="button"
       aria-pressed={pressed}
       className={cn(
-        "inline-flex min-h-[2.375rem] cursor-pointer items-center gap-1.5 rounded-ui border-2 border-line px-3 py-2 text-[0.8125rem] font-extrabold disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-ui border-2 border-line px-3 py-2 text-[0.8125rem] font-extrabold disabled:cursor-not-allowed disabled:opacity-50",
         pressed ? "bg-acc text-onc" : "bg-base text-ink shadow-hard-sm",
         className,
       )}

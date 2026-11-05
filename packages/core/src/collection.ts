@@ -2,7 +2,7 @@
 // recipe summaries (from the search index), the household's facts about each (favourite, cook stats), and the IDs a
 // text search matched; this decides what shows and in which order. Filter state round-trips through the URL.
 
-import { RECIPE_COURSES } from "./taxonomy";
+import { RECIPE_COURSES, type MealType } from "./taxonomy";
 import type { RecipeSummary } from "./recipe";
 
 export const SORTS = ["suggested", "expiry", "newest", "name", "quickest", "protein", "fibre", "cheapest", "rating", "made", "recent"] as const;
@@ -92,6 +92,30 @@ export function mealTypesOf(r: { tags: readonly string[] }): string[] {
 export function isSideOnly(r: { tags: readonly string[] }): boolean {
   const types = mealTypesOf(r);
   return types.includes("side") && types.length === 1;
+}
+
+/**
+ * A stub recipe (M24): no ingredient line with a weight or count, only vague ("to taste"), package ("1 can", R8.13) or
+ * empty lines, e.g. "Cook the chicken nuggets according to package directions". It can't be priced, scored on
+ * protein, or bought for, so it's never suggested as a meal (Suggested, the optimiser, expiry and use-it-up proposals)
+ * and its card says "needs ingredients" instead of zeros. Summaries written before M2 have no `lines`: not a stub.
+ */
+export function needsIngredients(r: { lines?: Readonly<Record<string, number>> | undefined }): boolean {
+  return r.lines !== undefined && !Object.values(r.lines).some((v) => v > 0);
+}
+
+/** Course tags that mean "not a main meal" on a recipe with no meal-type tag (M24): planned as a snack. */
+const SNACK_LIKE = new Set(["dessert", "appetizer", "baking", "treat", "cookie", "cookies"]);
+
+/**
+ * The meal types a recipe is planned as (M24: the Suggested tabs and the optimiser): its meal-type tags (not "side"),
+ * else a snack when it's tagged like one (dessert, appetizer, baking), else dinner.
+ */
+export function plannedMealTypesOf(r: { tags: readonly string[] }): MealType[] {
+  const types = mealTypesOf(r).filter((t): t is MealType => t !== "side");
+  if (types.length) return types;
+  if (isSideOnly(r)) return [];
+  return r.tags.some((t) => SNACK_LIKE.has(t.toLowerCase())) ? ["snack"] : ["dinner"];
 }
 
 /** Does a recipe pass every filter except `skip` (used for the per-option counts in the filter sheet)? */

@@ -255,7 +255,7 @@ function SupplyAdjust({ item, ingredient, unit, hid, uid }: { item: SupplyItem; 
         {units.length > 1 ? (
           <div role="group" aria-label="Unit" className="flex gap-1">
             {units.map((x) => (
-              <button key={x} type="button" aria-pressed={u === x} onClick={() => setU(x)} className={cn("min-h-11 cursor-pointer rounded-ui border-2 border-line px-2.5 font-mono text-[0.8125rem] font-extrabold", u === x ? "bg-acc text-onc" : "bg-base text-ink")}>
+              <button key={x} type="button" aria-pressed={u === x} onClick={() => setU(x)} className={cn("min-h-11 min-w-11 cursor-pointer rounded-ui border-2 border-line px-2 font-mono text-[0.8125rem] font-extrabold", u === x ? "bg-acc text-onc" : "bg-base text-ink")}>
                 {x === "count" ? "×" : unitLabel(x, 2)}
               </button>
             ))}

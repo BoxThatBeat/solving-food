@@ -21,7 +21,7 @@ function ThemePage() {
     setTheme(patch).catch(() => notify({ kind: "error", message: "Couldn't save your theme. It applies on this device only." }));
   return (
     <PageBody>
-      <Link to="/settings" className="inline-flex items-center gap-1 self-start text-sm font-extrabold">
+      <Link to="/settings" className="inline-flex min-h-11 items-center gap-1 self-start text-sm font-extrabold">
         <ArrowLeft aria-hidden className="size-4" strokeWidth={3} />
         Settings
       </Link>

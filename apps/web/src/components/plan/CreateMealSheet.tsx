@@ -429,7 +429,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
 
       {canName ? (
         <div className="flex flex-col gap-2 rounded-ui border-2 border-line bg-base p-3">
-          <label className="flex cursor-pointer items-center gap-2.5 text-[0.9375rem] font-extrabold">
+          <label className="flex min-h-11 cursor-pointer items-center gap-2.5 text-[0.9375rem] font-extrabold">
             <input type="checkbox" checked={saveAsMeal} onChange={(e) => setSaveAsMeal(e.target.checked)} className="size-5 accent-[var(--ink)]" />
             Save as meal
           </label>

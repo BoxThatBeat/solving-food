@@ -5,7 +5,7 @@
 import { useNutrition } from "@/data/nutrition";
 import { Link } from "@tanstack/react-router";
 import { Plus, Star } from "lucide-react";
-import { formatFibre, formatMinutes, formatProtein, taxonomyLabel, type HouseholdFacts, type RecipeSummary } from "@solving-food/core";
+import { formatFibre, formatMinutes, formatProtein, needsIngredients, taxonomyLabel, type HouseholdFacts, type RecipeSummary } from "@solving-food/core";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/chip";
 import { RecipeImage } from "./RecipeImage";
@@ -69,8 +69,11 @@ export function RecipeCard({
         <div className={cn("flex flex-col gap-[0.3125rem] px-2.5 pt-[0.5625rem] pb-[0.6875rem]", onPlan && "pr-12")}>
           <span className="font-mono text-[0.625rem] leading-[1.35] font-semibold text-sub uppercase">
             <span className="normal-case">{formatMinutes(r.totalMin)}</span> · {taxonomyLabel(r.cuisine)}
-            {/* Nutrition (R6.15, R6.26), hidden when the household turned tracking off (R6.27). */}
-            {nutrition.on ? (
+            {/* Nutrition (R6.15, R6.26), hidden when the household turned tracking off (R6.27). M24: a recipe with no
+                weighable ingredient says so instead of "0 g protein". */}
+            {needsIngredients(r) ? (
+              <span data-testid="needs-ingredients"> · Needs ingredients</span>
+            ) : nutrition.on ? (
               <>
                 {" "}
                 · {protein === "—" ? "PROTEIN —" : `${protein} PROTEIN`} · {fibre === "—" ? "FIBRE —" : `${fibre} FIBRE`}
@@ -81,17 +84,20 @@ export function RecipeCard({
           {facts.timesCooked ? <span className="font-mono text-[0.625rem] font-semibold">{madeLine(facts)}</span> : null}
         </div>
       </Link>
+      {/* M24: 44 px hit areas around the prototype's 34 / 38 px faces. */}
       <button
         type="button"
         onClick={() => onFavourite(!facts.favourite)}
         aria-pressed={facts.favourite}
         aria-label={`Favourite ${r.title}`}
-        className={cn(
-          "absolute top-[0.375rem] right-[0.375rem] grid size-[2.125rem] cursor-pointer place-items-center rounded-ui border-2 border-line shadow-hard-sm",
-          facts.favourite ? "bg-yellow text-onc" : "bg-base text-ink",
-        )}
+        className="absolute top-px right-px grid size-11 cursor-pointer place-items-center bg-transparent p-0"
       >
-        <Star aria-hidden className="size-4" strokeWidth={2.5} fill={facts.favourite ? "currentColor" : "none"} />
+        <span
+          aria-hidden
+          className={cn("grid size-[2.125rem] place-items-center rounded-ui border-2 border-line shadow-hard-sm", facts.favourite ? "bg-yellow text-onc" : "bg-base text-ink")}
+        >
+          <Star className="size-4" strokeWidth={2.5} fill={facts.favourite ? "currentColor" : "none"} />
+        </span>
       </button>
       {onPlan ? (
         <button
@@ -99,9 +105,11 @@ export function RecipeCard({
           onClick={onPlan}
           aria-label={`Add ${r.title} to plan`}
           title="Add to plan"
-          className="press absolute right-[0.4375rem] bottom-[0.5rem] grid size-[2.375rem] cursor-pointer place-items-center rounded-ui border-2 border-line bg-acc text-onc shadow-hard-sm"
+          className="absolute right-1 bottom-[0.3125rem] grid size-11 cursor-pointer place-items-center bg-transparent p-0"
         >
-          <Plus aria-hidden className="size-5" strokeWidth={3} />
+          <span aria-hidden className="press-face grid size-[2.375rem] place-items-center rounded-ui border-2 border-line bg-acc text-onc shadow-hard-sm">
+            <Plus className="size-5" strokeWidth={3} />
+          </span>
         </button>
       ) : null}
     </article>

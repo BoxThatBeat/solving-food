@@ -29,7 +29,7 @@ export function Stepper({
   /** Button names; default "Decrease <label>" / "Increase <label>". */
   decLabel?: string;
   incLabel?: string;
-  /** The recipe page's smaller control: 40 px tall buttons, a narrower value. */
+  /** The recipe page's smaller control: a narrower value (M24: buttons stay 44 px). */
   compact?: boolean;
 }) {
   const lower = label.toLowerCase();
@@ -41,7 +41,7 @@ export function Stepper({
         aria-label={decLabel ?? `Decrease ${lower}`}
         disabled={value <= min}
         onClick={() => onChange(clamp(value - step))}
-        className={cn("grid cursor-pointer place-items-center bg-pg text-ink disabled:cursor-not-allowed disabled:opacity-40", compact ? "h-10 w-11" : "size-11")}
+        className={cn("grid cursor-pointer place-items-center bg-pg text-ink disabled:cursor-not-allowed disabled:opacity-40", "size-11")}
       >
         <Minus aria-hidden className="size-4" strokeWidth={3} />
       </button>
@@ -53,7 +53,7 @@ export function Stepper({
         aria-label={incLabel ?? `Increase ${lower}`}
         disabled={value >= max}
         onClick={() => onChange(clamp(value + step))}
-        className={cn("grid cursor-pointer place-items-center bg-pg text-ink disabled:cursor-not-allowed disabled:opacity-40", compact ? "h-10 w-11" : "size-11")}
+        className={cn("grid cursor-pointer place-items-center bg-pg text-ink disabled:cursor-not-allowed disabled:opacity-40", "size-11")}
       >
         <Plus aria-hidden className="size-4" strokeWidth={3} />
       </button>

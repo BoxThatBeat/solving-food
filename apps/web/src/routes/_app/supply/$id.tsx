@@ -26,7 +26,7 @@ function SupplyItemPage() {
   const name = item ? item.label.charAt(0).toUpperCase() + item.label.slice(1) : "Supply item";
   return (
     <PageBody className="max-w-[48rem]">
-      <Link to="/supply" className="inline-flex items-center gap-1 self-start text-sm font-extrabold text-ink">
+      <Link to="/supply" className="inline-flex min-h-11 items-center gap-1 self-start text-sm font-extrabold text-ink">
         <ArrowLeft aria-hidden className="size-4" strokeWidth={3} />
         Supply
       </Link>
