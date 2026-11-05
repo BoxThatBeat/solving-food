@@ -5,7 +5,7 @@
 
 import type { MealType } from "../taxonomy";
 import { MEAL_TYPES } from "../taxonomy";
-import { DAY_MS } from "../expiry";
+import { DAY_MS, minSpare } from "../expiry";
 import { missingTools } from "../tools";
 import { matchingPrefs, type IngredientMetaOf, type PrefRecipe, type Preferences } from "../preferences";
 
@@ -102,13 +102,19 @@ export interface ExpiryUse {
   daysLeft: number;
 }
 
-/** The spare expiring ingredients a recipe would use, soonest first. */
-export function expiringUses(needs: ReadonlyMap<string, number>, ctx: Pick<ScoreContext, "expiring">): ExpiryUse[] {
+/**
+ * The spare expiring ingredients a recipe would use, soonest first. Spare below `minSpare` (the alerts' threshold)
+ * doesn't count, nor does a recipe using less than that of it (M21).
+ */
+export function expiringUses(needs: ReadonlyMap<string, number>, ctx: Pick<ScoreContext, "expiring"> & { ingredient?: ScoreContext["ingredient"] }): ExpiryUse[] {
   const out: ExpiryUse[] = [];
   for (const [id, need] of needs) {
     const e = ctx.expiring.get(id);
-    if (!e || !(e.amount > 0)) continue;
-    out.push({ ingredientId: id, used: Math.min(need, e.amount), daysLeft: e.daysLeft });
+    const min = minSpare(ctx.ingredient?.(id)?.canonicalUnit);
+    if (!e || !(e.amount >= min)) continue;
+    const used = Math.min(need, e.amount);
+    if (used < min) continue;
+    out.push({ ingredientId: id, used, daysLeft: e.daysLeft });
   }
   return out.sort((a, b) => a.daysLeft - b.daysLeft || b.used - a.used);
 }
@@ -117,7 +123,7 @@ export function expiringUses(needs: ReadonlyMap<string, number>, ctx: Pick<Score
  * expiryUrgency: Σ over spare expiring ingredients of (share of the spare amount the recipe uses up) × urgency, capped
  * at 1. Using all 300 g of salmon on its last day is 1; using 100 g of a 1 kg bag with three days left is 0.05.
  */
-export function expiryUrgency(needs: ReadonlyMap<string, number>, ctx: Pick<ScoreContext, "expiring">): number {
+export function expiryUrgency(needs: ReadonlyMap<string, number>, ctx: Pick<ScoreContext, "expiring"> & { ingredient?: ScoreContext["ingredient"] }): number {
   let s = 0;
   for (const u of expiringUses(needs, ctx)) {
     const spare = ctx.expiring.get(u.ingredientId)!.amount;

@@ -16,6 +16,18 @@ export const LEFTOVER_FREEZER_DAYS = 90;
 export const THAWED_DAYS = 2;
 /** "Still good" (R8.15) extends an expired lot by this many days unless a date is picked. */
 export const EXTEND_DEFAULT_DAYS = 3;
+/**
+ * Below this much expiring spare (g, or pieces for count ingredients) nothing is worth flagging, and a recipe using
+ * less than this of an expiring ingredient doesn't count as using it up (alerts, Use it up, expiry urgency; M21).
+ */
+export const ALERT_MIN_GRAMS = 10;
+export const ALERT_MIN_COUNT = 0.5;
+
+/** The smallest amount of expiring spare that matters, in the ingredient's canonical unit (grams when unknown). */
+export function minSpare(canonicalUnit: "g" | "count" | undefined): number {
+  return canonicalUnit === "count" ? ALERT_MIN_COUNT : ALERT_MIN_GRAMS;
+}
+
 /** A lot is flagged "use soon" when it expires within this many days. */
 export const USE_SOON_DAYS = 3;
 

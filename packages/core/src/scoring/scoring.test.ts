@@ -6,6 +6,7 @@ import {
   DEFAULT_WEIGHTS,
   emptyScoreContext,
   expiringSpare,
+  expiringUses,
   expiryUrgency,
   fibreGoal,
   meetsGoals,
@@ -198,6 +199,22 @@ describe("individual factors", () => {
     expect(expiryUrgency(new Map([["pasta", 300]]), c)).toBe(0);
     const today = ctx({ expiring: new Map([["salmon-fillet", { amount: 300, daysLeft: 0, expiresMs: 0 }]]) });
     expect(expiryUrgency(new Map([["salmon-fillet", 600]]), today)).toBe(1);
+  });
+
+  it("expiryUrgency ignores tiny spare and negligible use, with the alerts' threshold (M21)", () => {
+    const c = ctx({
+      expiring: new Map([
+        ["broccoli", { amount: 300, daysLeft: 0, expiresMs: 0 }],
+        ["crumbs", { amount: 4, daysLeft: 0, expiresMs: 0 }],
+        ["eggs", { amount: 2, daysLeft: 0, expiresMs: 0 }],
+      ]),
+      ingredient: (id) => ({ category: "x", canonicalUnit: id === "eggs" ? "count" : "g" }),
+    });
+    expect(expiryUrgency(new Map([["broccoli", 1.6]]), c)).toBe(0);
+    expect(expiringUses(new Map([["broccoli", 1.6]]), c)).toEqual([]);
+    expect(expiryUrgency(new Map([["crumbs", 4]]), c)).toBe(0);
+    expect(expiryUrgency(new Map([["broccoli", 30]]), c)).toBeCloseTo(0.1);
+    expect(expiryUrgency(new Map([["eggs", 1]]), c)).toBeCloseTo(0.5);
   });
 
   it("supplyUtilisation and missingIngredients from projected supply", () => {

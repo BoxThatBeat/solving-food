@@ -183,6 +183,17 @@ describe("expiry alerts", () => {
       ["a", 160],
     ]);
   });
+
+  it("leaves out recipes that use a negligible share (M21: not \"uses 1.6 g\")", () => {
+    const base = { cuisine: "x", mainProtein: "none", tags: [], servings: 4, proteinPerServingG: 5 };
+    const recipes = [
+      { ...base, id: "pizza", title: "Veggie Pizza Squares", ingredientIds: ["broccoli"], lines: { broccoli: 0.4 } },
+      { ...base, id: "stir", title: "Stir fry", ingredientIds: ["broccoli"], lines: { broccoli: 50 } },
+    ];
+    expect(recipesUsing("broccoli", 300, recipes, 4).map((x) => x.recipe.id)).toEqual(["stir"]);
+    const eggs = [{ ...base, id: "e", title: "E", ingredientIds: ["eggs"], lines: { eggs: 0.5 } }];
+    expect(recipesUsing("eggs", 6, eggs, 4, undefined, "count").map((x) => x.uses)).toEqual([2]);
+  });
 });
 
 describe("PC Express shapes", async () => {

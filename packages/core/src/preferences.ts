@@ -65,6 +65,8 @@ export interface IngredientMeta {
   category: string;
   name?: string;
   freeUse?: boolean;
+  /** For the smallest expiring amount that counts (`minSpare`); grams when absent. */
+  canonicalUnit?: "g" | "count";
 }
 
 export type IngredientMetaOf = (id: string) => IngredientMeta | undefined;

@@ -588,6 +588,9 @@ scores. Weights are 0–5 per factor (Balanced is the default; presets from the 
 Adventurous). Ranking uses `raw = Σ w·f(raising) − Σ w·f(lowering)`, monotone in every weight; the card shows
 `100 · raw / Σ w(raising)`, clamped. Details: expiryUrgency = Σ (share of the spare expiring amount the recipe uses) ×
 1/(1 + daysLeft/3), where "spare" is what planned meals won't use (FEFO), within the period or the next four days;
+spare below `minSpare()` (10 g, 0.5 for counts; `ALERT_MIN_GRAMS` / `ALERT_MIN_COUNT` in core `expiry.ts`, the alerts'
+threshold) doesn't count, and neither does a recipe using less than that of it (M21), so the "Uses …" chip, the alert's
+suggestions (`recipesUsing`) and Use it up never offer a recipe for a sliver of the expiring food;
 rating is Bayesian (as if two people rated it 6); historicalPref = (1 − e^(−made/5)) × (0.4 + 0.6 e^(−days/120)) + 0.4
 for a favourite; variety is half recipe novelty over four periods and a quarter each for the cuisine's and protein's
 share of recent cooks; preferences = likes matched (0, 0.6, 0.8, 1); cost = marginal cost / (a quarter of the budget

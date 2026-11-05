@@ -57,7 +57,7 @@ export function UseItUp({
           const name = ing?.name ?? a.ingredientId.replace(/-/g, " ");
           const Name = name.charAt(0).toUpperCase() + name.slice(1);
           const amount = (n: number) => formatCanonical(n, ing?.canonicalUnit ?? "g", ing?.unitWeightG);
-          const using = recipesUsing(a.ingredientId, a.amount, candidates, servings, (id) => scores.get(id)?.raw ?? 0).slice(0, 2);
+          const using = recipesUsing(a.ingredientId, a.amount, candidates, servings, (id) => scores.get(id)?.raw ?? 0, ing?.canonicalUnit).slice(0, 2);
           return (
             <div key={a.ingredientId} className="flex flex-col gap-1.5" data-testid="use-it-up-item">
               <div className="flex items-start justify-between gap-2">

@@ -140,7 +140,7 @@ export function buildContexts(s: ScoringSnapshot, seed: ReadonlyMap<string, Snap
     fibreGoals: s.fibreGoals,
     ingredient: (id) => {
       const i = ingredients.get(id);
-      return i ? { category: i.category, name: i.name, freeUse: i.freeUse } : undefined;
+      return i ? { category: i.category, name: i.name, freeUse: i.freeUse, canonicalUnit: i.canonicalUnit } : undefined;
     },
     costOf: (r) => {
       if (!costCache.has(r.id)) {

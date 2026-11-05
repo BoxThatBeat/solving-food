@@ -5,7 +5,7 @@
 import type { ExpiringSpare } from "./scoring/factors";
 import type { ScoreRecipe } from "./scoring/factors";
 import { expiringSpare } from "./scoring";
-import { daysLeft } from "./expiry";
+import { daysLeft, minSpare } from "./expiry";
 import { newLotFor } from "./projection";
 import type { LedgerLot } from "./ledger";
 import type { StorageLocation } from "./taxonomy";
@@ -15,10 +15,6 @@ export interface ExpiryAlert extends ExpiringSpare {
   ingredientId: string;
   lotIds: string[];
 }
-
-/** Below this much spare (g, or pieces for count ingredients) an alert isn't worth showing. */
-export const ALERT_MIN_GRAMS = 10;
-export const ALERT_MIN_COUNT = 0.5;
 
 /**
  * The alerts to show: spare expiring supply (see `expiringSpare`) above a small threshold, not dismissed (an alert is
@@ -31,8 +27,7 @@ export function expiryAlerts(
 ): ExpiryAlert[] {
   const out: ExpiryAlert[] = [];
   for (const [ingredientId, s] of spare) {
-    const min = unitOf(ingredientId) === "count" ? ALERT_MIN_COUNT : ALERT_MIN_GRAMS;
-    if (s.amount < min) continue;
+    if (s.amount < minSpare(unitOf(ingredientId))) continue;
     if (s.lotIds.length && s.lotIds.every((l) => dismissedLots.has(l))) continue;
     out.push({ ingredientId, ...s });
   }
@@ -41,7 +36,8 @@ export function expiryAlerts(
 
 /**
  * Recipes that use an expiring ingredient, most of it first (R6.13 "suggests recipes that use more of it"): amount at
- * the household's servings, capped by the spare amount; ties by `tieBreak` (the suggestion score), then title.
+ * the household's servings, capped by the spare amount; ties by `tieBreak` (the suggestion score), then title. A
+ * recipe that uses less than `minSpare(canonicalUnit)` of it isn't offered (M21: "uses 1.6 g" of broccoli).
  */
 export function recipesUsing(
   ingredientId: string,
@@ -49,12 +45,16 @@ export function recipesUsing(
   recipes: readonly ScoreRecipe[],
   servings: number,
   tieBreak: (id: string) => number = () => 0,
+  canonicalUnit?: "g" | "count",
 ): Array<{ recipe: ScoreRecipe; uses: number }> {
   const out: Array<{ recipe: ScoreRecipe; uses: number }> = [];
+  const min = minSpare(canonicalUnit);
   for (const r of recipes) {
     const per = r.lines?.[ingredientId];
     if (!per || per <= 0) continue;
-    out.push({ recipe: r, uses: Math.min(spare, per * servings) });
+    const uses = Math.min(spare, per * servings);
+    if (uses < min) continue;
+    out.push({ recipe: r, uses });
   }
   return out.sort((a, b) => b.uses - a.uses || tieBreak(b.recipe.id) - tieBreak(a.recipe.id) || a.recipe.title.localeCompare(b.recipe.title));
 }
@@ -111,8 +111,7 @@ export function orderSpare(
     const before = expiringSpare(new Map([[id, have]]), use, untilMs, nowMs, tz).get(id)?.amount ?? 0;
     const after = expiringSpare(new Map([[id, [...have, lot]]]), use, untilMs, nowMs, tz).get(id)?.amount ?? 0;
     const spare = Math.min(amount, after - before);
-    const min = ing.canonicalUnit === "count" ? ALERT_MIN_COUNT : ALERT_MIN_GRAMS;
-    if (!(spare >= min)) continue;
+    if (!(spare >= minSpare(ing.canonicalUnit))) continue;
     out.push({ ingredientId: id, amount: spare, bought: amount, expiresMs, daysLeft: Math.max(0, daysLeft(expiresMs, nowMs, tz)) });
   }
   return out.sort((a, b) => a.expiresMs - b.expiresMs || b.amount - a.amount || a.ingredientId.localeCompare(b.ingredientId));
