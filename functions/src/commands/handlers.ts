@@ -31,6 +31,7 @@ import {
   toMap,
   totalPortions,
   updateCadence,
+  UNITS,
   type AnyCommand,
   type CommandPayload,
   type IngredientDoc,
@@ -100,6 +101,7 @@ export async function addSupply(ctx: Ctx, p: CommandPayload<"addSupply">): Promi
   const lot = purchaseLot(ctx, ctx.cmdId, p.amount, ing, p.location);
   // A use-by date picked in the add sheet (R8.18) wins over the estimate, like Set date on a lot.
   if (p.until && p.until > ctx.nowMs) lot.expiryExtendedToMs = p.until;
+  if (p.unit && UNITS[p.unit] && UNITS[p.unit]!.kind !== "vague") d.displayUnit = p.unit;
   ctx.store.apply(ing.id, applyPurchase(d.lots, lot, "purchase", p.entered ? `added ${p.entered}` : "added"), { clearShort: true });
   ctx.store.commit();
   return undefined;
@@ -136,6 +138,7 @@ export async function receiveGroceries(ctx: Ctx, p: CommandPayload<"receiveGroce
   for (const it of tracked) {
     const ing = ings.get(it.ingredientId!)!;
     const d = ctx.store.ensure(ing.id, supplyInit(ing));
+    d.displayUnit = null; // groceries arrive in packs: Supply reads in the ingredient's pack measure again (R8.13)
     const lotId = `${ctx.cmdId}-${it.itemId}`.slice(0, 200);
     let r = applyPurchase(d.lots, purchaseLot(ctx, lotId, it.amount, ing), "purchase", "groceries arrived");
     const ref = { type: "groceryList", id: p.listId };

@@ -4,11 +4,13 @@ import {
   activeExpiry,
   expiryFlag,
   formatCanonical,
-  formatGrams,
+  formatInUnit,
   formatQuantity,
   isExpired,
   type ExpiryFlag,
   type LedgerLot,
+  type Measure,
+  unitForMeasure,
   expiredLots,
   type StorageLocation,
 } from "@solving-food/core";
@@ -19,22 +21,19 @@ export const LOCATION_LABEL: Record<StorageLocation, string> = { pantry: "Pantry
 export interface AmountUnit {
   canonicalUnit: "g" | "count";
   unitWeightG?: number | undefined;
+  densityGPerMl?: number | undefined;
+  /** The unit amounts read in (R8.13): the unit it was added in, else the ingredient's pack measure. */
+  displayUnit?: string | undefined;
   /** Leftover batches count portions. */
   portions?: boolean;
 }
 
-/** Metric only (R8.13): "640 g", "3 (640 g)", "2 portions". */
+/** In the unit it was added in (R8.13, owner review): "1.5 lb", "2.0 L", "3"; "2 portions" for leftovers. */
 export function amountText(amount: number, u: AmountUnit): string {
   const a = Math.max(0, amount);
   if (u.portions) return `${formatQuantity(a)} portion${Math.abs(a - 1) < 1e-6 ? "" : "s"}`;
+  if (u.displayUnit) return formatInUnit(a, u.displayUnit, u);
   return formatCanonical(a, u.canonicalUnit, u.unitWeightG);
-}
-
-/** The short metric figure for tight places (projected brackets): "190 g", "3". */
-export function shortAmount(amount: number, u: AmountUnit): string {
-  const a = Math.max(0, amount);
-  if (u.portions || u.canonicalUnit === "count") return formatQuantity(a);
-  return formatGrams(a);
 }
 
 export function dateText(ms: number, tz: string): string {
@@ -56,10 +55,16 @@ export function itemExpiry(lots: readonly LedgerLot[], nowMs: number, tz: string
 }
 
 
-/** How a supply item's amounts read: leftover batches count portions. */
-export function unitFor(item: { ingredientId?: string | undefined; canonicalUnit: "g" | "count" }, ing: { unitWeightG?: number | undefined } | undefined): AmountUnit {
+/**
+ * How a supply item's amounts read: leftover batches count portions; everything else in the unit it was last added in
+ * by hand, else the ingredient's pack measure (grams, millilitres, or a count), stored canonically underneath.
+ */
+export function unitFor(
+  item: { ingredientId?: string | undefined; canonicalUnit: "g" | "count"; displayUnit?: string | undefined },
+  ing: { unitWeightG?: number | undefined; densityGPerMl?: number | undefined; defaultPackMeasure?: Measure | undefined } | undefined,
+): AmountUnit {
   if (!item.ingredientId) return { canonicalUnit: "count", portions: true };
-  return { canonicalUnit: item.canonicalUnit, unitWeightG: ing?.unitWeightG };
+  return { canonicalUnit: item.canonicalUnit, unitWeightG: ing?.unitWeightG, densityGPerMl: ing?.densityGPerMl, displayUnit: item.displayUnit ?? unitForMeasure(ing?.defaultPackMeasure) };
 }
 
 export interface ExpiredEntry {

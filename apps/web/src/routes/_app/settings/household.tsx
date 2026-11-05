@@ -41,7 +41,7 @@ function fromDoc(h: HouseholdDoc): HouseholdSettingsInput {
 function HouseholdSettings() {
   const hh = useActiveHousehold();
   return (
-    <SettingsPage title="Household" kicker={`Settings · ${hh.data?.name ?? ""}`}>
+    <SettingsPage title="Household">
       {hh.data ? <HouseholdForm key={hh.id} hid={hh.id} household={hh.data} /> : <p className="m-0 font-bold">Loading…</p>}
     </SettingsPage>
   );

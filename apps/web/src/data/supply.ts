@@ -52,6 +52,8 @@ export interface SupplyItem {
   cookEventId?: string | undefined;
   leftoverMealType?: string | undefined;
   shortAtMs: number | null;
+  /** The unit it reads in (R8.13): the unit it was last added in by hand. */
+  displayUnit?: string | undefined;
   /** A pending command changed it (shown as "syncing"). */
   pending: boolean;
 }
@@ -64,6 +66,7 @@ interface StoredSupply {
   cookEventId?: string;
   leftoverMealType?: string;
   shortAt?: unknown;
+  displayUnit?: string;
   /** (M8) The row of an ingredient merged into another: empty, kept for its history, not shown. */
   mergedInto?: string;
 }
@@ -112,7 +115,7 @@ export function useSupply(hid: string | null, tz: string) {
   }, [docs.docs, pending]);
   const ingredients = useIngredientsById(ingredientIds);
   const items = useMemo(() => {
-    const base = new Map<string, ProjectedDoc & { extra: Pick<SupplyItem, "cookEventId" | "leftoverMealType" | "shortAtMs"> }>();
+    const base = new Map<string, ProjectedDoc & { extra: Pick<SupplyItem, "cookEventId" | "leftoverMealType" | "shortAtMs" | "displayUnit"> }>();
     for (const d of docs.docs ?? []) {
       if (d.data.mergedInto) continue;
       base.set(d.id, {
@@ -120,7 +123,7 @@ export function useSupply(hid: string | null, tz: string) {
         label: d.data.label,
         canonicalUnit: d.data.canonicalUnit,
         lots: (d.data.lots ?? []).map((l) => lotFromDoc(l as never, millis)),
-        extra: { cookEventId: d.data.cookEventId, leftoverMealType: d.data.leftoverMealType, shortAtMs: millis(d.data.shortAt) },
+        extra: { cookEventId: d.data.cookEventId, leftoverMealType: d.data.leftoverMealType, shortAtMs: millis(d.data.shortAt), displayUnit: d.data.displayUnit },
       });
     }
     const projected = projectPending(base, pending, {

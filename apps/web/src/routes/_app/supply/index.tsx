@@ -3,7 +3,9 @@
 // location tabs and category / expiring soon / low stock filters; expired lots prompt Still good / Threw it out;
 // leftovers as prepared portions; free-use staples with when they were last bought. Tapping a row opens its purchases,
 // correction, and history inline (the full history is /supply/:id). M9 (R8.17): a search box filters rows (and
-// leftovers) by name and aliases, together with the other filters.
+// leftovers) by name and aliases, together with the other filters. Owner review (2026-11-04): no count or explainer
+// line; location / expiring / low / category live in a Filter sheet behind the Recipes filter button, categories that
+// repeat a location (Pantry, Frozen ≈ Freezer) are left out; the bracket appears only when the plan uses some.
 import * as React from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
@@ -20,13 +22,15 @@ import {
 import { EmptyState, PageBody } from "@/components/AppShell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/chip";
+import { Badge, ToggleChip } from "@/components/ui/chip";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { FilterIcon, Group } from "@/components/CollectionView";
 import { useNotify } from "@/components/notifications-context";
 import { AddSupplySheet } from "@/components/supply/AddSupplySheet";
 import { ExpiredLotPrompts } from "@/components/supply/ExpiredLotPrompt";
 import { SupplyDetail } from "@/components/supply/SupplyDetail";
 import { ExpiryBadge } from "@/components/supply/shared";
-import { amountText, dateText, expiredEntries, itemExpiry, LOCATION_LABEL, shortAmount, unitFor } from "@/components/supply/format";
+import { amountText, dateText, expiredEntries, itemExpiry, LOCATION_LABEL, unitFor } from "@/components/supply/format";
 import { usePlanModel } from "@/data/planModel";
 import { FREE_USE, sendCommand, useCadence, type SupplyItem } from "@/data/supply";
 import { useIngredientsById, type IngredientEntry } from "@/data/ingredients";
@@ -64,6 +68,11 @@ interface Row {
 
 const SEVERITY = { expired: 0, soon: 1, fresh: 2, none: 3 } as const;
 
+/** Categories that only repeat a location filter: offered once, as the location. */
+const SAME_AS_LOCATION = new Set(["pantry", "frozen"]);
+/** One key per category as it reads ("Spice" and "spices" are one option). */
+const catKey = (c: string) => normalise(taxonomyLabel(c)).replace(/s$/, "");
+
 function SupplyPage() {
   const s = useReadySession();
   const search = Route.useSearch();
@@ -75,6 +84,7 @@ function SupplyPage() {
   const members = useMemberNames(m.hid);
   const [open, setOpen] = React.useState<string | null>(null);
   const [adding, setAdding] = React.useState(false);
+  const [filtering, setFiltering] = React.useState(false);
   const set = (patch: Partial<SupplySearch>) => void navigate({ to: "/supply", search: { ...search, ...patch } as never, replace: true });
   // Search (R8.17): typing is local and instant; the URL follows (replace) so Back and reloads keep it.
   const [q, setQ] = React.useState(search.q ?? "");
@@ -120,13 +130,19 @@ function SupplyPage() {
     if (!matchesQ([r.item.label, r.ing?.name, ...(r.ing?.aliases ?? [])])) return false;
     const loc = search.loc ?? "all";
     if (loc !== "all" && !r.locations.has(loc)) return false;
-    if (search.cat && r.category !== search.cat) return false;
+    if (search.cat && catKey(r.category) !== catKey(search.cat)) return false;
     if (search.exp && !(r.exp.flag === "expired" || r.exp.flag === "soon")) return false;
     if (search.low && !r.low) return false;
     return true;
   });
-  const cats = [...new Set(inStock.map((r) => r.category))].sort();
-  const soon = inStock.filter((r) => r.exp.flag === "soon" || r.exp.flag === "expired").length;
+  const cats = [...new Map(inStock.filter((r) => !SAME_AS_LOCATION.has(catKey(r.category))).map((r) => [catKey(r.category), r.category])).values()].sort((a, b) => taxonomyLabel(a).localeCompare(taxonomyLabel(b)));
+  const loc = search.loc ?? "all";
+  const applied = [
+    ...(loc !== "all" ? [{ key: "loc", label: LOCATION_LABEL[loc], clear: { loc: undefined } }] : []),
+    ...(search.exp ? [{ key: "exp", label: "Expiring soon", clear: { exp: undefined } }] : []),
+    ...(search.low ? [{ key: "low", label: "Low stock", clear: { low: undefined } }] : []),
+    ...(search.cat ? [{ key: "cat", label: taxonomyLabel(search.cat), clear: { cat: undefined } }] : []),
+  ] satisfies Array<{ key: string; label: string; clear: Partial<SupplySearch> }>;
   const expired = expiredEntries(m.supply.items.values(), now, (it) => unitFor(it, it.ingredientId ? ingredients.get(it.ingredientId) : undefined));
 
   // Staples (R8.14): free-use ingredients the household has bought, with the cadence's expected run-out.
@@ -153,41 +169,96 @@ function SupplyPage() {
   return (
     <PageBody className="max-w-[68.75rem]">
       <div className="flex items-end justify-between gap-2">
-        <div className="flex flex-col gap-1">
-          <span className="kicker" data-testid="supply-count">
-            {m.supply.loading ? "LOADING…" : `${inStock.length} IN SUPPLY${soon ? ` · ${soon} USE SOON` : ""}${m.supply.pendingCount ? " · SYNCING" : ""}`}
-          </span>
-          <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">Supply</h1>
-        </div>
+        <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">Supply</h1>
         <Button onClick={() => setAdding(true)}>+ Add</Button>
       </div>
-      <span className="font-mono text-[0.65625rem] leading-snug font-semibold uppercase">Now (after planned meals) · bought − cooked ± corrections · tap for detail</span>
+      <span className="sr-only" role="status" data-testid="supply-count">
+        {m.supply.loading ? "LOADING…" : `${inStock.length} IN SUPPLY${m.supply.pendingCount ? " · SYNCING" : ""}`}
+      </span>
 
-      <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search Supply…" aria-label="Search Supply" className="max-w-[60rem]" />
-
-      <div role="group" aria-label="Location" className="grid grid-cols-5 overflow-hidden rounded-ui border-2 border-line bg-base">
-        {(["all", ...STORAGE_LOCATIONS] as const).map((l, i) => {
-          const on = (search.loc ?? "all") === l;
-          return (
-            <button key={l} type="button" aria-pressed={on} onClick={() => set({ loc: l })} className={cn("min-h-10 min-w-0 cursor-pointer truncate px-0.5 text-[0.75rem] font-extrabold", i ? "border-l-2 border-line" : "", on ? "bg-acc text-onc" : "bg-base text-ink")}>
-              {l === "all" ? "All" : LOCATION_LABEL[l]}
+      <div className="flex flex-col gap-2.5">
+        <div className="flex max-w-[60rem] items-stretch gap-2.5">
+          <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search Supply…" aria-label="Search Supply" className="flex-1" />
+          <button
+            type="button"
+            onClick={() => setFiltering(true)}
+            aria-label={applied.length ? `Filter, ${applied.length} filters on` : "Filter"}
+            className="press relative grid w-[3.25rem] flex-none cursor-pointer place-items-center rounded-ui border-bw bg-acc shadow-hard"
+          >
+            <FilterIcon />
+            {applied.length ? (
+              <span className="absolute -top-[0.5625rem] -right-[0.5625rem] box-border h-[1.375rem] min-w-[1.375rem] rounded-full border-2 border-line bg-ink px-1 text-center font-mono text-[0.6875rem] leading-[1.125rem] font-extrabold text-base">
+                {applied.length}
+              </span>
+            ) : null}
+          </button>
+        </div>
+        {applied.length ? (
+          <div className="flex flex-wrap gap-1.5" aria-label="Applied filters">
+            {applied.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                onClick={() => set(c.clear)}
+                aria-label={`Remove filter ${c.label}`}
+                className="flex flex-none cursor-pointer items-center gap-1.5 rounded-ui border-2 border-line bg-acc px-2 py-1.5 text-xs font-extrabold whitespace-nowrap text-onc"
+              >
+                {c.label}
+                <span aria-hidden className="font-mono">
+                  ✕
+                </span>
+              </button>
+            ))}
+            <button type="button" onClick={() => set({ loc: undefined, exp: undefined, low: undefined, cat: undefined })} className="cursor-pointer bg-transparent px-1 py-1.5 text-xs font-extrabold text-ink underline">
+              Clear
             </button>
-          );
-        })}
+          </div>
+        ) : null}
       </div>
-      <div role="group" aria-label="Filters" className="flex flex-wrap gap-1.5">
-        <FilterChip on={!!search.exp} onClick={() => set({ exp: !search.exp })}>
-          Expiring soon
-        </FilterChip>
-        <FilterChip on={!!search.low} onClick={() => set({ low: !search.low })}>
-          Low stock
-        </FilterChip>
-        {cats.map((c) => (
-          <FilterChip key={c} on={search.cat === c} onClick={() => set({ cat: search.cat === c ? "" : c })}>
-            {taxonomyLabel(c)}
-          </FilterChip>
-        ))}
-      </div>
+
+      <Sheet open={filtering} onOpenChange={setFiltering}>
+        <SheetContent
+          title="Filter"
+          headerExtra={
+            <button type="button" onClick={() => set({ loc: undefined, exp: undefined, low: undefined, cat: undefined })} className="cursor-pointer bg-transparent p-1.5 text-[0.8125rem] font-extrabold text-ink underline">
+              Reset
+            </button>
+          }
+          footer={
+            <button type="button" onClick={() => setFiltering(false)} className="press w-full cursor-pointer rounded-ui border-bw bg-acc p-4 text-[1rem] font-extrabold text-onc shadow-hard">
+              Show {shown.length} {shown.length === 1 ? "item" : "items"}
+            </button>
+          }
+        >
+          <Group title="Location">
+            {(["all", ...STORAGE_LOCATIONS] as const).map((l) => (
+              <ToggleChip key={l} pressed={loc === l} onClick={() => set({ loc: l === "all" ? undefined : l })}>
+                {l === "all" ? "All" : LOCATION_LABEL[l]}
+              </ToggleChip>
+            ))}
+          </Group>
+          <Group title="Show" hint="Match all">
+            <ToggleChip pressed={!!search.exp} onClick={() => set({ exp: search.exp ? undefined : true })}>
+              Expiring soon
+            </ToggleChip>
+            <ToggleChip pressed={!!search.low} onClick={() => set({ low: search.low ? undefined : true })}>
+              Low stock
+            </ToggleChip>
+          </Group>
+          {cats.length ? (
+            <Group title="Category">
+              {cats.map((c) => {
+                const on = !!search.cat && catKey(search.cat) === catKey(c);
+                return (
+                  <ToggleChip key={c} pressed={on} onClick={() => set({ cat: on ? undefined : c })}>
+                    {taxonomyLabel(c)}
+                  </ToggleChip>
+                );
+              })}
+            </Group>
+          ) : null}
+        </SheetContent>
+      </Sheet>
 
       <ExpiredLotPrompts entries={expired} hid={m.hid} uid={s.user.uid} tz={tz} nowMs={now} />
 
@@ -267,14 +338,6 @@ function SupplyPage() {
   );
 }
 
-function FilterChip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button type="button" aria-pressed={on} onClick={onClick} className={cn("min-h-10 cursor-pointer rounded-ui border-2 border-line px-2.5 py-1.5 text-[0.75rem] font-extrabold", on ? "bg-acc text-onc" : "bg-base text-ink shadow-hard-sm")}>
-      {children}
-    </button>
-  );
-}
-
 function SupplyRow({ r, first, open, onToggle, tz, now, children }: { r: Row; first: boolean; open: boolean; onToggle: () => void; tz: string; now: number; children: React.ReactNode }) {
   const unit = unitFor(r.item, r.ing);
   const name = r.item.label.charAt(0).toUpperCase() + r.item.label.slice(1);
@@ -304,9 +367,11 @@ function SupplyRow({ r, first, open, onToggle, tz, now, children }: { r: Row; fi
           <span className="font-mono text-[0.9375rem] font-extrabold" data-testid="supply-current">
             {amountText(r.current, unit)}
           </span>
-          <span className="font-mono text-[0.6875rem] font-semibold text-sub" data-testid="supply-projected">
-            {r.needed > 1e-6 && r.projected < -1e-6 ? `(need ${shortAmount(-r.projected, unit)} more)` : `(${shortAmount(r.projected, unit)} after plan)`}
-          </span>
+          {r.needed > 1e-6 ? (
+            <span className="font-mono text-[0.6875rem] font-semibold text-sub" data-testid="supply-projected">
+              ({r.projected < -1e-6 ? `−${amountText(-r.projected, unit)}` : amountText(r.projected, unit)})
+            </span>
+          ) : null}
         </span>
       </button>
       {open ? (

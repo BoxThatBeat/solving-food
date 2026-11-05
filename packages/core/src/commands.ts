@@ -19,6 +19,8 @@ export const addSupplyPayload = z.object({
   entered: z.string().max(60).optional(),
   /** Use-by set by hand when adding (R8.18): the lot counts until this instant (midnight after the day). */
   until: ms.optional(),
+  /** The unit it was typed in ("lb", "cup", "count"): Supply reads the amount back in it (owner review, R8.13). */
+  unit: z.string().max(12).optional(),
 });
 
 export const receiveItemPayload = z.object({

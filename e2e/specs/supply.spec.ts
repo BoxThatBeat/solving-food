@@ -1,5 +1,5 @@
 // supply.spec.ts (TECHNICAL_SPECS §14.1): starts empty; add via the ingredient picker in an allowed measurement;
-// current (projected) in metric only; Staples for free-use; per-lot expiry flags; expired lots excluded until
+// current (projected, only when the plan uses some) in the unit it was added in; Staples for free-use; per-lot expiry flags; expired lots excluded until
 // Still good / Threw it out; freeze/thaw; ±5/±25 + Apply corrections; discard; filters; transaction history with
 // infinite scroll; live for another member.
 import { adminDb } from "../fixtures/admin";
@@ -7,7 +7,7 @@ import { expect, test } from "../fixtures/test";
 import { makePlanRecipe, seedPeriod, seedPlanItem } from "../pages/plan";
 import { commandsSettled, expectSupply, seedSupply, supplyDoc, SupplyPage } from "../pages/supply";
 
-test("starts empty; add an ingredient in an allowed measurement; shown in metric only (R8.2, R8.3, R8.13)", { tag: ["@R8.2", "@R8.3", "@R8.13", "@R8.1", "@smoke"] }, async ({ page, household }) => {
+test("starts empty; add an ingredient in an allowed measurement; shown in the unit it was added in (R8.2, R8.3, R8.13)", { tag: ["@R8.2", "@R8.3", "@R8.13", "@R8.1", "@smoke"] }, async ({ page, household }) => {
   const supply = new SupplyPage(page);
   await supply.goto();
   await expect(page.getByText(/Supply starts empty/)).toBeVisible();
@@ -21,7 +21,8 @@ test("starts empty; add an ingredient in an allowed measurement; shown in metric
   await expect(sheet.getByText("= 380 g", { exact: true })).toBeVisible();
   await sheet.getByRole("button", { name: /^Add 380 g/ }).click();
   await expect(supply.row("Dried red lentil")).toBeVisible();
-  await expect(supply.row("Dried red lentil").getByTestId("supply-current")).toHaveText("380 g");
+  // Stored in grams, read back in the cups it was added in.
+  await expect(supply.row("Dried red lentil").getByTestId("supply-current")).toHaveText("2 cups");
   await expectSupply(household.hid, "dried-red-lentil", 383.273);
   // Supply is written by the function only: the command doc is what the client wrote.
   expect(await commandsSettled(household.hid)).toEqual([]);
@@ -41,10 +42,10 @@ test("current (projected after planned meals); expiry flags per lot; Staples gro
   await supply.goto();
   const chicken = supply.row("Chicken thigh");
   await expect(chicken.getByTestId("supply-current")).toHaveText("1.0 kg");
-  await expect(chicken.getByTestId("supply-projected")).toHaveText("(400 g after plan)");
+  await expect(chicken.getByTestId("supply-projected")).toHaveText("(400 g)");
   await expect(chicken).toContainText(/Fresh · [89]D/i);
   const spinach = supply.row("Baby spinach");
-  await expect(spinach.getByTestId("supply-projected")).toHaveText("(10 g after plan)");
+  await expect(spinach.getByTestId("supply-projected")).toHaveText("(10 g)");
   await expect(spinach).toContainText(/Use soon · [12]D/i);
   await expect(spinach).toContainText(/2 purchases/i);
   // Leftovers are their own items (R8.11); free-use staples show when last bought, no amount (R8.14).
@@ -66,9 +67,10 @@ test("an expired lot stops counting until Still good or Threw it out; never disc
   const prompts = page.getByTestId("expired-prompts");
   await expect(prompts.getByTestId("expired-lot")).toHaveCount(2);
   await expect(supply.row("Milk")).toContainText(/Expired/i);
-  await expect(supply.row("Milk").getByTestId("supply-projected")).toHaveText("(0 g after plan)");
+  // Nothing planned uses milk: no bracket.
+  await expect(supply.row("Milk").getByTestId("supply-projected")).toHaveCount(0);
   await prompts.getByRole("button", { name: "Milk is still good" }).click();
-  await expect(supply.row("Milk").getByTestId("supply-projected")).toHaveText("(1.0 kg after plan)");
+  await expect(supply.row("Milk")).not.toContainText(/Expired/i);
   await expect(prompts.getByTestId("expired-lot")).toHaveCount(1);
   await prompts.getByRole("button", { name: "Threw out the Egg" }).click();
   await expect(prompts).toHaveCount(0);
@@ -118,27 +120,42 @@ test("freeze part of a lot, thaw it; correct with ±5/±25 + Apply; discard (R8.
   expect((await supplyDoc(household.hid, "chicken-thigh"))!.lots).toHaveLength(1);
 });
 
-test("filters: location, category, expiring soon, low stock (R8.12)", { tag: ["@R8.12"] }, async ({ page, household }) => {
+test("filters: location, category, expiring soon, low stock, in a Filter sheet with no repeated options (R8.12)", { tag: ["@R8.12"] }, async ({ page, household }) => {
   await seedSupply(household.hid, "chicken-thigh", [{ amount: 900, frozen: { frozenDaysAgo: 3, expiresInDays: 200 } }], { label: "chicken thigh" });
   await seedSupply(household.hid, "baby-spinach", [{ amount: 50, expiresInDays: 1 }], { label: "baby spinach" });
   await seedSupply(household.hid, "jasmine-rice", [{ amount: 5000, location: "pantry", expiresInDays: 300 }], { label: "jasmine rice" });
+  await seedSupply(household.hid, "canned-diced-tomato", [{ amount: 800, location: "pantry", expiresInDays: 300 }], { label: "canned diced tomato" });
   const supply = new SupplyPage(page);
   await supply.goto();
   const names = () => page.getByTestId("supply-row");
-  await expect(names()).toHaveCount(3);
-  await page.getByRole("group", { name: "Location" }).getByRole("button", { name: "Freezer" }).click();
+  await expect(names()).toHaveCount(4);
+  // No filter chips on the page itself: one Filter button, like Recipes.
+  await expect(page.getByRole("button", { name: "Expiring soon" })).toHaveCount(0);
+  const sheet = page.getByRole("dialog", { name: "Filter" });
+  const pick = async (group: string, name: string) => {
+    if (!(await sheet.isVisible())) await page.getByRole("button", { name: /^Filter/ }).click();
+    await sheet.getByRole("group", { name: group }).getByRole("button", { name, exact: true }).click();
+    await sheet.getByRole("button", { name: /^Show \d+ items?$/ }).click();
+    await expect(sheet).toHaveCount(0);
+  };
+  // "Pantry" is offered once, as a location; the pantry category isn't repeated.
+  await page.getByRole("button", { name: /^Filter/ }).click();
+  await expect(sheet.getByRole("group", { name: "Location" }).getByRole("button", { name: "Pantry" })).toBeVisible();
+  await expect(sheet.getByRole("group", { name: "Category" }).getByRole("button", { name: "Pantry" })).toHaveCount(0);
+  await pick("Location", "Freezer");
   await expect(names()).toHaveCount(1);
   await expect(supply.row("Chicken thigh")).toBeVisible();
-  await page.getByRole("group", { name: "Location" }).getByRole("button", { name: "All" }).click();
-  await page.getByRole("group", { name: "Filters" }).getByRole("button", { name: "Grains" }).click();
+  await expect(page.getByRole("button", { name: "Filter, 1 filters on" })).toBeVisible();
+  await page.getByRole("button", { name: "Remove filter Freezer" }).click();
+  await pick("Category", "Grains");
   await expect(names()).toHaveCount(1);
   await expect(supply.row("Jasmine rice")).toBeVisible();
-  await page.getByRole("group", { name: "Filters" }).getByRole("button", { name: "Grains" }).click();
-  await page.getByRole("group", { name: "Filters" }).getByRole("button", { name: "Expiring soon" }).click();
+  await pick("Category", "Grains");
+  await pick("Show", "Expiring soon");
   await expect(names()).toHaveCount(1);
   await expect(supply.row("Baby spinach")).toBeVisible();
-  await page.getByRole("group", { name: "Filters" }).getByRole("button", { name: "Expiring soon" }).click();
-  await page.getByRole("group", { name: "Filters" }).getByRole("button", { name: "Low stock" }).click();
+  await pick("Show", "Expiring soon");
+  await pick("Show", "Low stock");
   await expect(supply.row("Baby spinach")).toBeVisible(); // 50 g of a 312 g bag
   await expect(supply.row("Jasmine rice")).toHaveCount(0);
   await expect(page).toHaveURL(/low=true/);
@@ -188,9 +205,11 @@ test("search filters Supply by name and alias, with the other filters (R8.17)", 
   await expect(supply.row("Baby spinach")).toBeVisible();
   await expect(page).toHaveURL(/q=SPIN/);
   // Combined with a filter: nothing in the freezer matches.
-  await page.getByRole("group", { name: "Location" }).getByRole("button", { name: "Freezer" }).click();
+  await page.getByRole("button", { name: /^Filter/ }).click();
+  await page.getByRole("dialog", { name: "Filter" }).getByRole("group", { name: "Location" }).getByRole("button", { name: "Freezer" }).click();
+  await page.getByRole("dialog", { name: "Filter" }).getByRole("button", { name: /^Show/ }).click();
   await expect(rows()).toHaveCount(0);
-  await page.getByRole("group", { name: "Location" }).getByRole("button", { name: "All" }).click();
+  await page.getByRole("button", { name: "Remove filter Freezer" }).click();
   await box.fill("thai"); // an alias of jasmine rice
   await expect(rows()).toHaveCount(1);
   await expect(supply.row("Jasmine rice")).toBeVisible();

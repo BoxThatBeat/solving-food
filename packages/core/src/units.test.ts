@@ -3,6 +3,7 @@ import fc from "fast-check";
 import {
   enterableMeasures,
   formatAmount,
+  formatInUnit,
   formatGrams,
   celsiusToFahrenheit,
   formatMl,
@@ -244,5 +245,22 @@ describe("enterableMeasures (R8.3)", () => {
     expect(enterableMeasures(flour)).toEqual(["weight", "volume"]);
     expect(enterableMeasures({ ...potato, allowedMeasures: ["weight", "count", "volume"] })).toEqual(["weight", "count"]);
     expect(enterableMeasures(bayLeaf)).toEqual(["count"]);
+  });
+});
+
+describe("formatInUnit (Supply in the unit it was added in)", () => {
+  const flour = { canonicalUnit: "g" as const, densityGPerMl: 0.5 };
+  const eggs = { canonicalUnit: "count" as const, unitWeightG: 50 };
+  it("reads weights, volumes and counts in the given unit", () => {
+    expect(formatInUnit(453.59237 * 1.5, "lb", flour)).toBe("1.5 lb");
+    expect(formatInUnit(1200, "kg", flour)).toBe("1.2 kg");
+    expect(formatInUnit(1000, "l", flour)).toBe("2.0 L");
+    expect(formatInUnit(6, "count", eggs)).toBe("6");
+    expect(formatInUnit(6, "g", eggs)).toBe("300 g");
+  });
+  it("falls back to metric when the unit can't convert", () => {
+    expect(formatInUnit(500, "cup", { canonicalUnit: "g" })).toBe("500 g");
+    expect(formatInUnit(500, undefined, { canonicalUnit: "g" })).toBe("500 g");
+    expect(formatInUnit(3, "ml", { canonicalUnit: "count" })).toBe("3");
   });
 });

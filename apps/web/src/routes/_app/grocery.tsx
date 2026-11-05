@@ -15,7 +15,6 @@ import {
   copyText,
   formatCanonical,
   formatCents,
-  formatPeriodRange,
   groupByStore,
   manualItem,
   isGenerated,
@@ -112,9 +111,6 @@ function GroceryPage() {
   };
 
   const groups = groupByStore(items, m.stores);
-  const startMs = millis(m.period?.start);
-  const endMs = millis(m.period?.end);
-  const tz = m.household?.timezone ?? "America/Toronto";
 
   const storeName = (id: string) => m.stores.find((st) => st.id === id)?.name ?? "That store";
 
@@ -171,11 +167,7 @@ function GroceryPage() {
 
   return (
     <PageBody className="max-w-[112.5rem]">
-      <div className="flex flex-col gap-1">
-        <span className="kicker">{startMs && endMs ? `For the ${formatPeriodRange(startMs, endMs, tz)} plan` : "This period"}</span>
-        <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">Grocery</h1>
-        <span className="font-mono text-[0.65625rem] font-bold uppercase">Plan needs − supply − ordered · rounded to packs · brand-mapped · food only</span>
-      </div>
+      <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">Grocery List</h1>
 
       {!m.ready ? (
         <p className="m-0 text-sm font-bold">Building the list…</p>

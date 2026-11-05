@@ -80,7 +80,7 @@ function appliedChips(s: CollectionSearch): Array<{ key: string; label: string; 
   return out;
 }
 
-function FilterIcon() {
+export function FilterIcon() {
   return (
     <span aria-hidden className="flex flex-col items-center gap-1">
       <span className="block h-[3px] w-[1.375rem] bg-onc" />
@@ -362,7 +362,7 @@ export function CollectionView(p: CollectionViewProps) {
   );
 }
 
-function Group({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+export function Group({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   const id = React.useId();
   return (
     <div role="group" aria-labelledby={id} className="flex flex-col gap-2.5">

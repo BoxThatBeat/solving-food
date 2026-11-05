@@ -25,7 +25,7 @@ function ThemePage() {
         <ArrowLeft aria-hidden className="size-4" strokeWidth={3} />
         Settings
       </Link>
-      <PageHeader title="Theme" kicker="Settings" />
+      <PageHeader title="Theme" />
       <Card className="max-w-[30rem]">
         <div className="flex items-baseline justify-between">
           <h2 className="m-0 font-display text-[1.1875rem] font-normal">Theme</h2>

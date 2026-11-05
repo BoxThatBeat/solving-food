@@ -36,6 +36,8 @@ export interface SupplyData {
   leftoverMealType?: MealType;
   short?: boolean;
   clearShort?: boolean;
+  /** The unit Supply shows the amount in (R8.13): set by Add to Supply, `null` deletes it (a grocery receipt). */
+  displayUnit?: string | null;
 }
 
 interface Entry {
@@ -123,6 +125,7 @@ export class SupplyStore {
       if (d.ingredientId) doc.ingredientId = d.ingredientId;
       if (d.cookEventId) doc.cookEventId = d.cookEventId;
       if (d.leftoverMealType) doc.leftoverMealType = d.leftoverMealType;
+      if (d.displayUnit !== undefined) doc.displayUnit = d.displayUnit ?? FieldValue.delete();
       if (d.short) doc.shortAt = FieldValue.serverTimestamp();
       else if (d.clearShort) doc.shortAt = null;
       this.tx.set(e.ref, doc, { merge: true });

@@ -213,11 +213,14 @@ export function SupplyAdjust({ item, ingredient, unit, hid, uid }: { item: Suppl
   const notify = useNotify();
   const current = recomputeAmount(item.lots);
   const measures: Measure[] = ingredient ? enterableMeasures(ingredient) : ["count"];
-  const units = unit.portions ? ["count"] : measures.flatMap((m) => ENTRY_UNITS[m]);
+  const conv = ingredient ?? { allowedMeasures: ["count" as Measure], canonicalUnit: "count" as const };
+  // The unit Supply shows it in comes first (R8.13), so the box reads like the row above it.
+  const shownIn = !unit.portions && ingredient && unit.displayUnit && fromCanonical(1, unit.displayUnit, conv) !== null ? unit.displayUnit : null;
+  const base = unit.portions ? ["count"] : measures.flatMap((m) => ENTRY_UNITS[m]);
+  const units = shownIn ? [shownIn, ...base.filter((x) => x !== shownIn)] : base;
   // The ingredient may load after the first render: a unit it doesn't offer falls back to its first one.
   const [uPick, setU] = React.useState<string | null>(null);
   const u = uPick && units.includes(uPick) ? uPick : (units[0] ?? "g");
-  const conv = ingredient ?? { allowedMeasures: ["count" as Measure], canonicalUnit: "count" as const };
   const shown = (canon: number) => {
     const v = fromCanonical(canon, u, conv);
     return v === null ? "" : String(Math.round(v * 100) / 100);
@@ -229,7 +232,7 @@ export function SupplyAdjust({ item, ingredient, unit, hid, uid }: { item: Suppl
   const setText = (t: string) => setEdit({ key, text: t });
   const value = Number(text.replace(",", "."));
   const valid = text.trim() !== "" && Number.isFinite(value) && value >= 0;
-  const steps = u === "count" ? [-2, -1, 1, 2] : u === "g" || u === "ml" ? [-25, -5, 5, 25] : [-1, -0.5, 0.5, 1];
+  const steps = u === "count" ? [-2, -1, 1, 2] : u === "g" || u === "ml" ? [-25, -5, 5, 25] : u === "kg" || u === "l" ? [-0.5, -0.1, 0.1, 0.5] : [-1, -0.5, 0.5, 1];
   const id = React.useId();
   const apply = () => {
     if (!valid) return;

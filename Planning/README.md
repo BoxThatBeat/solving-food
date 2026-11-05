@@ -24,6 +24,7 @@ ordered, checkable tasks with the files they touch, the tests that prove them, a
 | [M16-add-with-gemini.md](M16-add-with-gemini.md) | Add with Gemini | M15 | Owner request: Settings → Gemini section; Add recipe from a web link, an uploaded photo or the camera, Gemini following the Claude skill, imported by the drop-folder importer |
 | [M17-grocery-remove.md](M17-grocery-remove.md) | Grocery remove | M10 | Owner request: an × on every grocery line to take off an ingredient the household doesn't want; it stays off (and out of the budget) until Regenerate puts every removed line back |
 | [M18-store-orders-expiry.md](M18-store-orders-expiry.md) | Store orders, expiry dates | M17 | Owner request: each store ordered on its own day, Set date on any Supply lot, the confirm sheet scrolls, canned names guessed as pantry |
+| [M19-declutter.md](M19-declutter.md) | Declutter | M18 | Owner request: Supply without count/explainer, filters in a sheet like Recipes (deduped), the bracket only when planned, amounts in the unit they were added in; Grocery List title alone; Settings without kickers |
 
 ## How to use these plans
 

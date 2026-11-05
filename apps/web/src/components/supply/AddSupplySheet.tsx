@@ -64,7 +64,7 @@ function AddSupplyBody({ hid, uid, tz, nowMs, close }: { hid: string; uid: strin
     const entered = amountText(canon.canonicalAmount, { canonicalUnit: pick.canonicalUnit, unitWeightG: pick.unitWeightG });
     // The lot counts until the midnight after its use-by day (R8.15), as Set date on a lot does.
     const until = dating && !pick.freeUse ? localMidnight(addDays(dating, 1), tz) : undefined;
-    sendCommand(hid, uid, "addSupply", { ingredientId: pick.id, amount: canon.canonicalAmount, location, entered, ...(until ? { until } : {}) });
+    sendCommand(hid, uid, "addSupply", { ingredientId: pick.id, amount: canon.canonicalAmount, location, entered, ...(until ? { until } : {}), unit });
     notify({
       kind: "success",
       message: pick.freeUse ? `${pick.name}: noted as bought (staples aren't tracked by amount)` : `${entered} ${pick.name} added to supply${dating ? ` · use by ${dateText(localMidnight(dating, tz), tz)}` : ""}`,

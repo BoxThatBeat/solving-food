@@ -116,8 +116,9 @@ URLs are blocked in the CLI; serve things over HTTP. Screenshots never go into t
 - UI: brutalist, Catppuccin, mobile-first, shadcn/ui + Tailwind. Units (PRD R8.13, rule v3): recipe pages show
   one unit system per amount, never both: imperial weights and fl oz/pints/quarts/gallons convert to metric only
   (`2 lb` → `900 g`), cups and spoons read as written with no metric (`1 cup flour`, `2 tbsp`), counts and metric as
-  written; temperatures are Fahrenheit only, never Celsius. Everything else (Supply, grocery, History, review) is
-  metric only, and cups/spoons still convert to grams for Supply.
+  written; temperatures are Fahrenheit only, never Celsius. Supply reads in the unit
+  it was added in (`displayUnit`, else the pack measure), stored in grams; everything else (grocery, History, review) is
+  metric only.
 
 ## People
 

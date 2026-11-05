@@ -330,6 +330,33 @@ export function formatAmount(
   return grams === null ? opts.original : `${opts.original} (${formatGrams(grams)})`;
 }
 
+/**
+ * A Supply amount in the unit it was added in (owner review, R8.13 Supply exception): "1.5 lb", "2 L", "3", "2 cups".
+ * Metric weights and volumes keep the usual rounding (g/kg, ml/L); a count reads as a bare number. Falls back to the
+ * canonical metric figure when the unit can't be converted for this ingredient (no density, no unit weight).
+ */
+export function formatInUnit(
+  canonical: number,
+  unit: string | undefined,
+  ingredient: Pick<ConvertibleIngredient, "canonicalUnit" | "unitWeightG" | "densityGPerMl">,
+): string {
+  const c = Math.max(0, canonical);
+  const fallback = () => (ingredient.canonicalUnit === "count" ? formatQuantity(c) : formatGrams(c));
+  const def = unit ? UNITS[unit] : undefined;
+  if (!unit || !def || def.kind === "vague") return fallback();
+  const v = fromCanonical(c, unit, { ...ingredient, allowedMeasures: [] });
+  if (v === null) return fallback();
+  if (def.kind === "count") return formatQuantity(v);
+  if (unit === "g" || unit === "kg" || unit === "mg") return formatGrams(v * def.factor);
+  if (unit === "ml" || unit === "l" || unit === "dl") return formatMl(v * def.factor);
+  return `${formatQuantity(v, unit)} ${unitLabel(unit, v)}`;
+}
+
+/** The unit a measurement kind reads in when nothing more specific is known: grams, millilitres, or a count. */
+export function unitForMeasure(m: Measure | undefined): string | undefined {
+  return m === "weight" ? "g" : m === "volume" ? "ml" : m === "count" ? "count" : undefined;
+}
+
 /** Units that are already metric: shown as written. */
 const METRIC = new Set(["mg", "g", "kg", "ml", "dl", "l"]);
 

@@ -4,7 +4,7 @@ import { auth } from "@/firebase/app";
 import { PageBody, PageHeader } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
-import { useActiveHousehold, useMyInvites } from "@/data/households";
+import { useMyInvites } from "@/data/households";
 import { InviteList } from "@/components/households/Invites";
 import { useReadySession } from "@/session/useSession";
 
@@ -29,13 +29,11 @@ const SECTIONS = [
 
 function SettingsPage() {
   const s = useReadySession();
-  const hh = useActiveHousehold();
   const navigate = useNavigate();
-  const name = hh.data?.name ?? "";
   const invites = useMyInvites(s.user.uid, s.user.email, s.householdIds);
   return (
     <PageBody>
-      <PageHeader title="Settings" kicker={`Household · ${name} · theme is per user`} />
+      <PageHeader title="Settings" />
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[repeat(auto-fill,minmax(23.75rem,1fr))]">
         <nav aria-label="Settings sections" className="flex flex-col gap-2.5">
           {SECTIONS.map((sec) => (

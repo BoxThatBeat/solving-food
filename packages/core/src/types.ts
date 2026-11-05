@@ -538,6 +538,8 @@ export const supplySchema = z.object({
   leftoverMealType: z.enum(MEAL_TYPES).optional(),
   /** Set when a consumption found less than it needed ("check the amount"); cleared by a correction or purchase. */
   shortAt: timestamp.nullable().optional(),
+  /** The unit the amount reads in on Supply (R8.13): the unit it was last added in by hand. Absent: the pack measure. */
+  displayUnit: z.string().max(12).optional(),
   updatedAt: timestamp.optional(),
 });
 export type SupplyDoc = z.infer<typeof supplySchema>;
