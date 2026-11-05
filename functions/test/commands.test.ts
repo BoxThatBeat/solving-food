@@ -16,6 +16,8 @@ const ING = {
   chicken: { name: "chicken thigh", aliases: [], category: "meat", defaultLocation: "fridge", allowedMeasures: ["weight"], canonicalUnit: "g", shelfLifeDays: { fridge: 2, freezer: 180 }, freezable: true, isStaple: false, freeUse: false, needsReview: false },
   spinach: { name: "baby spinach", aliases: [], category: "produce", defaultLocation: "fridge", allowedMeasures: ["weight"], canonicalUnit: "g", shelfLifeDays: { fridge: 5 }, freezable: false, isStaple: false, freeUse: false, needsReview: false },
   fries: { name: "frozen french fries", aliases: ["fries"], category: "frozen", defaultLocation: "freezer", allowedMeasures: ["weight"], canonicalUnit: "g", shelfLifeDays: { freezer: 365 }, defaultPackAmount: 1000, defaultPackMeasure: "weight", freezable: true, isStaple: false, freeUse: false, needsReview: false, side: { portion: 150 } },
+  garlic: { name: "garlic", aliases: [], category: "produce", defaultLocation: "pantry", allowedMeasures: ["weight", "count"], canonicalUnit: "g", unitWeightG: 5, shelfLifeDays: { pantry: 60 }, freezable: false, isStaple: false, freeUse: false, needsReview: false },
+  "garlic-powder": { name: "garlic powder", aliases: [], category: "spices", defaultLocation: "pantry", allowedMeasures: ["weight", "volume"], canonicalUnit: "g", densityGPerMl: 0.63, shelfLifeDays: { pantry: 730 }, freezable: false, isStaple: false, freeUse: false, needsReview: false },
   oil: { name: "olive oil", aliases: [], category: "pantry", defaultLocation: "pantry", allowedMeasures: ["volume"], canonicalUnit: "g", densityGPerMl: 0.91, shelfLifeDays: {}, freezable: false, isStaple: true, freeUse: true, needsReview: false },
 };
 
@@ -73,6 +75,7 @@ describe("supply commands", () => {
     b.set(db.doc(`households/${HID}`), { name: "Cmd", createdBy: UID, timezone: "America/Toronto", currentPeriodId: "2026-10-05", periodDays: 7, budgetCents: 0, currency: "CAD", defaultServings: 4, plannedMealTypes: ["breakfast", "lunch", "dinner"], pcxStoreId: "x", settings: {} });
     b.set(db.doc("recipes/r-chicken"), recipe("Chicken spinach", [["chicken", 600], ["spinach", 140], ["oil", 27]], { defaultLeftoverPortions: 2, leftoverMealType: "lunch" }));
     b.set(db.doc("recipes/r-rice"), recipe("Plain rice", [["rice", 400]]));
+    b.set(db.doc("recipes/r-garlic"), recipe("Garlic rice", [["rice", 200], ["garlic", 10]]));
     await b.commit();
   });
 
@@ -416,5 +419,53 @@ describe("sides (R5.10)", () => {
     await db.doc(`households/${HID}/planItems/snack`).set({ periodId: "2026-10-05", kind: "meal", mealType: "snack", servings: 2, recipes: [{ recipeId: "r-rice", servingsMultiplier: 1 }], sides: [{ ingredientId: "fries", portion: 50 }], coverage: {}, status: "planned", addedBy: UID });
     expect((await command("markEaten", { planItemId: "snack" })).status).toBe("applied");
     expect((await supply("fries"))!.canonicalAmount).toBe(1200);
+  });
+});
+
+describe("swaps and cook notes (M28, R4.38–R4.40)", () => {
+  it("finishCooking deducts an accepted swap's substitute instead of the original, ignores pairs the table lacks, and stores step notes", async () => {
+    expect((await command("addSupply", { ingredientId: "garlic-powder", amount: 50, location: "pantry" })).status).toBe("applied");
+    expect((await command("addSupply", { ingredientId: "rice", amount: 1000, location: "pantry" })).status).toBe("applied");
+    const garlicBefore = ((await supply("garlic"))?.canonicalAmount as number | undefined) ?? 0;
+    const riceBefore = (await supply("rice"))!.canonicalAmount as number;
+    const r = await command("finishCooking", {
+      cookEventId: "ev-swap",
+      recipes: [{ recipeId: "r-garlic", servingsMultiplier: 1 }],
+      servings: 4,
+      substitutions: [
+        { ingredientId: "garlic", withIngredientId: "garlic-powder", amount: 0.776 },
+        // Not in the substitution table: ignored, the rice comes out as written.
+        { ingredientId: "rice", withIngredientId: "chicken", amount: 100 },
+      ],
+      stepNotes: [
+        { recipeId: "r-garlic", step: 0, text: " Toast the powder first " },
+        { recipeId: "not-cooked", step: 0, text: "dropped" },
+      ],
+    });
+    expect(r.status).toBe("applied");
+    expect((await supply("garlic-powder"))!.canonicalAmount).toBeCloseTo(50 - 0.776, 6);
+    expect(((await supply("garlic"))?.canonicalAmount as number | undefined) ?? 0).toBe(garlicBefore);
+    expect((await supply("rice"))!.canonicalAmount).toBe(riceBefore - 200);
+    const ev = (await db.doc(`households/${HID}/cookEvents/ev-swap`).get()).data()!;
+    expect(ev.substitutions).toEqual([{ ingredientId: "garlic", withIngredientId: "garlic-powder", amount: 0.776 }]);
+    // The review pre-fills the substitute, not the garlic.
+    expect(ev.used).toEqual([
+      { ingredientId: "rice", canonicalAmount: 200 },
+      { ingredientId: "garlic-powder", canonicalAmount: 0.776 },
+    ]);
+    expect(ev.stepNotes).toEqual([{ recipeId: "r-garlic", step: 0, text: "Toast the powder first" }]);
+    expect(ev.notedRecipeIds).toEqual(["r-garlic"]);
+  });
+
+  it("submitReview's note marks every recipe of the meal noted; an event without notes has none", async () => {
+    expect((await command("finishCooking", { cookEventId: "ev-note", recipes: [{ recipeId: "r-rice", servingsMultiplier: 1 }, { recipeId: "r-garlic", servingsMultiplier: 1 }], servings: 4 })).status).toBe("applied");
+    expect((await db.doc(`households/${HID}/cookEvents/ev-note`).get()).data()!.notedRecipeIds).toBeUndefined();
+    expect((await command("submitReview", { cookEventId: "ev-note", ratings: [], note: "More garlic next time" })).status).toBe("applied");
+    const ev = (await db.doc(`households/${HID}/cookEvents/ev-note`).get()).data()!;
+    expect(ev.note).toBe("More garlic next time");
+    expect(ev.notedRecipeIds).toEqual(["r-garlic", "r-rice"]);
+    // The query the recipe page and mise en place use.
+    const q = await db.collection(`households/${HID}/cookEvents`).where("notedRecipeIds", "array-contains", "r-garlic").orderBy("cookedAt", "desc").limit(5).get();
+    expect(q.docs.map((d) => d.id)).toEqual(["ev-note", "ev-swap"]);
   });
 });

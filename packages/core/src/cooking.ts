@@ -7,6 +7,7 @@ import { isPlannable } from "./taxonomy";
 import { needsFor, type BuildContext, type GroceryIngredient, type PlanItemInput, type RecipeLines, type SideRef } from "./grocery";
 import { activeExpiry, isExpired, type LedgerLot } from "./ledger";
 import { DAY_MS, EPS } from "./math";
+import { findSwaps, type Swap } from "./substitutions";
 
 export type IngredientsOf = (id: string) => Pick<GroceryIngredient, "freeUse"> | undefined;
 export type RecipesOf = BuildContext["recipes"];
@@ -100,31 +101,42 @@ export interface SupplyCoverage {
   fraction: number;
   /** Every tracked ingredient covered: "can make" (R4.3). */
   canMake: boolean;
+  /** Tracked ingredients neither Supply nor a swap covers. */
   missing: string[];
+  /** M28 (R6.35): missing ingredients covered by a substitute in Supply (only with `substitute`). */
+  swaps: Swap[];
 }
 
 /**
  * How well projected supply covers one recipe at its own servings (R4.3, R4.4). Free-use, optional, and vague lines
  * don't count. A recipe with nothing tracked (only free-use or vague lines) is neither "can make" nor "use what's left".
+ * M28 (R6.35): with `substitute`, a missing ingredient a swap covers counts as covered ("can make · with swaps").
  */
-export function supplyCoverage(lines: RecipeLines["ingredients"], projected: ReadonlyMap<string, number>, ingredientOf: (id: string) => Pick<GroceryIngredient, "freeUse"> | undefined): SupplyCoverage {
+export function supplyCoverage(
+  lines: RecipeLines["ingredients"],
+  projected: ReadonlyMap<string, number>,
+  ingredientOf: (id: string) => Pick<GroceryIngredient, "freeUse"> | undefined,
+  opts: { substitute?: boolean | undefined; baking?: boolean | undefined } = {},
+): SupplyCoverage {
   let need = 0;
   let have = 0;
-  const missing: string[] = [];
   const per = new Map<string, number>();
   for (const l of lines) {
     if (l.optional || l.canonicalAmount <= 0) continue;
     if (ingredientOf(l.ingredientId)?.freeUse) continue;
     per.set(l.ingredientId, (per.get(l.ingredientId) ?? 0) + l.canonicalAmount);
   }
+  const swaps = opts.substitute ? findSwaps(per, projected, { baking: opts.baking }) : [];
+  const swapped = new Map(swaps.map((s) => [s.ingredientId, s.replaces]));
+  const missing: string[] = [];
   for (const [id, n] of per) {
-    const p = Math.max(0, projected.get(id) ?? 0);
+    const p = Math.max(0, projected.get(id) ?? 0) + (swapped.get(id) ?? 0);
     need += n;
     have += Math.min(p, n);
     if (p + EPS < n) missing.push(id);
   }
-  if (need <= 0) return { fraction: 0, canMake: false, missing };
-  return { fraction: have / need, canMake: missing.length === 0, missing };
+  if (need <= 0) return { fraction: 0, canMake: false, missing, swaps };
+  return { fraction: have / need, canMake: missing.length === 0, missing, swaps };
 }
 
 // ---------- expiry badges (R6.7, §7)

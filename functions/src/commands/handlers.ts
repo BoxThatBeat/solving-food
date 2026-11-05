@@ -5,6 +5,9 @@ import { FieldValue, type DocumentReference, type Transaction } from "firebase-a
 import {
   appendObservation,
   addLocalDays,
+  applySwaps,
+  notedRecipeIds,
+  substitutionRatio,
   applyCorrection,
   applyPurchase,
   consumeFEFO,
@@ -255,14 +258,25 @@ export async function finishCooking(ctx: Ctx, p: CommandPayload<"finishCooking">
   const present = recipes.filter((r) => r.doc);
   // Sides (R5.10): the command's, else the plan item's (portions snapshotted when the meal was created).
   const sides = p.sides ?? sidesOf(planData?.sides);
-  const ings = await ingredientsFor(ctx, [...present.flatMap((r) => r.doc!.ingredientIds ?? []), ...sides.map((x) => x.ingredientId)]);
+  const swapsSent = p.substitutions ?? [];
+  const ings = await ingredientsFor(ctx, [...present.flatMap((r) => r.doc!.ingredientIds ?? []), ...sides.map((x) => x.ingredientId), ...swapsSent.map((x) => x.withIngredientId)]);
   const byId = new Map(present.map((r) => [r.ref.recipeId, r.doc!]));
-  const needs = mealRequirements(
+  const recipeNeeds = mealRequirements(
     present.map((r) => r.ref),
     p.servings,
     { recipes: (id) => byId.get(id), ingredients: (id) => ings.get(id) },
     sides,
   );
+  // M28 (R4.40): swaps accepted on mise en place deduct the substitute in place of the original (table pairs only, of
+  // ingredients the meal uses; a free-use or unknown substitute isn't tracked).
+  // One swap per ingredient (the first).
+  const swapped = new Set<string>();
+  const applied = swapsSent.filter((x) => {
+    const ok = recipeNeeds.has(x.ingredientId) && !swapped.has(x.ingredientId) && substitutionRatio(x.ingredientId, x.withIngredientId) !== null && ings.has(x.withIngredientId) && !ings.get(x.withIngredientId)!.freeUse;
+    if (ok) swapped.add(x.ingredientId);
+    return ok;
+  });
+  const needs = applySwaps(recipeNeeds, applied);
   const titles = recipes.map((r) => r.doc?.title ?? "Recipe");
   const title = p.title ?? (planData?.name as string | undefined) ?? titles.join(" + ");
   const mealType: MealType = p.mealType ?? (planData?.mealType as MealType | undefined) ?? "dinner";
@@ -336,6 +350,14 @@ export async function finishCooking(ctx: Ctx, p: CommandPayload<"finishCooking">
   if (savedMealId) eventDoc.savedMealId = savedMealId;
   if (portions > 0) eventDoc.leftoverSupplyId = loId;
   if (sides.length) eventDoc.sides = sides.map((x) => ({ ingredientId: x.ingredientId, portion: x.portion }));
+  if (applied.length) eventDoc.substitutions = applied.map((x) => ({ ingredientId: x.ingredientId, withIngredientId: x.withIngredientId, amount: round(x.amount) }));
+  // M28 (R4.39): step notes of the recipes cooked, and which recipes have notes (the "Last time" query).
+  const recipeIdSet = new Set(present.map((r) => r.ref.recipeId));
+  const stepNotes = (p.stepNotes ?? []).filter((n) => recipeIdSet.has(n.recipeId));
+  if (stepNotes.length) {
+    eventDoc.stepNotes = stepNotes.map((n) => ({ recipeId: n.recipeId, step: n.step, text: n.text.trim() }));
+    eventDoc.notedRecipeIds = notedRecipeIds([...recipeIdSet], undefined, stepNotes);
+  }
   ctx.tx.set(eventRef, eventDoc);
 
   // "Made n times" and last cooked (R4.5) count at cooking; ratings arrive with the review.
@@ -424,7 +446,11 @@ export async function submitReview(ctx: Ctx, p: CommandPayload<"submitReview">):
   });
   if (ratings.length) eventUpdate.ratedBy = FieldValue.arrayUnion(ctx.uid);
   if (p.savedMealId && !e.savedMealId) eventUpdate.savedMealId = p.savedMealId;
-  if (p.note) eventUpdate.note = p.note;
+  if (p.note) {
+    eventUpdate.note = p.note;
+    // M28 (R4.38): the review's note makes every recipe of the meal "noted" (what the Last time query reads).
+    eventUpdate.notedRecipeIds = notedRecipeIds([...new Set([...((e.notedRecipeIds as string[] | undefined) ?? []), ...recipeIds])], p.note);
+  }
 
   if (doCorrect) {
     const ref = { type: "cookEvent", id: p.cookEventId };

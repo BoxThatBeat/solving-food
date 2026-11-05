@@ -34,6 +34,8 @@ export * from "./expiry";
 export * from "./ledger";
 export * from "./commands";
 export * from "./cooking";
+export * from "./cookNotes";
+export * from "./substitutions";
 export * from "./cadence";
 export * from "./preferences";
 export * from "./scoring";

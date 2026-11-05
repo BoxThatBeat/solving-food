@@ -9,6 +9,7 @@ import { minSpare } from "../expiry";
 import { DAY_MS, FLOAT_EPS } from "../math";
 import { missingTools } from "../tools";
 import { matchingPrefs, type IngredientMetaOf, type PrefRecipe, type Preferences } from "../preferences";
+import { SWAP_PENALTY, type Swap } from "../substitutions";
 
 
 /** A recipe as scoring sees it: the search index summary's fields (lines are canonical per serving). */
@@ -73,6 +74,8 @@ export interface ScoreContext {
   deals?: ReadonlyMap<string, { dealPct: number }> | undefined;
   /** M27: cents per canonical unit of an ingredient at the price the grocery list uses (null when unknown). */
   centsPerUnit?: ((ingredientId: string) => number | null) | undefined;
+  /** M28 (R6.35, R11.20): count a missing ingredient with a substitute in projected Supply as covered (a small penalty). */
+  substitute?: boolean | undefined;
 }
 
 /** Cooked within this many days counts fully as "recently cooked"; it fades out by RECENT_FADE_DAYS. */
@@ -155,10 +158,15 @@ export function missingIds(needs: ReadonlyMap<string, number>, ctx: Pick<ScoreCo
 
 /**
  * missingIngredients: share of tracked ingredients supply doesn't cover. A recipe with nothing tracked (only vague or
- * free-use lines) counts as half missing: it would otherwise look free and fully stocked and top every list.
+ * free-use lines) counts as half missing: it would otherwise look free and fully stocked and top every list. M28
+ * (R6.35): a missing ingredient covered by a swap (`findSwaps` over projected Supply) counts SWAP_PENALTY of one.
  */
-export function missingIngredients(needs: ReadonlyMap<string, number>, ctx: Pick<ScoreContext, "projected">): number {
-  return needs.size ? clamp01(missingIds(needs, ctx).length / needs.size) : 0.5;
+export function missingIngredients(needs: ReadonlyMap<string, number>, ctx: Pick<ScoreContext, "projected">, swaps: readonly Swap[] = []): number {
+  if (!needs.size) return 0.5;
+  const swapped = new Set(swaps.map((s) => s.ingredientId));
+  const missing = missingIds(needs, ctx);
+  const covered = missing.filter((id) => swapped.has(id)).length;
+  return clamp01((missing.length - covered * (1 - SWAP_PENALTY)) / needs.size);
 }
 
 /** rating: Bayesian household average / 10 (unrated = the prior, 0.6). */

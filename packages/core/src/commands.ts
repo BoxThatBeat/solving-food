@@ -6,6 +6,7 @@
 import { z } from "zod";
 import { MEAL_TYPES, STORAGE_LOCATIONS } from "./taxonomy";
 import { MEAL_RECIPES_MAX, MEAL_SIDES_MAX, mealSideSchema } from "./types";
+import { STEP_NOTE_MAX, STEP_NOTES_MAX } from "./cookNotes";
 
 /**
  * A document ID (M22): many payload IDs become path segments (`supply/{ingredientId}`, `cookEvents/{cookEventId}`), so
@@ -93,6 +94,11 @@ export function receiveChunks<T extends { itemId: string; ingredientId?: string 
   return out;
 }
 
+/** Swaps one finishCooking can carry (M28). */
+export const SWAPS_MAX = 40;
+export const swapUse = z.object({ ingredientId: id, withIngredientId: id, amount: amount.positive() });
+export const stepNote = z.object({ recipeId: id, step: z.number().int().min(0).max(500), text: z.string().max(STEP_NOTE_MAX) });
+
 export const recipeRefPayload = z.object({ recipeId: id, servingsMultiplier: z.number().positive().max(10) });
 
 export const finishCookingPayload = z.object({
@@ -106,6 +112,13 @@ export const finishCookingPayload = z.object({
   title: z.string().max(200).optional(),
   /** The meal's sides (R5.10); absent = the plan item's. */
   sides: z.array(mealSideSchema).max(MEAL_SIDES_MAX).optional(),
+  /**
+   * M28 (R4.40): swaps accepted on mise en place: `amount` (canonical) of `withIngredientId` is deducted in place of
+   * `amount / ratio` of `ingredientId`. Pairs the substitution table doesn't have are ignored (`applySwaps`).
+   */
+  substitutions: z.array(swapUse).max(SWAPS_MAX).optional(),
+  /** M28 (R4.39): the step notes of this cook (carried forward and edited; "" = cleared), stored on the cook event. */
+  stepNotes: z.array(stepNote).max(STEP_NOTES_MAX).optional(),
 });
 
 export const ratingPayload = z.object({

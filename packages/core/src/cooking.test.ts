@@ -176,7 +176,7 @@ describe("projected supply and can-make (R8.4, R4.3, R4.4)", () => {
   it("coverage ignores free-use; can make needs every tracked line", () => {
     const lines = recipes.get("r1")!.ingredients;
     const all = supplyCoverage(lines, new Map([["chicken", 600], ["spinach", 200]]), (id) => ingredients.get(id));
-    expect(all).toEqual({ fraction: 1, canMake: true, missing: [] });
+    expect(all).toEqual({ fraction: 1, canMake: true, missing: [], swaps: [] });
     const most = supplyCoverage(lines, new Map([["chicken", 600], ["spinach", 100]]), (id) => ingredients.get(id));
     expect(most.canMake).toBe(false);
     expect(most.fraction).toBeCloseTo(700 / 740);

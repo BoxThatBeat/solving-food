@@ -40,6 +40,8 @@ import {
 import { FACTORS, type FactorKey, type Weights } from "./weights";
 import { dealLabel, PROTEIN_CATEGORIES } from "../priceHistory";
 import { FLOAT_EPS } from "../math";
+import { findSwaps, isBaking, swapText, type Swap } from "../substitutions";
+import { formatCanonical } from "../grocery/copy";
 
 export * from "./factors";
 export * from "./weights";
@@ -77,6 +79,8 @@ export interface ScoreResult {
    * or fish ingredient) or its most expensive one to buy. Absent otherwise.
    */
   deal?: { ingredientId: string; dealPct: number; label: string };
+  /** M28 (R6.35): missing ingredients covered by a substitute in projected Supply (only while substitutions are on). */
+  swaps?: Swap[];
 }
 
 const short = (ctx: ScoreContext, id: string) => (ctx.ingredient(id)?.name ?? id.replace(/-/g, " ")).split(/[,(]/)[0]!.trim();
@@ -85,6 +89,7 @@ const dl = (d: number) => (d <= 0 ? "today" : d === 1 ? "1d" : `${d}d`);
 /** Scores one recipe. */
 export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResult {
   const needs = recipeNeeds(r, ctx);
+  const swaps = ctx.substitute ? findSwaps(needs, ctx.projected, { baking: isBaking(r.tags) }) : [];
   const s = ctx.stats.get(r.id);
   const cost = ctx.costOf(r);
   const f: Partial<Record<FactorKey, number>> = {
@@ -94,7 +99,7 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
     historicalPref: historicalPref(s, ctx.favourites.has(r.id), ctx.nowMs),
     variety: variety(r, s, ctx),
     preferences: preferencesFactor(r, ctx),
-    missingIngredients: missingIngredients(needs, ctx),
+    missingIngredients: missingIngredients(needs, ctx, swaps),
     cost: costFactor(cost, ctx.remainingBudgetCents),
     sameProtein: sameProtein(r, ctx),
     sameCuisine: sameCuisine(r, ctx),
@@ -156,8 +161,12 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
         return u ? `${capital(short(ctx, u.ingredientId))} ${dealLabel(u)}` : "On sale";
       }
       case "missingIngredients": {
-        const m = missingIds(needs, ctx).slice(0, 2).map((id) => short(ctx, id));
-        return m.length ? `Missing ${m.join(", ")}` : "Missing some";
+        // M28 (R6.35): "Missing lemon · garlic: use 0.8 g garlic powder from Supply".
+        const swapped = new Set(swaps.map((x) => x.ingredientId));
+        const m = missingIds(needs, ctx).filter((id) => !swapped.has(id)).slice(0, 2).map((id) => short(ctx, id));
+        const parts = m.length ? [`Missing ${m.join(", ")}`] : [];
+        if (swaps[0]) parts.push(swapText(swaps[0], (id) => short(ctx, id), (id, n) => formatCanonical(n, ctx.ingredient(id)?.canonicalUnit ?? "g")));
+        return parts.length ? parts.join(" · ") : "Missing some";
       }
       case "cost":
         return cost === null ? "Price unknown" : `+${formatCents(cost)}`;
@@ -196,6 +205,7 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
     reasons,
     costCents: cost,
     expiring: exp,
+    ...(swaps.length ? { swaps } : {}),
     ...(dealUse ? { deal: { ingredientId: dealUse.ingredientId, dealPct: dealUse.dealPct, label: `${capital(short(ctx, dealUse.ingredientId))} ${dealLabel(dealUse)}` } } : {}),
   };
 }

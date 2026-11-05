@@ -78,6 +78,8 @@ describe("commands (§6, validCommand)", () => {
     await assertSucceeds(setDoc(doc(dbAs(ALICE), "households/h-alice/commands/c1u"), cmd("addSupply", { ingredientId: "rice", amount: 500, location: "pantry", entered: "500 g", until: Date.now() + 86_400_000, unit: "cup" })));
     await assertSucceeds(setDoc(doc(dbAs(ALICE), "households/h-alice/commands/c2"), cmd("finishCooking", { cookEventId: "e9", planItemId: "p1", recipes: [{ recipeId: "r", servingsMultiplier: 1 }], servings: 4 })));
     await assertSucceeds(setDoc(doc(dbAs(ALICE), "households/h-alice/commands/c2s"), cmd("finishCooking", { cookEventId: "e10", recipes: [{ recipeId: "r", servingsMultiplier: 1 }], servings: 4, sides: [{ ingredientId: "fries", portion: 150 }] })));
+    // M28 (R4.39, R4.40): accepted swaps and step notes ride on finishCooking.
+    await assertSucceeds(setDoc(doc(dbAs(ALICE), "households/h-alice/commands/c2n"), cmd("finishCooking", { cookEventId: "e11", recipes: [{ recipeId: "r", servingsMultiplier: 1 }], servings: 4, substitutions: [{ ingredientId: "garlic", withIngredientId: "garlic-powder", amount: 0.8 }], stepNotes: [{ recipeId: "r", step: 1, text: "Hotter pan" }] })));
     await assertSucceeds(setDoc(doc(dbAs(ALICE), "households/h-alice/commands/c3"), cmd("submitReview", { cookEventId: "e1", ratings: [], used: [], leftoverPortions: 2 })));
     // M25: a receive prefilled from a receipt carries paid prices, extras and the receipt's total.
     await assertSucceeds(setDoc(doc(dbAs(ALICE), "households/h-alice/commands/c4"), cmd("receiveGroceries", { listId: "l1", items: [{ itemId: "rice", ingredientId: "rice", amount: 500, paidCents: 499 }, { itemId: "receipt-1", ingredientId: "rice", amount: 1, extra: true, name: "RICE" }], receipt: { totalCents: 998 } })));
@@ -94,6 +96,7 @@ describe("commands (§6, validCommand)", () => {
     await assertFails(setDoc(doc(db, "households/h-alice/commands/x8"), cmd("addSupply", { ingredientId: "rice/../x", amount: 1, location: "pantry" })));
     await assertFails(setDoc(doc(db, "households/h-alice/commands/x9"), cmd("discard", { supplyId: "..", lotId: "l1" })));
     await assertFails(setDoc(doc(db, "households/h-alice/commands/x10"), cmd("finishCooking", { cookEventId: "e".repeat(201), recipes: [{ recipeId: "r", servingsMultiplier: 1 }], servings: 4 })));
+    await assertFails(setDoc(doc(db, "households/h-alice/commands/x10n"), cmd("finishCooking", { cookEventId: "e12", recipes: [{ recipeId: "r", servingsMultiplier: 1 }], servings: 4, notes: [] })));
     await assertFails(setDoc(doc(db, "households/h-alice/commands/x11"), cmd("markEaten", { planItemId: 7 })));
     await assertFails(setDoc(doc(db, "households/h-alice/commands/x12"), cmd("receiveGroceries", { listId: "l1", items: [], paid: 5 })));
   });

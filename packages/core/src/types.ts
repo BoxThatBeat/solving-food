@@ -283,6 +283,9 @@ export const householdSettingsSchema = z.object({
   sides: z.record(id, z.object({ portion: z.number().positive() })).optional(),
   /** Instructions added to the list copied for ChatGPT (R7.5), e.g. preferred brands. */
   chatgptInstructions: z.string().max(1000).optional(),
+  /** Suggest substitutions (M28, R11.20): false turns swaps off in suggestions, Can make, cooking and the grocery hints;
+   * absent = on. */
+  substitutions: z.boolean().optional(),
 });
 
 export const householdNameSchema = z
@@ -453,6 +456,12 @@ export const cookEventSchema = z.object({
   reviewedBy: z.string().optional(),
   ratedBy: z.array(z.string()),
   note: z.string().optional(),
+  /** M28 (R4.39): notes on single steps, carried forward from cook to cook ("" = cleared). */
+  stepNotes: z.array(z.object({ recipeId: id, step: z.number().int().min(0), text: z.string() })).optional(),
+  /** M28: the recipes this event has a note for (the review's note, or step notes); what the "Last time" query reads. */
+  notedRecipeIds: z.array(id).optional(),
+  /** M28 (R4.40): swaps accepted on mise en place, as deducted. */
+  substitutions: z.array(z.object({ ingredientId: id, withIngredientId: id, amount: z.number() })).optional(),
 });
 export type CookEventDoc = z.infer<typeof cookEventSchema>;
 
