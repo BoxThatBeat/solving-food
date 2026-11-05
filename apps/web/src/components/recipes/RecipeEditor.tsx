@@ -808,7 +808,7 @@ function IngredientLine({
   control: Control<FormInput>;
   register: UseFormRegister<FormInput>;
   ingredients: readonly IngredientEntry[];
-  byId: Map<string, IngredientEntry>;
+  byId: ReadonlyMap<string, IngredientEntry>;
   uid: string;
   onRemove: () => void;
   setValue: UseFormSetValue<FormInput>;

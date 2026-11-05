@@ -316,7 +316,7 @@ function StoreCard({
 }: {
   store: StoreEntry;
   lines: Array<[string, GroceryItem]>;
-  ingredients: Map<string, IngredientEntry>;
+  ingredients: ReadonlyMap<string, IngredientEntry>;
   onTick: (id: string, on: boolean) => void;
   onRemove?: (id: string) => void;
   footer?: React.ReactNode;
@@ -380,7 +380,7 @@ function StoreCard({
   );
 }
 
-function OrderedList({ id, list, stores, ingredients, onTick, onUndo, onReceive, receiving }: { id: string; list: StoredList; stores: readonly StoreEntry[]; ingredients: Map<string, IngredientEntry>; onTick: (id: string, on: boolean) => void; onUndo: () => void; onReceive: () => void; receiving: boolean }) {
+function OrderedList({ id, list, stores, ingredients, onTick, onUndo, onReceive, receiving }: { id: string; list: StoredList; stores: readonly StoreEntry[]; ingredients: ReadonlyMap<string, IngredientEntry>; onTick: (id: string, on: boolean) => void; onUndo: () => void; onReceive: () => void; receiving: boolean }) {
   const at = millis(list.orderedAt);
   const store = list.storeId ? stores.find((st) => st.id === list.storeId) : undefined;
   return (

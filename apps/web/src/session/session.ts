@@ -16,6 +16,8 @@ import {
 } from "firebase/firestore";
 import { normalizeEmail, pickActiveHousehold, type DirectoryDoc, type UserDoc } from "@solving-food/core";
 import { auth, db } from "@/firebase/app";
+import { tracked } from "@/firebase/listen";
+import { reportListenerError } from "@/data/listenErrors";
 
 export interface AuthUser {
   uid: string;
@@ -157,7 +159,7 @@ export class SessionStore {
     }
     this.set({ status: "loading" });
     let following = false;
-    const unsub = onSnapshot(
+    const unsub = tracked(`allowlist/${email}`, onSnapshot(
       doc(db, "allowlist", email),
       { includeMetadataChanges: true },
       (snap) => {
@@ -184,16 +186,14 @@ export class SessionStore {
         this.stopListeners();
         this.set({ status: "notInvited", email });
       },
-    );
+    ));
     this.unsubs.push(unsub);
   }
 
   private followUser(uid: string): void {
-    const onError = (err: unknown) => {
-      console.error("session listener failed", err);
-    };
+    const onError = (label: string) => (err: unknown) => reportListenerError(label, err);
     this.unsubs.push(
-      onSnapshot(
+      tracked(`users/${uid}`, onSnapshot(
         doc(db, "users", uid),
         { includeMetadataChanges: true },
         (snap) => {
@@ -202,9 +202,9 @@ export class SessionStore {
           else return; // offline cache miss: don't send a known user to first-run setup
           this.derive();
         },
-        onError,
-      ),
-      onSnapshot(
+        onError(`users/${uid}`),
+      )),
+      tracked(`directory/${uid}`, onSnapshot(
         doc(db, "directory", uid),
         { includeMetadataChanges: true },
         (snap) => {
@@ -213,9 +213,9 @@ export class SessionStore {
           else return;
           this.derive();
         },
-        onError,
-      ),
-      onSnapshot(
+        onError(`directory/${uid}`),
+      )),
+      tracked("members?mine", onSnapshot(
         query(collectionGroup(db, "members"), where("uid", "==", uid)),
         { includeMetadataChanges: true },
         (snap) => {
@@ -239,8 +239,8 @@ export class SessionStore {
           }
           this.derive();
         },
-        onError,
-      ),
+        onError("members?mine"),
+      )),
     );
   }
 

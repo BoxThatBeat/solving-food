@@ -17,7 +17,7 @@ import { isPublicPath } from "@/session/publicPaths";
 import { useReadySession, useSession } from "@/session/useSession";
 import { useOnline } from "@/hooks/useOnline";
 import { cn } from "@/lib/utils";
-import { NotificationBanners, NotificationFeed, UpdateBanner } from "./notifications";
+import { ListenerErrorBanner, NotificationBanners, NotificationFeed, UpdateBanner } from "./notifications";
 import { useRecipeIndex } from "@/search/useRecipeSearch";
 import { HouseholdSheet } from "./HouseholdSheet";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "./ui/sheet";
@@ -394,6 +394,7 @@ function ReadyShell({ children, uid }: { children: React.ReactNode; uid: string 
         <TabBar />
       </div>
       <NotificationFeed uid={uid} />
+      <ListenerErrorBanner householdIds={s.householdIds} />
       <RemovalNotice />
       <UpdateBanner />
       <NotificationBanners className="bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-7" />

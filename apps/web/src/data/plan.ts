@@ -1,7 +1,7 @@
 // Plan, periods, stores, mappings, saved meals, and grocery lists: live reads and writes (TECHNICAL_SPECS §4.2, §7,
 // §8, §11). Business math is in @solving-food/core; this file only moves documents.
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import {
   arrayUnion,
   collection,
@@ -11,7 +11,6 @@ import {
   FieldPath,
   getDoc,
   getDocs,
-  onSnapshot,
   query,
   runTransaction,
   serverTimestamp,
@@ -20,8 +19,8 @@ import {
   updateDoc,
   where,
   writeBatch,
+  type DocumentData,
   type Transaction,
-  type Unsubscribe,
 } from "firebase/firestore";
 import {
   buildEatingOut,
@@ -61,7 +60,7 @@ import {
   type StoreDoc,
 } from "@solving-food/core";
 import { db } from "@/firebase/app";
-import { useLiveDoc, useLiveQuery } from "./live";
+import { useLiveDoc, useLiveDocs, useLiveQuery } from "./live";
 import type { StoredRecipe } from "./recipes";
 
 export type StoredPeriod = PeriodDoc & { start: Timestamp; end: Timestamp };
@@ -116,28 +115,11 @@ export function useMeal(id: string | null) {
   return useLiveDoc<StoredMeal>(id ? doc(db, "meals", id) : null, id ? `meals/${id}` : null);
 }
 
-/** Full recipe documents by ID, each its own live document (works signed out: public `get`). */
-export function useRecipeDocs(ids: readonly string[]): Map<string, StoredRecipe> {
-  const key = [...new Set(ids)].sort().join(",");
-  const [state, setState] = useState<{ key: string; map: Map<string, StoredRecipe> }>({ key: "", map: new Map() });
-  useEffect(() => {
-    const wanted = key ? key.split(",") : [];
-    const unsubs: Unsubscribe[] = wanted.map((id) =>
-      onSnapshot(
-        doc(db, "recipes", id),
-        (snap) =>
-          setState((s) => {
-            const map = new Map(s.key === key ? s.map : []);
-            if (snap.exists()) map.set(id, snap.data() as StoredRecipe);
-            else map.delete(id);
-            return { key, map };
-          }),
-        () => {},
-      ),
-    );
-    return () => unsubs.forEach((u) => u());
-  }, [key]);
-  return state.key === key ? state.map : new Map();
+const toRecipe = (_id: string, data: DocumentData) => data as StoredRecipe;
+
+/** Full recipe documents by ID, each its own live document (works signed out: public `get`), diffed (M23). */
+export function useRecipeDocs(ids: readonly string[]): ReadonlyMap<string, StoredRecipe> {
+  return useLiveDocs("recipes", ids, toRecipe);
 }
 
 export function millis(v: unknown): number | null {
@@ -361,7 +343,8 @@ export function deleteMeal(id: string) {
 
 export function useMealFavourites(hid: string | null) {
   const q = useLiveQuery<{ type: string; targetId: string }>(hid ? collection(db, "households", hid, "favourites") : null, hid ? `households/${hid}/favourites` : null);
-  return new Set((q.docs ?? []).filter((d) => d.data.type === "meal").map((d) => d.data.targetId));
+  // One Set per snapshot, not per render, so memos that depend on it hold (M23).
+  return useMemo(() => new Set((q.docs ?? []).filter((d) => d.data.type === "meal").map((d) => d.data.targetId)), [q.docs]);
 }
 
 export async function setMealFavourite(hid: string, mealId: string, on: boolean): Promise<void> {

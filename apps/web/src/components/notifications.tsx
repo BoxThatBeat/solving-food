@@ -10,6 +10,7 @@ import { X } from "lucide-react";
 import type { NotificationDoc } from "@solving-food/core";
 import { db } from "@/firebase/app";
 import { useLiveQuery } from "@/data/live";
+import { bannerFor, householdOf, onListenerError } from "@/data/listenErrors";
 import { cn } from "@/lib/utils";
 import { applyUpdate, useUpdatePending } from "@/pwa/update";
 import { NotificationsContext, useNotifications, useNotify, type Banner, type NotificationKind } from "./notifications-context";
@@ -108,6 +109,38 @@ export function NotificationFeed({ uid }: { uid: string }) {
 function millis(v: unknown): number {
   const t = v as { toMillis?: () => number } | null;
   return t && typeof t.toMillis === "function" ? t.toMillis() : Date.now();
+}
+
+/**
+ * Listener failures (M23, data/listenErrors.ts) as a non-blocking banner: permission-denied is an error banner,
+ * unavailable an info one, one of each at a time. A failure on a household this person has just left (or been removed
+ * from) is expected and stays quiet: the session drops that household a moment later, so it is checked after 1.5 s.
+ */
+export function ListenerErrorBanner({ householdIds }: { householdIds: readonly string[] }) {
+  const notify = useNotify();
+  const current = React.useRef(householdIds);
+  React.useEffect(() => {
+    current.current = householdIds;
+  }, [householdIds]);
+  React.useEffect(() => {
+    const timers = new Set<ReturnType<typeof setTimeout>>();
+    const off = onListenerError((e) => {
+      const banner = bannerFor(e.code);
+      if (!banner) return;
+      const t = setTimeout(() => {
+        timers.delete(t);
+        const hid = householdOf(e.label);
+        if (hid && !current.current.includes(hid)) return;
+        notify({ id: `listen:${e.code}`, kind: banner.kind, message: banner.message });
+      }, 1500);
+      timers.add(t);
+    });
+    return () => {
+      off();
+      timers.forEach(clearTimeout);
+    };
+  }, [notify]);
+  return null;
 }
 
 /** Shows the "Reload" banner when a new build is waiting behind a cook session (see pwa/update.ts). */

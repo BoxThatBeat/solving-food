@@ -78,7 +78,7 @@ function costLine(v: PlanItemView): string {
   return v.cost.cents > 0 ? `+${formatCents(v.cost.cents)} TO BUY${unknown}` : `$0 · NOTHING EXTRA TO BUY${unknown}`;
 }
 
-export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v: PlanItemView; recipes: Map<string, StoredRecipe>; ingredients: Map<string, IngredientEntry>; onOpen: () => void; hid: string; uid: string }) {
+export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v: PlanItemView; recipes: ReadonlyMap<string, StoredRecipe>; ingredients: ReadonlyMap<string, IngredientEntry>; onOpen: () => void; hid: string; uid: string }) {
   const notify = useNotify();
   const navigate = useNavigate();
   const it = v.item;
@@ -227,8 +227,8 @@ export function PlanItemSheet({
   v: PlanItemView | null;
   hid: string;
   uid: string;
-  recipes: Map<string, StoredRecipe>;
-  ingredients: Map<string, IngredientEntry>;
+  recipes: ReadonlyMap<string, StoredRecipe>;
+  ingredients: ReadonlyMap<string, IngredientEntry>;
   plannedMealTypes: readonly string[];
   onOpenChange: (open: boolean) => void;
 }) {
@@ -255,8 +255,8 @@ function PlanItemBody({
   v: PlanItemView;
   hid: string;
   uid: string;
-  recipes: Map<string, StoredRecipe>;
-  ingredients: Map<string, IngredientEntry>;
+  recipes: ReadonlyMap<string, StoredRecipe>;
+  ingredients: ReadonlyMap<string, IngredientEntry>;
   plannedMealTypes: readonly string[];
   close: () => void;
 }) {

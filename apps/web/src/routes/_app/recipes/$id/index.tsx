@@ -6,6 +6,7 @@ import { RecipeDetail, type DetailContext } from "@/components/recipes/RecipeDet
 import { useRecipe } from "@/data/recipes";
 import { useHousehold } from "@/data/households";
 import { useSession } from "@/session/useSession";
+import { codeOf } from "@/data/listenErrors";
 import { MD, useMediaQuery } from "@/hooks/useMediaQuery";
 
 // /recipes/:id renders for signed-out visitors too (share links, R4.21). Signed in, wide screens show the list beside
@@ -32,6 +33,10 @@ function RecipePage() {
       <p className="m-0 p-4 text-sm font-semibold" role="status">
         Loading recipe…
       </p>
+    ) : recipe.data === null && recipe.error && codeOf(recipe.error) !== "permission-denied" ? (
+      <PageBody>
+        <EmptyState>Couldn&apos;t load this recipe. Check your connection and reload.</EmptyState>
+      </PageBody>
     ) : recipe.data === null || (!ready && recipe.data.status !== "active") ? (
       <PageBody>
         <EmptyState>

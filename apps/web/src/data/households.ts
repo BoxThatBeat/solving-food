@@ -30,6 +30,8 @@ import {
   type MemberDoc,
   type NewHouseholdInput,
 } from "@solving-food/core";
+import { tracked } from "@/firebase/listen";
+import { reportListenerError } from "./listenErrors";
 import { db } from "@/firebase/app";
 import { useLiveDoc, useLiveQuery } from "./live";
 import { session } from "@/session/session";
@@ -146,9 +148,8 @@ export function useMyInvites(uid: string | null, email: string | null, memberOf:
           };
         })
         .filter((r) => r.hid);
-    const onErr = (e: unknown) => console.error("invites listener failed", e);
-    const u1 = onSnapshot(query(collectionGroup(db, "invites"), where("inviteeUid", "==", uid)), (s) => setByUid(rows(s)), onErr);
-    const u2 = onSnapshot(query(collectionGroup(db, "invites"), where("inviteeEmailLower", "==", email)), (s) => setByEmail(rows(s)), onErr);
+    const u1 = tracked("invites?mine=uid", onSnapshot(query(collectionGroup(db, "invites"), where("inviteeUid", "==", uid)), (s) => setByUid(rows(s)), (e) => reportListenerError("invites?mine=uid", e)));
+    const u2 = tracked("invites?mine=email", onSnapshot(query(collectionGroup(db, "invites"), where("inviteeEmailLower", "==", email)), (s) => setByEmail(rows(s)), (e) => reportListenerError("invites?mine=email", e)));
     return () => {
       u1();
       u2();

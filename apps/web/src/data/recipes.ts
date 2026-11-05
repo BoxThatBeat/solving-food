@@ -45,7 +45,7 @@ export type StoredVersion = RecipeVersionDoc & { editedAt: Timestamp };
  */
 export function useVersions(id: string | null, enabled = true) {
   const on = !!id && enabled;
-  const live = useLiveQuery<StoredVersion>(on ? collection(db, "recipes", id, "versions") : null, on ? `recipes/${id}/versions` : null);
+  const live = useLiveQuery<StoredVersion>(on ? collection(db, "recipes", id, "versions") : null, on ? `recipes/${id}/versions` : null, { metadata: true });
   const [server, setServer] = useState<{ key: string; docs: Array<{ id: string; data: StoredVersion }> } | null>(null);
   useEffect(() => {
     if (!on) return;

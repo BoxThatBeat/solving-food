@@ -1,8 +1,8 @@
 // Ingredients (TECHNICAL_SPECS §4.1, §5). The editor and picker follow the whole collection (allowlisted users, cached
 // offline); recipe pages, which also render signed out, read the ingredients they need one by one (public `get`).
 
-import { useEffect, useMemo, useState } from "react";
-import { collection, deleteField, doc, onSnapshot, serverTimestamp, setDoc, updateDoc, type Unsubscribe } from "firebase/firestore";
+import { useMemo } from "react";
+import { collection, deleteField, doc, serverTimestamp, setDoc, updateDoc, type DocumentData } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import {
   buildIngredientIndex,
@@ -15,7 +15,7 @@ import {
   type RecipeIngredientInfo,
 } from "@solving-food/core";
 import { db, functions } from "@/firebase/app";
-import { useLiveQuery } from "./live";
+import { useLiveDocs, useLiveQuery } from "./live";
 
 export interface IngredientEntry extends IngredientDoc {
   id: string;
@@ -26,7 +26,7 @@ export interface IngredientEntry extends IngredientDoc {
  * merged duplicates (M8: pickers never offer them); `byId` keeps them so old references still show a name, and the
  * index resolves their names to the ingredient they were merged into.
  */
-export function useAllIngredients(enabled = true): { list: IngredientEntry[] | undefined; byId: Map<string, IngredientEntry>; index: IngredientIndex } {
+export function useAllIngredients(enabled = true): { list: IngredientEntry[] | undefined; byId: ReadonlyMap<string, IngredientEntry>; index: IngredientIndex } {
   const q = useLiveQuery<IngredientDoc>(enabled ? collection(db, "ingredients") : null, enabled ? "ingredients" : null);
   return useMemo(() => {
     const all = q.docs?.map((d) => ({ id: d.id, ...d.data }));
@@ -48,33 +48,15 @@ export async function mergeIngredient(hid: string, fromId: string, intoId: strin
   return (await fn({ hid, fromId, intoId, dryRun })).data;
 }
 
-/** Specific ingredients by ID, each its own live document (works signed out). */
-export function useIngredientsById(ids: readonly string[]): Map<string, IngredientEntry> {
-  const key = [...new Set(ids)].sort().join(",");
-  const [state, setState] = useState<{ key: string; map: Map<string, IngredientEntry> }>({ key: "", map: new Map() });
-  useEffect(() => {
-    const wanted = key ? key.split(",") : [];
-    const unsubs: Unsubscribe[] = wanted.map((id) =>
-      onSnapshot(
-        doc(db, "ingredients", id),
-        (snap) => {
-          setState((s) => {
-            const map = new Map(s.key === key ? s.map : []);
-            if (snap.exists()) map.set(id, { id, ...(snap.data() as IngredientDoc) });
-            else map.delete(id);
-            return { key, map };
-          });
-        },
-        () => {},
-      ),
-    );
-    return () => unsubs.forEach((u) => u());
-  }, [key]);
-  return state.key === key ? state.map : new Map();
+const toIngredient = (id: string, data: DocumentData): IngredientEntry => ({ id, ...(data as IngredientDoc) });
+
+/** Specific ingredients by ID, each its own live document (works signed out), diffed as the IDs change (M23). */
+export function useIngredientsById(ids: readonly string[]): ReadonlyMap<string, IngredientEntry> {
+  return useLiveDocs("ingredients", ids, toIngredient);
 }
 
 /** The lookup recipe math needs (core `IngredientLookup`). */
-export function lookupFromMap(map: Map<string, IngredientEntry>) {
+export function lookupFromMap(map: ReadonlyMap<string, IngredientEntry>) {
   return (id: string): RecipeIngredientInfo | undefined => map.get(id);
 }
 

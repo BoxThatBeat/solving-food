@@ -506,7 +506,7 @@ function IngredientsTable({
   have,
 }: {
   recipe: StoredRecipe;
-  ingredients: Map<string, IngredientEntry>;
+  ingredients: ReadonlyMap<string, IngredientEntry>;
   factor: number;
   servings: number;
   signedIn: boolean;

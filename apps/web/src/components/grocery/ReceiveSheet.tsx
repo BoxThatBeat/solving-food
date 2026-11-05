@@ -41,7 +41,7 @@ export function ReceiveSheet({
   listId: string;
   items: Record<string, GroceryItem>;
   stores: readonly StoreEntry[];
-  ingredients: Map<string, IngredientEntry>;
+  ingredients: ReadonlyMap<string, IngredientEntry>;
   hid: string;
   uid: string;
 }) {
@@ -52,7 +52,7 @@ export function ReceiveSheet({
   );
 }
 
-function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, close }: { listId: string; items: Record<string, GroceryItem>; stores: readonly StoreEntry[]; ingredients: Map<string, IngredientEntry>; hid: string; uid: string; close: () => void }) {
+function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, close }: { listId: string; items: Record<string, GroceryItem>; stores: readonly StoreEntry[]; ingredients: ReadonlyMap<string, IngredientEntry>; hid: string; uid: string; close: () => void }) {
   const notify = useNotify();
   // The list's own ingredients (freezable? default location?), whatever the page happened to load.
   const ids = Object.values(items).flatMap((it) => (it.ingredientId ? [it.ingredientId] : []));
