@@ -9,13 +9,14 @@
 //                                                  tries it with a store lookup
 // refreshPrices()                                  the maintenance job's step: every distinct (store, product code) of
 //                                                  the households' brand mappings; failures keep old prices and notify
-//                                                  the owner; two failed weeks in a row log "pcx refresh failed twice"
+//                                                  the owner; two failed weeks in a row log "pcx refresh failed twice";
+//                                                  M27: each mapping of the product gets the price in its history
 //
 // Until the owner saves the API key in Settings → Stores every callable answers { connected: false } and the refresh
 // is skipped: the app prices from the bundled estimates.
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { logger } from "firebase-functions";
-import { priceDocId, PCX_KEY_PATTERN, pcxKeyHint, pcxKeyInput, pcxProductSearchInput, pcxStoreSearchInput, type PcxProduct, type PcxProductSearchResult, type PcxStatus, type PcxStoreSearchResult } from "@solving-food/core";
+import { appendObservation, priceDocId, PCX_KEY_PATTERN, pcxKeyHint, pcxKeyInput, pcxProductSearchInput, pcxStoreSearchInput, type PcxProduct, type PcxProductSearchResult, type PcxStatus, type PcxStoreSearchResult } from "@solving-food/core";
 import { db } from "../admin";
 import { notify } from "../notify";
 import { isOwner } from "../owner";
@@ -158,11 +159,22 @@ export interface RefreshReport {
   failed: number;
   pruned: number;
   consecutiveFailures: number;
+  /** M27: brand mappings whose price history got this week's price. */
+  histories: number;
+}
+
+export interface MappedPair {
+  pcxStoreId: string;
+  productCode: string;
+  packAmount?: number;
+  packMeasure?: string;
+  /** M27: every brand mapping of this product at this store (one per household), with its price history. */
+  mappings: Array<{ ref: FirebaseFirestore.DocumentReference; priceHistory: unknown }>;
 }
 
 /** Every distinct (household store, product code) among the brand mappings. Iterates households (a handful). */
-export async function mappedPairs(): Promise<Array<{ pcxStoreId: string; productCode: string; packAmount?: number; packMeasure?: string }>> {
-  const out = new Map<string, { pcxStoreId: string; productCode: string; packAmount?: number; packMeasure?: string }>();
+export async function mappedPairs(): Promise<MappedPair[]> {
+  const out = new Map<string, MappedPair>();
   const households = await db.collection("households").get();
   for (const h of households.docs) {
     const store = String(h.data().pcxStoreId ?? "");
@@ -172,14 +184,15 @@ export async function mappedPairs(): Promise<Array<{ pcxStoreId: string; product
       const code = m.data().productCode;
       if (typeof code !== "string" || !code) continue;
       const k = priceDocId(store, code);
-      if (!out.has(k)) out.set(k, { pcxStoreId: store, productCode: code, packAmount: m.data().packAmount, packMeasure: m.data().packMeasure });
+      if (!out.has(k)) out.set(k, { pcxStoreId: store, productCode: code, packAmount: m.data().packAmount, packMeasure: m.data().packMeasure, mappings: [] });
+      out.get(k)!.mappings.push({ ref: m.ref, priceHistory: m.data().priceHistory });
     }
   }
   return [...out.values()];
 }
 
 export async function refreshPrices(ownerUid: string | null, now = Date.now()): Promise<RefreshReport> {
-  const report: RefreshReport = { status: "ok", pairs: 0, refreshed: 0, failed: 0, pruned: 0, consecutiveFailures: 0 };
+  const report: RefreshReport = { status: "ok", pairs: 0, refreshed: 0, failed: 0, pruned: 0, consecutiveFailures: 0, histories: 0 };
   // Old prices nobody refreshes any more (unlinked products, searched-only results) go.
   const old = await db.collection("prices").where("fetchedAt", "<", Timestamp.fromMillis(now - PRICE_KEEP_DAYS * 86_400_000)).get();
   for (const d of old.docs) {
@@ -200,6 +213,10 @@ export async function refreshPrices(ownerUid: string | null, now = Date.now()): 
       const d = withPack ? priceDoc(pair.pcxStoreId, withPack, Timestamp.fromMillis(now)) : null;
       if (!d) throw new Error(`no price for ${pair.productCode}`);
       await db.doc(`prices/${priceDocId(pair.pcxStoreId, pair.productCode)}`).set(d);
+      // M27 (R6.32): the week's price joins each mapping's history (one pack of the mapped product, at the same moment
+      // as the price doc's fetchedAt, so the app doesn't count it twice). One write per mapping; bounded array.
+      for (const m of pair.mappings) await m.ref.update({ priceHistory: appendObservation(m.priceHistory, { atMs: now, cents: d.priceCents, source: "pcx" }) });
+      report.histories += pair.mappings.length;
       report.refreshed++;
     } catch (e) {
       report.failed++;

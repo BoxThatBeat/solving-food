@@ -3,7 +3,8 @@
 // factors and the strongest lowering one), one tap from Create meal. The header links to the weights (prototype:
 // "WEIGHTS: BALANCED"); "See more" (M7) opens Recipes sorted by Suggested. M24 (R6.30): meal-type tabs (All and the
 // household's meal types, Snack always) filter the list; it opens on the meal type with the most open cells in the
-// coverage strip, and See more keeps the tab as a Meal type filter.
+// coverage strip, and See more keeps the tab as a Meal type filter. M27 (R6.33): a Deal chip when its main protein or
+// its most expensive ingredient to buy is on sale.
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import { formatCents, formatMinutes, plannedMealTypesOf, presetOf, resolveWeights, type MealType, type Reason, type RecipeSummary, type ScoreResult } from "@solving-food/core";
@@ -12,6 +13,7 @@ import { MEAL_LABEL } from "./plan-sheet-context";
 import { EmptyState } from "@/components/AppShell";
 import { RecipeThumb } from "@/components/recipes/RecipeThumb";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/chip";
 import { NutritionText } from "@/components/NutritionText";
 
 function WhyChips({ reasons, className }: { reasons: readonly Reason[]; className?: string }) {
@@ -92,6 +94,11 @@ export function SuggestedSection({
                   <NutritionText r={r} />
                   {x.costCents !== null ? ` · +${formatCents(x.costCents)}` : ""}
                 </span>
+                {x.deal ? (
+                  <Badge className="w-fit bg-acc text-onc uppercase" data-testid="deal-chip" aria-label={`Deal: ${x.deal.label}`}>
+                    Deal{x.reasons.some((rr) => rr.key === "onSale") ? "" : ` · ${x.deal.label}`}
+                  </Badge>
+                ) : null}
                 <WhyChips reasons={x.reasons} />
               </span>
             </Link>

@@ -556,11 +556,18 @@ service cloud.firestore {
               || str(request.resource.data.match.get('ingredientId', ''), 1, 200))
           && str(request.resource.data.storeId, 1, 200);
       }
+      // M25/M27: lastPaidCents, lastPaidAt and priceHistory are written by the receiveGroceries command and the weekly
+      // maintenance; a member's edit may keep them exactly as they are (a merge) or drop them (a new product), never set them.
+      function keptOrDropped(f) {
+        return !(f in request.resource.data)
+          || (resource != null && f in resource.data && request.resource.data[f] == resource.data[f]);
+      }
       match /brandMappings/{ingredientId} {
         allow read, delete: if isMember(hid);
         allow create, update: if isMember(hid)
           && request.resource.data.keys().hasOnly(['productName', 'productCode', 'packAmount', 'packMeasure', 'storeId',
-                                                    'updatedBy', 'updatedAt'])
+                                                    'updatedBy', 'updatedAt', 'lastPaidCents', 'lastPaidAt', 'priceHistory'])
+          && keptOrDropped('lastPaidCents') && keptOrDropped('lastPaidAt') && keptOrDropped('priceHistory')
           && request.resource.data.keys().hasAll(['productName', 'packAmount', 'packMeasure', 'storeId'])
           && str(request.resource.data.productName, 1, 120)
           && optStr(request.resource.data, 'productCode', 100)

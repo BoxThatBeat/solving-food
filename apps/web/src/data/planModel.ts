@@ -11,6 +11,7 @@ import {
   addLocalDays,
   budgetState,
   buildList,
+  dealsFromMappings,
   removedLineIds,
   withoutRemoved,
   expiringSpare,
@@ -32,6 +33,7 @@ import {
   type MappingEntry,
   type PeriodView,
   type PlanItemInput,
+  type PriceDeal,
   type RecipeLines,
   type RuleEntry,
   type StoreEntry,
@@ -79,6 +81,8 @@ interface PeriodInputs {
   mappings: Docs<MappingEntry> | undefined;
   supply: ReturnType<typeof useSupply>;
   livePrices: ReturnType<typeof useLivePrices>;
+  /** M27 (R6.32): the household's products on sale, by ingredient ID (shared by both views). */
+  deals: ReadonlyMap<string, PriceDeal>;
   /** Supply that counts, per ingredient, and its lots: today's, or projected at the next period's start. */
   unexpired: ReadonlyMap<string, number>;
   lotsByIngredient: ReadonlyMap<string, LedgerLot[]>;
@@ -163,7 +167,7 @@ function usePeriodModel(p: PeriodInputs) {
   const ready =
     p.baseReady && !!household && !supply.loading && p.planItems.docs !== undefined && recipesReady && ingredientsReady && p.stores !== undefined && p.orderedAll !== undefined && p.mappings !== undefined;
 
-  const { view, periodId, period, draft, draftId, ordered, livePrices } = p;
+  const { view, periodId, period, draft, draftId, ordered, livePrices, deals } = p;
   return useMemo(
     () => ({
       /** "current", or "next" for the period after it (M26). */
@@ -201,8 +205,10 @@ function usePeriodModel(p: PeriodInputs) {
       expiring,
       useItUp,
       livePrices,
+      /** Products on sale (M27, R6.32): the brand mappings' price history against the live prices. */
+      deals,
     }),
-    [view, hid, household, periodId, period, items, p.planItems.docs, recipes, ingredients, ctx, inputs, built, removedIds, costs, budget, draft, draftId, ordered, ready, supply, unexpired, projected, lotsByIngredient, plannedNeeds, expiring, useItUp, livePrices],
+    [view, hid, household, periodId, period, items, p.planItems.docs, recipes, ingredients, ctx, inputs, built, removedIds, costs, budget, draft, draftId, ordered, ready, supply, unexpired, projected, lotsByIngredient, plannedNeeds, expiring, useItUp, livePrices, deals],
   );
 }
 
@@ -222,6 +228,12 @@ export function useComputePlanModel() {
   const tz = household?.timezone ?? "America/Toronto";
   const supply = useSupply(hid, tz);
   const livePrices = useLivePrices(household?.pcxStoreId);
+  // M27: on sale = 15 % or more below the usual price (the mapping's history) at the live price; checked every 10 minutes.
+  const dealTick = Math.floor(supply.now / 600_000);
+  const deals = useMemo(
+    () => dealsFromMappings((mappings.docs ?? []).map((d) => [d.id, d.data] as const), (code) => livePrices.get(code), dealTick * 600_000),
+    [mappings.docs, livePrices, dealTick],
+  );
   // The period after this one (M26): its ID is computed, never stored, until the rollover makes it current.
   const endMs = millis(period.data?.end);
   const periodDays = household?.periodDays ?? 7;
@@ -254,6 +266,7 @@ export function useComputePlanModel() {
     mappings: mappings.docs,
     supply,
     livePrices,
+    deals,
     unexpired,
     lotsByIngredient,
     incoming,
@@ -309,6 +322,7 @@ export function useComputeNextPlanModel(base: CurrentModel, enabled: boolean): P
     mappings: base.mappings_,
     supply: base.supply,
     livePrices: base.livePrices,
+    deals: base.deals,
     unexpired: atStart.unexpired,
     lotsByIngredient: atStart.lots,
     incoming: noIncoming,

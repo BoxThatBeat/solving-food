@@ -155,6 +155,28 @@ describe("weekly price refresh", () => {
     expect((await db.doc(`prices/${priceDocId(DEFAULT_PCX_STORE_ID, "STUB-TOM-400")}`).get()).data()!.priceCents).toBe(299);
   });
 
+  it("M27 (R6.32): appends the week's price to the history of every mapping of the product, once per week", async () => {
+    await mapping(DEFAULT_PCX_STORE_ID, "STUB-TOM-400");
+    await db.doc("households/other").set({ name: "Other", pcxStoreId: DEFAULT_PCX_STORE_ID });
+    const old = [1, 2, 3].map((w) => ({ atMs: Date.UTC(2026, 9, 1) + w * 7 * 86_400_000, cents: 349, source: "pcx" }));
+    await db.doc("households/other/brandMappings/tomatoes").set({ productName: "Mutti", productCode: "STUB-TOM-400", packAmount: 400, packMeasure: "weight", storeId: "pc-express", priceHistory: old });
+    stubPriceOverride.set("STUB-TOM-400", 2.79);
+    const now = Date.UTC(2026, 10, 9, 9);
+    const r = await refreshPrices(OWNER, now);
+    expect(r).toMatchObject({ refreshed: 1, histories: 2 });
+    const mine = (await db.doc(`households/${HID}/brandMappings/canned-tomatoes`).get()).data()!;
+    expect(mine.priceHistory).toEqual([{ atMs: now, cents: 279, source: "pcx" }]);
+    const theirs = (await db.doc("households/other/brandMappings/tomatoes").get()).data()!;
+    expect(theirs.priceHistory).toHaveLength(4);
+    expect(theirs.priceHistory[3]).toEqual({ atMs: now, cents: 279, source: "pcx" });
+    // A second run the same week replaces the week's price rather than adding one.
+    stubPriceOverride.set("STUB-TOM-400", 2.69);
+    await refreshPrices(OWNER, now + 3_600_000);
+    const again = (await db.doc("households/other/brandMappings/tomatoes").get()).data()!;
+    expect(again.priceHistory).toHaveLength(4);
+    expect(again.priceHistory[3]).toMatchObject({ cents: 269 });
+  });
+
   it("failures keep old prices, notify the owner, and count consecutive bad weeks", async () => {
     await mapping("S1", "STUB-TOM-400");
     const id = priceDocId("S1", "STUB-TOM-400");

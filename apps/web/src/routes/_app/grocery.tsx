@@ -25,6 +25,7 @@ import {
   stapleDismissUntil,
   isRemoved as removedLine,
   type GroceryItem,
+  type PriceDeal,
   type PeriodView,
   type StoreEntry,
 } from "@solving-food/core";
@@ -36,6 +37,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/chip";
 import { useNotify } from "@/components/notifications-context";
 import { ChatgptInstructions } from "@/components/grocery/ChatgptInstructions";
+import { DealChip } from "@/components/DealChip";
 import { addLine, addManualItem, dismissStaple, syncDraft, millis, orderDraft, removeItem, setLineRemoved, tickItem, undoOrder, type StoredList } from "@/data/plan";
 import { usePlanModel, useViewModel } from "@/data/planModel";
 import { ReceiveSheet } from "@/components/grocery/ReceiveSheet";
@@ -227,6 +229,7 @@ function GroceryPage() {
               store={g.store}
               lines={g.items}
               ingredients={m.ingredients}
+              deals={m.deals}
               onTick={(id, on) => tick(draftId, id, on)}
               onRemove={(id) => void remove(id)}
               footer={
@@ -353,7 +356,7 @@ function lineSub(it: GroceryItem, ing: IngredientEntry | undefined): string {
     ? `${it.packs} × ${it.packLabel && !/ k?g$/.test(it.packLabel) ? `${it.packLabel} (${formatCanonical(it.packAmount, unit, ing?.unitWeightG)})` : formatCanonical(it.packAmount, unit, ing?.unitWeightG)}`
     : formatCanonical(it.amount, unit, ing?.unitWeightG);
   if (it.source === "manual") return `${name} · added by hand · ${pack}`;
-  if (it.source === "staple") return `${name} · ${it.stapleReason === "plan" ? "used by planned meals" : it.stapleReason === "out" ? "none left in Supply" : "probably running low"} · ${pack}`;
+  if (it.source === "staple") return `${name} · ${it.stapleReason === "plan" ? "used by planned meals" : it.stapleReason === "out" ? "none left in Supply" : it.stapleReason === "sale" ? "on sale, due soon" : "probably running low"} · ${pack}`;
   if (it.source === "cadence") return `${name} · staple · ${pack}`;
   return `${name} · need ${formatCanonical(it.need ?? it.amount, unit, ing?.unitWeightG)} → ${pack}`;
 }
@@ -362,6 +365,7 @@ function StoreCard({
   store,
   lines,
   ingredients,
+  deals,
   onTick,
   onRemove,
   footer,
@@ -370,6 +374,8 @@ function StoreCard({
   store: StoreEntry;
   lines: Array<[string, GroceryItem]>;
   ingredients: ReadonlyMap<string, IngredientEntry>;
+  /** M27 (R6.33): products on sale, by ingredient ID (the draft's lines only). */
+  deals?: ReadonlyMap<string, PriceDeal>;
   onTick: (id: string, on: boolean) => void;
   onRemove?: (id: string) => void;
   footer?: React.ReactNode;
@@ -414,6 +420,7 @@ function StoreCard({
                 {it.packLabel && !it.productName.includes(it.packLabel) ? `, ${it.packLabel}` : ""}
               </span>
               <span className="font-mono text-[0.625rem] font-semibold text-sub">{lineSub(it, it.ingredientId ? ingredients.get(it.ingredientId) : undefined)}</span>
+              {it.ingredientId && deals?.get(it.ingredientId) ? <DealChip deal={deals.get(it.ingredientId)!} usual /> : null}
             </span>
             <span className="flex flex-none flex-col items-end">
               <span className="font-mono text-[0.8125rem] font-extrabold">×{it.packs}</span>

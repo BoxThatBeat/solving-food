@@ -4,6 +4,7 @@ import {
   cleanHistory,
   dealLabel,
   dealsFromMappings,
+  mealDeal,
   DEAL_MIN_OBSERVATIONS,
   DEAL_THRESHOLD,
   median,
@@ -107,5 +108,21 @@ describe("usual price and deals", () => {
     expect(m.map((x) => x.id)).toEqual(["a", "b", "j", "i", "h"]);
     expect(m[0]!.changePct).toBeCloseTo(0.3);
     expect(m[1]!.changePct).toBeCloseTo(-0.2);
+  });
+});
+
+describe("the Deal chip of a planned meal (R6.33)", () => {
+  const deals = new Map([["chicken", { dealPct: 0.2 }], ["rice", { dealPct: 0.4 }], ["cream", { dealPct: 0.3 }]]);
+  const meta = (id: string) => ({ chicken: { category: "meat", name: "chicken thighs, boneless" }, rice: { category: "grains", name: "rice" }, cream: { category: "dairy", name: "cream" } })[id];
+  it("the main protein or the costliest line, only what the order buys", () => {
+    const cents = (m: Record<string, number>) => (id: string) => m[id] ?? null;
+    expect(mealDeal(["chicken", "rice"], deals, meta, cents({ chicken: 900, rice: 300 }))).toMatchObject({ ingredientId: "chicken", label: "Chicken thighs 20% below usual" });
+    // Cream is the costliest line: on sale, so it is the chip (no protein to buy).
+    expect(mealDeal(["cream", "rice"], deals, meta, cents({ cream: 900, rice: 300 }))).toMatchObject({ ingredientId: "cream" });
+    // Cheap rice on sale alone isn't worth a chip.
+    expect(mealDeal(["cream", "rice"], deals, meta, cents({ cream: 900, rice: 300 }))?.ingredientId).not.toBe("rice");
+    expect(mealDeal(["cream", "rice"], new Map([["rice", { dealPct: 0.4 }]]), meta, cents({ cream: 900, rice: 300 }))).toBeNull();
+    // Not bought (no line): nothing.
+    expect(mealDeal(["chicken"], deals, meta, cents({}))).toBeNull();
   });
 });

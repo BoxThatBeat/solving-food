@@ -21,7 +21,8 @@ price feeds the history). PRD v0.13. Spec §2 (quota rows), §4.2 (`brandMapping
 
 ## Items
 
-- [ ] **0. CI for M26.**
+- [x] **0. CI for M26.** The Checks run for 21fc3f1 failed on the @R3.4 note test (all projects): M26's item 10 made
+      "400 g" non-breaking and the test's regex had a plain space. Fixed in its own commit, noted under M26's Deviations.
 - [x] **1. Core** `packages/core/src/priceHistory.ts`: `appendObservation` (bounded `PRICE_HISTORY_MAX` = 16, a second
       PC Express price the same week replaces the first), `priceDeal` (usual = median of the observations before the
       current price; current = the live price at the store when fresh, else the newest observation; on sale =
@@ -31,14 +32,15 @@ price feeds the history). PRD v0.13. Spec §2 (quota rows), §4.2 (`brandMapping
       ("Chicken thighs 20% below usual") and `ScoreResult.deal` for the card chip. Staples: `sale` input on
       `dueStaples` / `stapleLines` (reason `sale`, headroom shared). Unit tests: `priceHistory.test.ts`, scoring, grocery
       (staples on sale; the deal price in the list, meter and marginal cost).
-- [ ] **2. Functions**: maintenance appends the weekly observation to every mapping of the product; `receiveGroceries`
-      appends the paid price; the product search no longer replaces a price doc's history-less fields only. Stub prices
-      per household. Functions tests.
-- [ ] **3. Rules**: a client edit of a brand mapping may keep the function-written `priceHistory`, `lastPaidCents`,
-      `lastPaidAt` unchanged or drop them, never write them. Rules test.
-- [ ] **4. Web data**: deals in the plan model (`deals` from mapping docs + live prices); the worker snapshot carries
-      only the on-sale ingredients and the cents per unit comes from the build context; `saveMapping` keeps the history
-      when the product is the same.
+- [x] **2. Functions**: `refreshPrices` (maintenance) appends the week's price to every brand mapping of the product
+      (`mappedPairs` keeps the mapping refs; report `histories`); `receiveGroceries` appends the paid price per pack
+      (source `receipt`) with `lastPaidCents`. The stub's `_stubPcx/{hid}.prices` apply to that household only. Functions
+      tests: `pcx.test.ts` (history appended per mapping, a second run the same week replaces), `commands.test.ts`.
+- [x] **3. Rules**: a member's edit of a brand mapping may keep the function-written `priceHistory`, `lastPaidCents`,
+      `lastPaidAt` exactly (a merge) or drop them (a replace), never set them. Rules test in `plan.test.ts`.
+- [x] **4. Web data**: `deals` in the plan model (`dealsFromMappings` over the mapping docs and live prices, both views);
+      the worker snapshot carries only the on-sale ingredients (`deals: [id, { dealPct }]`) and the worker prices them
+      with `linePricing` from its build context; `saveMapping` merges when the product (code and pack) is unchanged.
 - [ ] **5. UI**: Brands row chip; grocery line chip and "on sale" staple reason; suggestion and plan cards' Deal chip;
       reasons line; Settings → Suggestion weights lists "On sale"; History → Prices card.
 - [ ] **6. E2E** tagged @R6.32 @R6.33 @R6.34 @R7.19 @R10.4.

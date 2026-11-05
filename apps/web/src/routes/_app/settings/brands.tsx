@@ -4,8 +4,9 @@
 // price; manual entry stays for anything else. Rows show the live price when one is fresh.
 import * as React from "react";
 import { FromPcx } from "@/components/FromPcx";
+import { DealChip } from "@/components/DealChip";
 import { createFileRoute } from "@tanstack/react-router";
-import { enterableMeasures, formatCents, LIVE_PRICE_MAX_AGE_DAYS, packLabel, type BrandMappingDoc, type Measure, type PcxProduct } from "@solving-food/core";
+import { dealOfMapping, enterableMeasures, formatCents, LIVE_PRICE_MAX_AGE_DAYS, packLabel, type BrandMappingDoc, type Measure, type PcxProduct } from "@solving-food/core";
 import { PcxProductSearch } from "@/components/settings/PcxProductSearch";
 import { PcxStatusLine } from "@/components/settings/PcxStorePicker";
 import { useLivePrices } from "@/data/livePrices";
@@ -45,6 +46,11 @@ function BrandsPage() {
     const days = Math.max(0, Math.floor((now - p.fetchedAtMs) / 86_400_000));
     return `${formatCents(p.priceCents)} · ${days > LIVE_PRICE_MAX_AGE_DAYS ? "stale" : "live"} ${days === 0 ? "today" : `${days}d ago`}`;
   };
+  // M27 (R6.33): on sale against the usual price (the mapping's price history).
+  const dealOf = (m: BrandMappingDoc) => {
+    const d = dealOfMapping(m, (code) => live.get(code), now);
+    return d?.onSale ? d : null;
+  };
 
   return (
     <SettingsPage title="Brands" wide>
@@ -76,6 +82,7 @@ function BrandsPage() {
                   ) : r.m.productCode ? (
                     <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">PC Express product · estimate until priced</span>
                   ) : null}
+                  {dealOf(r.m) ? <DealChip deal={dealOf(r.m)!} usual className="mt-0.5" /> : null}
                 </span>
                 <Button size="sm" variant="secondary" className="shadow-hard-sm" onClick={() => setEditing({ ingredient: ing.byId.get(r.id) ?? ({ id: r.id, name: r.name } as IngredientEntry), m: r.m })} aria-label={`Edit brand for ${r.name}`}>
                   Edit
@@ -103,7 +110,7 @@ function BrandsPage() {
             onCancel={editing ? () => setEditing(null) : undefined}
             onSave={async (ingredientId, m) => {
               // Shown at once; only a failure comes back (M23).
-              void saveMapping(hh.id, ingredientId, m, s.user.uid).catch((e) => notify({ kind: "error", message: `Couldn't save ${m.productName}: ${(e as Error).message}` }));
+              void saveMapping(hh.id, ingredientId, m, s.user.uid, mappings.docs?.find((d) => d.id === ingredientId)?.data).catch((e) => notify({ kind: "error", message: `Couldn't save ${m.productName}: ${(e as Error).message}` }));
               notify({ kind: "success", message: `Saved ${m.productName}` });
               setEditing(null);
             }}

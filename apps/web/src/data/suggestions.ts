@@ -102,7 +102,8 @@ export function useScoringSnapshot(m: PlanModel, mealType: MealType | null = nul
       stores: [...m.ctx.stores],
       defaultStoreId: m.ctx.defaultStoreId,
       live: [...m.livePrices].map(([code, p]) => [code, { priceCents: p.priceCents, packAmount: p.packAmount, packMeasure: p.packMeasure, fetchedAtMs: p.fetchedAtMs }]),
+      deals: [...m.deals].map(([id, d]) => [id, { dealPct: d.dealPct }]),
     } satisfies ScoringSnapshot;
-    }, [household, summaries, m.ready, m.supply.loading, m.items, m.recipes, m.ingredients, m.unexpired, m.ctx, m.expiring, m.livePrices, m.period?.budgetCents, stats, favourites, events.docs, mealType, tz, tick, fromMs, currentMeals]);
+    }, [household, summaries, m.ready, m.supply.loading, m.items, m.recipes, m.ingredients, m.unexpired, m.ctx, m.expiring, m.livePrices, m.deals, m.period?.budgetCents, stats, favourites, events.docs, mealType, tz, tick, fromMs, currentMeals]);
 }
 

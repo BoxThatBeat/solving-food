@@ -3,6 +3,7 @@
 // recipes) are read outside the transaction through the context's caches: they change rarely and needn't lock.
 import { FieldValue, type DocumentReference, type Transaction } from "firebase-admin/firestore";
 import {
+  appendObservation,
   addLocalDays,
   applyCorrection,
   applyPurchase,
@@ -214,7 +215,10 @@ export async function receiveGroceries(ctx: Ctx, p: CommandPayload<"receiveGroce
   if (anyPaid) Object.assign(update, { paidCents: paid, spendCents: Math.max(0, spend), paidComplete: allPaid });
   if (p.receipt?.totalCents !== undefined) update.receiptTotalCents = p.receipt.totalCents;
   mappingSnaps.forEach((snap, i) => {
-    if (snap.exists) ctx.tx.update(mappingRefs[i]!, { lastPaidCents: [...paidPack.values()][i]!, lastPaidAt: ts(ctx.nowMs) });
+    if (!snap.exists) return;
+    const cents = [...paidPack.values()][i]!;
+    // M27 (R6.32): the paid price also joins the mapping's price history (one pack, source "receipt").
+    ctx.tx.update(mappingRefs[i]!, { lastPaidCents: cents, lastPaidAt: ts(ctx.nowMs), priceHistory: appendObservation(snap.data()?.priceHistory, { atMs: ctx.nowMs, cents, source: "receipt" }) });
   });
   ctx.store.commit();
   ctx.tx.update(listRef, update);

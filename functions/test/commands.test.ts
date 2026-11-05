@@ -177,7 +177,8 @@ describe("receiveGroceries", () => {
 
 describe("receiveGroceries from a receipt (M25, R7.16, R7.17)", () => {
   it("stores paid prices on the lines and the list, records extras, spends at paid prices, updates the mapping's last paid price", async () => {
-    await db.doc(`households/${HID}/brandMappings/rice`).set({ productName: "Rice 2 kg", packAmount: 2000, packMeasure: "weight", storeId: "pc-express" });
+    const before = [{ atMs: Date.UTC(2026, 9, 1), cents: 600, source: "pcx" }];
+    await db.doc(`households/${HID}/brandMappings/rice`).set({ productName: "Rice 2 kg", packAmount: 2000, packMeasure: "weight", storeId: "pc-express", priceHistory: before });
     await db.doc("ingredients/lentils").set({ ...ING.rice, name: "red lentils", isStaple: false });
     await db.doc(`households/${HID}/groceryLists/ordR`).set({
       periodId: "2026-10-05",
@@ -216,6 +217,10 @@ describe("receiveGroceries from a receipt (M25, R7.16, R7.17)", () => {
     const mapping = (await db.doc(`households/${HID}/brandMappings/rice`).get()).data()!;
     expect(mapping.lastPaidCents).toBe(550);
     expect(mapping.lastPaidAt).toBeDefined();
+    // M27 (R6.32): the paid price per pack joins the price history.
+    expect(mapping.priceHistory).toHaveLength(2);
+    expect(mapping.priceHistory[0]).toEqual(before[0]);
+    expect(mapping.priceHistory[1]).toMatchObject({ cents: 550, source: "receipt" });
     // No mapping for chicken: nothing created.
     expect((await db.doc(`households/${HID}/brandMappings/chicken`).get()).exists).toBe(false);
   });

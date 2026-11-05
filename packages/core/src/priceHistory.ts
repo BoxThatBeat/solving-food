@@ -168,3 +168,28 @@ export function priceMovers(
   }
   return out.sort((a, b) => Math.abs(b.changePct) - Math.abs(a.changePct) || a.id.localeCompare(b.id)).slice(0, limit);
 }
+
+/** Ingredient categories that count as a meal's main protein for the Deal chip (M27, R6.33). */
+export const PROTEIN_CATEGORIES: ReadonlySet<string> = new Set(["meat", "fish"]);
+
+/**
+ * The Deal chip of a planned meal (R6.33): among the ingredients the next order buys for it, one on sale that is a main
+ * protein (meat or fish) or the most expensive line; the protein first, then the bigger saving. Null when none is.
+ */
+export function mealDeal(
+  ingredientIds: Iterable<string>,
+  deals: ReadonlyMap<string, Pick<PriceDeal, "dealPct">>,
+  meta: (id: string) => { category?: string | undefined; name?: string | undefined } | undefined,
+  lineCents: (id: string) => number | null,
+): { ingredientId: string; dealPct: number; label: string } | null {
+  const ids = [...new Set(ingredientIds)].filter((id) => lineCents(id) !== null);
+  if (!ids.length) return null;
+  const costliest = ids.reduce((a, b) => ((lineCents(b) ?? 0) > (lineCents(a) ?? 0) ? b : a));
+  const pick = ids
+    .filter((id) => deals.has(id) && (id === costliest || PROTEIN_CATEGORIES.has(meta(id)?.category ?? "")))
+    .sort((a, b) => Number(PROTEIN_CATEGORIES.has(meta(b)?.category ?? "")) - Number(PROTEIN_CATEGORIES.has(meta(a)?.category ?? "")) || deals.get(b)!.dealPct - deals.get(a)!.dealPct)[0];
+  if (!pick) return null;
+  const d = deals.get(pick)!;
+  const name = (meta(pick)?.name ?? pick.replace(/-/g, " ")).split(/[,(]/)[0]!.trim();
+  return { ingredientId: pick, dealPct: d.dealPct, label: `${name.charAt(0).toUpperCase()}${name.slice(1)} ${dealLabel(d)}` };
+}

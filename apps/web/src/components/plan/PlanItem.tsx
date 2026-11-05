@@ -56,6 +56,8 @@ export interface PlanItemView {
   leftover?: { useBy: string | null; expired: boolean } | undefined;
   /** In the next period (M26, R3.2): cooked once its period starts, so no Cook or Ate it yet. */
   upcoming?: boolean | undefined;
+  /** M27 (R6.33): "Chicken thighs 20% below usual" when the order buys its main protein or costliest line on sale. */
+  deal?: string | undefined;
 }
 
 /** Uppercased by CSS; the duration stays lower case ("45m", not "45M"). Protein and fibre only while tracked (R6.27). */
@@ -144,6 +146,11 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
             </Badge>
           ))}
           {trashed ? <Badge className="bg-red-soft text-onc uppercase">Recipe in Trash</Badge> : null}
+          {v.deal && status === "planned" ? (
+            <Badge className="bg-acc text-onc uppercase" data-testid="deal-chip">
+              Deal · {v.deal}
+            </Badge>
+          ) : null}
           {v.expiry && status === "planned" ? (
             <Badge className="bg-peach-soft text-onc uppercase" data-testid="expiry-badge">
               {v.expiry}

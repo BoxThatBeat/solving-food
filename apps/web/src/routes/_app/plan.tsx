@@ -21,6 +21,7 @@ import {
   earliestExpiringUse,
   soonestUseDays,
   expiresPhrase,
+  mealDeal,
   mealRequirements,
   USE_SOON_DAYS,
   formatPeriodRange,
@@ -129,6 +130,8 @@ function PlanPage() {
           const e = earliestExpiringUse(needs, (id) => m.lotsByIngredient.get(id), supplyNow);
           // M9 (R6.24): the list's default order is the soonest-expiring ingredient first; the badge says why.
           v.soonDays = soonestUseDays(needs, (id) => m.lotsByIngredient.get(id), supplyNow)?.days;
+          // M27 (R6.33): its main protein or costliest ingredient on the list, on sale.
+          if (m.deals.size) v.deal = mealDeal(needs.keys(), m.deals, (id) => m.ingredients.get(id), (id) => (m.removedIds.has(id) ? null : (m.built.items[id]?.estPriceCents ?? null)))?.label;
           if (e && (e.expiresMs <= (endMs ?? 0) || daysLeft(e.expiresMs, supplyNow, tz) <= USE_SOON_DAYS)) {
             const name = m.ingredients.get(e.ingredientId)?.name ?? e.ingredientId.replace(/-/g, " ");
             v.expiry = `${name} ${expiresPhrase(e.expiresMs, supplyNow, tz)}`;
@@ -141,7 +144,7 @@ function PlanPage() {
         }
         return v;
       }),
-    [m.items, titleOf, sideNameOf, m.costs, m.ready, optimistic, reviewOf, m.ctx, m.lotsByIngredient, m.ingredients, m.supply.items, supplyNow, endMs, tz, upcoming],
+    [m.items, titleOf, sideNameOf, m.costs, m.ready, optimistic, reviewOf, m.ctx, m.lotsByIngredient, m.ingredients, m.supply.items, supplyNow, endMs, tz, upcoming, m.deals, m.removedIds, m.built.items],
   );
   const rows = React.useMemo(
     () => stripModel(views.map((v) => ({ coverage: v.item.coverage, status: v.status, kind: v.item.kind })), cells.length, m.household?.plannedMealTypes ?? []),

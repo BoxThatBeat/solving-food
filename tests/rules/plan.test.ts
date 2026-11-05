@@ -184,6 +184,14 @@ describe("household collections are member-only (R2.8)", () => {
     await assertFails(setDoc(doc(db, "households/h-alice/sourcingRules/r3"), { match: { category: "meat", ingredientId: "x" }, storeId: "costco" }));
     await assertSucceeds(setDoc(doc(db, "households/h-alice/brandMappings/tomato"), { productName: "Mutti Polpa", packAmount: 400, packMeasure: "weight", storeId: "pc-express", updatedBy: ALICE.uid, updatedAt: serverTimestamp() }));
     await assertFails(setDoc(doc(db, "households/h-alice/brandMappings/milk"), { productName: "Milk", packAmount: 0, packMeasure: "volume", storeId: "pc-express" }));
+    // M27 (R6.32): the function-written price history and last paid price: kept by a merge, dropped by a replace, never set.
+    const hist = [{ atMs: 1, cents: 349, source: "pcx" }];
+    await assertFails(setDoc(doc(db, "households/h-alice/brandMappings/rice"), { productName: "Rice", packAmount: 2000, packMeasure: "weight", storeId: "pc-express", priceHistory: hist }));
+    await seed((s) => updateDoc(doc(s, "households/h-alice/brandMappings/tomato"), { priceHistory: hist, lastPaidCents: 330, lastPaidAt: Timestamp.now() }));
+    await assertSucceeds(setDoc(doc(db, "households/h-alice/brandMappings/tomato"), { productName: "Mutti Polpa finely chopped", packAmount: 400, packMeasure: "weight", storeId: "pc-express" }, { merge: true }));
+    await assertFails(updateDoc(doc(db, "households/h-alice/brandMappings/tomato"), { priceHistory: [...hist, { atMs: 2, cents: 1, source: "pcx" }] }));
+    await assertFails(updateDoc(doc(db, "households/h-alice/brandMappings/tomato"), { lastPaidCents: 1 }));
+    await assertSucceeds(setDoc(doc(db, "households/h-alice/brandMappings/tomato"), { productName: "No Name tomatoes", productCode: "X", packAmount: 796, packMeasure: "weight", storeId: "pc-express" }));
     await assertFails(setDoc(doc(dbAs(BOB), "households/h-alice/stores/x"), { name: "X", kind: "inStore", bulk: false }));
   });
 

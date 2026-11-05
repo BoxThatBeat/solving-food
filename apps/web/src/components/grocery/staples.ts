@@ -40,10 +40,12 @@ export function useStapleLines(m: PlanModel, opts: { nowMs?: number; alsoOnList?
         // A dismissal from an earlier period that's still running stays; the until time decides.
         dismissed,
         nowMs: opts.nowMs ?? m.supply.now,
+        // M27 (R7.19): an on-sale staple due within two periods, while the budget meter has room for it.
+        ...(m.deals.size && m.household ? { sale: { deals: m.deals, periodDays: m.household.periodDays, headroomCents: m.budget.remainingCents } } : {}),
       },
       { ...m.ctx, ingredients: ingredientOf },
     );
-  }, [ready, draftItems, dismissed, m.built.items, m.ordered, m.inputs, m.supply.now, m.ctx, cadence.docs, ingredientOf, opts.nowMs, opts.alsoOnList]);
+  }, [ready, draftItems, dismissed, m.built.items, m.ordered, m.inputs, m.supply.now, m.ctx, cadence.docs, ingredientOf, opts.nowMs, opts.alsoOnList, m.deals, m.household, m.budget.remainingCents]);
   const cadenceOf = React.useCallback(
     (id: string) => {
       const d = cadence.docs?.find((x) => x.id === id)?.data;

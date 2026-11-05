@@ -5,7 +5,7 @@
 // Ingredients: the snapshot carries the ingredient docs the page has loaded (planned recipes, supply, mappings); every
 // other ingredient comes from the seed bundled into the worker (data/ingredients/*.json), which has the categories,
 // conversions, and pack sizes scoring and costing need without reading 475 documents.
-import { marginalCostFn, needsFor, buildList, type BuildContext, type GroceryIngredient, type MappingEntry, type PlanItemInput, type RecipeLines, type RuleEntry, type StoreEntry } from "@solving-food/core/grocery";
+import { marginalCostFn, needsFor, buildList, linePricing, type BuildContext, type GroceryIngredient, type MappingEntry, type PlanItemInput, type RecipeLines, type RuleEntry, type StoreEntry } from "@solving-food/core/grocery";
 import { projectedSupply } from "@solving-food/core/cooking";
 import { resolveWeights, tally, type ScoreContext, type ScoreRecipe, type Weights } from "@solving-food/core/scoring";
 import type { ExpiringSpare, LivePrice, MealType, PriceEstimate, RecipeStats, RecipeSummary } from "@solving-food/core";
@@ -50,6 +50,8 @@ export interface ScoringSnapshot {
   stores: StoreEntry[];
   defaultStoreId?: string | undefined;
   live: Array<[string, LivePrice]>;
+  /** M27 (R6.34): only the products on sale (usually a handful), by ingredient ID: how far below usual. */
+  deals?: Array<[string, { dealPct: number }]>;
 }
 
 export interface WorkerContexts {
@@ -102,6 +104,7 @@ export function buildContexts(s: ScoringSnapshot, seed: ReadonlyMap<string, Snap
     return n;
   };
   const costCache = new Map<string, number | null>();
+  const cpuCache = new Map<string, number | null>();
   const planned = tally(s.plannedRecipeIds, (id) => byId.get(id));
   const recent = tally(s.recentRecipeIds, (id) => byId.get(id));
   const score: ScoreContext = {
@@ -135,6 +138,12 @@ export function buildContexts(s: ScoringSnapshot, seed: ReadonlyMap<string, Snap
       return costCache.get(r.id)!;
     },
     remainingBudgetCents: s.budgetCents - spent,
+    deals: new Map(s.deals ?? []),
+    // The price the list would pay per canonical unit (the live sale price for a mapped product), looked up once.
+    centsPerUnit: (id) => {
+      if (!cpuCache.has(id)) cpuCache.set(id, linePricing(id, build)?.centsPerUnit ?? null);
+      return cpuCache.get(id)!;
+    },
   };
   const setCost = (ids: readonly string[]) => {
     const sum = new Map<string, number>();

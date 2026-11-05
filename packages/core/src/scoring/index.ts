@@ -38,7 +38,7 @@ import {
   type ScoreRecipe,
 } from "./factors";
 import { FACTORS, type FactorKey, type Weights } from "./weights";
-import { dealLabel } from "../priceHistory";
+import { dealLabel, PROTEIN_CATEGORIES } from "../priceHistory";
 import { FLOAT_EPS } from "../math";
 
 export * from "./factors";
@@ -200,8 +200,6 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
   };
 }
 
-/** Ingredient categories that count as a recipe's main protein for the Deal chip (M27). */
-const PROTEIN_CATEGORIES = new Set(["meat", "fish"]);
 const capital = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
 
 /** Where a result sorts: suggestions first, then blocked ones, then recipes already in the plan at the very bottom. */

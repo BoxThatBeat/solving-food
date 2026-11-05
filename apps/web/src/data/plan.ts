@@ -515,10 +515,16 @@ export function deleteRule(hid: string, id: string) {
   return deleteDoc(doc(db, "households", hid, "sourcingRules", id));
 }
 
-export function saveMapping(hid: string, ingredientId: string, m: BrandMappingDoc, uid: string) {
+/**
+ * Saves a brand mapping. M27: an edit that keeps the same product (code and pack) merges, so the function-written price
+ * history and last paid price stay; a different product replaces the document and starts its history afresh.
+ */
+export function saveMapping(hid: string, ingredientId: string, m: BrandMappingDoc, uid: string, prev?: BrandMappingDoc) {
   const data: Record<string, unknown> = { productName: m.productName.trim(), packAmount: m.packAmount, packMeasure: m.packMeasure, storeId: m.storeId, updatedBy: uid, updatedAt: serverTimestamp() };
   if (m.productCode) data.productCode = m.productCode;
-  return setDoc(doc(db, "households", hid, "brandMappings", ingredientId), data);
+  const same = !!prev && (prev.productCode ?? "") === (m.productCode ?? "") && prev.packAmount === m.packAmount && prev.packMeasure === m.packMeasure;
+  const ref = doc(db, "households", hid, "brandMappings", ingredientId);
+  return same ? setDoc(ref, data, { merge: true }) : setDoc(ref, data);
 }
 export function deleteMapping(hid: string, ingredientId: string) {
   return deleteDoc(doc(db, "households", hid, "brandMappings", ingredientId));

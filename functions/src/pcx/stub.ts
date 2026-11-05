@@ -27,6 +27,8 @@ export const STUB_PRODUCTS = [
 
 /** Price changes a test can apply: code → dollars (the weekly refresh then picks them up). */
 export const stubPriceOverride = new Map<string, number>();
+/** M27: price changes for one household only (`_stubPcx/{hid}.prices`), so parallel e2e tests don't see each other's. */
+const householdPrices = new Map<string, Record<string, number>>();
 
 let modeOverride: StubMode | null = null;
 /** Tests set the mode directly; the emulator reads `_stubPcx/config`. */
@@ -40,7 +42,12 @@ export async function stubMode(hid?: string): Promise<StubMode> {
   const own = hid ? await db.doc(`_stubPcx/${hid}`).get().catch(() => null) : null;
   const s = own?.exists ? own : await db.doc("_stubPcx/config").get().catch(() => null);
   const m = s?.data()?.mode;
-  if (s?.exists && typeof s.data()?.prices === "object") for (const [k, v] of Object.entries(s.data()!.prices as Record<string, number>)) stubPriceOverride.set(k, v);
+  if (hid) householdPrices.delete(hid);
+  if (s?.exists && typeof s.data()?.prices === "object") {
+    const prices = s.data()!.prices as Record<string, number>;
+    if (own?.exists && hid) householdPrices.set(hid, prices);
+    else for (const [k, v] of Object.entries(prices)) stubPriceOverride.set(k, v);
+  }
   return m === "notConfigured" || m === "down" || m === "priceFails" ? m : "ok";
 }
 
@@ -65,18 +72,18 @@ export async function stubFetch(input: string | URL | Request, init?: RequestIni
     const body = JSON.parse(String(init?.body ?? "{}")) as { term?: string };
     const words = String(body.term ?? "").toLowerCase().split(/\s+/).filter(Boolean);
     const results = STUB_PRODUCTS.filter((p) => words.every((w) => `${p.name} ${p.brand}`.toLowerCase().includes(w.replace(/s$/, ""))));
-    return json(200, { results: results.map(withOverride) });
+    return json(200, { results: results.map((p) => withOverride(p, hid)) });
   }
   const m = /\/v1\/products\/([^/?]+)$/.exec(url.pathname);
   if (m) {
     if (mode === "priceFails") return json(500, { error: "boom" });
     const p = STUB_PRODUCTS.find((x) => x.code === decodeURIComponent(m[1]!));
-    return p ? json(200, withOverride(p)) : json(404, { error: "not found" });
+    return p ? json(200, withOverride(p, hid)) : json(404, { error: "not found" });
   }
   return json(404, { error: "no such stub route" });
 }
 
-function withOverride<T extends { code: string; prices: { price: { value: number; unit: string } } }>(p: T): T {
-  const v = stubPriceOverride.get(p.code);
+function withOverride<T extends { code: string; prices: { price: { value: number; unit: string } } }>(p: T, hid?: string): T {
+  const v = (hid ? householdPrices.get(hid)?.[p.code] : undefined) ?? stubPriceOverride.get(p.code);
   return v === undefined ? p : { ...p, prices: { price: { ...p.prices.price, value: v } } };
 }

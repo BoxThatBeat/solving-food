@@ -1,7 +1,9 @@
 // The History page (PRD R10.1–R10.3, R4.7; TECHNICAL_SPECS §12; prototype page "History"): everything cooked, with
 // the date, meal and recipes (deleted titles marked), who cooked it, everyone's ratings, deviations from the recipe,
 // and notes, through the shared <CollectionView>; stat tiles for most-cooked recipes, average rating by cuisine, and
-// spend per period (the estimated cost of grocery lists confirmed as received in each period).
+// spend per period (the estimated cost of grocery lists confirmed as received in each period). M27 (R10.4): a Prices
+// tile with this week's five biggest price moves against usual, from the household's brand mappings (already loaded by
+// the shell's plan model: no extra reads).
 import { MealThumb } from "@/components/recipes/RecipeThumb";
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -18,6 +20,8 @@ import {
   formatPeriodRange,
   mostCooked,
   optionCount,
+  priceMovers,
+  type PriceMover,
   SORT_LABELS,
   listSpend,
   spendPerPeriod,
@@ -44,6 +48,8 @@ import { useRecipeIndex } from "@/search/useRecipeSearch";
 import { useReadySession } from "@/session/useSession";
 import { cn } from "@/lib/utils";
 import { useNutritionSearch } from "@/data/nutrition";
+import { usePlanModel } from "@/data/planModel";
+import { useNow } from "@/hooks/useNow";
 
 export const Route = createFileRoute("/_app/history")({
   validateSearch: (s) => collectionSearchSchema.parse(s),
@@ -124,6 +130,12 @@ function HistoryPage() {
     (periods.docs ?? []).map((p) => ({ id: p.id, startMs: millis(p.data.start) ?? 0, endMs: millis(p.data.end) ?? 0, budgetCents: p.data.budgetCents })),
   ).slice(-6);
 
+  // M27 (R10.4): this week's biggest price moves, from the brand mappings' price history.
+  const pm = usePlanModel();
+  const now = useNow(600_000);
+  const movers = React.useMemo(() => priceMovers((pm.mappings_ ?? []).map((d) => [d.id, d.data] as const), (code) => pm.livePrices.get(code), now), [pm.mappings_, pm.livePrices, now]);
+  const productOf = (id: string) => pm.mappings_?.find((d) => d.id === id)?.data.productName ?? pm.ingredients.get(id)?.name ?? id;
+
   const devIds = React.useMemo(() => [...new Set(evs.flatMap((x) => (x.e.reviewStatus === "done" ? deviations(x.e.defaults ?? [], x.e.used).map((d) => d.ingredientId) : [])))], [evs]);
   const devIngredients = useIngredientsById(devIds);
   const viewById = new Map(evs.map((x) => [x.id, x]));
@@ -179,6 +191,18 @@ function HistoryPage() {
                 )}
                 {spend.some((p) => p.cents > 0) ? <span className="text-[0.6875rem] font-semibold text-sub">The groceries confirmed as received in each period: what was paid where a receipt was read (actual), the estimate otherwise.</span> : null}
               </StatTile>
+              <StatTile title="Prices · this week vs usual" testId="stat-prices">
+                {movers.length ? (
+                  <>
+                    {movers.map((x) => (
+                      <PriceRow key={x.id} name={productOf(x.id)} m={x} />
+                    ))}
+                    <span className="text-[0.6875rem] font-semibold text-sub">Your brands&apos; prices this week against their usual price (the middle of recent weeks and receipts). 15% or more below usual is a deal.</span>
+                  </>
+                ) : (
+                  <Empty loading={pm.mappings_ === undefined}>Link brands to PC Express products in Settings → Brands; after a few weekly price checks, the biggest moves show up here.</Empty>
+                )}
+              </StatTile>
             </div>
             <div className="flex items-baseline justify-between gap-2">
               <h2 className="m-0 font-display text-[1.375rem] font-normal">Cooked</h2>
@@ -226,6 +250,25 @@ function Empty({ loading, children }: { loading: boolean; children: React.ReactN
       <span className="font-extrabold text-ink">Nothing yet.</span>
       <span>{children}</span>
     </span>
+  );
+}
+
+/** One price move (M27, R10.4): product, this week's price, the change against usual (down is good: accent). */
+function PriceRow({ name, m }: { name: string; m: PriceMover }) {
+  const pct = Math.round(Math.abs(m.changePct) * 100);
+  const down = m.changePct < 0;
+  return (
+    <div className="flex items-center gap-2.5" data-testid="price-mover">
+      <span className="flex min-w-0 flex-1 flex-col leading-tight">
+        <span className="truncate text-[0.8125rem] font-bold">{name}</span>
+        <span className="font-mono text-[0.5625rem] font-bold text-sub uppercase">usual {formatCents(m.usualCents)}</span>
+      </span>
+      <span className="font-mono text-[0.75rem] font-extrabold">{formatCents(m.cents)}</span>
+      <Badge className={cn("w-[3.25rem] flex-none text-center", down ? "bg-acc text-onc" : "bg-red-soft text-onc")} aria-label={`${pct}% ${down ? "below" : "above"} usual`}>
+        {down ? "−" : "+"}
+        {pct}%
+      </Badge>
+    </div>
   );
 }
 
