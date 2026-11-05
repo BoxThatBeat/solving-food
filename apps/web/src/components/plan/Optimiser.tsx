@@ -120,15 +120,12 @@ export function OptimiserCard({
   const current = sets[index];
   const atEnd = state === "exhausted" && index === sets.length - 1;
 
-  const accept = async () => {
+  const accept = () => {
     if (!current || !periodId) return;
-    try {
-      await addOptimiserSet(hid, periodId, uid, current.ids, mealType, servings);
-      notify({ kind: "success", message: `Added ${current.ids.length} ${current.ids.length === 1 ? MEAL_LABEL[mealType].toLowerCase() : PLURAL[mealType]} to the plan` });
-      reset();
-    } catch (e) {
-      notify({ kind: "error", message: `Couldn't add the set: ${(e as Error).message}` });
-    }
+    // Shown at once (latency compensation); only a failure comes back (M23).
+    void addOptimiserSet(hid, periodId, uid, current.ids, mealType, servings).catch((e) => notify({ kind: "error", message: `Couldn't add the set: ${(e as Error).message}` }));
+    notify({ kind: "success", message: `Added ${current.ids.length} ${current.ids.length === 1 ? MEAL_LABEL[mealType].toLowerCase() : PLURAL[mealType]} to the plan` });
+    reset();
   };
 
   const relax = (what: "budget" | "caps" | "protein") => {

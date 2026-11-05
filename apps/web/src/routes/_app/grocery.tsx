@@ -217,7 +217,8 @@ function GroceryPage() {
           // The picked ingredient may not be one the plan uses yet: give the builder its document.
           const ctx = ingredient ? { ...m.ctx, ingredients: (id: string) => (id === ingredient.id ? ingredient : m.ctx.ingredients(id)) } : m.ctx;
           const item = manualItem(input, ctx);
-          await addManualItem(m.hid, m.periodId, item, !!m.draft.data);
+          // Shown at once; only a failure comes back (M23).
+          void addManualItem(m.hid, m.periodId, item, !!m.draft.data).catch((e) => notify({ kind: "error", message: `Couldn't add ${item.productName}: ${(e as Error).message}` }));
           notify({ kind: "success", message: `Added ${item.productName} to the list` });
         }}
       />

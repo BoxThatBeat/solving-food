@@ -100,14 +100,10 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
   const sideNames = (it.sides ?? []).map((x) => ingredients.get(x.ingredientId)?.name).filter((n): n is string => !!n);
   const lower = v.title.toLowerCase();
   const sides = it.sides?.length && !sideNames.every((n) => lower.includes(n.toLowerCase())) ? sidesLine(it.sides, (id) => ingredients.get(id)?.name) : "";
-  const remove = async () => {
+  const remove = () => {
     const snapshot = { ...it };
-    try {
-      await removePlanItem(hid, v.id);
-      notify({ kind: "success", message: `Removed “${v.title}” from the plan`, action: { label: "Undo", run: () => void restorePlanItem(hid, v.id, snapshot) } });
-    } catch (e) {
-      notify({ kind: "error", message: `Couldn't remove it: ${(e as Error).message}` });
-    }
+    void removePlanItem(hid, v.id).catch((e) => notify({ kind: "error", message: `Couldn't remove it: ${(e as Error).message}` }));
+    notify({ kind: "success", message: `Removed “${v.title}” from the plan`, action: { label: "Undo", run: () => void restorePlanItem(hid, v.id, snapshot) } });
   };
   return (
     <article className="flex flex-col overflow-hidden rounded-ui border-bw bg-base text-ink shadow-hard" data-testid="plan-item" aria-label={v.title}>
@@ -269,38 +265,26 @@ function PlanItemBody({
   const titles = it.recipes.map((r) => recipes.get(r.recipeId)?.title ?? "Recipe");
   const sideNames = sides.map((x) => ingredients.get(x.ingredientId)?.name ?? sideList.byId.get(x.ingredientId)?.ingredient.name ?? "side");
   const [name, setName] = React.useState(it.name ?? defaultMealName(titles, sideNames));
-  const [busy, setBusy] = React.useState(false);
   const types: MealType[] = [...PLANNABLE_MEAL_TYPES.filter((t) => plannedMealTypes.includes(t) || t === it.mealType), "snack"];
   const editable = it.status === "planned";
   const out = it.kind === "out";
 
-  const save = async () => {
-    setBusy(true);
-    try {
-      const coverage = coverageFor({ kind: it.kind, mealType, recipes: it.recipes }, (id) => recipes.get(id));
-      await updatePlanItem(hid, v.id, { servings, mealType, coverage, ...(sameSides(sides, it.sides ?? []) ? {} : { sides }) });
-      notify({ kind: "success", message: "Plan updated" });
-      close();
-    } catch (e) {
-      notify({ kind: "error", message: `Couldn't save: ${(e as Error).message}` });
-      setBusy(false);
-    }
+  // M23: the writes show at once (latency compensation) and the sheet closes on the local write; a failure comes back
+  // as an error banner.
+  const save = () => {
+    const coverage = coverageFor({ kind: it.kind, mealType, recipes: it.recipes }, (id) => recipes.get(id));
+    void updatePlanItem(hid, v.id, { servings, mealType, coverage, ...(sameSides(sides, it.sides ?? []) ? {} : { sides }) }).catch((e) => notify({ kind: "error", message: `Couldn't save: ${(e as Error).message}` }));
+    notify({ kind: "success", message: "Plan updated" });
+    close();
   };
-  const saveMeal = async () => {
+  const saveMeal = () => {
     if (!name.trim()) return;
-    setBusy(true);
-    try {
-      await saveItemAsMeal(hid, v.id, name, it.recipes, uid, sides);
-      notify({ kind: "success", message: `Saved “${name.trim()}” to Meals`, link: { to: "/meals", label: "Meals" } });
-      setBusy(false);
-    } catch (e) {
-      notify({ kind: "error", message: `Couldn't save the meal: ${(e as Error).message}` });
-      setBusy(false);
-    }
+    void saveItemAsMeal(hid, v.id, name, it.recipes, uid, sides).catch((e) => notify({ kind: "error", message: `Couldn't save the meal: ${(e as Error).message}` }));
+    notify({ kind: "success", message: `Saved “${name.trim()}” to Meals`, link: { to: "/meals", label: "Meals" } });
   };
-  const remove = async () => {
+  const remove = () => {
     const snapshot = { ...it };
-    await removePlanItem(hid, v.id);
+    void removePlanItem(hid, v.id).catch((e) => notify({ kind: "error", message: `Couldn't remove it: ${(e as Error).message}` }));
     notify({ kind: "success", message: `Removed “${v.title}” from the plan`, action: { label: "Undo", run: () => void restorePlanItem(hid, v.id, snapshot) } });
     close();
   };
@@ -314,7 +298,7 @@ function PlanItemBody({
           <Button variant="secondary" onClick={remove} className="flex-none">
             Remove
           </Button>
-          <Button className="flex-1" disabled={busy || !editable || (servings === it.servings && mealType === it.mealType && sameSides(sides, it.sides ?? []))} onClick={save}>
+          <Button className="flex-1" disabled={!editable || (servings === it.servings && mealType === it.mealType && sameSides(sides, it.sides ?? []))} onClick={save}>
             Save changes
           </Button>
         </div>
@@ -377,7 +361,7 @@ function PlanItemBody({
           <span className="text-[0.75rem] font-semibold text-sub">Keeps a reusable copy in Meals; this planned meal stays as it is.</span>
           <div className="flex gap-2">
             <Input aria-label="Meal name" value={name} maxLength={80} onChange={(e) => setName(e.target.value)} className="flex-1" />
-            <Button variant="secondary" disabled={busy || !name.trim()} onClick={saveMeal} className="flex-none">
+            <Button variant="secondary" disabled={!name.trim()} onClick={saveMeal} className="flex-none">
               Save
             </Button>
           </div>

@@ -52,11 +52,10 @@ function HouseholdForm({ hid, household }: { hid: string; household: HouseholdDo
   const [form, setForm] = React.useState<HouseholdSettingsInput>(() => fromDoc(household));
   const [budgetText, setBudgetText] = React.useState(String(household.budgetCents / 100));
   const [error, setError] = React.useState<string | null>(null);
-  const [busy, setBusy] = React.useState(false);
   const tz = React.useMemo(() => zones(form.timezone), [form.timezone]);
   const dirty = JSON.stringify(form) !== JSON.stringify(fromDoc(household));
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = householdSettingsInputSchema.safeParse(form);
     if (!parsed.success) {
@@ -64,20 +63,14 @@ function HouseholdForm({ hid, household }: { hid: string; household: HouseholdDo
       return;
     }
     setError(null);
-    setBusy(true);
-    try {
-      const v = parsed.data;
-      await saveHouseholdSettings(
-        hid,
-        { ...v, plannedMealTypes: PLANNABLE_MEAL_TYPES.filter((t) => v.plannedMealTypes.includes(t)) },
-        v.budgetCents !== household.budgetCents ? household.currentPeriodId : null,
-      );
-      notify({ kind: "success", message: "Household settings saved" });
-    } catch (err) {
-      setError(`Couldn't save: ${(err as Error).message}`);
-    } finally {
-      setBusy(false);
-    }
+    const v = parsed.data;
+    // Shown at once (latency compensation); only a failure comes back (M23).
+    void saveHouseholdSettings(
+      hid,
+      { ...v, plannedMealTypes: PLANNABLE_MEAL_TYPES.filter((t) => v.plannedMealTypes.includes(t)) },
+      v.budgetCents !== household.budgetCents ? household.currentPeriodId : null,
+    ).catch((err) => setError(`Couldn't save: ${(err as Error).message}`));
+    notify({ kind: "success", message: "Household settings saved" });
   };
 
   return (
@@ -172,8 +165,8 @@ function HouseholdForm({ hid, household }: { hid: string; household: HouseholdDo
             {error}
           </p>
         ) : null}
-        <Button type="submit" size="lg" disabled={busy || !dirty} className="self-start">
-          {busy ? "Saving…" : dirty ? "Save" : "Saved"}
+        <Button type="submit" size="lg" disabled={!dirty} className="self-start">
+          {dirty ? "Save" : "Saved"}
         </Button>
       </div>
     </form>

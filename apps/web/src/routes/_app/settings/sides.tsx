@@ -33,13 +33,10 @@ function SidesPage() {
   const [editing, setEditing] = React.useState<string | null>(null);
   const [picked, setPicked] = React.useState<IngredientEntry | null>(null);
 
-  const write = async (next: SideSettings, message: string) => {
-    try {
-      await saveSides(hh.id, next);
-      notify({ kind: "success", message });
-    } catch (e) {
-      notify({ kind: "error", message: `Couldn't save sides: ${(e as Error).message}` });
-    }
+  const write = (next: SideSettings, message: string) => {
+    // Shown at once; only a failure comes back (M23).
+    void saveSides(hh.id, next).catch((e) => notify({ kind: "error", message: `Couldn't save sides: ${(e as Error).message}` }));
+    notify({ kind: "success", message });
   };
   const setPortion = (side: SideEntry, portion: number) => {
     const next = { ...sides.settings };

@@ -19,6 +19,7 @@ import {
   type Timestamp,
 } from "firebase/firestore";
 import { deriveRecipe, type IngredientLookup, type RecipeContent, type RecipeDoc, type RecipeVersionDoc } from "@solving-food/core";
+import { isOnline } from "@/hooks/useOnline";
 import { db } from "@/firebase/app";
 import { useEffect, useState } from "react";
 import { useLiveDoc, useLiveQuery } from "./live";
@@ -138,7 +139,7 @@ async function writeNextVersion(
   lookup: IngredientLookup,
   opts: { content?: RecipeContent; expectedVersion?: number; change?: StateChange },
 ): Promise<number> {
-  if (typeof navigator !== "undefined" && navigator.onLine === false) throw new OfflineError();
+  if (!isOnline()) throw new OfflineError();
   const ref = doc(db, "recipes", id);
   const snap = await getDocFromServer(ref);
   if (!snap.exists()) throw new Error("This recipe no longer exists");
@@ -180,7 +181,7 @@ async function writeNextVersion(
 
 /** Creates a recipe (version 1 + snapshot). Returns its ID. */
 export async function createRecipe(content: RecipeContent, uid: string, lookup: IngredientLookup, id = doc(collection(db, "recipes")).id): Promise<string> {
-  if (typeof navigator !== "undefined" && navigator.onLine === false) throw new OfflineError();
+  if (!isOnline()) throw new OfflineError();
   const derived = deriveRecipe(content, lookup);
   const data: Record<string, unknown> = {
     ...content,

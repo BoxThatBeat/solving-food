@@ -59,6 +59,7 @@ import {
   type SourcingRuleDoc,
   type StoreDoc,
 } from "@solving-food/core";
+import { isOnline } from "@/hooks/useOnline";
 import { db } from "@/firebase/app";
 import { useLiveDoc, useLiveDocs, useLiveQuery } from "./live";
 import type { StoredRecipe } from "./recipes";
@@ -179,7 +180,7 @@ export type BootstrapResult = "ok" | "rolled" | "offline" | "error";
  * created before M2 also get the default stores here. Needs a connection; offline the ended period stays.
  */
 export async function bootstrapHousehold(hid: string, now = Date.now()): Promise<BootstrapResult> {
-  if (typeof navigator !== "undefined" && navigator.onLine === false) return "offline";
+  if (!isOnline()) return "offline";
   const hRef = doc(db, "households", hid);
   const h = (await getDoc(hRef)).data() as HouseholdDoc | undefined;
   if (!h) return "error";
@@ -235,7 +236,7 @@ export type RestartResult = { kind: "noop" | "moved" | "restarted" | "offline" |
  * Returns "changed" when another member changed the current period in the meantime (nothing written).
  */
 export async function restartPeriod(hid: string, day: RestartDay, now = Date.now()): Promise<RestartResult> {
-  if (typeof navigator !== "undefined" && navigator.onLine === false) return { kind: "offline" };
+  if (!isOnline()) return { kind: "offline" };
   const hRef = doc(db, "households", hid);
   const h = (await getDoc(hRef)).data() as HouseholdDoc | undefined;
   if (!h) throw new Error("Household not found");
@@ -478,7 +479,7 @@ const draftRef = (hid: string) => doc(db, "households", hid, "groceryLists", DRA
  * the computed lines and the draft catches up later.
  */
 export async function syncDraft(hid: string, periodId: string, generated: Record<string, GroceryItem>, opts: { restore?: boolean } = {}): Promise<void> {
-  if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+  if (!isOnline()) return;
   const ref = draftRef(hid);
   await runTransaction(db, async (tx) => {
     const snap = await tx.get(ref);

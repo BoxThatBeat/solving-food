@@ -571,14 +571,11 @@ function HouseholdNotes({ hid, uid, recipeId }: { hid: string; uid: string; reci
   const current = note.data?.text ?? "";
   const value = text ?? current;
   const dirty = text !== null && text !== current;
-  const save = async () => {
-    try {
-      await saveNote(hid, recipeId, value, uid);
-      setText(null);
-      notify({ kind: "success", message: "Household note saved" });
-    } catch (e) {
-      notify({ kind: "error", message: `Couldn't save the note: ${(e as Error).message}` });
-    }
+  const save = () => {
+    // Shown at once (latency compensation); only a failure comes back (M23).
+    void saveNote(hid, recipeId, value, uid).catch((e) => notify({ kind: "error", message: `Couldn't save the note: ${(e as Error).message}` }));
+    setText(null);
+    notify({ kind: "success", message: "Household note saved" });
   };
   return (
     <div className="flex flex-col gap-1.5 rounded-ui border-2 border-line bg-base p-3">

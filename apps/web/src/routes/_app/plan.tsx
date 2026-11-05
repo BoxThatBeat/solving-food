@@ -177,12 +177,12 @@ function PlanPage() {
   // Offline (§12): warm the service worker's image cache with the planned recipes' photos.
   const imageKey = [...m.recipes.values()].map((r) => r.imagePaths[0] ?? "").filter(Boolean).sort().join("|");
   React.useEffect(() => {
-    if (!imageKey || !navigator.onLine) return;
+    if (!imageKey || !online) return;
     const t = setTimeout(() => {
       for (const base of imageKey.split("|")) for (const size of [480, 960] as const) new Image().src = publicUrl(imageVariant(base, size));
     }, 2000);
     return () => clearTimeout(t);
-  }, [imageKey]);
+  }, [imageKey, online]);
 
   return (
     <PageBody className="max-w-[112.5rem]">

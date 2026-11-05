@@ -102,7 +102,8 @@ function BrandsPage() {
             defaultStoreId={hh.data?.defaultStoreId}
             onCancel={editing ? () => setEditing(null) : undefined}
             onSave={async (ingredientId, m) => {
-              await saveMapping(hh.id, ingredientId, m, s.user.uid);
+              // Shown at once; only a failure comes back (M23).
+              void saveMapping(hh.id, ingredientId, m, s.user.uid).catch((e) => notify({ kind: "error", message: `Couldn't save ${m.productName}: ${(e as Error).message}` }));
               notify({ kind: "success", message: `Saved ${m.productName}` });
               setEditing(null);
             }}

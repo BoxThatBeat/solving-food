@@ -4,6 +4,7 @@
 import * as React from "react";
 import { adjustTimer, newTimer, pauseTimer, startTimer, tickTimers, type CookTimer } from "@solving-food/core";
 import { cancelPush, pushSupport, schedulePush } from "@/pwa/push";
+import { isOnline } from "@/hooks/useOnline";
 
 const KEY = (k: string) => `sf.timers.${k}`;
 
@@ -111,7 +112,7 @@ export function useCookTimers(sessionKey: string, ctx: TimerContext) {
       askedInstall.current = true;
       ctxRef.current.onNeedsInstall?.();
     }
-    if (!navigator.onLine) ctxRef.current.onOfflineStart?.();
+    if (!isOnline()) ctxRef.current.onOfflineStart?.();
     const n = Date.now();
     const s = startTimer(t, n);
     setNow(n);

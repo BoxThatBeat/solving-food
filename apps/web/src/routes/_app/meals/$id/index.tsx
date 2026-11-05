@@ -221,8 +221,8 @@ function MealPage() {
         title="Delete this meal?"
         confirmLabel="Delete meal"
         destructive
-        onConfirm={async () => {
-          await deleteMeal(id);
+        onConfirm={() => {
+          void deleteMeal(id).catch((e) => notify({ kind: "error", message: `Couldn't delete it: ${(e as Error).message}` }));
           setConfirmDelete(false);
           notify({ kind: "success", message: `Deleted “${data.name}”. Its recipes stay in the library; planned meals keep their recipes.` });
           void navigate({ to: "/meals" });

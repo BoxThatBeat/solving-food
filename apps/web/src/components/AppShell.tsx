@@ -3,19 +3,19 @@
 
 import * as React from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { collection } from "firebase/firestore";
+import { collection, doc } from "firebase/firestore";
 import { ChevronDown, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { PAGES, type NavPage } from "./nav";
 import type { MemberDoc } from "@solving-food/core";
 import { db } from "@/firebase/app";
-import { useLiveQuery } from "@/data/live";
+import { useLiveDoc, useLiveQuery } from "@/data/live";
 import { useActiveHousehold } from "@/data/households";
 import { InviteBanner } from "./households/Invites";
 import { consumeSelfLeft } from "./households/removal";
 import { useNotify } from "./notifications-context";
 import { isPublicPath } from "@/session/publicPaths";
 import { useReadySession, useSession } from "@/session/useSession";
-import { useOnline } from "@/hooks/useOnline";
+import { reportServerContact, useOnline } from "@/hooks/useOnline";
 import { cn } from "@/lib/utils";
 import { ListenerErrorBanner, NotificationBanners, NotificationFeed, UpdateBanner } from "./notifications";
 import { useRecipeIndex } from "@/search/useRecipeSearch";
@@ -74,6 +74,17 @@ function useHouseholdSummary() {
     name: hh.data?.name ?? "",
     memberNames: (members.docs ?? []).map((m) => m.data.displayName),
   };
+}
+
+/** Feeds the connectivity store (hooks/useOnline.ts) from the household document's cache/server metadata. */
+function ConnectivityProbe({ hid }: { hid: string }) {
+  const probe = useLiveDoc(doc(db, "households", hid), `households/${hid}#probe`, { metadata: true });
+  const fromCache = probe.data === undefined ? null : probe.fromCache;
+  React.useEffect(() => {
+    if (fromCache !== null) reportServerContact(fromCache);
+  }, [fromCache]);
+  React.useEffect(() => () => reportServerContact(false), []);
+  return null;
 }
 
 function SyncStatus() {
@@ -409,6 +420,7 @@ function ReadyShell({ children, uid }: { children: React.ReactNode; uid: string 
       </div>
       <NotificationFeed uid={uid} />
       <ListenerErrorBanner householdIds={s.householdIds} />
+      <ConnectivityProbe hid={s.activeHouseholdId} />
       <RemovalNotice />
       <UpdateBanner />
       <NotificationBanners className="bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-7" />
