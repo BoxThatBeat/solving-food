@@ -162,3 +162,32 @@ export async function fakeWakeLock(page: Page): Promise<void> {
     Object.defineProperty(navigator, "wakeLock", { configurable: true, value: { request: async () => (w.__wakeLocks++, sentinel()) } });
   });
 }
+
+/**
+ * A cook event with a note left in an earlier cook (M28, R4.38, R4.39), as the functions leave it: `notedRecipeIds` is
+ * what the "Last time" query reads.
+ */
+export async function seedNotedEvent(hid: string, o: { id?: string; recipeId: string; title: string; uid: string; daysAgo: number; note?: string; stepNotes?: Array<{ step: number; text: string }> }): Promise<string> {
+  const id = o.id ?? `noted-${Math.random().toString(36).slice(2, 10)}`;
+  const doc: Record<string, unknown> = {
+    recipeIds: [o.recipeId],
+    titles: [o.title],
+    title: o.title,
+    mealType: "dinner",
+    servings: 4,
+    cookedBy: o.uid,
+    cookedAt: Timestamp.fromMillis(Date.now() - o.daysAgo * DAY),
+    used: [],
+    defaults: [],
+    deducted: [],
+    takes: [],
+    leftoverPortions: 0,
+    reviewStatus: "done",
+    ratedBy: [o.uid],
+    notedRecipeIds: [o.recipeId],
+  };
+  if (o.note) doc.note = o.note;
+  if (o.stepNotes) doc.stepNotes = o.stepNotes.map((n) => ({ recipeId: o.recipeId, ...n }));
+  await adminDb.doc(`households/${hid}/cookEvents/${id}`).set(doc);
+  return id;
+}

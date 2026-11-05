@@ -2,7 +2,7 @@
 // portrait/landscape and tablet layouts; wake lock requested; choosing the order of a multi-recipe meal.
 import { expect, test } from "../fixtures/test";
 import { PlanPage, seedPeriod, seedPlanItem } from "../pages/plan";
-import { fakeWakeLock, makeCookRecipe } from "../pages/supply";
+import { cookEvents, expectSupply, fakeWakeLock, makeCookRecipe, seedNotedEvent, seedSupply } from "../pages/supply";
 
 test("mise en place lists the prep tasks, then step mode shows one step with inline amounts and its ingredients; the screen stays awake (R4.12, R4.10, R4.11)", { tag: ["@R4.12", "@R4.10", "@R4.11"] }, async ({ page, household }) => {
   await fakeWakeLock(page);
@@ -194,4 +194,81 @@ test("a long step shows a down arrow while there's more text; it goes at the end
   await expect(page.getByTestId("step-text")).toContainText("Serve it");
   await expect(arrow).toHaveCount(0);
   void household;
+});
+
+// ---------- M28: cook notes and swaps
+
+test("last time's note shows on mise en place and the recipe page, with when and who; Show earlier opens the rest (R4.38)", { tag: ["@R4.38"] }, async ({ page, household }) => {
+  const r = await makeCookRecipe("Noted flow");
+  await seedNotedEvent(household.hid, { recipeId: r.id, title: r.title, uid: household.uid, daysAgo: 20, note: "Too salty" });
+  await seedNotedEvent(household.hid, { recipeId: r.id, title: r.title, uid: household.uid, daysAgo: 10, note: "Less stock" });
+  await seedNotedEvent(household.hid, { recipeId: r.id, title: r.title, uid: household.uid, daysAgo: 3, note: "More lemon next time" });
+  // A cook with no note doesn't hide them.
+  await seedNotedEvent(household.hid, { recipeId: r.id, title: r.title, uid: household.uid, daysAgo: 1, stepNotes: [] });
+
+  await page.goto(`/recipes/${r.id}/cook`);
+  await expect(page.getByRole("heading", { name: "Mise en place" })).toBeVisible();
+  const last = page.getByTestId("last-time");
+  await expect(last).toContainText(/Last time \(\d{1,2} [A-Z][a-z]{2,3}, Aaron\): More lemon next time/);
+  await expect(last.getByRole("list", { name: "Earlier notes" })).toHaveCount(0);
+  await last.getByRole("button", { name: "Show earlier (2)" }).click();
+  const earlier = last.getByRole("list", { name: "Earlier notes" });
+  await expect(earlier.getByRole("listitem")).toHaveCount(2);
+  await expect(earlier.getByRole("listitem").first()).toContainText("Less stock");
+  await expect(earlier.getByRole("listitem").last()).toContainText("Too salty");
+
+  await page.goto(`/recipes/${r.id}`);
+  await expect(page.getByTestId("last-time")).toContainText("More lemon next time");
+});
+
+test("a note on a step is saved with Done cooking and shows under that step next time (R4.39)", { tag: ["@R4.39"] }, async ({ page, household }) => {
+  const r = await makeCookRecipe("Step note flow");
+  await page.goto(`/recipes/${r.id}/cook`);
+  await page.getByRole("button", { name: "Start step mode →" }).click();
+  await expect(page.getByTestId("step-note")).toHaveCount(0);
+  await page.getByRole("button", { name: "Add a note to step 1" }).click();
+  const sheet = page.getByRole("dialog", { name: "Note on step 1" });
+  await sheet.getByLabel("Note on step 1").fill("Pan hotter than you think");
+  await sheet.getByRole("button", { name: "Save note" }).click();
+  await expect(page.getByTestId("step-note")).toContainText("Pan hotter than you think");
+  await expect(page.getByRole("button", { name: "Edit the note on step 1" })).toBeVisible();
+  // Step 2 has no note.
+  await page.getByRole("button", { name: "Next step →" }).click();
+  await expect(page.getByTestId("step-note")).toHaveCount(0);
+  await page.getByRole("button", { name: "Done cooking", exact: true }).click();
+  await expect(page).toHaveURL(/\/review\//);
+  await expect.poll(async () => (await cookEvents(household.hid))[0]?.stepNotes, { timeout: 30_000 }).toEqual([{ recipeId: r.id, step: 0, text: "Pan hotter than you think" }]);
+  expect((await cookEvents(household.hid))[0]!.notedRecipeIds).toEqual([r.id]);
+  await page.getByRole("button", { name: "Review later" }).click();
+
+  // Next time: under step 1's text, and carried forward when Done cooking comes without changes.
+  await page.goto(`/recipes/${r.id}/cook?step=0`);
+  await expect(page.getByTestId("step-note")).toContainText("Pan hotter than you think");
+  await page.getByRole("button", { name: "Done cooking", exact: true }).click();
+  await expect.poll(async () => (await cookEvents(household.hid)).length, { timeout: 30_000 }).toBe(2);
+  await expect.poll(async () => (await cookEvents(household.hid)).every((e) => JSON.stringify(e.stepNotes) === JSON.stringify([{ recipeId: r.id, step: 0, text: "Pan hotter than you think" }]))).toBe(true);
+});
+
+test("a missing ingredient with a substitute in Supply: mise en place offers the swap and Done cooking takes the substitute (R4.40)", { tag: ["@R4.40"] }, async ({ page, household }) => {
+  const r = await makeCookRecipe("Swap flow", { leftovers: 0, lines: "Sear @chicken thigh{600%g} with @garlic{10%g} for ~{10%minutes}." });
+  await seedSupply(household.hid, "chicken-thigh", [{ amount: 1000, expiresInDays: 3 }], { label: "chicken thigh" });
+  await seedSupply(household.hid, "garlic-powder", [{ amount: 50, location: "pantry", expiresInDays: 300 }], { label: "garlic powder" });
+  await seedSupply(household.hid, "baby-spinach", [{ amount: 312, expiresInDays: 4 }], { label: "baby spinach" });
+  await page.goto(`/recipes/${r.id}/cook`);
+  const swap = page.getByTestId("swap");
+  await expect(swap).toHaveCount(1);
+  await expect(swap).toContainText(/garlic: use 0\.8 g garlic powder from Supply/i);
+  await swap.getByRole("button", { name: "Use it" }).click();
+  await expect(swap).toContainText(/swapped/i);
+  await expect(swap.getByRole("button", { name: "Undo" })).toBeVisible();
+  await page.getByRole("button", { name: "Done cooking", exact: true }).click();
+  await expect(page).toHaveURL(/\/review\//);
+  await expectSupply(household.hid, "garlic-powder", 49.224);
+  await expectSupply(household.hid, "chicken-thigh", 400);
+  const [ev] = await cookEvents(household.hid);
+  expect(ev!.substitutions).toEqual([{ ingredientId: "garlic", withIngredientId: "garlic-powder", amount: 0.776 }]);
+  // The review pre-fills the garlic powder, not the garlic.
+  await page.getByRole("button", { name: "Next →" }).click();
+  await expect(page.getByTestId("used-row").filter({ hasText: /garlic powder/i })).toContainText("0.8 g");
+  await expect(page.getByTestId("used-row").filter({ hasText: /^Garlic$|^Garlic[^ ]/ })).toHaveCount(0);
 });

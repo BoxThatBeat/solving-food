@@ -136,3 +136,25 @@ test("one switch hides protein and fibre everywhere and keeps the goals; switchi
   await expect(page.getByTestId("protein-dinner")).toContainText("goal 40 g");
   await expect(page.getByTestId("fibre-dinner")).toContainText("goal 8 g");
 });
+
+test("Suggest substitutions is on by default; off, mise en place offers no swap and Can make is strict (R11.20, R6.35)", { tag: ["@R11.20", "@R6.35"] }, async ({ page, household }) => {
+  const { seedSupply } = await import("../pages/supply");
+  const r = await makePlanRecipe("Swap off garlic", { lines: "Roast @pork tenderloin{500%g} with @garlic{10%g}." });
+  await seedPeriod(household.hid);
+  await seedSupply(household.hid, "pork-tenderloin", [{ amount: 500, expiresInDays: 3 }], { label: "pork tenderloin" });
+  await seedSupply(household.hid, "garlic-powder", [{ amount: 50, location: "pantry", expiresInDays: 300 }], { label: "garlic powder" });
+  await page.goto(`/recipes/${r.id}/cook`);
+  await expect(page.getByTestId("swap")).toHaveCount(1);
+
+  await adminDb.doc(`households/${household.hid}`).update({ "settings.substitutions": false });
+  await page.goto("/settings/preferences");
+  await expect(page.getByRole("switch", { name: "Suggest substitutions" })).toHaveAttribute("aria-checked", "false");
+  await page.goto(`/recipes/${r.id}/cook`);
+  await expect(page.getByRole("heading", { name: "Mise en place" })).toBeVisible();
+  await expect(page.getByTestId("swap")).toHaveCount(0);
+
+  // Off, Can make is strict again: the garlic is missing.
+  await page.goto("/recipes?supply=can");
+  await expect(page.getByTestId("recipe-count")).toBeVisible();
+  await expect(page.getByTestId("recipe-card").filter({ hasText: r.title })).toHaveCount(0);
+});

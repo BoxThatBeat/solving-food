@@ -5,7 +5,7 @@ import { adminDb } from "../fixtures/admin";
 import { expect, test } from "../fixtures/test";
 import { PlanPage, seedPeriod, seedPlanItem } from "../pages/plan";
 import { uniqueTitle } from "../fixtures/recipes";
-import { commandsSettled, cookEvents, expectSupply, makeCookRecipe, seedSupply } from "../pages/supply";
+import { commandsSettled, cookEvents, expectSupply, makeCookRecipe, seedNotedEvent, seedSupply } from "../pages/supply";
 
 test("Done cooking subtracts the recipe's amounts right away and records leftovers; the review then corrects by the difference (R9.3, R9.2)", { tag: ["@R9.3", "@R9.2", "@R5.3", "@R8.1"] }, async ({ page, household }) => {
   const r = await makeCookRecipe("Review flow");
@@ -104,4 +104,27 @@ test("an unsaved meal of several recipes offers Save this meal; the meal is then
   const st = (await adminDb.doc(`households/${household.hid}/stats/meal_${meal.docs[0]!.id}`).get()).data();
   expect(st).toMatchObject({ ratingSum: 10, ratingCount: 1 });
   await expect(new PlanPage(page).item(mealName)).toContainText(/Saved meal/i);
+});
+
+test("the review shows last time's note above the note field; Keep this note carries it into this cook (R9.6, R4.38)", { tag: ["@R9.6", "@R4.38"] }, async ({ page, household }) => {
+  const r = await makeCookRecipe("Kept note", { leftovers: 0 });
+  await seedNotedEvent(household.hid, { recipeId: r.id, title: r.title, uid: household.uid, daysAgo: 6, note: "Rest the chicken five minutes" });
+  await page.goto(`/recipes/${r.id}/cook`);
+  await page.getByRole("button", { name: "Done cooking", exact: true }).click();
+  await expect(page).toHaveURL(/\/review\//);
+  await page.getByRole("tab", { name: "3 · Leftovers" }).click();
+  const prev = page.getByTestId("previous-note");
+  await expect(prev).toContainText(/Last time \(\d{1,2} [A-Z][a-z]{2,3}, Aaron\): Rest the chicken five minutes/);
+  await prev.getByRole("button", { name: "Keep this note" }).click();
+  await expect(page.getByPlaceholder("Pork could go five minutes longer.")).toHaveValue("Rest the chicken five minutes");
+  await expect(prev.getByRole("button", { name: "Kept ✓" })).toBeDisabled();
+  await page.getByRole("button", { name: "Save & update supply" }).click();
+  await expect(page).toHaveURL(/\/plan$/);
+  expect(await commandsSettled(household.hid, 2)).toEqual([]);
+  const ev = (await cookEvents(household.hid)).find((e) => !e.id.startsWith("noted-"))!;
+  expect(ev).toMatchObject({ note: "Rest the chicken five minutes", notedRecipeIds: [r.id] });
+  // The recipe page now leads with this cook's note.
+  await page.goto(`/recipes/${r.id}`);
+  await expect(page.getByTestId("last-time-text")).toHaveText("Rest the chicken five minutes");
+  await expect(page.getByTestId("last-time").getByRole("button", { name: "Show earlier (1)" })).toBeVisible();
 });

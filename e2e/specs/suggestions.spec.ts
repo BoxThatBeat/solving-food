@@ -203,3 +203,25 @@ test("on sale: a recipe whose ingredients to buy are on sale is boosted, says wh
   await expect(w).toContainText("On sale");
   await expect(w.getByRole("radio", { name: "5" })).toHaveAttribute("aria-checked", "true");
 });
+
+test("a missing ingredient with a substitute in Supply counts as covered: the reason says what to use, and Can make counts it (R6.35)", { tag: ["@R6.35", "@R4.3"] }, async ({ page, household }) => {
+  const r = await makePlanRecipe("Swap pork garlic", { lines: "Roast @pork tenderloin{500%g} with @garlic{10%g}." });
+  await seedPeriod(household.hid);
+  await seedSupply(household.hid, "pork-tenderloin", [{ amount: 500, expiresInDays: 3 }], { label: "pork tenderloin" });
+  await seedSupply(household.hid, "garlic-powder", [{ amount: 50, location: "pantry", expiresInDays: 300 }], { label: "garlic powder" });
+  // Only what Supply covers counts, so the swap decides the order and is the reason shown.
+  const zero = Object.fromEntries(["expiryUrgency", "supplyUtilisation", "rating", "historicalPref", "variety", "preferences", "proteinGoal", "fibreGoal", "cost", "sameProtein", "sameCuisine", "recentlyCooked", "onSale"].map((k) => [k, 0]));
+  await adminDb.doc(`households/${household.hid}`).update({ "settings.scoreWeights": { ...zero, missingIngredients: 5 } });
+
+  await new PlanPage(page).goto();
+  const card = page.getByTestId("suggestion").filter({ hasText: r.title });
+  await expect(card).toBeVisible({ timeout: 30_000 });
+  await expect(card.getByLabel("Why")).toContainText(/garlic: use 0\.8 g garlic powder from Supply/i);
+  await expect(card.getByLabel("Why")).not.toContainText(/Missing/i);
+
+  // Can make (R4.3) with the swap, marked on the card.
+  await page.goto("/recipes?supply=can");
+  const rc = page.getByTestId("recipe-card").filter({ hasText: r.title });
+  await expect(rc).toBeVisible({ timeout: 30_000 });
+  await expect(rc.getByTestId("can-make")).toHaveText("CAN MAKE · SWAPS");
+});

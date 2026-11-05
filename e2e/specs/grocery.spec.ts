@@ -250,3 +250,26 @@ test("the next period's list: its own draft from its meals and the Supply left a
   // This period's list still buys its own spinach: the next order isn't counted as incoming here.
   await expect(line(page, "Baby spinach")).toContainText("need 140 g");
 });
+
+test("a line whose substitute is already in Supply says so; switching substitutions off in Settings drops the hint and the swaps (R7.20, R11.20)", { tag: ["@R7.20", "@R11.20"] }, async ({ page, household }) => {
+  const r = await makePlanRecipe("Shallot chicken", { lines: "Sear @chicken thigh{600%g} with @shallot{100%g}." });
+  const pid = await seedPeriod(household.hid);
+  await seedPlanItem(household.hid, pid, [r.id]);
+  await seedSupply(household.hid, "onion", [{ amount: 500, location: "pantry", expiresInDays: 20 }], { label: "onion" });
+  await gotoGrocery(page);
+  // Only a hint: the shallot is still on the list.
+  await expect(line(page, /shallot/i)).toHaveCount(1);
+  await expect(line(page, /shallot/i).getByTestId("swap-hint")).toHaveText(/have onion/i);
+  await expect(line(page, "Chicken thigh").getByTestId("swap-hint")).toHaveCount(0);
+
+  await page.goto("/settings/preferences");
+  const sw = page.getByRole("switch", { name: "Suggest substitutions" });
+  await expect(sw).toHaveAttribute("aria-checked", "true");
+  await sw.click();
+  await expect(sw).toHaveAttribute("aria-checked", "false");
+  await expect(page.getByTestId("substitutions-note")).toContainText("Off");
+  await expect.poll(async () => (await adminDb.doc(`households/${household.hid}`).get()).data()?.settings?.substitutions).toBe(false);
+  await gotoGrocery(page);
+  await expect(line(page, /shallot/i)).toHaveCount(1);
+  await expect(page.getByTestId("swap-hint")).toHaveCount(0);
+});
