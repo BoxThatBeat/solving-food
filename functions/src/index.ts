@@ -11,7 +11,7 @@ import { syncRecipeIndex } from "./recipeIndex";
 import { cleanupDeletedRecipe } from "./recipeCleanup";
 import { conversionChanged, recomputeRecipesUsing } from "./recipes";
 import { DROP_PREFIX, handleDropObject } from "./dropFolder";
-import { runMaintenance } from "./maintenance";
+import { runScheduledMaintenance } from "./maintenance";
 import { applyCommand } from "./commands";
 import { cleanupIfEmpty } from "./households";
 import { cancelTimer as cancelTimerLogic, fireTimer, scheduleTimer as scheduleTimerLogic, timerRateLimit, type TimerTask } from "./timers";
@@ -65,9 +65,12 @@ export const dropFolder = onObjectFinalized({ bucket: STORAGE_BUCKET, memory: "5
 /** Who hears about failed price refreshes and may change the PC Express key (SETUP.md: the owner's uid). */
 const OWNER_UID = defineString("OWNER_UID", { default: "HBebN9sYntQG1Kbdx5Ggw611xyy1" });
 
-/** Weekly maintenance (§13): Monday 04:00 Toronto time; trash purge, index refresh, and the PC Express price refresh. */
+/**
+ * Weekly maintenance (§13): Monday 04:00 Toronto time; trash purge, index refresh, the PC Express price refresh, and (M22)
+ * stuck commands, retention and orphaned uploads. Two failures in a row reach the owner (system/maintenance).
+ */
 export const maintenance = onSchedule({ schedule: "every monday 04:00", timeZone: "America/Toronto", timeoutSeconds: 540 }, async () => {
-  const report = await runMaintenance(Date.now(), { ownerUid: OWNER_UID.value() || null });
+  const report = await runScheduledMaintenance(Date.now(), { ownerUid: OWNER_UID.value() || null });
   logger.info("maintenance", report);
 });
 

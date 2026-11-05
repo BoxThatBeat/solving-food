@@ -1,6 +1,6 @@
 # Solving Food — Product Requirements
 
-> Status: Draft v0.7 · Source: `THOUGHTS.md` + answered open questions + owner reviews · Last updated: 2026-11-05
+> Status: Draft v0.8 · Source: `THOUGHTS.md` + answered open questions + owner reviews · Last updated: 2026-11-05
 
 ---
 
@@ -360,7 +360,7 @@ Everything here belongs to the household except the theme, which is per user.
 ## 13. Non-Functional Requirements
 
 - **NFR1 Cloud-hosted on Firebase.** Hosting, user accounts, and the database all run on Firebase. Every household member can reach the app from anywhere, with nothing to run at home.
-- **NFR2 Free tier.** The app stays within Firebase's free usage. Paid features are used only where they're unavoidable, and even then usage must stay inside the no-cost quotas.
+- **NFR2 Free tier.** The app stays within Firebase's free usage. Paid features are used only where they're unavoidable, and even then usage must stay inside the no-cost quotas. One exception is accepted on purpose (M22): a weekly **Firestore scheduled backup** kept two weeks, billed per GiB stored, which at the family's data size is cents a month and protects everyone's history against a bad import or a bug.
 - **NFR3 Scale.** Designed for about **3 households and 10 users** in the first year.
 - **NFR4 Privacy.** Household data (supply, plans, history, ratings) is visible only to members of that household, enforced by database security rules. Only allowlisted email addresses can sign in (R2.12), also enforced by security rules.
 - **NFR5 Live sync.** Changes made by one household member (plan, supply, grocery list) appear on other members' devices without a refresh.

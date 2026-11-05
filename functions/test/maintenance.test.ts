@@ -2,9 +2,9 @@
 // onDocumentDeleted cleanup removes versions, images, meal and plan references, favourites, notes and stats in every
 // household; cook events keep their titles. Plus the notification helper and ingredient-driven recomputation.
 import { beforeAll, describe, expect, it } from "vitest";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { bucket, clearFirestore, db, fileExists, poll, seedIngredients } from "./helpers";
-import { runMaintenance } from "../src/maintenance";
+import { MAINTENANCE_DOC, pruneNotifications, runMaintenance, runScheduledMaintenance, sweepCommands, sweepOrphanUploads } from "../src/maintenance";
 import { notify } from "../src/notify";
 
 const DAY = 86_400_000;
@@ -171,5 +171,80 @@ describe("ingredient edits recompute recipe protein (§5)", () => {
     }, 30_000, "nutrition");
     expect(n.nutrition).toEqual({ kcal: 150, fatG: 5, sodiumMg: 200 });
     expect(n.version).toBe(1);
+  });
+});
+
+describe("maintenance M22: stuck commands, retention, orphaned uploads, failure alert", () => {
+  beforeAll(async () => {
+    await clearFirestore();
+  });
+
+  it("fails stuck commands and prunes applied or failed ones older than 30 days, in every household", async () => {
+    const now = Date.now();
+    const at = (ms: number) => Timestamp.fromMillis(ms);
+    await db.doc("households/hm").set({ name: "M" });
+    const cmd = (status: string, extra: Record<string, unknown>) => ({ type: "addSupply", payload: { ingredientId: "rice", amount: 1, location: "pantry" }, uid: "m-user", status, ...extra });
+    // Written as "held" so the emulator's trigger skips them, then given their real state.
+    await db.doc("households/hm/commands/stuck").set(cmd("held", { createdAt: at(now - 5 * 3_600_000) }));
+    await db.doc("households/hm/commands/old-applied").set(cmd("held", { createdAt: at(now - 40 * DAY), appliedAt: at(now - 40 * DAY) }));
+    await db.doc("households/hm/commands/old-failed").set(cmd("held", { createdAt: at(now - 40 * DAY), appliedAt: at(now - 31 * DAY), error: "x" }));
+    await db.doc("households/hm/commands/recent").set(cmd("held", { createdAt: at(now - 2 * DAY), appliedAt: at(now - 2 * DAY) }));
+    await new Promise((r) => setTimeout(r, 3000));
+    await db.doc("households/hm/commands/stuck").update({ status: "pending" });
+    await db.doc("households/hm/commands/old-applied").update({ status: "applied" });
+    await db.doc("households/hm/commands/old-failed").update({ status: "failed" });
+    await db.doc("households/hm/commands/recent").update({ status: "applied" });
+
+    expect(await sweepCommands(now)).toEqual({ stuck: 1, pruned: 2 });
+    expect((await db.doc("households/hm/commands/stuck").get()).data()).toMatchObject({ status: "failed", error: expect.stringMatching(/didn't finish/) });
+    expect((await db.doc("households/hm/commands/old-applied").get()).exists).toBe(false);
+    expect((await db.doc("households/hm/commands/old-failed").get()).exists).toBe(false);
+    expect((await db.doc("households/hm/commands/recent").get()).exists).toBe(true);
+    const notes = await db.collection("users/m-user/notifications").get();
+    expect(notes.docs.some((d) => /^Couldn't add to supply: it didn't finish/.test(d.data().message))).toBe(true);
+  });
+
+  it("prunes notifications dismissed more than 30 days ago, never undismissed ones", async () => {
+    const now = Date.now();
+    const n = (dismissedAt: unknown) => ({ kind: "info", message: "m", createdAt: Timestamp.fromMillis(now - 60 * DAY), dismissedAt });
+    await db.doc("users/n-user/notifications/old").set(n(Timestamp.fromMillis(now - 31 * DAY)));
+    await db.doc("users/n-user/notifications/recent").set(n(Timestamp.fromMillis(now - DAY)));
+    await db.doc("users/n-user/notifications/open").set(n(null));
+    expect(await pruneNotifications(now)).toBeGreaterThanOrEqual(1);
+    const left = (await db.collection("users/n-user/notifications").get()).docs.map((d) => d.id).sort();
+    expect(left).toEqual(["open", "recent"]);
+  });
+
+  it("sweeps recipe-photos/, imports/ and images of recipes that don't exist, after 3 days", async () => {
+    const files = ["recipe-photos/u1/p.jpg", "imports/h1/x.zip", "recipes/ghost-recipe/img/480.webp", "recipes/real-recipe/img/480.webp"];
+    for (const f of files) await bucket().file(f).save(Buffer.from("x"), { contentType: f.endsWith(".zip") ? "application/zip" : "image/webp" });
+    await db.doc("recipes/real-recipe").set({ title: "Real" });
+    // Just uploaded: kept.
+    await sweepOrphanUploads(Date.now());
+    for (const f of files) expect(await fileExists(f), f).toBe(true);
+    // Four days on: everything unclaimed goes, a live recipe's image stays.
+    await sweepOrphanUploads(Date.now() + 4 * DAY);
+    expect(await fileExists("recipe-photos/u1/p.jpg")).toBe(false);
+    expect(await fileExists("imports/h1/x.zip")).toBe(false);
+    expect(await fileExists("recipes/ghost-recipe/img/480.webp")).toBe(false);
+    expect(await fileExists("recipes/real-recipe/img/480.webp")).toBe(true);
+  });
+
+  it("records each run; the second failure in a row tells the owner, a success resets the count", async () => {
+    const boom = async (): Promise<never> => {
+      throw new Error("boom");
+    };
+    const ok = async () => ({ purged: [], dropFilesSwept: 0, importLogsDeleted: 0, summariesRefreshed: 0, stuckCommandsFailed: 0, commandsPruned: 0, notificationsPruned: 0, orphanFilesSwept: 0 });
+    const ownerNotes = async () => (await db.collection("users/maint-owner/notifications").get()).docs.map((d) => String(d.data().message));
+    await expect(runScheduledMaintenance(Date.now(), { ownerUid: "maint-owner", run: boom })).rejects.toThrow("boom");
+    expect((await db.doc(MAINTENANCE_DOC).get()).data()).toMatchObject({ lastStatus: "failed", consecutiveFailures: 1, lastError: "boom" });
+    expect(await ownerNotes()).toEqual([]);
+    await expect(runScheduledMaintenance(Date.now(), { ownerUid: "maint-owner", run: boom })).rejects.toThrow("boom");
+    expect((await db.doc(MAINTENANCE_DOC).get()).data()?.consecutiveFailures).toBe(2);
+    expect(await ownerNotes()).toEqual([expect.stringMatching(/maintenance failed 2 weeks in a row \(boom\)/)]);
+    await runScheduledMaintenance(Date.now(), { ownerUid: "maint-owner", run: ok });
+    const d = (await db.doc(MAINTENANCE_DOC).get()).data()!;
+    expect(d).toMatchObject({ lastStatus: "ok", consecutiveFailures: 0 });
+    expect(d.lastError).toBeUndefined();
   });
 });
