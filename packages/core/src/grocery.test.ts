@@ -300,6 +300,49 @@ describe("marginalCostFn", () => {
   });
 });
 
+describe("marginalCostFn fast path (M21)", () => {
+  it("property: equals the line-building path (lineFor per ingredient) for any plan, supply, incoming and extra", async () => {
+    const { marginalCostFn, lineFor, needsFor, linePricing, lineCents } = await import("./grocery");
+    const ids = Object.keys(ING);
+    const amounts = fc.dictionary(fc.constantFrom(...ids), fc.double({ min: 0, max: 5000, noNaN: true }));
+    const mapping: MappingEntry = { productName: "Tomatoes", packAmount: 540, packMeasure: "weight", storeId: "pc-express" };
+    fc.assert(
+      fc.property(amounts, amounts, amounts, fc.boolean(), fc.array(fc.tuple(fc.constantFrom("pasta", "curry"), fc.integer({ min: 1, max: 12 })), { maxLength: 4 }), (supply, incoming, extra, mapped, items) => {
+        const c = ctx({ supply: new Map(Object.entries(supply)), incoming: new Map(Object.entries(incoming)), mappings: mapped ? new Map([["tomato", mapping]]) : new Map() });
+        const planned = items.map(([r, n], k) => plan(`p${k}`, r, n));
+        const base = needsFor(planned, c);
+        // The pre-M21 implementation: a full line per evaluation.
+        const slow = (add: ReadonlyMap<string, number>) => {
+          let cents = 0;
+          let unknown = 0;
+          const cost = (id: string, need: number) => {
+            const l = need > 0 ? lineFor(id, need, c) : null;
+            return l ? l.estPriceCents : 0;
+          };
+          for (const [id, a] of add) {
+            if (!(a > 0)) continue;
+            const before = cost(id, base.get(id) ?? 0);
+            const after = cost(id, (base.get(id) ?? 0) + a);
+            if (after === null || before === null) {
+              if (after === null && before !== null) unknown++;
+              continue;
+            }
+            cents += after - before;
+          }
+          return { cents, unknown };
+        };
+        const extraMap = new Map(Object.entries(extra));
+        expect(marginalCostFn(planned, c)(extraMap)).toEqual(slow(extraMap));
+        for (const id of ids) for (const need of [0, 1, 400, 796, 2000]) {
+          const l = lineFor(id, need, c);
+          expect(lineCents(linePricing(id, c), need)).toBe(l ? l.estPriceCents : 0);
+        }
+      }),
+      { numRuns: 300 },
+    );
+  });
+});
+
 describe("sides (R5.10, R7.11)", () => {
   const SIDE_ING: Record<string, GroceryIngredient> = {
     ...ING,

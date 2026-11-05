@@ -280,31 +280,71 @@ export function addedCost(items: readonly PlanItemInput[], candidate: PlanItemIn
 }
 
 /**
+ * What pricing one ingredient's line needs, computed once (M21): what Supply and incoming already cover, the pack
+ * size and the cents per canonical unit. `lineCents` from it equals `lineFor(...).estPriceCents` exactly.
+ */
+export interface LinePricing {
+  /** Unexpired supply and incoming, kept apart so the arithmetic matches `lineFor` to the last bit. */
+  supply: number;
+  incoming: number;
+  packAmount: number | null;
+  centsPerUnit: number | null;
+}
+
+/** The pricing table entry for one ingredient, or null when the ingredient is unknown (no line). */
+export function linePricing(ingredientId: string, ctx: BuildContext): LinePricing | null {
+  const ing = ctx.ingredients(ingredientId);
+  if (!ing) return null;
+  return {
+    supply: Math.max(0, ctx.supply.get(ingredientId) ?? 0),
+    incoming: Math.max(0, ctx.incoming.get(ingredientId) ?? 0),
+    packAmount: packSizeFor(ing, ctx.mappings.get(ingredientId))?.amount ?? null,
+    centsPerUnit: priceOf(ing, ctx).cpu,
+  };
+}
+
+/** A line's estimated cents at `need` from its pricing entry: 0 when covered, null when the price is unknown. */
+export function lineCents(p: LinePricing | null, need: number): number | null {
+  if (!p) return 0;
+  // Same arithmetic as lineFor/purchase, so results are identical to the line-building path.
+  const shortfall = Math.max(0, need - p.supply - p.incoming);
+  if (shortfall <= EPS) return 0;
+  const amount = p.packAmount ? Math.ceil(shortfall / p.packAmount - EPS) * p.packAmount : shortfall;
+  return p.centsPerUnit === null ? null : Math.round(amount * p.centsPerUnit);
+}
+
+/**
  * A fast marginal-cost function over a fixed plan (suggestions and the optimiser price hundreds of candidates): the
  * plan's needs are summed once, and a candidate's cost is Σ over its own ingredients of (line cost with it − line cost
- * without it). Lines are independent per ingredient, so this equals `addedCost` exactly, shared packs included.
+ * without it). Lines are independent per ingredient, so this equals `addedCost` exactly, shared packs included. Each
+ * ingredient's cover, pack and price are looked up once per function (`linePricing`), not per call (M21: the optimiser
+ * calls this 10⁵–10⁶ times).
  */
 export function marginalCostFn(planned: readonly PlanItemInput[], ctx: BuildContext): (extra: ReadonlyMap<string, number>) => { cents: number; unknown: number } {
   const base = needsFor(planned, ctx);
-  const baseLine = new Map<string, number | null>();
-  const lineCents = (id: string, need: number): number | null => {
-    const l = lineFor(id, need, ctx);
-    return l ? l.estPriceCents : 0;
+  const table = new Map<string, { p: LinePricing | null; base: number; before: number | null }>();
+  const entry = (id: string) => {
+    let e = table.get(id);
+    if (!e) {
+      const p = linePricing(id, ctx);
+      const b = base.get(id) ?? 0;
+      e = { p, base: b, before: b > 0 ? lineCents(p, b) : 0 };
+      table.set(id, e);
+    }
+    return e;
   };
   return (extra) => {
     let cents = 0;
     let unknown = 0;
     for (const [id, add] of extra) {
       if (!(add > 0)) continue;
-      const b = base.get(id) ?? 0;
-      if (!baseLine.has(id)) baseLine.set(id, b > 0 ? lineCents(id, b) : 0);
-      const before = baseLine.get(id)!;
-      const after = lineCents(id, b + add);
-      if (after === null || before === null) {
-        if (after === null && before !== null) unknown++;
+      const e = entry(id);
+      const after = lineCents(e.p, e.base + add);
+      if (after === null || e.before === null) {
+        if (after === null && e.before !== null) unknown++;
         continue;
       }
-      cents += after - before;
+      cents += after - e.before;
     }
     return { cents, unknown };
   };
