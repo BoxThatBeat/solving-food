@@ -78,7 +78,7 @@ export function PlanAlerts({
         aria-expanded={open}
         aria-controls={id}
         onClick={() => setOpen((o) => !o)}
-        className="press flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-ui border-bw bg-peach px-3 py-2 text-left text-[0.875rem] font-extrabold text-onc shadow-hard"
+        className="press flex min-h-11 w-full cursor-pointer items-center justify-between gap-2 rounded-ui border-bw bg-peach-soft px-3 py-2 text-left text-[0.875rem] font-extrabold text-onc shadow-hard"
         data-testid="plan-alerts-summary"
       >
         <span>{alertsSummary(counts)}</span>

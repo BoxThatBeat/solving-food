@@ -42,7 +42,7 @@ export function MealTypeTabs({ types, value, onChange, label }: { types: readonl
           aria-pressed={value === t}
           onClick={() => onChange(t)}
           className={cn(
-            "min-h-11 flex-auto cursor-pointer rounded-ui border-2 border-line px-2.5 text-[0.8125rem] font-extrabold",
+            "min-h-11 min-w-11 flex-auto cursor-pointer rounded-ui border-2 border-line px-2.5 text-[0.8125rem] font-extrabold",
             value === t ? "bg-acc text-onc" : "bg-base text-ink shadow-hard-sm",
           )}
         >

@@ -91,6 +91,9 @@ paragraph under the suggestion score; folding under Use it up), §14.1 (`a11y.sp
   History, Supply; 44 px hit area around the chip). `a11y.spec.ts` now also visits a filtered Recipes list.
 - **Visual baselines regenerated** for the Recipes library (phone-android, desktop-1080p, 4K, 4K-2x): the diff is the
   44 px header button, tabs, chips and tab bar shifting the page, nothing else.
+- **CI after dbfaf07 (fixed in M25's first commit):** phone-ios failed `a11y.spec.ts`: the folded alerts' summary line
+  (ink on `bg-peach`, 14 px bold) is 4.13:1, under AA, so it is on `bg-peach-soft`; and the Suggested tabs' "All" was
+  43 px wide (`flex-auto` could shrink it), so the tabs have `min-w-11`.
 - **Verification:** typecheck and lint clean; unit tests core 701 → 707, web 48; `pnpm e2e:coverage` green. E2E on
   phone-android and desktop-1080p, `--workers=1`, in batches: supply/cooking/history 41, recipe-detail/recipe-edit/grocery
   48, notifications/optimiser/settings 24, meals/receive/responsive 26, plan/suggestions 75, recipes-browse/pwa 29 all
