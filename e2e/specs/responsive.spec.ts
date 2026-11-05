@@ -18,8 +18,9 @@ test("navigation variant per breakpoint and no horizontal scroll on any page", {
     await page.goto(path);
     await expect(page.locator("h1")).toBeVisible();
     await expect(page.locator(`nav[data-nav="${want}"]`)).toBeVisible();
+    // M23: the other variants aren't hidden but not mounted at all (their badges would open listeners).
     for (const other of ["tabs", "rail", "sidebar"].filter((n) => n !== want)) {
-      await expect(page.locator(`nav[data-nav="${other}"]`)).toBeHidden();
+      await expect(page.locator(`nav[data-nav="${other}"]`)).toHaveCount(0);
     }
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow, `horizontal overflow on ${path}`).toBeLessThanOrEqual(0);

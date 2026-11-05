@@ -44,6 +44,33 @@ test("lists everything cooked with date, ratings, who cooked, notes, and deviati
   await expect(rows.nth(1)).toContainText("Grandma's soup (deleted)");
 });
 
+test("history loads the newest 100 meals; Show more adds the rest (R10.1, M23)", { tag: ["@R10.1"] }, async ({ page, household }) => {
+  const batch = adminDb.batch();
+  for (let i = 0; i < 103; i++) {
+    batch.set(adminDb.doc(`households/${household.hid}/cookEvents/m${String(i).padStart(3, "0")}`), {
+      recipeIds: ["gone-recipe"],
+      titles: [`Meal ${i}`],
+      title: `Meal ${i}`,
+      cookedBy: household.uid,
+      cookedAt: Timestamp.fromMillis(Date.now() - (i + 1) * 3600_000),
+      used: [],
+      defaults: [],
+      leftoverPortions: 0,
+      reviewStatus: "done",
+      ratedBy: [household.uid],
+    });
+  }
+  await batch.commit();
+  await page.goto("/history");
+  const rows = page.getByTestId("history-row");
+  await expect(rows).toHaveCount(100);
+  await expect(rows.first()).toContainText("Meal 0 (deleted)");
+  await page.getByRole("button", { name: "Show more" }).click();
+  await expect(rows).toHaveCount(103);
+  await expect(rows.last()).toContainText("Meal 102 (deleted)");
+  await expect(page.getByRole("button", { name: "Show more" })).toHaveCount(0);
+});
+
 test("the shared filter and sort apply to history (R10.2, R4.7)", { tag: ["@R10.2", "@R4.7"] }, async ({ page, household }) => {
   const a = await seedRecipeId("Garlic Rice and Chicken");
   const b = await seedRecipeId("Easy Flatbread No Yeast");

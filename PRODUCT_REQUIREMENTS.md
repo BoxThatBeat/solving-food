@@ -1,6 +1,6 @@
 # Solving Food — Product Requirements
 
-> Status: Draft v0.8 · Source: `THOUGHTS.md` + answered open questions + owner reviews · Last updated: 2026-11-05
+> Status: Draft v0.9 · Source: `THOUGHTS.md` + answered open questions + owner reviews · Last updated: 2026-11-05
 
 ---
 
@@ -288,7 +288,7 @@ flowchart LR
 
 ## 10. History
 
-- **R10.1** The History page lists everything cooked: date, meal (with its sides, R5.9), ratings, who cooked it, notes, and deviations from the recipe.
+- **R10.1** The History page lists everything cooked: date, meal (with its sides, R5.9), ratings, who cooked it, notes, and deviations from the recipe. It loads the newest 100 and a **Show more** button adds the next 100 (v0.9).
 - **R10.2** It uses the same filter and sort component as the other lists.
 - **R10.3** It shows stats: most-cooked recipes, average rating by cuisine, and spend per period. Spend is the estimated cost of every grocery list confirmed as received in the period, using the prices known at the time.
 
@@ -353,7 +353,7 @@ Everything here belongs to the household except the theme, which is per user.
 
 ### Notifications
 
-- **R12.1** An app-wide **notification system** shows banners at the **bottom of every page** (above the bottom navigation on phones). It's used for things that finish in the background or fail, such as recipe imports, household data imports, and price refresh problems. Success and info banners disappear on their own after a few seconds. Errors stay until dismissed. A banner can link to the related page, e.g. the newly imported recipe.
+- **R12.1** An app-wide **notification system** shows banners at the **bottom of every page** (above the bottom navigation on phones). It's used for things that finish in the background or fail, such as recipe imports, household data imports, and price refresh problems. Success and info banners disappear on their own after a few seconds, on the device that showed them (v0.9: the person's other devices still show them; dismissing one by hand takes it down everywhere). Errors stay until dismissed. A banner can link to the related page, e.g. the newly imported recipe. A part of a page that can't load (no access any more, server unreachable) says so in a banner instead of looking empty (v0.9).
 
 ---
 
@@ -363,5 +363,5 @@ Everything here belongs to the household except the theme, which is per user.
 - **NFR2 Free tier.** The app stays within Firebase's free usage. Paid features are used only where they're unavoidable, and even then usage must stay inside the no-cost quotas. One exception is accepted on purpose (M22): a weekly **Firestore scheduled backup** kept two weeks, billed per GiB stored, which at the family's data size is cents a month and protects everyone's history against a bad import or a bug.
 - **NFR3 Scale.** Designed for about **3 households and 10 users** in the first year.
 - **NFR4 Privacy.** Household data (supply, plans, history, ratings) is visible only to members of that household, enforced by database security rules. Only allowlisted email addresses can sign in (R2.12), also enforced by security rules.
-- **NFR5 Live sync.** Changes made by one household member (plan, supply, grocery list) appear on other members' devices without a refresh.
+- **NFR5 Live sync.** Changes made by one household member (plan, supply, grocery list) appear on other members' devices without a refresh. Changes show at once on the device that made them and never wait for the server (v0.9: a Wi-Fi network that goes nowhere counts as offline), and two members marking the same grocery order at once order it once.
 - **NFR6 Responsive.** Every page works and looks intentional from a 360 px-wide phone up to a 3840×2160 (4K) display, with no horizontal scrolling and no pixelated images.
