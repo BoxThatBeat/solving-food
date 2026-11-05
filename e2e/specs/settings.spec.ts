@@ -149,6 +149,8 @@ test("brand mappings: add one by hand; the grocery list uses its name and pack (
   await page.getByRole("option", { name: /baby spinach/i }).first().click();
   await page.getByLabel("PRODUCT", { exact: true }).fill("Organic baby spinach clamshell");
   await page.getByLabel("PACK SIZE").fill("142");
+  // A fixture household gets its default stores from the first rollover run (on opening the app); wait for them.
+  await expect(page.locator("#bm-store")).not.toHaveValue("");
   await page.getByRole("button", { name: "Save brand" }).click();
   const row = page.getByTestId("brand-row").filter({ hasText: "Organic baby spinach clamshell" });
   await expect(row).toContainText("142 g");

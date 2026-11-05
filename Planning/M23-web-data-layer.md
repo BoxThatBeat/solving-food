@@ -140,7 +140,14 @@ where the bytes were.
   servings stepper (now `<Stepper compact>`: Lucide minus/plus instead of text glyphs, same size) against the prototype;
   no other layout changed. History's Show more uses the standard secondary button.
 - **Verification:** typecheck and lint clean; unit 698 → 701 (core) and 37 → 48 (web); `pnpm e2e:coverage` green. The
-  full e2e run on phone-android and desktop-1080p was stopped by Claude Code after 32 tests (all passed: a11y, auth,
-  cadence, cooking, core-loop, data-transfer, drop-folder) because the machine ran low on memory. It still has to be run
-  (`pnpm e2e --project=phone-android --project=desktop-1080p`), especially notifications, grocery, offline, households,
-  history, responsive, recipe-edit and plan, before this is pushed.
+  full two-project run was stopped twice by memory pressure (7.6 GB machine), so e2e ran in batches with
+  `--workers=2` on phone-android and desktop-1080p. The coordinator's rerun of 14 specs found three regressions, fixed:
+  (1) Create meal, Save as meal and brand tests read Firestore right after a write the app no longer awaits: the admin
+  reads now wait (`eventually` in `e2e/fixtures/admin.ts`, `expect.poll`), and tests let a write reach the server before
+  a full page load; (2) "edited elsewhere" never showed under load: `getDocFromServer` could answer from the edit page's
+  own listener before another member's save arrived, so recipe saves now check the version inside a transaction; (3) the
+  invite tests found two "Kimberly Quinn"/"Deedee" users because both projects share one emulator's global directory:
+  per-run display names. The brand-mapping test waits for the fixture household's default stores. Reruns: plan +
+  meals 52/52, recipe-edit + households 40/40, receive + responsive + settings 27/28 then the brand test 6/6 with
+  `--repeat-each=3`, recipe-detail + sides + optimiser 30/30; the coordinator's run had notifications, grocery, offline,
+  history and the rest of the 14 green.
