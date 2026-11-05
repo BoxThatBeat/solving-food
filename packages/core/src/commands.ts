@@ -7,7 +7,12 @@ import { z } from "zod";
 import { MEAL_TYPES, STORAGE_LOCATIONS } from "./taxonomy";
 import { MEAL_RECIPES_MAX, MEAL_SIDES_MAX, mealSideSchema } from "./types";
 
-const id = z.string().min(1).max(200);
+/**
+ * A document ID (M22): many payload IDs become path segments (`supply/{ingredientId}`, `cookEvents/{cookEventId}`), so
+ * no "/", not "." or "..", not Firestore's reserved `__…__`, and at most 200 characters (Firestore allows 1,500 bytes).
+ */
+export const COMMAND_ID_PATTERN = /^(?!\.\.?$)(?!__.*__$)[^/]+$/;
+const id = z.string().min(1).max(200).regex(COMMAND_ID_PATTERN, "must be a document ID (no /)");
 const amount = z.number().finite().min(0).max(1e7);
 const ms = z.number().int().min(0);
 
@@ -35,10 +40,48 @@ export const receiveItemPayload = z.object({
   missing: z.boolean().optional(),
 });
 
+/** Lines per receiveGroceries command: a grocery list holds at most 400 (firestore.rules). */
+export const RECEIVE_ITEMS_MAX = 400;
+
 export const receiveGroceriesPayload = z.object({
   listId: id,
-  items: z.array(receiveItemPayload).max(400),
+  items: z.array(receiveItemPayload).max(RECEIVE_ITEMS_MAX),
 });
+
+/**
+ * Lines per receiveGroceries transaction (M22). Each line writes at most four documents (its ingredient's Supply row and
+ * cadence, a purchase and a freeze transaction), plus the list and the command: 100 lines is ≤ 402 writes, inside
+ * Firestore's 500-write transaction limit with margin. A longer list is applied in several transactions.
+ */
+export const RECEIVE_CHUNK = 100;
+
+/**
+ * The lines in transaction-sized chunks (M22): every line of one ingredient stays in one chunk (so its Supply row and
+ * cadence are written once), chunks are filled in order, and only an ingredient with more than `size` lines is split.
+ */
+export function receiveChunks<T extends { itemId: string; ingredientId?: string | undefined }>(items: readonly T[], size = RECEIVE_CHUNK): T[][] {
+  const groups = new Map<string, T[]>();
+  for (const it of items) {
+    const k = it.ingredientId ? `i:${it.ingredientId}` : `l:${it.itemId}`;
+    const g = groups.get(k);
+    if (g) g.push(it);
+    else groups.set(k, [it]);
+  }
+  const out: T[][] = [];
+  let cur: T[] = [];
+  for (const g of groups.values()) {
+    for (let i = 0; i < g.length; i += size) {
+      const piece = g.slice(i, i + size);
+      if (cur.length + piece.length > size) {
+        out.push(cur);
+        cur = [];
+      }
+      cur.push(...piece);
+    }
+  }
+  if (cur.length || !out.length) out.push(cur);
+  return out;
+}
 
 export const recipeRefPayload = z.object({ recipeId: id, servingsMultiplier: z.number().positive().max(10) });
 

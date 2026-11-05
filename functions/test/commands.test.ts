@@ -175,6 +175,64 @@ describe("receiveGroceries", () => {
   });
 });
 
+describe("receiveGroceries: a 400-line list (M22)", () => {
+  it("applies in transactions of ≤ 100 lines (none near the 500-write limit), counting cadence once per ingredient", async () => {
+    // 40 ingredients × 10 lines, each frozen in part: one transaction would write 40 + 40 + 800 + 2 documents.
+    const ids = Array.from({ length: 40 }, (_, i) => `bulk-${i}`);
+    for (let i = 0; i < ids.length; i += 10) {
+      const b = db.batch();
+      for (const id of ids.slice(i, i + 10)) b.set(db.doc(`ingredients/${id}`), { ...ING.chicken, name: id });
+      await b.commit();
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    const listItems: Record<string, unknown> = {};
+    const lines: Array<Record<string, unknown>> = [];
+    for (let k = 0; k < 400; k++) {
+      const ingredientId = ids[k % 40]!;
+      listItems[`line${k}`] = { ingredientId, amount: 1000, measure: "g", packs: 1, productName: ingredientId, storeId: "costco", estPriceCents: 100, source: "plan", checked: false };
+      lines.push({ itemId: `line${k}`, ingredientId, amount: k === 0 ? 0 : 1000, ...(k === 0 ? { missing: true } : { freezeAmount: 400 }) });
+    }
+    await db.doc(`households/${HID}/groceryLists/big`).set({ periodId: "2026-10-05", status: "ordered", createdAt: new Date(), orderedAt: new Date(), orderedBy: UID, items: listItems });
+    const r = await command("receiveGroceries", { listId: "big", items: lines });
+    expect(r.status).toBe("applied");
+    const cmd = (await db.doc(`households/${HID}/commands/${r.id}`).get()).data()!;
+    expect(cmd.receivedParts).toBe(3); // four parts, the last marks it applied
+    const list = (await db.doc(`households/${HID}/groceryLists/big`).get()).data()!;
+    expect(list.status).toBe("received");
+    expect(list.receivedCents).toBe(399 * 100);
+    expect(list.items.line0.receivedAmount).toBe(0);
+    expect(list.items.line399.receivedAmount).toBe(1000);
+    for (const id of [ids[0]!, ids[39]!]) {
+      const d = (await supply(id))!;
+      expect(d.canonicalAmount).toBe(id === ids[0] ? 9000 : 10000);
+      expect(await txSum(id)).toBe(d.canonicalAmount);
+      expect((await db.doc(`households/${HID}/cadence/${id}`).get()).data()?.purchaseCount).toBe(1);
+    }
+  });
+});
+
+describe("stuck commands (M22)", () => {
+  it("a command pending or running for hours is failed by the next command in its household, and its issuer told", async () => {
+    const old = Timestamp.fromMillis(Date.now() - 3 * 3_600_000);
+    // Created as something else first and left until the trigger has skipped them; then they look stuck.
+    await db.doc(`households/${HID}/commands/stuck-a`).set({ type: "addSupply", payload: { ingredientId: "rice", amount: 5, location: "pantry" }, uid: UID2, createdAt: old, status: "held" });
+    await db.doc(`households/${HID}/commands/stuck-b`).set({ type: "importHousehold", payload: { path: `imports/${HID}/x.zip` }, uid: UID2, createdAt: old, status: "held" });
+    await db.doc(`households/${HID}/commands/fresh`).set({ type: "addSupply", payload: { ingredientId: "rice", amount: 5, location: "pantry" }, uid: UID2, createdAt: Timestamp.now(), status: "held" });
+    await new Promise((r) => setTimeout(r, 4000));
+    await db.doc(`households/${HID}/commands/stuck-a`).update({ status: "pending" });
+    await db.doc(`households/${HID}/commands/stuck-b`).update({ status: "running" });
+    await db.doc(`households/${HID}/commands/fresh`).update({ status: "pending" });
+    const r = await command("addSupply", { ingredientId: "rice", amount: 1, location: "pantry" });
+    expect(r.status).toBe("applied");
+    const st = async (id: string) => (await db.doc(`households/${HID}/commands/${id}`).get()).data()!;
+    await poll(async () => (await st("stuck-a")).status === "failed" && (await st("stuck-b")).status === "failed", 20_000, "stuck commands failed");
+    expect(await st("stuck-a")).toMatchObject({ status: "failed", error: expect.stringMatching(/didn't finish/) });
+    expect((await st("fresh")).status).toBe("pending"); // not old enough
+    const notes = await db.collection(`users/${UID2}/notifications`).get();
+    expect(notes.docs.map((d) => d.data().message)).toEqual(expect.arrayContaining([expect.stringMatching(/^Couldn't add to supply: it didn't finish/), expect.stringMatching(/^Couldn't import household data: it didn't finish/)]));
+  });
+});
+
 describe("cooking, review, leftovers, eaten", () => {
   it("finishCooking deducts defaults FEFO, adds leftovers as supply and plan items, marks cooked, counts the stat; a second finish is a no-op", async () => {
     await db.doc(`households/${HID}/planItems/p1`).set({ periodId: "2026-10-05", kind: "meal", mealType: "dinner", servings: 4, recipes: [{ recipeId: "r-chicken", servingsMultiplier: 1 }], coverage: { dinner: 1, lunch: 2 }, status: "planned", addedBy: UID });

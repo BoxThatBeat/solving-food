@@ -88,6 +88,11 @@ describe("commands (§6, validCommand)", () => {
     await assertFails(setDoc(doc(db, "households/h-alice/commands/x4"), cmd("addSupply", { ingredientId: "rice", amount: 1, location: "pantry", canonicalAmount: 9 })));
     await assertFails(setDoc(doc(db, "households/h-alice/commands/x5"), cmd("discard", { supplyId: "rice", lotId: "l1" }, ALICE.uid, { error: "" })));
     await assertFails(setDoc(doc(db, "households/h-alice/commands/x6"), cmd("discard", { supplyId: "rice", lotId: "l1" }, ALICE.uid, { createdAt: new Date(0) })));
+    // M22: payload document IDs are path-safe.
+    await assertFails(setDoc(doc(db, "households/h-alice/commands/x8"), cmd("addSupply", { ingredientId: "rice/../x", amount: 1, location: "pantry" })));
+    await assertFails(setDoc(doc(db, "households/h-alice/commands/x9"), cmd("discard", { supplyId: "..", lotId: "l1" })));
+    await assertFails(setDoc(doc(db, "households/h-alice/commands/x10"), cmd("finishCooking", { cookEventId: "e".repeat(201), recipes: [{ recipeId: "r", servingsMultiplier: 1 }], servings: 4 })));
+    await assertFails(setDoc(doc(db, "households/h-alice/commands/x11"), cmd("markEaten", { planItemId: 7 })));
   });
   it("outsiders can't command another household; nobody edits or deletes commands", async () => {
     await assertFails(setDoc(doc(dbAs(BOB), "households/h-alice/commands/x7"), cmd("addSupply", { ingredientId: "rice", amount: 1, location: "pantry" }, BOB.uid)));

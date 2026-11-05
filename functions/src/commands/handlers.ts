@@ -118,7 +118,19 @@ function writeCadence(ctx: Ctx, ref: DocumentReference, prev: Record<string, unk
 
 // ---------- receiveGroceries (R7.8, R7.9, §8 cadence)
 
-export async function receiveGroceries(ctx: Ctx, p: CommandPayload<"receiveGroceries">): Promise<Outcome> {
+/**
+ * One transaction's share of a long list (M22, `receiveChunks`): its lines go into Supply; only the last part marks the
+ * list received (with every line's amount and the cost); `cadenceDone` holds the ingredients an earlier part already
+ * counted as bought (computed from the chunks, so a retried transaction sees the same set). Absent = the whole list in
+ * one transaction.
+ */
+export interface ReceivePart {
+  items: CommandPayload<"receiveGroceries">["items"];
+  last: boolean;
+  cadenceDone: ReadonlySet<string>;
+}
+
+export async function receiveGroceries(ctx: Ctx, p: CommandPayload<"receiveGroceries">, part?: ReceivePart): Promise<Outcome> {
   const listRef = hh(ctx, `groceryLists/${p.listId}`);
   const list = await ctx.tx.get(listRef);
   if (!list.exists) throw new CommandError("That grocery list is gone");
@@ -127,10 +139,10 @@ export async function receiveGroceries(ctx: Ctx, p: CommandPayload<"receiveGroce
   if (listData.status !== "ordered") throw new CommandError("Only an ordered list can be received");
   const items = (listData.items ?? {}) as Record<string, { amount?: number; estPriceCents?: number | null }>;
 
-  const bought = p.items.filter((i) => i.ingredientId && !i.missing && i.amount > 0);
+  const bought = (part?.items ?? p.items).filter((i) => i.ingredientId && !i.missing && i.amount > 0);
   const ings = await ingredientsFor(ctx, bought.map((i) => i.ingredientId!));
   const tracked = bought.filter((i) => ings.get(i.ingredientId!) && !ings.get(i.ingredientId!)!.freeUse);
-  const cadenceIds = [...new Set(bought.filter((i) => ings.has(i.ingredientId!)).map((i) => i.ingredientId!))];
+  const cadenceIds = [...new Set(bought.filter((i) => ings.has(i.ingredientId!)).map((i) => i.ingredientId!))].filter((id) => !part?.cadenceDone.has(id));
   const cadenceRefs = cadenceIds.map((id) => hh(ctx, `cadence/${id}`));
   const cadenceSnaps = cadenceRefs.length ? await ctx.tx.getAll(...cadenceRefs) : [];
   await ctx.store.load(tracked.map((i) => i.ingredientId!));
@@ -149,6 +161,10 @@ export async function receiveGroceries(ctx: Ctx, p: CommandPayload<"receiveGroce
     }
   }
   cadenceSnaps.forEach((s, i) => writeCadence(ctx, cadenceRefs[i]!, s.exists ? s.data()! : null));
+  if (part && !part.last) {
+    ctx.store.commit();
+    return undefined;
+  }
 
   // The list: received, with what arrived and its estimated cost (the period's spend, R10.3).
   const update: Record<string, unknown> = { status: "received", receivedAt: ts(ctx.nowMs), receivedBy: ctx.uid };

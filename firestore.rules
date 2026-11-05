@@ -357,12 +357,22 @@ service cloud.firestore {
         : t == 'snoozeCadence' ? ['ingredientId', 'until']
         : [];
     }
+    // M22: the payload's own document IDs are path segments in the function (supply/{ingredientId}, …): when present
+    // they are strings of 1..200 characters with no "/" (the function's zod schema checks the rest, nested ones too).
+    function pathId(p, k) {
+      return !(k in p) || (p[k] is string && p[k].size() >= 1 && p[k].size() <= 200 && !p[k].matches('.*/.*')
+        && p[k] != '.' && p[k] != '..');
+    }
+    function validCommandIds(p) {
+      return pathId(p, 'ingredientId') && pathId(p, 'listId') && pathId(p, 'cookEventId') && pathId(p, 'planItemId')
+        && pathId(p, 'savedMealId') && pathId(p, 'supplyId') && pathId(p, 'lotId');
+    }
     function validCommand(d) {
       return d.keys().hasOnly(['type', 'payload', 'uid', 'createdAt', 'status'])
         && d.keys().hasAll(['type', 'payload', 'uid', 'createdAt', 'status'])
         && d.type in ['addSupply', 'receiveGroceries', 'finishCooking', 'submitReview', 'correctSupply', 'discard',
                       'extendExpiry', 'freeze', 'thaw', 'markEaten', 'importHousehold', 'snoozeCadence']
-        && d.payload is map && d.payload.keys().hasOnly(payloadKeys(d.type))
+        && d.payload is map && d.payload.keys().hasOnly(payloadKeys(d.type)) && validCommandIds(d.payload)
         && d.status == 'pending'
         && d.createdAt == request.time;
     }

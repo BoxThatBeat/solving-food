@@ -483,6 +483,23 @@ Firestore writes queue up offline, but callable functions don't. So every action
 - `markEaten`: leftover → one portion out of its lot; cooked meal → status only (since M9 the review does this; the Plan card offers Mark eaten only for a cooked meal whose review is already done, i.e. older data); a planned snack → its recipe amounts come out of supply (kind `eaten`); a planned non-snack meal is refused ("cook it first").
 - `receiveGroceries`: lines not mentioned arrived as listed (R7.8); missing lines have amount 0. Each bought tracked ingredient gets a lot `<commandId>-<itemId>` in its default location (frozen from the start when that is the freezer), plus the freeze split. The list gets `receivedAt`, `receivedBy`, `receivedCents` (estimated cost of what arrived, pro rata) and per-line `receivedAmount`. Cadence keeps `purchaseCount` alongside the EMA; `avgIntervalDays` is null until the second purchase.
 - Thawing gives the lot a fresh expiry of 2 days from thawing (the original fresh date has usually passed); the frozen expiry stays on the lot.
+- **Payload IDs (M22)** are document IDs: 1–200 characters, no `/`, not `.` / `..` or `__…__`
+  (`COMMAND_ID_PATTERN` in `packages/core/src/commands.ts`), since many become path segments (`supply/{ingredientId}`,
+  `cookEvents/{cookEventId}`). `firestore.rules` (`validCommandIds`) checks the top-level ones too.
+- **Long grocery lists (M22).** A list holds at most 400 lines, and one line can write four documents (its Supply row and
+  cadence, a purchase and a freeze transaction), so a whole list in one transaction could pass Firestore's 500-write
+  limit. `receiveChunks` splits the lines into chunks of at most `RECEIVE_CHUNK` = 100 (≤ 402 writes), keeping each
+  ingredient's lines together; the dispatcher applies one transaction per chunk, recording `receivedParts` on the
+  command, and only the last chunk marks the list received (with every line's `receivedAmount` and the cost) and the
+  command applied. A part already applied is skipped if the command is dispatched again; cadence counts an ingredient
+  once. A list of ≤ 100 lines is still one transaction. A failure in a later part leaves the earlier parts in Supply
+  and fails the command (its error banner says so); the client sends one command either way.
+- **Stuck commands (M22).** The trigger runs with `retry: false`, so a timeout or crash before it marks the command
+  leaves it `pending` (or an import `running`) and the client's optimistic projection would keep showing it. After
+  applying a command the dispatcher looks at up to 20 of the same household's `pending` / `running` commands and fails
+  any created more than 2 hours ago (`STUCK_AFTER_MS`; re-checked in a transaction) with "it didn't finish on the
+  server; check Supply, then try again", posting the usual error banner to its issuer; the weekly maintenance does the
+  same for every household (§13). A failed command leaves the projection, so the screen shows what Supply really holds.
 
 ### Merging ingredients (M8, R4.27, R8.16)
 
