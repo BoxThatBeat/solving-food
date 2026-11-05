@@ -212,7 +212,9 @@ export function RecipeEditor({
   const lines = useFieldArray({ control, name: "ingredients" });
   const steps = useFieldArray({ control, name: "steps" });
   const prep = useFieldArray({ control, name: "prepTasks" });
-  const values = useWatch({ control }) as FormInput;
+  // Only the fields that drive what the editor shows (M23): typing a title or a note doesn't re-render the whole form.
+  const [wIngredients, wTags, wTools, wImagePaths, wCuisine, wSteps] = useWatch({ control, name: ["ingredients", "tags", "tools", "imagePaths", "cuisine", "steps"] });
+  const values = { ingredients: wIngredients, tags: wTags, tools: wTools, imagePaths: wImagePaths, cuisine: wCuisine, steps: wSteps };
   const recipeId = id ?? newId;
   const lookup = lookupFromMap(ing.byId);
 
@@ -237,23 +239,42 @@ export function RecipeEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  // Keep the draft on this device while editing (debounced).
+  // Keep the draft on this device while editing (debounced), from a form subscription so typing doesn't re-render.
+  // A reset (opening, saving, restoring) has no field name and writes nothing.
+  const latest = React.useRef({ baseVersion, online, draftValues });
   React.useEffect(() => {
-    if (!formState.isDirty) return;
-    const t = setTimeout(() => {
-      void idbSet(draftKey(id), makeDraft(draftValues(), baseVersion, !online)).catch(() => {});
-    }, 400);
-    return () => clearTimeout(t);
-  }, [values, formState.isDirty, id, baseVersion, online, draftValues]);
+    latest.current = { baseVersion, online, draftValues };
+  });
+  React.useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const unsubscribe = form.subscribe({
+      formState: { values: true },
+      callback: (info) => {
+        if (!info.name) return;
+        clearTimeout(t);
+        t = setTimeout(() => {
+          const l = latest.current;
+          void idbSet(draftKey(id), makeDraft(l.draftValues(), l.baseVersion, !l.online)).catch(() => {});
+        }, 400);
+      },
+    });
+    return () => {
+      clearTimeout(t);
+      unsubscribe();
+    };
+  }, [form, id]);
 
-  const finish = async (savedId: string, message: string) => {
+  /** After a save: the draft goes, the form is clean. A save the person pressed opens the recipe; the automatic save
+   * when the connection comes back (M23) keeps them in the editor (a new recipe's editor becomes its edit page). */
+  const finish = async (savedId: string, message: string, auto: boolean) => {
     await idbDel(draftKey(id)).catch(() => {});
     reset(getValues());
     notify({ kind: "success", message });
-    void navigate({ to: "/recipes/$id", params: { id: savedId } });
+    if (!auto) void navigate({ to: "/recipes/$id", params: { id: savedId } });
+    else if (id === null) void navigate({ to: "/recipes/$id/edit", params: { id: savedId }, replace: true });
   };
 
-  const doSave = async (content: RecipeContent, opts: { overwriteVersion?: number; skipDupes?: boolean } = {}) => {
+  const doSave = async (content: RecipeContent, opts: { overwriteVersion?: number; skipDupes?: boolean; auto?: boolean } = {}) => {
     setSaving(true);
     try {
       if (id === null) {
@@ -282,12 +303,12 @@ export function RecipeEditor({
         }
         // A photo that didn't upload leaves the recipe (version 2), so it never points at a missing image.
         if (failed.length) await saveRecipe(created, { ...content, imagePaths: content.imagePaths.filter((p) => !failed.includes(p)) }, uid, lookup, 1).catch(() => undefined);
-        await finish(created, `Saved “${content.title}”`);
+        await finish(created, `Saved “${content.title}”`, !!opts.auto);
       } else {
         const expected = opts.overwriteVersion ?? baseVersion ?? undefined;
         const v = await saveRecipe(id, content, uid, lookup, expected);
         setBaseVersion(v);
-        await finish(id, `Saved as v${v} for everyone`);
+        await finish(id, `Saved as v${v} for everyone`, !!opts.auto);
       }
     } catch (e) {
       if (e instanceof EditedElsewhereError) setConflict(e.current);
@@ -301,17 +322,18 @@ export function RecipeEditor({
   };
 
   const onSubmit = handleSubmit((v) => doSave(toContent(v)), () => notify({ kind: "error", message: "Some fields need fixing before saving" }));
+  const autoSave = handleSubmit((v) => doSave(toContent(v), { auto: true }), () => notify({ kind: "error", message: "Back online, but some fields need fixing before the draft can save" }));
 
-  // Back online with a save waiting: re-check the version and save.
+  // Back online with a save waiting: re-check the version and save, staying in the editor.
   const wasOnline = React.useRef(online);
   React.useEffect(() => {
     if (online && !wasOnline.current) {
       void idbGet<Draft>(draftKey(id)).then((d) => {
-        if (d?.pendingSave) void onSubmit();
+        if (d?.pendingSave) void autoSave();
       });
     }
     wasOnline.current = online;
-  }, [online, id, onSubmit]);
+  }, [online, id, autoSave]);
 
   const insertIngredient = (lineId: string) => {
     const f = focusedStep.current;
