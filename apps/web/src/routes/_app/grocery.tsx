@@ -202,7 +202,7 @@ function GroceryPage() {
                     <Button size="lg" className="w-full" disabled={busy || !g.items.length} onClick={() => void copy(g.store.id)}>
                       Copy for ChatGPT
                     </Button>
-                    <button type="button" disabled={busy} onClick={() => void orderStore(g.store.id, "marked")} className="cursor-pointer self-center bg-transparent p-1 text-[0.8125rem] font-extrabold text-ink underline">
+                    <button type="button" disabled={busy} onClick={() => void orderStore(g.store.id, "marked")} className="min-h-11 cursor-pointer self-center bg-transparent px-1 text-[0.8125rem] font-extrabold text-ink underline">
                       Mark ordered without copying
                     </button>
                   </div>
@@ -470,7 +470,7 @@ function AddItem({ stores, defaultStoreId, onAdd }: { stores: readonly StoreEntr
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="font-mono text-[0.625rem] font-bold text-sub uppercase">Use ingredient:</span>
           {suggestions.map((i) => (
-            <button key={i.id} type="button" onClick={() => setPicked(i)} className="cursor-pointer rounded-ui border-2 border-line bg-base px-2 py-1 text-xs font-extrabold text-ink shadow-hard-sm">
+            <button key={i.id} type="button" onClick={() => setPicked(i)} className="min-h-11 cursor-pointer rounded-ui border-2 border-line bg-base px-2 py-1 text-xs font-extrabold text-ink shadow-hard-sm">
               {i.name}
             </button>
           ))}

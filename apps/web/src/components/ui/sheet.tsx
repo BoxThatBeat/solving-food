@@ -42,7 +42,7 @@ export function SheetContent({
           {headerExtra}
           <Dialog.Close
             aria-label="Close"
-            className="grid size-[2.375rem] cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink shadow-hard-sm"
+            className="grid size-11 cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink shadow-hard-sm"
           >
             <X aria-hidden className="size-4" strokeWidth={3} />
           </Dialog.Close>

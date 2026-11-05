@@ -277,9 +277,9 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
                           step={MULTIPLIERS_STEP}
                           format={fmtMultiplier}
                           onChange={(v) => setMultiplier(r.recipeId, v)}
-                          className="text-ink [&_button]:size-9"
+                          className="text-ink"
                         />
-                        <button type="button" aria-label={`Remove ${title}`} onClick={() => toggle(r.recipeId)} className="grid size-9 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink">
+                        <button type="button" aria-label={`Remove ${title}`} onClick={() => toggle(r.recipeId)} className="grid size-11 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink">
                           <X aria-hidden className="size-4" strokeWidth={3} />
                         </button>
                       </li>

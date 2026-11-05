@@ -100,7 +100,7 @@ function Shell({ title, kicker = "Review", onClose, children }: { title: string;
   return (
     <div className="fixed inset-0 z-30 flex flex-col bg-pg text-ink" role="region" aria-label={`Review ${title}`}>
       <header className="flex flex-none items-center gap-3 border-b-bw bg-base px-4 pt-[max(0.625rem,env(safe-area-inset-top))] pb-2.5">
-        <button type="button" onClick={onClose} aria-label="Close review" className="grid size-10 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink shadow-hard-sm">
+        <button type="button" onClick={onClose} aria-label="Close review" className="grid size-11 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink shadow-hard-sm">
           <X aria-hidden className="size-5" strokeWidth={3} />
         </button>
         <span className="flex min-w-0 flex-1 flex-col">
@@ -252,17 +252,17 @@ function ReviewFlow({
                           <span className="font-mono text-[0.5625rem] font-bold text-sub uppercase">{def === undefined ? "added" : Math.abs(def - u.canonicalAmount) < 1e-6 ? "as written" : `recipe ${formatCanonical(def, unit, ing?.unitWeightG)}`}</span>
                         </span>
                         <div className="flex flex-none overflow-hidden rounded-ui border-2 border-line" role="group" aria-label={`${name} used`}>
-                          <button type="button" aria-label={`Less ${name}`} onClick={() => setUsed((l) => l.map((x) => (x.ingredientId === u.ingredientId ? { ...x, canonicalAmount: Math.max(0, x.canonicalAmount - stepAmt) } : x)))} className="h-10 w-9 cursor-pointer bg-pg text-lg font-extrabold">
+                          <button type="button" aria-label={`Less ${name}`} onClick={() => setUsed((l) => l.map((x) => (x.ingredientId === u.ingredientId ? { ...x, canonicalAmount: Math.max(0, x.canonicalAmount - stepAmt) } : x)))} className="size-11 cursor-pointer bg-pg text-lg font-extrabold">
                             −
                           </button>
                           <output className="flex min-w-[5.75rem] items-center justify-center border-x-2 border-line px-1 font-mono text-[0.6875rem] font-extrabold" aria-label={`${name} amount`}>
                             {formatCanonical(u.canonicalAmount, unit, ing?.unitWeightG)}
                           </output>
-                          <button type="button" aria-label={`More ${name}`} onClick={() => setUsed((l) => l.map((x) => (x.ingredientId === u.ingredientId ? { ...x, canonicalAmount: x.canonicalAmount + stepAmt } : x)))} className="h-10 w-9 cursor-pointer bg-pg text-lg font-extrabold">
+                          <button type="button" aria-label={`More ${name}`} onClick={() => setUsed((l) => l.map((x) => (x.ingredientId === u.ingredientId ? { ...x, canonicalAmount: x.canonicalAmount + stepAmt } : x)))} className="size-11 cursor-pointer bg-pg text-lg font-extrabold">
                             +
                           </button>
                         </div>
-                        <button type="button" aria-label={`Didn't use ${name}`} onClick={() => setUsed((l) => l.filter((x) => x.ingredientId !== u.ingredientId))} className="grid size-10 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base">
+                        <button type="button" aria-label={`Didn't use ${name}`} onClick={() => setUsed((l) => l.filter((x) => x.ingredientId !== u.ingredientId))} className="grid size-11 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base">
                           <X aria-hidden className="size-4" strokeWidth={3} />
                         </button>
                       </li>

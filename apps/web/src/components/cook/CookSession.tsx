@@ -248,7 +248,7 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
                 const on = done.includes(id);
                 return (
                   <li key={id} className={cn("flex items-center gap-3 rounded-ui border-bw bg-base p-3 shadow-hard", on && "bg-mantle")} data-testid="cook-recipe">
-                    <button type="button" role="checkbox" aria-checked={on} aria-label={`${r.title} done`} onClick={() => checkOff(id)} className={cn("grid size-10 flex-none cursor-pointer place-items-center rounded-ui border-bw", on ? "bg-acc text-onc" : "bg-base")}>
+                    <button type="button" role="checkbox" aria-checked={on} aria-label={`${r.title} done`} onClick={() => checkOff(id)} className={cn("grid size-11 flex-none cursor-pointer place-items-center rounded-ui border-bw", on ? "bg-acc text-onc" : "bg-base")}>
                       {on ? <Check aria-hidden className="size-5" strokeWidth={4} /> : null}
                     </button>
                     <RecipeThumb base={thumbOf(r)} cuisine={r.cuisine} />
@@ -259,10 +259,10 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
                       </span>
                     </span>
                     <span className="flex flex-none flex-col gap-1">
-                      <button type="button" onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Move ${r.title} earlier`} className="grid h-8 w-10 cursor-pointer place-items-center rounded-[calc(var(--r)*0.67)] border-2 border-line bg-pg text-[0.75rem] disabled:opacity-40">
+                      <button type="button" onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Move ${r.title} earlier`} className="grid size-11 cursor-pointer place-items-center rounded-[calc(var(--r)*0.67)] border-2 border-line bg-pg text-[0.75rem] disabled:opacity-40">
                         ▲
                       </button>
-                      <button type="button" onClick={() => move(i, 1)} disabled={i === order.length - 1} aria-label={`Move ${r.title} later`} className="grid h-8 w-10 cursor-pointer place-items-center rounded-[calc(var(--r)*0.67)] border-2 border-line bg-pg text-[0.75rem] disabled:opacity-40">
+                      <button type="button" onClick={() => move(i, 1)} disabled={i === order.length - 1} aria-label={`Move ${r.title} later`} className="grid size-11 cursor-pointer place-items-center rounded-[calc(var(--r)*0.67)] border-2 border-line bg-pg text-[0.75rem] disabled:opacity-40">
                         ▼
                       </button>
                     </span>

@@ -169,18 +169,21 @@ export function CollectionView(p: CollectionViewProps) {
                 type="button"
                 onClick={() => onSearchChange(c.remove(search))}
                 aria-label={`Remove filter ${c.label}`}
-                className="flex flex-none cursor-pointer items-center gap-1.5 rounded-ui border-2 border-line bg-acc px-2 py-1.5 text-xs font-extrabold whitespace-nowrap text-onc"
+                className="inline-flex min-h-11 flex-none cursor-pointer items-center bg-transparent p-0"
               >
-                {c.label}
-                <span aria-hidden className="font-mono">
-                  ✕
+                {/* M24: a 44 px hit area around the chip. */}
+                <span className="flex items-center gap-1.5 rounded-ui border-2 border-line bg-acc px-2 py-1.5 text-xs font-extrabold whitespace-nowrap text-onc">
+                  {c.label}
+                  <span aria-hidden className="font-mono">
+                    ✕
+                  </span>
                 </span>
               </button>
             ))}
             <button
               type="button"
               onClick={() => onSearchChange({ q: search.q, sort: search.sort })}
-              className="cursor-pointer bg-transparent px-1 py-1.5 text-xs font-extrabold text-ink underline"
+              className="min-h-11 min-w-11 cursor-pointer bg-transparent px-1 text-xs font-extrabold text-ink underline"
             >
               Clear
             </button>

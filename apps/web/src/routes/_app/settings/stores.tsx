@@ -154,7 +154,7 @@ function StoresPage() {
                   <span>
                     {ing.byId.get(iid)?.name ?? iid} → {list.find((x) => x.id === r.data.storeId)?.data.name ?? "a deleted store"}
                   </span>
-                  <button type="button" aria-label={`Remove rule for ${ing.byId.get(iid)?.name ?? iid}`} onClick={() => void deleteRule(hh.id, r.id).catch(err("remove the rule"))} className="grid size-8 cursor-pointer place-items-center bg-transparent text-ink">
+                  <button type="button" aria-label={`Remove rule for ${ing.byId.get(iid)?.name ?? iid}`} onClick={() => void deleteRule(hh.id, r.id).catch(err("remove the rule"))} className="grid size-11 cursor-pointer place-items-center bg-transparent text-ink">
                     <Trash2 aria-hidden className="size-4" />
                   </button>
                 </li>

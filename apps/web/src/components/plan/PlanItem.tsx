@@ -113,7 +113,7 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
       {!out && !multi && it.recipes[0] ? <RecipeThumb base={thumbOf(recipes.get(it.recipes[0].recipeId))} cuisine={recipes.get(it.recipes[0].recipeId)?.cuisine} className="h-16 self-start" /> : null}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex items-start justify-between gap-2">
-          <button type="button" onClick={onOpen} className="cursor-pointer bg-transparent p-0 text-left text-[1.0625rem] leading-tight font-extrabold text-ink hover:underline">
+          <button type="button" onClick={onOpen} className="-my-2.5 min-h-11 cursor-pointer bg-transparent p-0 text-left text-[1.0625rem] leading-tight font-extrabold text-ink hover:underline">
             {v.title}
           </button>
           <Badge className={cn("flex-none rounded-[calc(var(--r)*0.5)] px-1.5 py-1 text-[0.5625rem] uppercase", status === "planned" ? "bg-base" : "bg-acc text-onc")} data-testid="plan-item-status">
@@ -179,8 +179,11 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
         <span className="flex-1 font-mono text-[0.6875rem] font-bold" data-testid="plan-item-cost">
           {costLine(v)}
         </span>
-        <button type="button" onClick={remove} aria-label={`Remove ${v.title} from the plan`} className="grid size-10 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink">
-          <X aria-hidden className="size-4" strokeWidth={3} />
+        <button type="button" onClick={remove} aria-label={`Remove ${v.title} from the plan`} className="-m-0.5 grid size-11 flex-none cursor-pointer place-items-center bg-transparent p-0">
+          {/* M24: a 44 px hit area around the 40 px face. */}
+          <span aria-hidden className="grid size-10 place-items-center rounded-ui border-2 border-line bg-base text-ink">
+            <X className="size-4" strokeWidth={3} />
+          </span>
         </button>
         {canCook ? (
           <Button size="sm" onClick={() => void navigate({ to: "/plan/$itemId/cook", params: { itemId: v.id } })} aria-label={`Cook ${v.title}`} className="shadow-hard-sm">
@@ -192,7 +195,7 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
             to="/review/$eventId"
             params={{ eventId: v.review! }}
             aria-label={`Review ${v.title} to finish it`}
-            className="press inline-flex min-h-10 items-center rounded-ui border-2 border-line bg-acc px-3 text-[0.875rem] font-extrabold text-onc no-underline shadow-hard-sm"
+            className="press inline-flex min-h-11 items-center rounded-ui border-2 border-line bg-acc px-3 text-[0.875rem] font-extrabold text-onc no-underline shadow-hard-sm"
           >
             Review →
           </Link>

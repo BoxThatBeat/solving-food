@@ -92,7 +92,7 @@ export function MealCard({
           aria-pressed={facts.favourite}
           aria-label={`Favourite ${row.title}`}
           onClick={() => onFavourite(!facts.favourite)}
-          className={cn("grid size-10 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line shadow-hard-sm", facts.favourite ? "bg-yellow text-onc" : "bg-base text-ink")}
+          className={cn("grid size-11 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line shadow-hard-sm", facts.favourite ? "bg-yellow text-onc" : "bg-base text-ink")}
         >
           <Star aria-hidden className="size-4" strokeWidth={2.5} fill={facts.favourite ? "currentColor" : "none"} />
         </button>

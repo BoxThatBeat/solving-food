@@ -167,7 +167,7 @@ function MealPage() {
                     aria-label={`Remove ${rec?.title ?? "recipe"} from this meal`}
                     disabled={data.recipes.length <= 1}
                     onClick={() => void save({ recipes: data.recipes.filter((x) => x.recipeId !== r.recipeId) })}
-                    className="grid size-10 cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink disabled:cursor-not-allowed disabled:opacity-40"
+                    className="grid size-11 cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <X aria-hidden className="size-4" strokeWidth={3} />
                   </button>

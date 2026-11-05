@@ -256,6 +256,7 @@ test("every button and link is at least 44 px on a phone (M24)", { tag: ["@R12.2
   const pages: Array<[string, () => Promise<void>]> = [
     ["/plan", () => expect(page.getByTestId("plan-count")).not.toHaveText("LOADING…")],
     ["/recipes", () => expect(page.getByTestId("recipe-card").first()).toBeVisible()],
+    ["/recipes?meal=dinner", () => expect(page.getByRole("button", { name: "Remove filter Dinner" })).toBeVisible()],
     [`/recipes/${r.id}`, () => expect(page.getByRole("heading", { name: r.title })).toBeVisible()],
     [`/recipes/${r.id}/edit`, () => expect(page.getByRole("heading", { name: "Edit recipe" })).toBeVisible()],
     ["/supply", () => expect(page.getByTestId("expired-prompts")).toBeVisible()],

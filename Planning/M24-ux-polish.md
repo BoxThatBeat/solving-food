@@ -1,6 +1,6 @@
 # M24 — UX polish
 
-Status: in progress
+Status: done (owner: check the touch-target density and the folded alerts on a real phone)
 
 ## Goal
 
@@ -83,3 +83,16 @@ paragraph under the suggestion score; folding under Use it up), §14.1 (`a11y.sp
   and History on phone; Plan and History on desktop. Prototype has no tabs or fold line: built in its tokens (peach
   summary like the Use it or lose it card, tabs like the meal-type picker). The prototype's alert rows put "uses 300 g"
   on the right; the sentence now sits under the title.
+- **Second touch-target pass (coordinator's e2e run):** targets that only exist with data were missed by the first
+  audit: the plan card's title button (43 px) and remove × (40 px, now a 44 px hit area around the 40 px face), the
+  Create meal confirm rows' remove and stepper, side picker remove, cooking's recipe check-off and reorder buttons,
+  review close and amount buttons, meal card favourite and meal page buttons, sheet close (38 px), the store rule
+  remove, Grocery's "Mark ordered" and product-search chips, and the applied-filter chips and Clear (Recipes, Plan,
+  History, Supply; 44 px hit area around the chip). `a11y.spec.ts` now also visits a filtered Recipes list.
+- **Visual baselines regenerated** for the Recipes library (phone-android, desktop-1080p, 4K, 4K-2x): the diff is the
+  44 px header button, tabs, chips and tab bar shifting the page, nothing else.
+- **Verification:** typecheck and lint clean; unit tests core 701 → 707, web 48; `pnpm e2e:coverage` green. E2E on
+  phone-android and desktop-1080p, `--workers=1`, in batches: supply/cooking/history 41, recipe-detail/recipe-edit/grocery
+  48, notifications/optimiser/settings 24, meals/receive/responsive 26, plan/suggestions 75, recipes-browse/pwa 29 all
+  passed; after the fixes a11y + visual + plan 33/33 on phone-android (one rerun after widening Clear: a11y + visual
+  11/11) and 31 passed, 2 skipped (phone-only tests) on desktop-1080p; visual on desktop-4k and desktop-4k-2x 2/2 each.

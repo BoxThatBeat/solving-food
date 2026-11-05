@@ -82,7 +82,7 @@ export function SidePicker({
                     </span>
                   ) : null}
                 </span>
-                <button type="button" aria-label={`Remove ${name}`} onClick={() => remove(v.ingredientId)} className="grid size-9 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink">
+                <button type="button" aria-label={`Remove ${name}`} onClick={() => remove(v.ingredientId)} className="grid size-11 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink">
                   <X aria-hidden className="size-4" strokeWidth={3} />
                 </button>
               </li>
