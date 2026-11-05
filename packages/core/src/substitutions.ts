@@ -194,8 +194,10 @@ export function applySwaps(needs: ReadonlyMap<string, number>, swaps: readonly S
   for (const s of swaps) {
     const ratio = substitutionRatio(s.ingredientId, s.withIngredientId);
     if (ratio === null || !(s.amount > 0) || !out.has(s.ingredientId)) continue;
-    const left = (out.get(s.ingredientId) ?? 0) - s.amount / ratio;
-    if (left > EPS) out.set(s.ingredientId, left);
+    const before = out.get(s.ingredientId) ?? 0;
+    const left = before - s.amount / ratio;
+    // A rounded amount (the command carries 3 decimals) can leave a sliver of the original: under 1 % is nothing.
+    if (left > Math.max(EPS, before * 0.01)) out.set(s.ingredientId, left);
     else out.delete(s.ingredientId);
     out.set(s.withIngredientId, (out.get(s.withIngredientId) ?? 0) + s.amount);
   }

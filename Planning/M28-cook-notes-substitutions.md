@@ -1,6 +1,6 @@
 # M28 — Cook notes and substitutions
 
-Status: in progress
+Status: done (owner: try the swaps and step notes in the kitchen; see the plan's owner checks)
 
 ## Goal
 
@@ -38,18 +38,19 @@ PRD v0.14. Spec §4.2 (cookEvents fields, settings), §6 (finishCooking, submitR
       recipe of the meal to `notedRecipeIds`. Functions test in `commands.test.ts`.
 - [x] **3. Rules and index**: `finishCooking` payload keys `substitutions`, `stepNotes` (rules test in `supply.test.ts`);
       the composite index `cookEvents (notedRecipeIds CONTAINS, cookedAt DESC)`.
-- [ ] **4. Web: cook notes**: `useRecipeCookNotes(hid, recipeId)` (one bounded listener); "Last time (12 Oct, Aaron)"
+- [x] **4. Web: cook notes**: `useRecipeCookNotes(hid, recipeId)` (one bounded listener); "Last time (12 Oct, Aaron)"
       with Show earlier on mise en place and the recipe page; step notes under the step text and a Note sheet in step
       mode, carried in the session and sent with Done cooking; the review's previous note and Keep this note.
-- [ ] **5. Web: substitutions**: the snapshot's `substitute`; Can make with swaps ("CAN MAKE · SWAPS"); the mise en place
+- [x] **5. Web: substitutions**: the snapshot's `substitute`; Can make with swaps ("CAN MAKE · SWAPS"); the mise en place
       swap line with Use it / Undo, sent with Done cooking and applied to the pending review's amounts; the grocery
       "have …" hint; Settings → Preferences → Suggest substitutions.
-- [ ] **6. E2E**: cooking.spec (@R4.38 @R4.39 @R4.40), review.spec (@R9.6), suggestions.spec (@R6.35), grocery.spec
+- [x] **6. E2E**: cooking.spec (@R4.38 @R4.39 @R4.40), review.spec (@R9.6), suggestions.spec (@R6.35), grocery.spec
       (@R7.20), preferences.spec (@R11.20).
-- [ ] **7. Docs**: PRD v0.14, spec, README row, this plan.
-- [ ] **8. Screenshot check** (phone 430×932, desktop 1920×1080): mise en place (note, swap), step mode (step note,
+- [x] **7. Docs**: PRD v0.14, spec, README row, this plan.
+- [x] **8. Screenshot check** (phone 430×932, desktop 1920×1080): mise en place (note, swap), step mode (step note,
       sheet), review (previous note), recipe page, a suggestion card, Recipes Can make, Grocery hint, Settings →
-      Preferences.
+      Preferences. All matched the app; nothing to fix. Found and fixed instead: a swap sent with 3 decimals left a
+      sliver of the original (garlic 0 g) in the review's used amounts; `applySwaps` now drops a remainder under 1 %.
 
 ## Deviations
 
@@ -67,6 +68,24 @@ PRD v0.14. Spec §4.2 (cookEvents fields, settings), §6 (finishCooking, submitR
 - **Butter ↔ oil is in the table but inert today**: both are free-use (never "missing", never deducted).
 - **The penalty is on the missing-ingredients factor only**: a swapped ingredient counts 0.25 of a missing one;
   supply utilisation, cost and the grocery list are unchanged (we don't buy substitutes).
+- **Plan cards' swap reason not screenshotted**: in the dev data the strongest lowering reason was cost, so the swap
+  text didn't show; it reuses the existing reason chip and is covered by unit and e2e tests.
+- **Functions suite flake**: one full local run failed `ai.test.ts` "Gemini down" (the member doc gone, from test
+  order); `ai.test.ts` with `commands.test.ts` alone passed. Unrelated to M28 (no change there); CI decides.
 - **Can make counts swaps, no toggle**: the simpler choice; the badge reads "CAN MAKE · SWAPS" when a swap was needed.
 
 ## Verification
+
+- Typecheck, lint: clean. `pnpm e2e:coverage`: green, M28 9/9 tagged.
+- Unit: core 747 → 777 (`substitutions.test.ts` 24, `cookNotes.test.ts` 6), web 48.
+- Functions: 94 → 96 (finishCooking with swaps and step notes; the review note and the noted query); see the flake above.
+- Rules: 104 (commands test extended: finishCooking with `substitutions` and `stepNotes`, an unknown key refused).
+- E2E: written, not run locally (owner rule: memory); CI runs the matrix.
+
+## Owner checks
+
+- The substitution table (`packages/core/src/substitutions.ts`) is my guess: 57 swaps, ratios from common kitchen rules
+  (1 clove garlic → ⅛ tsp powder, fresh : dried herbs 3 : 1, 1 tsp bouillon powder per 250 ml stock, 1 lemon → 45 ml
+  juice). Remove any you'd never make; tell me what's missing.
+- Cook something with a swap accepted and check Supply moved the substitute; leave a step note and cook it again.
+

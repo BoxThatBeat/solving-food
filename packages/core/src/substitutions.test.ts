@@ -137,6 +137,12 @@ describe("applySwaps", () => {
     expect([...out]).toEqual([["chicken-thigh", 600], ["garlic-powder", 0.776]]);
   });
 
+  it("drops the original when a rounded swap amount leaves a sliver of it", () => {
+    // 25 g garlic → 1.94 g powder, sent as 1.94 (3 decimals): 0.0005 g short of the exact swap.
+    const out = applySwaps(new Map([["garlic", 25]]), [{ ingredientId: "garlic", withIngredientId: "garlic-powder", amount: 1.94 }]);
+    expect(out.has("garlic")).toBe(false);
+  });
+
   it("keeps the part of the original the swap doesn't replace", () => {
     const out = applySwaps(new Map([["onion", 200]]), [{ ingredientId: "onion", withIngredientId: "shallot", amount: 140 }]);
     expect(out.get("onion")).toBeCloseTo(60);
