@@ -111,3 +111,7 @@ new test in `recipe-edit.spec.ts`), NFR2 (the weekly Firestore backup is the one
   functions-error alert fires at 5 errors an hour, since single refused commands log errors.
 - **Key docs are `aiSession/config` and `pcxSession/config`** (the brief's `_pcx` / `_ai`); they stay in Firestore.
 - **No design-compare:** the only UI change is one sentence in an existing card and a preview image in an existing slot.
+- **Verification:** unit 693 → 698 (core) + 37 web; rules 99 → 103; functions 74 → 89. e2e on phone-android and
+  desktop-1080p: ingredients, recipe-edit, data-transfer, receive, timers, notifications, plan, rollover, grocery,
+  gemini, drop-folder, prices, settings. In one 15-minute run the last 21 desktop tests failed in the sign-in fixture
+  (the emulator degraded late in the run); the same specs passed 41/41 when rerun on desktop.
