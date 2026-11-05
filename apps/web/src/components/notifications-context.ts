@@ -13,8 +13,10 @@ export interface Banner {
   action?: { label: string; run: () => void };
   /** Stays until dismissed or acted on, whatever the kind (the app-update banner). */
   sticky?: boolean;
-  /** Called when the banner is dismissed (by the user or the auto-dismiss timer), e.g. to write `dismissedAt`. */
+  /** Called when the person dismisses the banner (×, Dismiss all, its link or action), e.g. to write `dismissedAt`. */
   onDismiss?: () => void;
+  /** Called instead of onDismiss when a success or info banner clears itself after a few seconds (M23: per device). */
+  onAutoDismiss?: () => void;
 }
 
 export interface NotificationsCtx {

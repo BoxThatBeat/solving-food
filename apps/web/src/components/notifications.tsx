@@ -1,7 +1,7 @@
 // <NotificationBanners> (TECHNICAL_SPECS §12, R12.1): one stack at the bottom of every page (above the phone tab bar),
 // fed by local client-only messages and by the live listener on users/{uid}/notifications (<NotificationFeed>).
-// Success and info disappear after ~6 s (and the Firestore ones are marked dismissed, so they stay dismissed on every
-// device); errors stay until dismissed. Each can link to the related page.
+// Success and info disappear after ~6 s on the device showing them (M23: only there; notificationsSeen.ts), errors stay
+// until dismissed, and dismissing one by hand dismisses it on every device. Each can link to the related page.
 
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
@@ -13,6 +13,7 @@ import { useLiveQuery } from "@/data/live";
 import { bannerFor, householdOf, onListenerError } from "@/data/listenErrors";
 import { cn } from "@/lib/utils";
 import { applyUpdate, useUpdatePending } from "@/pwa/update";
+import { isStale, markSeenHere, seenHere } from "./notificationsSeen";
 import { NotificationsContext, useNotifications, useNotify, type Banner, type NotificationKind } from "./notifications-context";
 
 export const AUTO_DISMISS_MS = 6000;
@@ -24,7 +25,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const all = React.useRef(new Map<string, Banner>());
   const timers = React.useRef(new Map<string, ReturnType<typeof setTimeout>>());
 
-  const remove = React.useCallback((id: string, runHook: boolean) => {
+  const remove = React.useCallback((id: string, runHook: boolean | "auto") => {
     const b = all.current.get(id);
     if (!b) return;
     all.current.delete(id);
@@ -32,7 +33,8 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     const t = timers.current.get(id);
     if (t) clearTimeout(t);
     timers.current.delete(id);
-    if (runHook) b.onDismiss?.();
+    if (runHook === "auto") b.onAutoDismiss?.();
+    else if (runHook) b.onDismiss?.();
   }, []);
 
   const dismiss = React.useCallback((id: string) => remove(id, true), [remove]);
@@ -46,7 +48,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       all.current.set(id, b);
       setBanners((bs) => [...bs, b]);
       // Success and info disappear on their own; errors (and sticky banners) stay until dismissed (R12.1).
-      if (b.kind !== "error" && !b.sticky) timers.current.set(id, setTimeout(() => remove(id, true), AUTO_DISMISS_MS));
+      if (b.kind !== "error" && !b.sticky) timers.current.set(id, setTimeout(() => remove(id, "auto"), AUTO_DISMISS_MS));
       return id;
     },
     [remove],
@@ -80,19 +82,28 @@ export function NotificationFeed({ uid }: { uid: string }) {
     if (!q.docs) return;
     const live = new Set<string>();
     const sorted = [...q.docs].sort((a, b) => millis(a.data.createdAt) - millis(b.data.createdAt));
+    const now = Date.now();
     for (const d of sorted) {
       const id = `fs:${d.id}`;
       live.add(id);
       if (shown.current.has(id)) continue;
       shown.current.add(id);
       const ref = doc(db, "users", uid, "notifications", d.id);
+      const dismissEverywhere = () => void updateDoc(ref, { dismissedAt: serverTimestamp() }).catch(() => {});
+      // A day-old success or info nobody dismissed: cleared for everyone. One this device already showed: not again.
+      if (isStale(d.data.kind, millisOrNull(d.data.createdAt), now)) {
+        dismissEverywhere();
+        continue;
+      }
+      if (seenHere(uid, d.id)) continue;
       notify({
         id,
         kind: d.data.kind,
         message: d.data.message,
         ...(d.data.link ? { link: { to: d.data.link, label: linkLabel(d.data.link) } } : {}),
         ...(d.data.link2 ? { link2: d.data.link2 } : {}),
-        onDismiss: () => void updateDoc(ref, { dismissedAt: serverTimestamp() }).catch(() => {}),
+        onDismiss: dismissEverywhere,
+        onAutoDismiss: () => markSeenHere(uid, d.id),
       });
     }
     // Dismissed on another device: take it down here too.
@@ -104,6 +115,11 @@ export function NotificationFeed({ uid }: { uid: string }) {
     }
   }, [q.docs, notify, retract, uid]);
   return null;
+}
+
+function millisOrNull(v: unknown): number | null {
+  const t = v as { toMillis?: () => number } | null;
+  return t && typeof t.toMillis === "function" ? t.toMillis() : null;
 }
 
 function millis(v: unknown): number {

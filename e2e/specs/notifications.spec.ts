@@ -14,7 +14,7 @@ async function notifyUser(uid: string, n: { kind: "info" | "success" | "error"; 
 
 const stack = (page: Page) => page.getByTestId("notifications");
 
-test("banners stack at the bottom of any page; success and info auto-dismiss, errors stay until dismissed", { tag: ["@R12.1"] }, async ({ page, household }) => {
+test("banners stack at the bottom of any page; success and info auto-dismiss on this device, errors stay until dismissed", { tag: ["@R12.1"] }, async ({ page, household, browser }) => {
   await page.goto("/drop");
   const ok = await notifyUser(household.uid, { kind: "success", message: "Imported \"Test Soup\" from test-soup.cook." });
   await notifyUser(household.uid, { kind: "info", message: "\"Test Soup\" looks like a duplicate of \"Soup\"." });
@@ -36,17 +36,23 @@ test("banners stack at the bottom of any page; success and info auto-dismiss, er
   await page.getByRole("link", { name: "Recipes" }).first().click();
   await expect(stack(page).getByRole("alert")).toBeVisible();
 
-  // After ~6 s the success and info banners are gone and marked dismissed; the error stays.
+  // After ~6 s the success and info banners are gone from this device only (M23): not marked dismissed, so the
+  // person's other devices still show them; the error stays.
   await expect(stack(page).getByRole("status")).toHaveCount(0, { timeout: 10_000 });
-  await expect.poll(async () => (await adminDb.doc(`users/${household.uid}/notifications/${ok}`).get()).data()?.dismissedAt).not.toBeNull();
   await page.waitForTimeout(1000);
+  expect((await adminDb.doc(`users/${household.uid}/notifications/${ok}`).get()).data()?.dismissedAt).toBeNull();
+  const other = await browser.newContext();
+  const phone2 = await other.newPage();
+  await signInWithEmailLink(phone2, household.email);
+  await expect(stack(phone2).getByRole("status").filter({ hasText: /Imported "Test Soup"/ })).toBeVisible();
+  await other.close();
   const alert = stack(page).getByRole("alert");
   await expect(alert).toBeVisible();
   await alert.getByRole("button", { name: "Dismiss" }).click();
   await expect(alert).toBeHidden();
   await expect.poll(async () => (await adminDb.doc(`users/${household.uid}/notifications/${err}`).get()).data()?.dismissedAt).not.toBeNull();
 
-  // A dismissed notification doesn't come back on reload.
+  // Neither the dismissed error nor the banners this device let clear come back on reload.
   await page.reload();
   await expect(page.getByRole("heading", { name: "Recipes", level: 1 })).toBeVisible();
   await expect(stack(page).locator("[data-kind]")).toHaveCount(0);
