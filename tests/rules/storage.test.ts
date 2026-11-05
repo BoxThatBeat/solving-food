@@ -32,6 +32,7 @@ beforeEach(async () => {
   await env.clearFirestore();
   await env.withSecurityRulesDisabled(async (ctx) => {
     await setDoc(doc(ctx.firestore() as unknown as Firestore, "allowlist", ALICE.email), { addedBy: "seed", addedAt: new Date() });
+    await setDoc(doc(ctx.firestore() as unknown as Firestore, "recipes", "r1"), { title: "Exists" });
   });
 });
 
@@ -42,6 +43,10 @@ describe("recipe images", () => {
     // Safari can't encode WebP from a canvas; its JPEG variants are accepted too.
     await assertSucceeds(uploadBytes(ref(st(ALICE), "recipes/r1/img2/480.webp"), bytes(1000), { contentType: "image/jpeg" }));
     await assertSucceeds(deleteObject(ref(st(ALICE), "recipes/r1/img1/480.webp")));
+  });
+
+  it("only for a recipe that exists (M22): no uploads under made-up IDs", async () => {
+    await assertFails(uploadBytes(ref(st(ALICE), "recipes/no-such-recipe/img1/480.webp"), bytes(1000), { contentType: "image/webp" }));
   });
 
   it("refuses non-allowlisted users, signed-out uploads, other types, and big files", async () => {

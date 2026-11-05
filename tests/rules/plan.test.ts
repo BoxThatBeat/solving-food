@@ -145,6 +145,17 @@ describe("household collections are member-only (R2.8)", () => {
     await assertSucceeds(deleteDoc(ref));
   });
 
+  it("plan items: addedBy is the adder (or a carried copy's original adder) and never changes (M22)", async () => {
+    const db = dbAs(ALICE);
+    await assertFails(setDoc(doc(db, "households/h-alice/planItems/a1"), planItem({ addedBy: BOB.uid })));
+    // Bob added an item in Alice's household (seeded); Alice's rollover carries it with his name.
+    await seed(async (s) => setDoc(doc(s, "households/h-alice/planItems/bobs"), planItem({ addedBy: BOB.uid })));
+    await assertSucceeds(setDoc(doc(db, "households/h-alice/planItems/2026-10-12_bobs"), planItem({ periodId: "2026-10-12", addedBy: BOB.uid, carriedFromId: "bobs" })));
+    await assertFails(setDoc(doc(db, "households/h-alice/planItems/2026-10-12_x"), planItem({ periodId: "2026-10-12", addedBy: BOB.uid, carriedFromId: "nope" })));
+    await assertFails(updateDoc(doc(db, "households/h-alice/planItems/bobs"), { addedBy: ALICE.uid }));
+    await assertSucceeds(updateDoc(doc(db, "households/h-alice/planItems/bobs"), { servings: 2 }));
+  });
+
   it("plan items with sides (R5.9): meals only, at most 12; household side settings", async () => {
     const db = dbAs(ALICE);
     const fries = { ingredientId: "fries", portion: 150 };
@@ -197,6 +208,17 @@ describe("household collections are member-only (R2.8)", () => {
     await assertFails(setDoc(ordered, { periodId: "2026-10-05", status: "ordered", storeId: 7, createdAt: serverTimestamp(), orderedAt: serverTimestamp(), orderedBy: ALICE.uid, items: { tomato: groceryItem } }));
     await assertFails(updateDoc(ordered, { status: "received" }));
     await assertSucceeds(deleteDoc(ordered)); // Undo
+  });
+
+  it("grocery lists: createdAt is stamped by the server and then kept (M22)", async () => {
+    const db = dbAs(ALICE);
+    const ref = doc(db, "households/h-alice/groceryLists/draft");
+    await assertFails(setDoc(ref, { periodId: "2026-10-05", status: "draft", createdAt: new Date(0), items: {} }));
+    await assertFails(setDoc(ref, { periodId: "2026-10-05", status: "draft", createdAt: "yesterday", items: {} }));
+    await assertSucceeds(setDoc(ref, { periodId: "2026-10-05", status: "draft", createdAt: serverTimestamp(), items: {} }));
+    await assertSucceeds(updateDoc(ref, { "items.tomato": groceryItem }));
+    await assertSucceeds(setDoc(ref, { periodId: "2026-10-05", status: "draft", createdAt: serverTimestamp(), items: {} }, { merge: true }));
+    await assertFails(updateDoc(ref, { createdAt: new Date(0) }));
   });
 
   it("members change the current period and default store on the household", async () => {

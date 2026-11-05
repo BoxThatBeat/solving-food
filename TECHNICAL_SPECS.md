@@ -1078,6 +1078,13 @@ the `OWNER_UID` param (`functions/src/owner.ts`). The emulator's per-household s
 honoured only when `FUNCTIONS_EMULATOR === "true"` (set by the emulator itself), never because of `PCX_STUB`, which only
 picks the PC Express and Gemini stubs.
 
+**Rules tightened in M22:** a plan item's `addedBy` is the creator (`me()`), or for a carried copy (rollover, restart) the
+`addedBy` of the item named by `carriedFromId`, and never changes on update; a grocery list's `createdAt` is a timestamp
+equal to `request.time` or the stored value (the draft's merge write stamps it again); a recipe version snapshot may hold
+only fields of the recipe as written in the same batch, none with a different value, plus `editedBy` / `editedAt`
+(`snapshot.diff(recipeAfter)`: no added keys but those two, no changed keys); a command's top-level payload IDs are
+path-safe (§6).
+
 **Outbound fetches (M22):** the functions fetch two kinds of URL people supply: the recipe page behind Add with Gemini's
 link and a recipe's `image:` URL (stored publicly in the bucket). Both go through `functions/src/safeFetch.ts`: http(s)
 only, no credentials in the URL, no obviously internal names (`localhost`, `*.local`, `*.internal`, single labels); the
@@ -1096,7 +1103,7 @@ function-only, so the merge's Supply moves happen in the function.
 
 Share links work for both recipes and meals: `allow get: if true` on both, and a meal page reads its recipes the same way. Public `get` on single documents can't be enumerated, so the exposure is limited to someone who already has a link.
 
-Storage rules: `recipe-drop/{uid}/**` can only be written by that user, with a size limit of 1 MB and `.cook` files only. Image uploads under `recipes/{recipeId}/**` are capped at 2 MB per file and allowed for allowlisted users; **reads of recipe images are public**, so share-link pages render them. `recipe-photos/{uid}/{file}` (M16) can be written by that allowlisted user, images only, ≤ 10 MB, a plain random file name, and read by nobody but functions. `imports/{hid}/**` can be written by household members, JSON or zip only, ≤ 20 MB, and read by nobody but functions.
+Storage rules: `recipe-drop/{uid}/**` can only be written by that user, with a size limit of 1 MB and `.cook` files only. Image uploads under `recipes/{recipeId}/**` are capped at 2 MB per file and allowed for allowlisted users, and (M22) only for a recipe that exists (`firestore.exists`), so a new recipe's photos wait in the editor (shown from the file) and are uploaded right after the recipe is created, under the base path already in its `imagePaths` (a photo that then fails to upload is taken out again, version 2); **reads of recipe images are public**, so share-link pages render them. `recipe-photos/{uid}/{file}` (M16) can be written by that allowlisted user, images only, ≤ 10 MB, a plain random file name, and read by nobody but functions. `imports/{hid}/**` can be written by household members, JSON or zip only, ≤ 20 MB, and read by nobody but functions.
 
 ---
 

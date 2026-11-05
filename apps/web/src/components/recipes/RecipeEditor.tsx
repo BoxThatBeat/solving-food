@@ -42,7 +42,7 @@ import { lookupFromMap, useAllIngredients, type IngredientEntry } from "@/data/i
 import { createRecipe, EditedElsewhereError, OfflineError, saveRecipe, type StoredRecipe } from "@/data/recipes";
 import { useRecipeIndex } from "@/search/useRecipeSearch";
 import { useOnline } from "@/hooks/useOnline";
-import { uploadRecipeImage } from "@/lib/images";
+import { newImageBase, uploadRecipeImage } from "@/lib/images";
 import { cn } from "@/lib/utils";
 import { IngredientPicker } from "./IngredientPicker";
 import { RecipeImage } from "./RecipeImage";
@@ -197,6 +197,9 @@ export function RecipeEditor({
   const [saving, setSaving] = React.useState(false);
   const [restorable, setRestorable] = React.useState<Draft | null>(null);
   const [uploading, setUploading] = React.useState(false);
+  // A new recipe's photos (M22): Storage only takes uploads for a recipe that exists, so they wait here, shown from the
+  // file, and are uploaded under their planned base right after the recipe is created.
+  const [pending, setPending] = React.useState<Record<string, { file: File; url: string }>>({});
   // The step being written and its caret, tracked on every selection change: reading selectionStart at chip-tap time
   // can be stale on WebKit once the textarea has lost focus to the chip.
   const focusedStep = React.useRef<{ index: number; el: HTMLTextAreaElement; caret: number } | null>(null);
@@ -212,6 +215,12 @@ export function RecipeEditor({
   const values = useWatch({ control }) as FormInput;
   const recipeId = id ?? newId;
   const lookup = lookupFromMap(ing.byId);
+
+  /** The form for the device draft: a photo still waiting for the save can't be kept (it's only in memory). */
+  const draftValues = React.useCallback((): FormInput => {
+    const v = getValues();
+    return { ...v, imagePaths: v.imagePaths.filter((p) => !pending[p]) };
+  }, [getValues, pending]);
 
   // Offer a saved draft when there is one.
   React.useEffect(() => {
@@ -232,10 +241,10 @@ export function RecipeEditor({
   React.useEffect(() => {
     if (!formState.isDirty) return;
     const t = setTimeout(() => {
-      void idbSet(draftKey(id), makeDraft(getValues(), baseVersion, !online)).catch(() => {});
+      void idbSet(draftKey(id), makeDraft(draftValues(), baseVersion, !online)).catch(() => {});
     }, 400);
     return () => clearTimeout(t);
-  }, [values, formState.isDirty, id, baseVersion, online, getValues]);
+  }, [values, formState.isDirty, id, baseVersion, online, draftValues]);
 
   const finish = async (savedId: string, message: string) => {
     await idbDel(draftKey(id)).catch(() => {});
@@ -260,6 +269,19 @@ export function RecipeEditor({
           }
         }
         const created = await createRecipe(content, uid, lookup, newId);
+        const failed: string[] = [];
+        for (const base of content.imagePaths) {
+          const file = pending[base]?.file;
+          if (!file) continue;
+          try {
+            await uploadRecipeImage(created, file, base);
+          } catch (e) {
+            failed.push(base);
+            notify({ kind: "error", message: `The recipe is saved, but a photo couldn't be uploaded: ${(e as Error).message}` });
+          }
+        }
+        // A photo that didn't upload leaves the recipe (version 2), so it never points at a missing image.
+        if (failed.length) await saveRecipe(created, { ...content, imagePaths: content.imagePaths.filter((p) => !failed.includes(p)) }, uid, lookup, 1).catch(() => undefined);
         await finish(created, `Saved “${content.title}”`);
       } else {
         const expected = opts.overwriteVersion ?? baseVersion ?? undefined;
@@ -270,7 +292,7 @@ export function RecipeEditor({
     } catch (e) {
       if (e instanceof EditedElsewhereError) setConflict(e.current);
       else if (e instanceof OfflineError) {
-        await idbSet(draftKey(id), makeDraft(getValues(), baseVersion, true)).catch(() => {});
+        await idbSet(draftKey(id), makeDraft(draftValues(), baseVersion, true)).catch(() => {});
         notify({ kind: "info", message: "You're offline. The draft is kept on this device and will save when you're back online." });
       } else notify({ kind: "error", message: `Couldn't save: ${(e as Error).message}` });
     } finally {
@@ -317,6 +339,16 @@ export function RecipeEditor({
 
   const onImage = async (file: File | undefined) => {
     if (!file) return;
+    if (id === null) {
+      if (!file.type.startsWith("image/")) {
+        notify({ kind: "error", message: "Couldn't add the photo: That isn't an image" });
+        return;
+      }
+      const base = newImageBase(recipeId);
+      setPending((p) => ({ ...p, [base]: { file, url: URL.createObjectURL(file) } }));
+      setValue("imagePaths", [base, ...getValues("imagePaths")], { shouldDirty: true });
+      return;
+    }
     setUploading(true);
     try {
       const base = await uploadRecipeImage(recipeId, file);
@@ -405,7 +437,11 @@ export function RecipeEditor({
         <div className="flex flex-wrap gap-2.5">
           {values.imagePaths.map((p, k) => (
             <div key={p} className="relative h-28 w-28 overflow-hidden rounded-ui border-2 border-line">
-              <RecipeImage base={p} cuisine={values.cuisine} alt={k === 0 ? "Main photo" : `Photo ${k + 1}`} sizes="7rem" />
+              {pending[p] ? (
+                <img src={pending[p].url} alt={k === 0 ? "Main photo" : `Photo ${k + 1}`} className="size-full object-cover" />
+              ) : (
+                <RecipeImage base={p} cuisine={values.cuisine} alt={k === 0 ? "Main photo" : `Photo ${k + 1}`} sizes="7rem" />
+              )}
               {k === 0 ? <span className="absolute bottom-1 left-1 rounded border border-line bg-base px-1 font-mono text-[0.5625rem] font-bold">MAIN</span> : null}
               <button
                 type="button"

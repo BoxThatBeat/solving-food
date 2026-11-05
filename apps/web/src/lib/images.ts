@@ -32,13 +32,20 @@ async function resized(bitmap: ImageBitmap, width: number): Promise<Blob> {
   throw new Error("The image is too large even after compression");
 }
 
-/** Resizes a picked photo and uploads the three sizes; returns the image base path for `imagePaths`. */
-export async function uploadRecipeImage(recipeId: string, file: File): Promise<string> {
+/** A new image's base path, `recipes/{recipeId}/{imageId}`, before anything is uploaded. */
+export function newImageBase(recipeId: string): string {
+  return `recipes/${recipeId}/${crypto.randomUUID().replace(/-/g, "").slice(0, 12)}`;
+}
+
+/**
+ * Resizes a picked photo and uploads the three sizes; returns the image base path for `imagePaths`. Storage only takes
+ * uploads for a recipe that exists (M22), so a new recipe's photo waits for the save and is uploaded under the base it
+ * was given then (`base`).
+ */
+export async function uploadRecipeImage(recipeId: string, file: File, base = newImageBase(recipeId)): Promise<string> {
   if (!file.type.startsWith("image/")) throw new Error("That isn't an image");
   const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
   try {
-    const imageId = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
-    const base = `recipes/${recipeId}/${imageId}`;
     for (const size of IMAGE_SIZES) {
       const blob = await resized(bitmap, size);
       await uploadBytes(ref(storage, imageVariant(base, size)), blob, {

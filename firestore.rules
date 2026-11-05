@@ -270,10 +270,14 @@ service cloud.firestore {
 
       match /versions/{v} {
         allow read: if allowed();
+        // M22: the snapshot is the recipe as written in the same batch (a subset of its fields, none different) plus
+        // who and when; nothing else can be smuggled into history.
         allow create: if allowed()
           && v == string(getAfter(/databases/$(database)/documents/recipes/$(id)).data.version)
           && request.resource.data.editedBy == me()
-          && request.resource.data.editedAt == request.time;
+          && request.resource.data.editedAt == request.time
+          && request.resource.data.diff(getAfter(/databases/$(database)/documents/recipes/$(id)).data).addedKeys().hasOnly(['editedBy', 'editedAt'])
+          && request.resource.data.diff(getAfter(/databases/$(database)/documents/recipes/$(id)).data).changedKeys().size() == 0;
       }
     }
 
@@ -519,10 +523,17 @@ service cloud.firestore {
       match /planItems/{iid} {
         allow read, delete: if isMember(hid);
         // Cooking and eating change status through commands (M3); clients add planned items and edit them.
+        // M22: `addedBy` is the creator, or for a carried copy (rollover, restart) the original item's adder; it never
+        // changes afterwards.
         allow create: if isMemberAfter(hid) && validPlanItem(request.resource.data)
-          && request.resource.data.status == 'planned';
+          && request.resource.data.status == 'planned'
+          && (request.resource.data.addedBy == me()
+              || ('carriedFromId' in request.resource.data
+                  && getAfter(/databases/$(database)/documents/households/$(hid)/planItems/$(request.resource.data.carriedFromId)).data.addedBy
+                     == request.resource.data.addedBy));
         allow update: if isMember(hid) && validPlanItem(request.resource.data)
-          && request.resource.data.status == resource.data.status;
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.addedBy == resource.data.addedBy;
       }
 
       // Stores, sourcing rules, brand mappings (§4.2, §8, R7.3, R7.4).
@@ -571,6 +582,10 @@ service cloud.firestore {
               && request.resource.data.storeId.size() >= 1 && request.resource.data.storeId.size() <= 200))
           && request.resource.data.keys().hasAll(['periodId', 'status', 'createdAt', 'items'])
           && request.resource.data.status in ['draft', 'ordered']
+          // M22: created now; kept, or stamped again by a merge write of the draft.
+          && request.resource.data.createdAt is timestamp
+          && (request.resource.data.createdAt == request.time
+              || (resource != null && request.resource.data.createdAt == resource.data.createdAt))
           && request.resource.data.items is map && request.resource.data.items.size() <= 400
           // M10 (R7.12): staples removed from the list, ingredient ID → until (ms).
           && (!('dismissedStaples' in request.resource.data) || (request.resource.data.dismissedStaples is map

@@ -326,3 +326,33 @@ test("a photo added in the editor is resized in the browser to three WebP sizes 
   // Each size within the 2 MB Storage rule.
   for (const f of files) expect(Number(f.metadata.size)).toBeLessThan(2 * 1024 * 1024);
 });
+
+test("a photo added to a new recipe waits for the save, then is uploaded under the new recipe (M22)", { tag: ["@R4.15"] }, async ({ page, household: _ }) => {
+  const { readFileSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const { ATTACHMENTS_DIR, bucket } = await import("../fixtures/recipes");
+  await page.goto("/recipes/new");
+  const form = page.getByRole("form", { name: "New recipe" });
+  const title = uniqueTitle("Brand New Salad");
+  await form.getByLabel("Title").fill(title);
+  await form.getByLabel("Servings").fill("1");
+  await form.getByRole("button", { name: "Add ingredient" }).click();
+  await pickIngredient(page, 1, "all-purpose flour", /^All-purpose flour/i);
+  await form.getByLabel("Amount for ingredient 1").fill(String(1000 + 10 * Math.floor(Math.random() * 900)));
+  await form.getByRole("combobox", { name: "Unit for ingredient 1" }).selectOption("g");
+  await form.getByRole("textbox", { name: "Step 1", exact: true }).fill("Toss.");
+  await form.getByLabel("Add photo").setInputFiles({ name: "salad.jpeg", mimeType: "image/jpeg", buffer: readFileSync(join(ATTACHMENTS_DIR, "IMG_6374.jpeg")) });
+  // Shown from the file at once; nothing is uploaded before the recipe exists (Storage refuses it).
+  await expect(form.getByRole("img", { name: "Main photo" })).toHaveAttribute("src", /^blob:/);
+  await form.getByRole("button", { name: "Save recipe" }).click();
+  await expect(detail(page).locator("#recipe-title")).toHaveText(title, { timeout: 30_000 });
+  const id = page.url().split("/recipes/")[1]!.split(/[?#/]/)[0]!;
+  const data = (await adminDb.doc(`recipes/${id}`).get()).data()!;
+  expect(data.version).toBe(1);
+  const base = (data.imagePaths as string[])[0]!;
+  expect(base).toMatch(new RegExp(`^recipes/${id}/`));
+  const [files] = await bucket().getFiles({ prefix: `${base}/` });
+  expect(files.map((f) => f.name.split("/").pop()).sort()).toEqual(["1920.webp", "480.webp", "960.webp"]);
+  const img = detail(page).getByRole("img", { name: title });
+  await expect.poll(() => img.evaluate((e: HTMLImageElement) => e.complete && e.naturalWidth), { timeout: 20_000 }).toBeGreaterThan(0);
+});

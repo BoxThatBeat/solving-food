@@ -177,6 +177,20 @@ describe("recipes: update and versioning (R4.19)", () => {
     await assertFails(updateDoc(doc(db, "recipes", "r1"), { title: "x" }));
   });
 
+  it("a version snapshot is the recipe as written: no different values, no extra fields (M22)", async () => {
+    const db = dbAs(BOB);
+    const save = (snapshot: Record<string, unknown>) => {
+      const b = writeBatch(db);
+      b.set(doc(db, "recipes", "r1"), { title: "Better Feta Pasta", version: 2, updatedBy: BOB.uid, ...now() }, { merge: true });
+      b.set(doc(db, "recipes", "r1", "versions", "2"), { version: 2, editedBy: BOB.uid, editedAt: serverTimestamp(), ...snapshot });
+      return b.commit();
+    };
+    await assertFails(save({ title: "Something else" }));
+    await assertFails(save({ title: "Better Feta Pasta", hidden: "x".repeat(100) }));
+    await assertFails(save({ title: "Better Feta Pasta", steps: [{ text: "Not the recipe's steps", ingredientRefs: [] }] }));
+    await assertSucceeds(save({ title: "Better Feta Pasta" }));
+  });
+
   it("trash stamps who and when (R4.26); restore clears them", async () => {
     const db = dbAs(BOB);
     await assertFails(saveBatch(db, "r1", { status: "trashed", version: 2, updatedBy: BOB.uid, ...now() }, BOB.uid, { merge: true }).commit());
