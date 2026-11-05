@@ -11,7 +11,6 @@ import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
 import {
-  COPY_INSTRUCTIONS_MAX,
   copyText,
   formatCanonical,
   formatCents,
@@ -31,7 +30,8 @@ import { Input, Select } from "@/components/ui/input";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/chip";
 import { useNotify } from "@/components/notifications-context";
-import { addLine, addManualItem, dismissStaple, DRAFT_ID, syncDraft, millis, orderDraft, removeItem, saveChatgptInstructions, setLineRemoved, tickItem, undoOrder, type StoredList } from "@/data/plan";
+import { ChatgptInstructions } from "@/components/grocery/ChatgptInstructions";
+import { addLine, addManualItem, dismissStaple, DRAFT_ID, syncDraft, millis, orderDraft, removeItem, setLineRemoved, tickItem, undoOrder, type StoredList } from "@/data/plan";
 import { usePlanModel } from "@/data/planModel";
 import { ReceiveSheet } from "@/components/grocery/ReceiveSheet";
 import { searchIngredients, useAllIngredients, type IngredientEntry } from "@/data/ingredients";
@@ -465,23 +465,3 @@ function AddItem({ stores, defaultStoreId, onAdd }: { stores: readonly StoreEntr
   );
 }
 
-/** The household's own instructions added to the copied list (R7.5): saved when the box loses focus. */
-function ChatgptInstructions({ hid, saved }: { hid: string; saved: string }) {
-  const notify = useNotify();
-  const [text, setText] = React.useState(saved);
-  const [prev, setPrev] = React.useState(saved);
-  if (saved !== prev) {
-    setPrev(saved);
-    setText(saved);
-  }
-  const save = () => {
-    if (text.trim() === saved.trim()) return;
-    saveChatgptInstructions(hid, text).catch((e) => notify({ kind: "error", message: `Couldn't save the instructions: ${(e as Error).message}` }));
-  };
-  return (
-    <label className="flex flex-col gap-1">
-      <span className="font-mono text-[0.625rem] font-bold tracking-[0.06rem] uppercase">Instructions for ChatGPT</span>
-      <Textarea rows={2} maxLength={COPY_INSTRUCTIONS_MAX} value={text} onChange={(e) => setText(e.target.value)} onBlur={save} placeholder="e.g. Default to No Name or President's Choice brands if not specified." className="text-[0.8125rem]" />
-    </label>
-  );
-}
