@@ -189,6 +189,17 @@ describe("draft regeneration", () => {
     expect(mergeDraft(stored, gen4).set.tomato).toMatchObject({ checked: true, checkedBy: "u2", packs: 3 }); // 2000 g in 796 g cans
   });
 
+  it("an un-removed line (Undo writes removed: false) keeps its state and isn't rewritten (M21)", () => {
+    const c = ctx();
+    const gen = buildList([plan("a", "curry", 4)], c).items;
+    const stored = { ...gen, tomato: { ...gen.tomato!, removed: false } };
+    expect(mergeDraft(stored, gen)).toEqual({ set: {}, remove: [] });
+    expect(mergeDraft(stored, gen, { restore: true })).toEqual({ set: {}, remove: [] });
+    const gen2 = buildList([plan("a", "curry", 20)], c).items;
+    expect(mergeDraft(stored, gen2).set.tomato).toMatchObject({ removed: false, packs: 3 });
+    expect(isRemoved(mergeDraft(stored, gen2).set.tomato!)).toBe(false);
+  });
+
   it("removed lines (M17, R7.13) stay removed through regeneration; restore puts them back", () => {
     const c = ctx();
     const built = buildList([plan("a", "curry", 4)], c);

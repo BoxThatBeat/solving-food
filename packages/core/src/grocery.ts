@@ -488,8 +488,10 @@ export function mergeDraft(
     const merged: GroceryItem = { ...gen, checked: e?.checked ?? false };
     delete merged.removed;
     if (e?.checkedBy) merged.checkedBy = e.checkedBy;
-    // A removed line (M17, R7.13) stays removed through regeneration, until Regenerate restores it.
-    if (e?.removed && !opts.restore) merged.removed = true;
+    // A removed line (M17, R7.13) stays removed through regeneration, until Regenerate restores it. An un-removed line
+    // (Undo writes `removed: false`) keeps its flag too, so regeneration doesn't rewrite it every time (M21).
+    if (e?.removed === true && !opts.restore) merged.removed = true;
+    if (e?.removed === false) merged.removed = false;
     if (!e || stable(e) !== stable(merged)) set[id] = merged;
   }
   for (const [id, e] of Object.entries(existing)) if (isGenerated(e) && !(id in generated)) remove.push(id);
