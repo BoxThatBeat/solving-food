@@ -7,6 +7,7 @@
 import { addDays, localDate, localMidnight } from "./period";
 import type { StorageLocation } from "./taxonomy";
 import { DAY_MS } from "./math";
+import type { CanonicalUnit } from "./ingredientTypes";
 
 
 /** Leftover portions (R6.10): fixed shelf lives, not per ingredient. */
@@ -24,7 +25,7 @@ export const ALERT_MIN_GRAMS = 10;
 export const ALERT_MIN_COUNT = 0.5;
 
 /** The smallest amount of expiring spare that matters, in the ingredient's canonical unit (grams when unknown). */
-export function minSpare(canonicalUnit: "g" | "count" | undefined): number {
+export function minSpare(canonicalUnit: CanonicalUnit | undefined): number {
   return canonicalUnit === "count" ? ALERT_MIN_COUNT : ALERT_MIN_GRAMS;
 }
 

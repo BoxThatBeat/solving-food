@@ -10,14 +10,10 @@
 
 import type { Measure } from "./taxonomy";
 import { singularize } from "./names";
+import type { IngredientConversion } from "./ingredientTypes";
 
-/** The subset of an ingredient that conversions need. */
-export interface ConvertibleIngredient {
-  allowedMeasures: readonly Measure[];
-  canonicalUnit: "g" | "count";
-  densityGPerMl?: number | undefined;
-  unitWeightG?: number | undefined;
-}
+/** The subset of an ingredient that conversions need (the name used across core; see `IngredientConversion`). */
+export type ConvertibleIngredient = IngredientConversion;
 
 /**
  * `container` (M21): a package or bundle word ("can", "jar", "bunch") whose size varies. It has no canonical value: a

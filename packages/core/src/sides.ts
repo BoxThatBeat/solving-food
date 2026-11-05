@@ -5,14 +5,9 @@
 
 import { formatCanonical } from "./grocery";
 import { formatGrams, formatQuantity } from "./units";
-import type { Measure } from "./taxonomy";
+import type { IngredientConversion, IngredientRef } from "./ingredientTypes";
 
-export interface SideIngredient {
-  id: string;
-  name: string;
-  canonicalUnit: "g" | "count";
-  unitWeightG?: number | undefined;
-  allowedMeasures: readonly Measure[];
+export interface SideIngredient extends IngredientRef, Pick<IngredientConversion, "allowedMeasures" | "canonicalUnit" | "unitWeightG"> {
   freeUse: boolean;
   side?: { portion: number } | undefined;
 }

@@ -10,6 +10,7 @@
 
 import { CUISINES, MAIN_PROTEINS, type MainProtein } from "./taxonomy";
 import { taxonomyLabel } from "./collection";
+import type { CanonicalUnit } from "./ingredientTypes";
 
 export const PREF_KINDS = ["ingredient", "cuisine", "protein", "text"] as const;
 export type PrefKind = (typeof PREF_KINDS)[number];
@@ -66,7 +67,7 @@ export interface IngredientMeta {
   name?: string;
   freeUse?: boolean;
   /** For the smallest expiring amount that counts (`minSpare`); grams when absent. */
-  canonicalUnit?: "g" | "count";
+  canonicalUnit?: CanonicalUnit;
 }
 
 export type IngredientMetaOf = (id: string) => IngredientMeta | undefined;

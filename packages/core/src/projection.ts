@@ -14,6 +14,7 @@ import {
   type LedgerLot,
 } from "./ledger";
 import type { StorageLocation } from "./taxonomy";
+import type { IngredientRef, IngredientStorage } from "./ingredientTypes";
 
 export interface StoredLotLike {
   lotId: string;
@@ -61,7 +62,7 @@ export interface ProjectedDoc {
 export interface ProjectionContext {
   nowMs: number;
   tz: string;
-  ingredient: (id: string) => { name: string; canonicalUnit: "g" | "count"; defaultLocation: StorageLocation; shelfLifeDays: ShelfLife; freeUse: boolean } | undefined;
+  ingredient: (id: string) => (Pick<IngredientRef, "name"> & Required<IngredientStorage>) | undefined;
 }
 
 /** A fresh lot for an ingredient bought or added now (expiry estimated from its location, R8.5). */

@@ -8,8 +8,7 @@ import { expiringSpare } from "./scoring";
 import { daysLeft, minSpare } from "./expiry";
 import { newLotFor } from "./projection";
 import type { LedgerLot } from "./ledger";
-import type { StorageLocation } from "./taxonomy";
-import type { ShelfLife } from "./expiry";
+import type { IngredientStorage } from "./ingredientTypes";
 
 export interface ExpiryAlert extends ExpiringSpare {
   ingredientId: string;
@@ -62,12 +61,7 @@ export function recipesUsing(
 // ---------- Use it up before ordering (M9, R6.25)
 
 /** What the order check needs to know about an ingredient. */
-export interface OrderIngredient {
-  canonicalUnit: "g" | "count";
-  defaultLocation: StorageLocation;
-  shelfLifeDays?: ShelfLife | undefined;
-  freeUse?: boolean | undefined;
-}
+export type OrderIngredient = IngredientStorage;
 
 export interface OrderSpare {
   ingredientId: string;

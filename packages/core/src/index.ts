@@ -7,6 +7,7 @@ export * from "./household";
 export * from "./profile";
 export * from "./landing";
 export * from "./names";
+export * from "./ingredientTypes";
 export * from "./units";
 export * from "./ingredient";
 export * from "./ingredientMerge";

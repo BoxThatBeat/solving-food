@@ -12,15 +12,13 @@
 // what the next order will cost (R6.3). Pure: no Firebase.
 
 import type { Measure } from "../taxonomy";
-import type { ConvertibleIngredient } from "../units";
+import type { IngredientConversion, IngredientRef } from "../ingredientTypes";
 import type { GroceryItem } from "../types";
 import { packToCanonical, resolvePrice, type LivePrice, type PriceEstimate, type PriceSource } from "../pricing";
 import type { RecipeRef } from "../plan";
 import { FLOAT_EPS as EPS, round3 } from "../math";
 
-export interface GroceryIngredient extends ConvertibleIngredient {
-  id: string;
-  name: string;
+export interface GroceryIngredient extends IngredientRef, IngredientConversion {
   category: string;
   freeUse: boolean;
   defaultPackAmount?: number | undefined;
