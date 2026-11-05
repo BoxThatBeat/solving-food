@@ -387,7 +387,7 @@ function ReadyShell({ children, uid }: { children: React.ReactNode; uid: string 
         <div className="md:hidden">
           <PhoneHeader />
         </div>
-        {pathname === "/settings" ? null : <InviteBanner me={{ uid: s.user.uid, email: s.user.email, displayName: s.displayName }} householdIds={s.householdIds} />}
+        {pathname === "/settings/account" ? null : <InviteBanner me={{ uid: s.user.uid, email: s.user.email, displayName: s.displayName }} householdIds={s.householdIds} />}
         <main id="main" className="min-w-0 flex-1">
           {children}
         </main>

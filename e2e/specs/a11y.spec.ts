@@ -216,6 +216,9 @@ test("M4 pages and dialogs: members with invites, the invite banner, data, the l
     await expectNoSeriousViolations(page, `/settings/data (${flavour})`);
     await page.goto("/settings");
     await expectNoSeriousViolations(page, `/settings with invites (${flavour})`);
+    await page.goto("/settings/account");
+    await expect(page.getByRole("list", { name: "Household invites" })).toBeVisible();
+    await expectNoSeriousViolations(page, `/settings/account with invites (${flavour})`);
     await page.goto("/welcome/household");
     await expect(page.getByRole("heading", { name: "Create a household" })).toBeVisible();
     await expectNoSeriousViolations(page, `/welcome/household, another household (${flavour})`);

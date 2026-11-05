@@ -114,7 +114,7 @@ test.describe("sign-in", () => {
 
   test("signing out from Settings returns to sign-in", { tag: ["@R2.1"] }, async ({ page, household }) => {
     void household;
-    await page.goto("/settings");
+    await page.goto("/settings/account");
     await page.getByRole("button", { name: "Sign out" }).click();
     await expect(page).toHaveURL(/\/sign-in$/);
     await page.goto("/plan");

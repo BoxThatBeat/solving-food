@@ -1,6 +1,7 @@
-// Household invites addressed to me (PRD R2.4, TECHNICAL_SPECS §10 "See invites" / "Accept"): a banner on every page
-// of the shell, a card in Settings, and a list on the first-run household page (a newcomer invited by email sees the
-// invite as soon as they've picked a display name).
+// Household invites addressed to me (PRD R2.4, R11.18, TECHNICAL_SPECS §10 "See invites" / "Accept"): a banner on
+// every page of the shell while any is open (Settings included since M20; not on Settings → Account, which lists them
+// in a card instead), and a list on the first-run household page (a newcomer invited by email sees the invite as soon
+// as they've picked a display name).
 import * as React from "react";
 import { Mail } from "lucide-react";
 import { acceptInvite, declineInvite, HouseholdActionError, useMyInvites, type MyInvite } from "@/data/households";
