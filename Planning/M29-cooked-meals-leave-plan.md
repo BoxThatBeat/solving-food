@@ -71,6 +71,10 @@ reviews). PRD v0.15. Spec §7 (What the Plan list shows), §12 (`<CoverageStrip>
 - **Plain prep tasks are matched by name.** Imported prep tasks have no ingredient links, so names are found in the
   wording (display text, without preparation words, singular); a task that words an ingredient differently from the
   recipe ("Juice 2 lemons" for the line "lemon juice") gets no badge and keeps its text.
+- **A match is locked, "not planned" isn't.** The first CI run failed on Android: opening `/recipes/:id/cook` straight
+  after the period changed, the first snapshots came from the device's cache (the household's older period), so the
+  hook locked "not planned". Now only a match is kept for the session; until one appears the cook runs off the plan and
+  switches to the planned meal when the fresh snapshot arrives (a moment's flicker at most).
 - **Recipe page "Before you start" unchanged.** Only mise en place renders amounts, as asked.
 
 ## Verification

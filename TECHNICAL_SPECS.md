@@ -637,7 +637,7 @@ Each plan item has a `coverage` map: how many slots of each meal type it fills. 
   Meals page: the item made from the saved meal, or one with the same recipes). Exact matches first (a meal of just
   this recipe, the saved meal itself), then the Plan page's order: meal type, soonest-expiring ingredient (the
   default sort, R6.24; ties don't use the Suggested score, which lives in the worker), then document order.
-  `usePlannedMeal()` (web) decides once, when the plan has loaded (no period: off the plan; items whose
+  `usePlannedMeal()` (web) locks the first match for the session ("not planned" is re-checked, since the first snapshots can be the cache's older period; no period: off the plan; items whose
   `finishCooking` is still queued offline don't count), and `/recipes/:id/cook` and `/meals/:id/cook` then run the
   plan item's session (`planCookTarget`: all its recipes, its servings and sides, key `plan-<itemId>`, so progress is
   shared with `/plan/:itemId/cook`), sending `planItemId` with Done cooking. The `finishCooking` payload is unchanged.
