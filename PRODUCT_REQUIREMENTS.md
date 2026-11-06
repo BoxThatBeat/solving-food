@@ -1,6 +1,6 @@
 # Solving Food — Product Requirements
 
-> Status: Draft v0.14 · Source: `THOUGHTS.md` + answered open questions + owner reviews · Last updated: 2026-11-05
+> Status: Draft v0.15 · Source: `THOUGHTS.md` + answered open questions + owner reviews · Last updated: 2026-11-05
 
 ---
 
@@ -119,6 +119,8 @@ Orders go in before a period starts, so the next period can be planned and order
 - **R4.38** **Last time's note** (M28). Mise en place and the recipe page show the newest note the household left in a review of this recipe (R9.2), with when it was cooked and by whom: *"Last time (12 Oct, Aaron): more lemon next time"*. When there are earlier notes, **Show earlier** opens up to four more, newest first.
 - **R4.39** **Step notes** (M28). In step mode each step has a small **Note** action that opens a sheet with one short text field (Save, or Remove an existing note). The note is saved with **Done cooking** and shows under that step's text the next time anyone in the household cooks the recipe; it stays until someone edits or removes it.
 - **R4.40** **Swaps on mise en place** (M28). When the meal needs an ingredient Supply doesn't hold but a substitute from the substitution table (R6.35) is in Supply in the converted amount, mise en place shows the swap with that amount (*"Garlic: use 0.8 g garlic powder from Supply"*, with a tip where the swap needs one). One tap (**Use it**, **Undo**) accepts it; **Done cooking** then takes the substitute out of Supply instead of the original, and the review's used amounts show the substitute.
+- **R4.41** **Back from mise en place** (M29). Mise en place has a **Back** button at the top left, like the recipe page's: in a one-recipe cook it goes to the recipe's page; in a meal of several recipes it goes back to the meal's list of recipes (as the phone's back button does, R4.12).
+- **R4.42** **Amounts on mise en place** (M29). Each prep task shows the amounts of the ingredients it names inline, the way step mode does (R4.11): *"Mince garlic **4 cloves**"*, scaled to the servings being cooked and in one unit system (R8.13). A quantity written into an imported prep task (*"Chop 0.25 cup basil"*) becomes that inline amount, scaled, instead of staying in the text at the recipe's own servings.
 
 ### 4.3 Adding & Editing Recipes
 
@@ -171,11 +173,11 @@ Orders go in before a period starts, so the next period can be planned and order
 
 ### 6.1 Plan Page
 
-- **R6.1** The Plan page shows the **meals selected for the current period** (or, with *Next period*, the next one, R3.2) as a list that can be sorted and filtered; each row shows the meal's name or recipes and its sides (R5.9). Its primary action is **Create meal** (R5.7). The page has no button to the grocery list; the Grocery tab in the navigation is the way there.
+- **R6.1** The Plan page shows the **meals selected for the current period** (or, with *Next period*, the next one, R3.2) as a list that can be sorted and filtered; each row shows the meal's name or recipes and its sides (R5.9). The list holds only what is **still to cook or eat** (M29): once a meal is cooked (or eaten, or skipped) it leaves the list, however it was cooked; it still fills its cell in the coverage strip (R6.2) and shows in History. Its primary action is **Create meal** (R5.7). The page has no button to the grocery list; the Grocery tab in the navigation is the way there.
 - **R6.2** **Period coverage view.** Above the list, the Plan page shows the plan period as a **calendar-like strip**: one cell per day, labelled with its weekday and date for orientation, and one row per meal type the household plans (R11.13; breakfast, lunch, and dinner by default).
   - Cells **fill from left to right** as meals are added. Five dinners planned in a 7-day period fill the first five dinner cells, and the row reads **5/7**. It's a visual version of "5 of 7 dinners planned", **not a schedule**. Meals are never assigned to specific days, and the cells can't be tapped to pick a day. (The strip doesn't spell this out in a hint.)
   - A meal-prep recipe or leftover portions fill one cell per portion they cover (e.g. 4 lunches from one batch fill 4 lunch cells).
-  - Cooked meals show as solid cells and planned-but-not-cooked meals as outlined cells, so the strip also shows progress through the period.
+  - Cooked (and eaten) meals show as cells **filled with the accent colour**, and planned-but-not-cooked meals as **white outlined squares**, so the strip also shows progress through the period (M29: a cell turns accent as soon as **Done cooking** is tapped, wherever the cook was started, R9.7).
   - If more meals are planned than there are days, the row shows the overflow (e.g. **8/7, +1**).
   - Snacks aren't shown in the strip.
 - **R6.3** A **budget meter** is always visible. It starts at the household's budget for the period and goes down as meals are added. The cost of a meal counts only ingredients that **still have to be bought**; ingredients already in supply, or already on a grocery list that has been ordered but not yet delivered, cost nothing extra. The meter therefore answers *"what will the next grocery order cost?"* Once an order is confirmed as received, the planned meals are covered and the meter goes back up. **This is intended.** What the household actually spent in a period is shown on the History page (R10.3).
@@ -304,8 +306,9 @@ Orders go in before a period starts, so the next period can be planned and order
   3. **Confirm leftovers** with ▲/▼ (R6.9), and optionally leave **notes for next time** (shown on mise en place and the recipe page, R4.38; last time's note can be kept, R9.6).
 - **R9.3** Supply is updated in two steps so that it's never left stale. **Done cooking** immediately subtracts the recipe's ingredients (at the planned servings) and adds the recipe's estimated leftover portions. The review then **corrects** supply by the difference between those defaults and what the user confirms. If the review is never completed, the defaults stand.
 - **R9.4** A review doesn't have to be done straight away. Cooked meals without a review appear in a **"pending reviews"** prompt so any household member can finish it later (e.g. that evening). Each other member is prompted to add their own rating.
-- **R9.5** Planned items are marked **eaten**. Completing a cooked meal's **review marks it eaten** automatically; there is no separate step (M9, owner's review). Leftovers and snacks, which have no review, are marked eaten by the user ("Ate one", "Ate it"). Until its review is done, a cooked meal on the Plan page shows a **Review** button.
+- **R9.5** Planned items are marked **eaten**. Completing a cooked meal's **review marks it eaten** automatically; there is no separate step (M9, owner's review). Leftovers and snacks, which have no review, are marked eaten by the user ("Ate one", "Ate it") and stay on the Plan page's list until they are. A cooked meal leaves the list straight away (R6.1, M29); until its review is done it is offered in **Pending reviews** (R9.4) above the list, which opens the review.
 - **R9.6** **Last time's note in the review** (M28). Above the review's note field, the newest note an earlier cook of the same recipes left shows with when and by whom (R4.38), and **Keep this note** copies it into this cook's note in one tap, so it can be confirmed or replaced.
+- **R9.7** **Cooking a planned recipe from anywhere cooks the planned meal** (M29). When **Cook** is tapped on a recipe's page (or a saved meal's) and the current period has that recipe (or meal) planned and not yet cooked, the cook is that planned meal: all of its recipes, at its servings, with its sides, and the cooking view says **Planned**. **Done cooking** then marks it cooked, so it leaves the Plan page and its strip cell turns accent. If several planned meals match, a meal of just that recipe comes first, then the one the Plan page lists first. A recipe that isn't planned (or is only planned for the next period) is cooked on its own, off the plan, as before.
 
 ---
 
@@ -352,7 +355,7 @@ Everything here belongs to the household except the theme, which is per user.
 
 | Page | Purpose |
 |---|---|
-| **Plan** | Current period's meals (expiring first), Create meal (incl. eating out), budget meter, suggestions, optimiser, expiry alerts, use it up before ordering, pending reviews |
+| **Plan** | Current period's meals still to cook or eat (expiring first), Create meal (incl. eating out), budget meter, suggestions, optimiser, expiry alerts, use it up before ordering, pending reviews |
 | **Recipes** | Global library: search, filter, add, review possible duplicates, Trash |
 | **Meals** | Saved meals (named recipe collections) |
 | **Supply** | Current and projected amounts, expiry dates, transactions |
