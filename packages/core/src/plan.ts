@@ -259,3 +259,39 @@ export function proteinSummary(
   }
   return Object.fromEntries(Object.entries(out).map(([k, v]) => [k, { avg: v!.sum / v!.n, items: v!.n }]));
 }
+
+/**
+ * Whether the Plan page lists an item (M29, R6.1, R9.5): only what is still to cook or eat. Cooked, eaten and skipped
+ * items leave the list (they still fill the strip, count in the budget's spent side and show in History); a cooked
+ * meal's review is offered by Pending reviews (R9.4).
+ */
+export function listedOnPlan(status: PlanItemDoc["status"]): boolean {
+  return status === "planned";
+}
+
+/** What a cook started outside the plan is: one recipe (the recipe page) or a saved meal (the Meals page). */
+export type CookStart = { recipeId: string } | { savedMealId: string; recipeIds: readonly string[] };
+
+/**
+ * `plannedMealFor()` (M29, R9.7): the current period's planned meal a cook started from a recipe or a saved meal
+ * belongs to, so Done cooking marks it cooked. Candidates are planned meals (not eating out, leftovers or next-period
+ * items: the caller passes the current period's items) with recipes. A recipe matches a meal that contains it; a saved
+ * meal matches the plan item made from it or one with the same recipes. Exact matches come first (a meal of just this
+ * recipe, the saved meal itself), then the Plan page's order: meal type, then the soonest-expiring ingredient
+ * (`soonDays`, nothing expiring last), then the order given.
+ */
+export function plannedMealFor<T extends { id: string; data: Pick<PlanItemDoc, "kind" | "status" | "recipes" | "mealType" | "savedMealId"> }>(
+  items: readonly T[],
+  start: CookStart,
+  soonDays?: (item: T) => number | null | undefined,
+): T | undefined {
+  const ids = (it: T) => it.data.recipes.map((r) => r.recipeId);
+  const sameSet = (a: readonly string[], b: readonly string[]) => a.length === b.length && [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
+  const exact = (it: T) => ("recipeId" in start ? it.data.recipes.length === 1 : it.data.savedMealId === start.savedMealId);
+  const matches = (it: T) => ("recipeId" in start ? ids(it).includes(start.recipeId) : exact(it) || sameSet(ids(it), start.recipeIds));
+  const days = (it: T) => soonDays?.(it) ?? Number.POSITIVE_INFINITY;
+  return items
+    .map((it, i) => ({ it, i }))
+    .filter(({ it }) => it.data.kind === "meal" && it.data.status === "planned" && it.data.recipes.length > 0 && matches(it))
+    .sort((a, b) => Number(exact(b.it)) - Number(exact(a.it)) || MEAL_TYPE_ORDER[a.it.data.mealType] - MEAL_TYPE_ORDER[b.it.data.mealType] || days(a.it) - days(b.it) || a.i - b.i)[0]?.it;
+}

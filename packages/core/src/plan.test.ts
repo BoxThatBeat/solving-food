@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildEatingOut, buildPlanItem, carriedItemId, carriesOver, carryOver, cleanSides, coverageFor, createMealInputSchema, defaultMealName, planItemTitle, proteinSummary, sidesLine, emptiestMealType, stripCount, stripModel } from "./plan";
+import { buildEatingOut, buildPlanItem, listedOnPlan, plannedMealFor, carriedItemId, carriesOver, carryOver, cleanSides, coverageFor, createMealInputSchema, defaultMealName, planItemTitle, proteinSummary, sidesLine, emptiestMealType, stripCount, stripModel } from "./plan";
 import type { PlanItemDoc } from "./types";
 
 const recipes: Record<string, { defaultLeftoverPortions: number; leftoverMealType?: "breakfast" | "lunch" | "dinner" | "snack" }> = {
@@ -189,5 +189,31 @@ describe("emptiestMealType (M24, R6.30)", () => {
     expect(emptiestMealType(stripModel([item({ dinner: 3, lunch: 3 })], 3, ["lunch", "dinner"]))).toBeNull();
     expect(emptiestMealType(stripModel([item({ dinner: 9 })], 7, ["dinner"]))).toBeNull();
     expect(emptiestMealType([])).toBeNull();
+  });
+});
+
+describe("plannedMealFor and listedOnPlan (M29, R9.7, R6.1)", () => {
+  type Item = { id: string; data: Pick<PlanItemDoc, "kind" | "status" | "recipes" | "mealType" | "savedMealId"> };
+  const item = (id: string, recipeIds: string[], over: Partial<Item["data"]> = {}): Item => ({ id, data: { kind: "meal", status: "planned", mealType: "dinner", recipes: recipeIds.map(ref), ...over } });
+  it("a recipe matches the planned meal containing it; cooked, eaten out, leftovers and other recipes don't", () => {
+    const items = [item("a", ["tacos"], { status: "cooked" }), item("b", ["soup"]), item("c", [], { kind: "out" }), item("d", ["tacos"], { kind: "leftover" }), item("e", ["tacos", "rice"], { name: "Taco night" } as never)];
+    expect(plannedMealFor(items, { recipeId: "tacos" })?.id).toBe("e");
+    expect(plannedMealFor(items, { recipeId: "pie" })).toBeUndefined();
+  });
+  it("prefers a meal of just this recipe, then the Plan page's order: meal type, soonest expiring, given order", () => {
+    const items = [item("multi", ["tacos", "rice"], { mealType: "breakfast" }), item("d1", ["tacos"]), item("l1", ["tacos"], { mealType: "lunch" }), item("d2", ["tacos"])];
+    expect(plannedMealFor(items, { recipeId: "tacos" })?.id).toBe("l1");
+    const two = [item("d1", ["tacos"]), item("d2", ["tacos"])];
+    expect(plannedMealFor(two, { recipeId: "tacos" })?.id).toBe("d1");
+    expect(plannedMealFor(two, { recipeId: "tacos" }, (i) => (i.id === "d2" ? 2 : null))?.id).toBe("d2");
+  });
+  it("a saved meal matches its own plan item first, then one with the same recipes", () => {
+    const items = [item("same", ["rice", "tacos"]), item("own", ["tacos", "rice"], { savedMealId: "m1" }), item("more", ["tacos", "rice", "salsa"])];
+    expect(plannedMealFor(items, { savedMealId: "m1", recipeIds: ["tacos", "rice"] })?.id).toBe("own");
+    expect(plannedMealFor(items.slice(0, 1), { savedMealId: "m1", recipeIds: ["tacos", "rice"] })?.id).toBe("same");
+    expect(plannedMealFor(items.slice(2), { savedMealId: "m1", recipeIds: ["tacos", "rice"] })).toBeUndefined();
+  });
+  it("only planned items stay listed", () => {
+    expect(["planned", "cooked", "eaten", "skipped"].filter((s) => listedOnPlan(s as PlanItemDoc["status"]))).toEqual(["planned"]);
   });
 });

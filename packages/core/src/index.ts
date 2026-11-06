@@ -15,6 +15,7 @@ export * from "./ingredientJudge";
 export * from "./recipeFromGemini";
 export * from "./receipt";
 export * from "./recipe";
+export * from "./prepTask";
 export * from "./nutrition";
 export * from "./dedupe";
 export * from "./cooklang";
