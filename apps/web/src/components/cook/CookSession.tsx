@@ -284,9 +284,16 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
           <X aria-hidden className="size-5" strokeWidth={3} />
         </button>
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem] uppercase" data-testid="cook-kicker">
-            {/* M29 (R9.7): a planned meal says so, however the cook was started. */}
-            {target.planItemId ? `Planned · ${label}` : label}
+          <span className="truncate font-mono text-[0.625rem] font-bold tracking-[0.09rem] uppercase" data-testid="cook-kicker">
+            {/* M29 (R9.7): a planned meal says so, however the cook was started ("Planned dinner"); the phase is the
+                page's own heading or step badge, so it gives way on the narrow header. */}
+            {target.planItemId ? (
+              <>
+                Planned<span className="max-sm:sr-only"> {target.mealType ?? "meal"}</span>
+              </>
+            ) : (
+              label
+            )}
           </span>
           <span className="truncate text-[0.9375rem] font-extrabold">{current && !single ? current.title : target.title}</span>
         </span>

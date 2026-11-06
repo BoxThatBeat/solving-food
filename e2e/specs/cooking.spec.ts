@@ -289,7 +289,7 @@ test("Cook on the page of a planned recipe cooks that planned meal: Done cooking
   await page.goto(`/recipes/${r.id}`);
   await page.getByRole("link", { name: "Cook →" }).click();
   await expect(page.getByRole("heading", { name: "Mise en place" })).toBeVisible();
-  await expect(page.getByTestId("cook-kicker")).toHaveText(/^Planned · Mise en place$/i);
+  await expect(page.getByTestId("cook-kicker")).toHaveText(/^Planned dinner$/i);
   await page.getByRole("button", { name: "Done cooking", exact: true }).click();
   await expect(page).toHaveURL(/\/review\//);
   await page.getByRole("button", { name: "Review later" }).click();
@@ -315,7 +315,7 @@ test("a recipe planned in a meal of several cooks the whole meal from its page (
   await page.goto(`/recipes/${a.id}/cook`);
   const list = page.getByRole("list", { name: "Recipes in cooking order" });
   await expect(list.getByTestId("cook-recipe")).toHaveCount(2);
-  await expect(page.getByTestId("cook-kicker")).toHaveText(/^Planned · Meal · 2 recipes$/i);
+  await expect(page.getByTestId("cook-kicker")).toHaveText(/^Planned dinner$/i);
   await expect(page.getByRole("region", { name: "Cooking Taco night" })).toBeVisible();
   await page.getByRole("button", { name: "Done cooking", exact: true }).click();
   await expect(page).toHaveURL(/\/review\//);
