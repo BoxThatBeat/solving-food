@@ -36,11 +36,12 @@ function CookMeal() {
   if (planned) {
     if (planned.data.recipes.some((x) => !plannedRecipes.has(x.recipeId)) && !planned.data.name) return null;
     const title = planItemTitle(planned.data, (rid) => plannedRecipes.get(rid)?.title);
-    return <CookSession target={planCookTarget(planned.id, planned.data, title, { exitTo: `/meals/${id}`, path: `/meals/${id}/cook` })} {...common} />;
+    return <CookSession key={`plan-${planned.id}`} target={planCookTarget(planned.id, planned.data, title, { exitTo: `/meals/${id}`, path: `/meals/${id}/cook` })} {...common} />;
   }
   const servings = search.servings ?? hh.data?.defaultServings ?? 4;
   return (
     <CookSession
+      key={`meal-${id}-${servings}`}
       target={{ key: `meal-${id}-${servings}`, title: meal.data.name, kicker: "Meal", recipes: meal.data.recipes, sides: meal.data.sides, servings, savedMealId: id, exitTo: `/meals/${id}`, path: `/meals/${id}/cook` }}
       {...common}
     />

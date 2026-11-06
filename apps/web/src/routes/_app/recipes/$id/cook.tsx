@@ -38,8 +38,8 @@ function CookRecipe() {
     // The title names the meal in history: wait for its recipes rather than call it "Recipe".
     if (planned.data.recipes.some((x) => !plannedRecipes.has(x.recipeId)) && !planned.data.name) return null;
     const title = planItemTitle(planned.data, (rid) => plannedRecipes.get(rid)?.title);
-    return <CookSession target={planCookTarget(planned.id, planned.data, title, { exitTo: `/recipes/${id}`, path: `/recipes/${id}/cook` })} {...common} />;
+    return <CookSession key={`plan-${planned.id}`} target={planCookTarget(planned.id, planned.data, title, { exitTo: `/recipes/${id}`, path: `/recipes/${id}/cook` })} {...common} />;
   }
   const servings = search.servings ?? r.data.servings;
-  return <CookSession target={{ key: `recipe-${id}-${servings}`, title: r.data.title, kicker: "Recipe", recipes: [{ recipeId: id, servingsMultiplier: 1 }], servings, exitTo: `/recipes/${id}`, path: `/recipes/${id}/cook` }} {...common} />;
+  return <CookSession key={`recipe-${id}-${servings}`} target={{ key: `recipe-${id}-${servings}`, title: r.data.title, kicker: "Recipe", recipes: [{ recipeId: id, servingsMultiplier: 1 }], servings, exitTo: `/recipes/${id}`, path: `/recipes/${id}/cook` }} {...common} />;
 }

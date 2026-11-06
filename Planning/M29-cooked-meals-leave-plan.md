@@ -75,6 +75,8 @@ reviews). PRD v0.15. Spec §7 (What the Plan list shows), §12 (`<CoverageStrip>
   after the period changed, the first snapshots came from the device's cache (the household's older period), so the
   hook locked "not planned". Now only a match is kept for the session; until one appears the cook runs off the plan and
   switches to the planned meal when the fresh snapshot arrives (a moment's flicker at most).
+  The second run showed the switch kept the first session's state (a meal shown at one recipe's mise en place):
+  `<CookSession>` is now keyed by its target, so the planned session mounts fresh.
 - **Recipe page "Before you start" unchanged.** Only mise en place renders amounts, as asked.
 
 ## Verification
