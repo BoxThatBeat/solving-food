@@ -1,8 +1,8 @@
 // A planned meal on the Plan page (PRD R5.1, R5.5, R6.1) and its sheet: change servings and meal type, save an
 // unsaved meal to Meals (R5.8), remove. M3: Cook → opens the cook view; cooked meals, leftovers, and snacks can be
 // marked eaten (R9.5, `markEaten`); an expiry badge names the soonest-expiring ingredient the meal would use (R6.7);
-// leftovers show their use-by (R6.10). M9 (R9.5): a cooked meal's review marks it eaten, so a cooked meal shows
-// Review (its pending review) instead of Mark eaten.
+// leftovers show their use-by (R6.10). M9 (R9.5): a cooked meal's review marks it eaten. M29 (R6.1, R9.5): only
+// planned items are listed, so a card is never cooked or eaten; Pending reviews (R9.4) offers a cooked meal's review.
 import { MealTypePicker } from "./MealTypePicker";
 import * as React from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -50,8 +50,6 @@ export interface PlanItemView {
   soonDays?: number | undefined;
   /** "Salmon expires in 2 days" (R6.7). */
   expiry?: string | undefined;
-  /** A cooked meal's pending review (cook event ID): finishing it marks the meal eaten (M9, R9.5). */
-  review?: string | undefined;
   /** Leftovers: "use by 13 Oct" and whether the batch is already past it. */
   leftover?: { useBy: string | null; expired: boolean } | undefined;
   /** In the next period (M26, R3.2): cooked once its period starts, so no Cook or Ate it yet. */
@@ -74,8 +72,6 @@ function RecipeMeta({ r }: { r: StoredRecipe | undefined }) {
 
 function costLine(v: PlanItemView): string {
   if (v.item.kind === "out") return "EATING OUT · NOTHING TO BUY OR COOK";
-  if (v.status === "cooked") return v.review ? "COOKED · REVIEW TO FINISH" : "COOKED";
-  if (v.status === "eaten") return "EATEN";
   if (v.status !== "planned") return v.status.toUpperCase();
   if (v.item.kind === "leftover") return "ALREADY PAID FOR";
   if (!v.cost) return "PRICING…";
@@ -91,9 +87,8 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
   const leftover = it.kind === "leftover";
   const out = it.kind === "out";
   const canCook = status === "planned" && !leftover && it.recipes.length > 0 && !v.upcoming;
-  // A cooked meal is finished by its review (M9); Mark eaten stays only for one whose review is already done (older data).
-  const canReview = status === "cooked" && !!v.review;
-  const canEat = !out && !v.upcoming && ((status === "cooked" && !v.review) || (status === "planned" && (leftover || it.mealType === "snack")));
+  // Leftovers and snacks have no review: they're marked eaten by hand (R9.5); a cooked meal's review marks it eaten.
+  const canEat = !out && !v.upcoming && status === "planned" && (leftover || it.mealType === "snack");
   const eat = () => {
     sendCommand(hid, uid, "markEaten", { planItemId: v.id });
     notify({ kind: "success", message: leftover ? `Ate a portion of ${v.title}` : `${v.title} marked eaten` });
@@ -199,19 +194,9 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
             Cook →
           </Button>
         ) : null}
-        {canReview ? (
-          <Link
-            to="/review/$eventId"
-            params={{ eventId: v.review! }}
-            aria-label={`Review ${v.title} to finish it`}
-            className="press inline-flex min-h-11 items-center rounded-ui border-2 border-line bg-acc px-3 text-[0.875rem] font-extrabold text-onc no-underline shadow-hard-sm"
-          >
-            Review →
-          </Link>
-        ) : null}
         {canEat ? (
           <Button size="sm" variant="secondary" onClick={eat} aria-label={leftover ? `Ate one: ${v.title}` : `Mark ${v.title} eaten`} className="shadow-hard-sm">
-            {leftover ? "Ate one" : status === "cooked" ? "Mark eaten" : "Ate it"}
+            {leftover ? "Ate one" : "Ate it"}
           </Button>
         ) : null}
         {!canCook && !canEat && status === "planned" && !out ? (

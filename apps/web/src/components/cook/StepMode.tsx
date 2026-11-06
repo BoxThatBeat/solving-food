@@ -5,7 +5,7 @@
 // tablet portrait (step, next step, all ingredients), and landscape tablet/desktop (ingredient checklist | step |
 // timers and next step).
 import * as React from "react";
-import { Check, ChevronDown, NotebookPen } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, NotebookPen } from "lucide-react";
 import {
   ingredientSpeech,
   formatClock,
@@ -59,6 +59,7 @@ export function MiseEnPlace({
   notes,
   swaps = [],
   onSwap,
+  back,
 }: {
   recipe: StoredRecipe;
   recipeId: string;
@@ -69,11 +70,13 @@ export function MiseEnPlace({
   notes?: MiseNotes | undefined;
   swaps?: readonly MiseSwap[];
   onSwap?: (ingredientId: string, accept: boolean) => void;
+  /** M29 (R4.41): the Back button: to the recipe page (one recipe) or the meal's list of recipes. */
+  back?: { label: string; onClick: () => void } | undefined;
 }) {
   const items = prepList(recipe, lookup, factor);
   const [done, setDone] = React.useState<Set<number>>(new Set());
   // Hands-free (R4.33): mise en place reads its prep list; "next" starts step mode.
-  const prep = items.map((it) => (it.amount ? `${it.text}, ${it.amount}.` : `${it.text}.`));
+  const prep = items.map((it) => `${it.speech}.`);
   useVoiceScript({
     id: `mise:${recipeId}`,
     intro: prep,
@@ -86,6 +89,18 @@ export function MiseEnPlace({
   });
   return (
     <div className="mx-auto flex w-full max-w-[60rem] flex-1 flex-col gap-3 px-4 pt-4 pb-4">
+      {back ? (
+        <button
+          type="button"
+          onClick={back.onClick}
+          aria-label={back.label}
+          className="flex min-h-11 cursor-pointer items-center gap-1 self-start rounded-ui border-2 border-line bg-base px-3 py-2 text-[0.8125rem] font-extrabold text-ink shadow-[3px_3px_0_var(--line)]"
+          data-testid="mise-back"
+        >
+          <ArrowLeft aria-hidden className="size-4" strokeWidth={3} />
+          Back
+        </button>
+      ) : null}
       <div className="flex flex-col gap-1">
         <span className="kicker" data-testid="mise-count">
           {done.size} OF {items.length} READY
@@ -143,9 +158,18 @@ export function MiseEnPlace({
                   className={cn("flex w-full cursor-pointer items-center gap-3 px-3.5 py-3 text-left text-ink", on ? "bg-mantle" : "bg-base")}
                 >
                   <span className={cn("grid size-7 flex-none place-items-center rounded-[calc(var(--r)*0.67)] border-2 border-line", on ? "bg-acc text-onc" : "bg-base")}>{on ? <Check aria-hidden className="size-4" strokeWidth={4} /> : null}</span>
-                  <span className={cn("text-[0.9375rem] font-bold first-letter:uppercase", on && "line-through decoration-2")}>
-                    {it.text}{" "}
-                    {it.amount ? <span className="ml-1 rounded-[calc(var(--r)*0.5)] border-2 border-line bg-acc px-1 font-mono text-[0.75rem] font-extrabold whitespace-nowrap text-onc">{it.amount}</span> : null}
+                  {/* M29 (R4.42): every ingredient the task names with its amount inline, as in step mode (R4.11). */}
+                  <span className={cn("text-[0.9375rem] font-bold first-letter:uppercase", on && "line-through decoration-2")} data-testid="prep-task">
+                    {it.segments.map((seg, k) =>
+                      seg.kind === "text" ? (
+                        <React.Fragment key={k}>{seg.text}</React.Fragment>
+                      ) : (
+                        <React.Fragment key={k}>
+                          {seg.name}
+                          {seg.amount ? <span className="mx-1 inline-block rounded-[calc(var(--r)*0.5)] border-2 border-line bg-acc px-1 align-middle font-mono text-[0.75rem] leading-[1.4] font-extrabold whitespace-nowrap text-onc" data-testid="prep-amount">{seg.amount}</span> : null}
+                        </React.Fragment>
+                      ),
+                    )}
                   </span>
                 </button>
               </li>

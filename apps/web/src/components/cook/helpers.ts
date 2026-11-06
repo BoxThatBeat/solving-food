@@ -1,7 +1,7 @@
 // Hooks and pure helpers for the cooking views (kept apart from the components for fast refresh).
 import * as React from "react";
 import { collection, limit, query, Timestamp, where } from "firebase/firestore";
-import { DAY_MS, lineText, pendingReviews, RATE_PROMPT_DAYS, renderStep, type IngredientLookup } from "@solving-food/core";
+import { DAY_MS, lineText, pendingReviews, RATE_PROMPT_DAYS, renderPrepTask, type IngredientLookup, type StepSegment } from "@solving-food/core";
 import { db } from "@/firebase/app";
 import { useLiveQuery } from "@/data/live";
 import type { StoredRecipe } from "@/data/recipes";
@@ -62,20 +62,24 @@ export function usePendingReviews(hid: string, uid: string) {
   }, [waiting.docs, recent.docs, uid, now]);
 }
 
-/** Prep tasks, or (for recipes without any) "Measure out …" for each ingredient, as the prototype does. */
-export function prepList(recipe: StoredRecipe, lookup: IngredientLookup, factor: number): Array<{ text: string; amount: string }> {
+/**
+ * Prep tasks, or (for recipes without any) "Measure out …" for each ingredient, as the prototype does. M29 (R4.42): each
+ * ingredient a task names carries its amount inline, scaled, as in step mode (`renderPrepTask`).
+ */
+export function prepList(recipe: StoredRecipe, lookup: IngredientLookup, factor: number): Array<{ segments: StepSegment[]; speech: string }> {
+  const speak = (segments: StepSegment[]) => segments.map((s) => (s.kind === "text" ? s.text : s.amount ? `${s.name}, ${s.amount},` : s.name)).join("").replace(/,(\s*[.,]|\s*$)/g, "$1").trim();
   if (recipe.prepTasks.length) {
     return recipe.prepTasks.map((p) => {
-      const segs = renderStep(p.text, recipe.ingredients, lookup, factor);
-      const amount = segs.find((s) => s.kind === "ingredient" && s.amount);
-      return { text: segs.map((s) => (s.kind === "text" ? s.text : s.name)).join(""), amount: amount && amount.kind === "ingredient" ? amount.amount : "" };
+      const segments = renderPrepTask(p.text, recipe.ingredients, lookup, factor);
+      return { segments, speech: speak(segments) };
     });
   }
   return recipe.ingredients
     .filter((l) => !l.optional)
     .map((l) => {
       const t = lineText(l, lookup, factor);
-      return { text: `Measure out ${t.name}`, amount: t.amount };
+      const segments: StepSegment[] = [{ kind: "text", text: "Measure out " }, { kind: "ingredient", lineId: l.id, name: t.name, amount: t.amount }];
+      return { segments, speech: speak(segments) };
     });
 }
 

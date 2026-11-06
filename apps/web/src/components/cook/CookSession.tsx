@@ -284,7 +284,10 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
           <X aria-hidden className="size-5" strokeWidth={3} />
         </button>
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem] uppercase">{label}</span>
+          <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem] uppercase" data-testid="cook-kicker">
+            {/* M29 (R9.7): a planned meal says so, however the cook was started. */}
+            {target.planItemId ? `Planned · ${label}` : label}
+          </span>
           <span className="truncate text-[0.9375rem] font-extrabold">{current && !single ? current.title : target.title}</span>
         </span>
         {awake ? (
@@ -355,6 +358,8 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
               .filter((x) => current.ingredientIds.includes(x.ingredientId))
               .map((x): MiseSwap => ({ ingredientId: x.ingredientId, text: swapText(x, nameOf, amountOf), note: x.note, accepted: accepted.includes(x.ingredientId) }))}
             onSwap={(id, on) => setAccepted((a) => (on ? [...new Set([...a, id])] : a.filter((x) => x !== id)))}
+            // M29 (R4.41): one recipe goes back to its recipe page; a meal goes back to its list of recipes (R4.12).
+            back={single ? { label: "Back to the recipe", onClick: () => void navigate({ to: "/recipes/$id", params: { id: order[0]! } }) } : { label: "Back to the meal's recipes", onClick: () => back({ kind: "order" }) }}
           />
         ) : phase.kind === "steps" && current ? (
           <StepMode

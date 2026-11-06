@@ -9,6 +9,7 @@ import { useActiveHousehold } from "@/data/households";
 import { useRecipeDocs, type StoredPlanItem } from "@/data/plan";
 import { EmptyState, PageBody } from "@/components/AppShell";
 import { CookSession } from "@/components/cook/CookSession";
+import { planCookTarget } from "@/components/cook/planTarget";
 import { cookSearchSchema, initialStepOf } from "@/components/cook/cookSearch";
 import { useReadySession } from "@/session/useSession";
 
@@ -49,19 +50,7 @@ function CookPlanItem() {
   const title = planItemTitle(it, (id) => recipes.get(id)?.title);
   return (
     <CookSession
-      target={{
-        key: `plan-${itemId}`,
-        title,
-        kicker: "Meal",
-        recipes: it.recipes,
-        servings: it.servings,
-        planItemId: itemId,
-        savedMealId: it.savedMealId,
-        mealType: it.mealType,
-        sides: it.sides,
-        exitTo: "/plan",
-        path: `/plan/${itemId}/cook`,
-      }}
+      target={planCookTarget(itemId, it, title, { exitTo: "/plan", path: `/plan/${itemId}/cook` })}
       hid={hh.id}
       uid={s.user.uid}
       tools={hh.data?.settings?.tools ?? []}

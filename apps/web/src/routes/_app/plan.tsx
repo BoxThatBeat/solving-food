@@ -4,7 +4,9 @@
 // columns; xl: plan · suggestions/protein/optimiser · budget/expiry, as the prototype's desktop mode. M7 (owner review):
 // no Grocery list button (the tab stays), no "not a schedule" hint, protein directly above the optimiser. M26 (R3.2,
 // R3.4): "This period · Next period" at the top; the next period has its own strip, list, budget, Create meal,
-// Suggested and optimiser (Supply projected at its start), and one note instead of the alerts.
+// Suggested and optimiser (Supply projected at its start), and one note instead of the alerts. M29 (R6.1, R9.5): the
+// list holds only what is still to cook or eat; cooked, eaten and skipped items leave it (they still fill the strip),
+// and a cooked meal's review is in Pending reviews above (R9.4).
 import * as React from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -37,6 +39,7 @@ import {
   atStartSummary,
   daysBetween,
   formatCanonical,
+  listedOnPlan,
   localDate,
   type CollectionSearch,
   type HouseholdFacts,
@@ -66,7 +69,6 @@ import { useNotify } from "@/components/notifications-context";
 import { ExpiredLotPrompts } from "@/components/supply/ExpiredLotPrompt";
 import { dateText, expiredEntries, itemExpiry, unitFor } from "@/components/supply/format";
 import { PendingReviews } from "@/components/cook/PendingReviews";
-import { usePendingReviews } from "@/components/cook/helpers";
 import { useOnline } from "@/hooks/useOnline";
 import { useReadySession } from "@/session/useSession";
 import { useNutrition, useNutritionSearch } from "@/data/nutrition";
@@ -116,14 +118,11 @@ function PlanPage() {
     return out;
   }, [m.supply.pendingCommands]);
   const supplyNow = m.supply.now;
-  // Cooked meals waiting for their review (M9, R9.5): the card's Review button; the review marks them eaten.
-  const pending = usePendingReviews(m.hid, s.user.uid);
-  const reviewOf = React.useMemo(() => new Map(pending.filter((e) => e.reason === "review" && e.planItemId).map((e) => [e.planItemId!, e.id])), [pending]);
   const views: PlanItemView[] = React.useMemo(
     () =>
       m.items.map((i) => {
         const status = optimistic.get(i.id) ?? i.data.status;
-        const v: PlanItemView = { id: i.id, item: i.data, title: planItemTitle(i.data, titleOf, sideNameOf), cost: m.ready ? m.costs.get(i.id) : undefined, status, review: reviewOf.get(i.id), upcoming };
+        const v: PlanItemView = { id: i.id, item: i.data, title: planItemTitle(i.data, titleOf, sideNameOf), cost: m.ready ? m.costs.get(i.id) : undefined, status, upcoming };
         if (status === "planned" && i.data.kind === "meal") {
           // R6.7: the soonest-expiring lot this meal would use, when it expires within the period (or within days).
           const needs = mealRequirements(i.data.recipes, i.data.servings, m.ctx, i.data.sides);
@@ -144,13 +143,15 @@ function PlanPage() {
         }
         return v;
       }),
-    [m.items, titleOf, sideNameOf, m.costs, m.ready, optimistic, reviewOf, m.ctx, m.lotsByIngredient, m.ingredients, m.supply.items, supplyNow, endMs, tz, upcoming, m.deals, m.removedIds, m.built.items],
+    [m.items, titleOf, sideNameOf, m.costs, m.ready, optimistic, m.ctx, m.lotsByIngredient, m.ingredients, m.supply.items, supplyNow, endMs, tz, upcoming, m.deals, m.removedIds, m.built.items],
   );
   const rows = React.useMemo(
     () => stripModel(views.map((v) => ({ coverage: v.item.coverage, status: v.status, kind: v.item.kind })), cells.length, m.household?.plannedMealTypes ?? []),
     [views, cells.length, m.household?.plannedMealTypes],
   );
-  const listRows = React.useMemo(() => views.map((v) => planItemRow(v.id, v.item, (id) => byId.get(id), v.title, sideNameOf)), [views, byId, sideNameOf]);
+  // M29: the list is what's still to cook or eat; the strip above counts everything (cooked cells solid).
+  const listed = React.useMemo(() => views.filter((v) => listedOnPlan(v.status)), [views]);
+  const listRows = React.useMemo(() => listed.map((v) => planItemRow(v.id, v.item, (id) => byId.get(id), v.title, sideNameOf)), [listed, byId, sideNameOf]);
   const suggestions = useSuggestions(view);
   // The list's Suggested and Expiring first sorts: each item's recipes' scores, combined (M5).
   const factsOf = React.useCallback(
@@ -270,7 +271,14 @@ function PlanPage() {
               </div>
             }
           >
-            {!m.loading && m.items.length === 0 ? (
+            {!m.loading && listed.length === 0 && m.items.length > 0 && !upcoming ? (
+              <EmptyState>
+                <p className="m-0 mb-3" data-testid="plan-all-cooked">
+                  Everything planned this period is cooked. Plan another meal, or pick one from Suggested.
+                </p>
+                <Button onClick={() => openCreateMeal()}>+ Create meal</Button>
+              </EmptyState>
+            ) : !m.loading && listed.length === 0 ? (
               <EmptyState>
                 <p className="m-0 mb-3">
                   {upcoming
