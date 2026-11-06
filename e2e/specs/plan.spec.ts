@@ -461,6 +461,33 @@ test.describe("alerts fold once seen (M24)", () => {
 });
 
 test.describe("the next period (M26)", () => {
+  test("Add to plan from a recipe page offers This period · Next period, This period first; Next adds to the next period (R3.2)", { tag: ["@R3.2", "@R5.7"] }, async ({ page, household }) => {
+    const r = await makePlanRecipe("Picked for next week");
+    const pid = await seedPeriod(household.hid);
+    await page.goto(`/recipes/${r.id}`);
+    await page.getByRole("button", { name: "+ Plan" }).click();
+    const sheet = page.getByRole("dialog", { name: "Add to plan" });
+    const choice = sheet.getByRole("group", { name: "Period" });
+    await expect(choice.getByRole("button", { name: /^This period/ })).toHaveAttribute("aria-pressed", "true");
+    await choice.getByRole("button", { name: /^Next period/ }).click();
+    await expect(choice.getByRole("button", { name: /^Next period/ })).toHaveAttribute("aria-pressed", "true");
+    await sheet.getByRole("button", { name: /^Add to plan · / }).click();
+    await expect(sheet).toBeHidden();
+    await expect(page.getByTestId("notifications")).toContainText("Added to the next period");
+    const items = await eventually(() => planItems(household.hid), (x) => x.length === 1);
+    expect(items[0]!.periodId).not.toBe(pid);
+    // Not in this period's list; in the next period's.
+    const plan = new PlanPage(page);
+    await plan.goto();
+    await expect(plan.item(r.title)).toHaveCount(0);
+    await expect(page.getByRole("group", { name: "Period" })).toHaveCount(1); // the Plan page's own switch only
+    await page.getByRole("group", { name: "Period" }).getByRole("button", { name: /^Next period/ }).click();
+    await expect(plan.item(r.title)).toBeVisible();
+    // On the Plan page the sheet has no choice of its own: the page's switch decides.
+    await plan.openCreateMeal();
+    await expect(page.getByRole("dialog", { name: "Create meal" }).getByRole("group", { name: "Period" })).toHaveCount(0);
+  });
+
   test("plan the next period: its meal is in its own strip, list and budget, and not in this period's (R3.2)", { tag: ["@R3.2"] }, async ({ page, household }) => {
     const r = await makePlanRecipe("Next week's skillet");
     const pid = await seedPeriod(household.hid, { budgetCents: 10000 });

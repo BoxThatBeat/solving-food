@@ -1371,6 +1371,11 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
   ("garlic cloves") becoming the badge, scaled by the session's factor and formatted by `amountText` (R8.13); a name
   with nothing in front gets the line's amount. The badges are step mode's inline amount chips. The cook header's
   kicker says **Planned** (**Planned dinner** from `sm`) for any plan item session (R9.7).
+- **`<CreateMealSheet>` period choice** (M29, R3.2): opened outside `/plan` (recipe page **+ Plan**, a saved meal,
+  Suggested elsewhere), the sheet shows `<PeriodSwitch>` at the top of both steps, `current` first; its choice is the
+  sheet's `view` state, which picks `useViewModel(view)` (the M26 next-period model: its `periodId`, budget and
+  projected Supply), so Next adds to the next period exactly as the Plan page's Next view does. On `/plan` the
+  request's `period` (the page's switch) decides and no control shows. Hidden until the current period has loaded.
 - **Cook notes** (M28, R4.38, R4.39, R9.6): `useCookNotes(hid, recipeIds)` (`data/cookNotes.ts`) is the one bounded
   query (§4.2 "Cook notes"); `recipeNotes` / `latestStepNotes` (core `cookNotes.ts`) pick what shows. `<LastTimeNotes>`:
   a dashed card "Last time (12 Oct, Aaron): …" (`noteWhen`: the date in the household's zone, the cook's first name)
@@ -1816,7 +1821,7 @@ Besides the weekly scheduled backup of the whole database (M22, above; restoring
 | M26 | Next period | This period · Next period on the Plan and Grocery pages: the next period's ID computed from the current one, its own strip, list, budget, Create meal, Suggested and optimiser on the Supply projected at its start, a projected-at-start note; its own draft (`draft-next`) and orders; the rollover adopts its items and draft with no copies, a restart moves them |
 | M27 | Deal awareness | Price history per brand mapping (weekly PC Express price and receipts, ≤ 16), usual price (median) and on sale (≥ 15 % below, ≥ 4 prices); Deal chips on brands, grocery lines, suggestion and plan cards; the On sale suggestion factor and weight; on-sale staples due within two periods pulled forward while the budget has room; History → Prices |
 | M28 | Cook notes and substitutions | The last cook's note with when and who on mise en place, the recipe page and the review (Keep this note), per-step notes saved with Done cooking and carried forward (one bounded `notedRecipeIds` query, the first composite index); a 57-entry substitution table in core with stored ratios checked against the seed; swaps counted (at a 0.25 penalty) in suggestions with the reason, in Can make, offered on mise en place and deducted by `finishCooking`, hinted on grocery lines; Settings → Preferences → Suggest substitutions |
-| M29 | Cooked meals leave the plan | Cook on a planned recipe's page (or a planned saved meal's) cooks the plan item (`plannedMealFor`, `usePlannedMeal`), so Done cooking turns its strip cell accent; cooked, eaten and skipped items leave the Plan list (reviews from Pending reviews); mise en place Back to the recipe or the meal's list; prep tasks with ingredient amounts inline, scaled (`renderPrepTask`) |
+| M29 | Cooked meals leave the plan | Cook on a planned recipe's page (or a planned saved meal's) cooks the plan item (`plannedMealFor`, `usePlannedMeal`), so Done cooking turns its strip cell accent; cooked, eaten and skipped items leave the Plan list (reviews from Pending reviews); mise en place Back to the recipe or the meal's list; prep tasks with ingredient amounts inline, scaled (`renderPrepTask`); Add to plan outside the Plan page chooses This period · Next period |
 
 Each milestone is done only when the Playwright specs for its requirements (§14.1) pass in CI across the project matrix. The detailed, task-level plan for each milestone lives in `Planning/`.
 

@@ -7,7 +7,8 @@ Status: done (owner: cook a planned recipe from its page on the phone; see the o
 The owner cooked a planned recipe and found it still on the Plan page. Cook on a recipe's page ran "a recipe that
 isn't on the plan" (no `planItemId`), so `finishCooking` never marked the plan item cooked and the strip cell stayed
 white. Make every cook of a planned recipe or saved meal the plan item, take cooked meals off the Plan list (the strip
-keeps them, accent-filled), and give mise en place a Back button and the ingredient amounts step mode shows.
+keeps them, accent-filled), give mise en place a Back button and the ingredient amounts step mode shows, and let
+Add to plan from a recipe page choose This period or Next period.
 
 ## Root cause (verified)
 
@@ -22,7 +23,8 @@ keeps them, accent-filled), and give mise en place a Back button and the ingredi
 ## Requirements covered
 
 New: **R9.7** (Cook on a planned recipe's or saved meal's page cooks the plan item), **R4.41** (Back on mise en place),
-**R4.42** (amounts on mise en place). Changed: **R6.1** (the list holds only what's still to cook or eat), **R6.2**
+**R4.42** (amounts on mise en place). Changed: **R3.2** (Add to plan outside the Plan page offers This period · Next
+period), **R6.1** (the list holds only what's still to cook or eat), **R6.2**
 (cooked cells accent-filled, planned white outlined), **R9.5** (cooked meals leave the list; the review from Pending
 reviews). PRD v0.15. Spec §7 (What the Plan list shows), §12 (`<CoverageStrip>`, `<MiseEnPlace>`), §14.1, §15.
 
@@ -39,13 +41,18 @@ reviews). PRD v0.15. Spec §7 (What the Plan list shows), §12 (`<CoverageStrip>
       "Everything planned this period is cooked" empty state.
 - [x] **4. Web: mise en place**: Back chip (recipe page's style, 44 px) → recipe page or the meal's list; prep tasks
       rendered from `renderPrepTask` with step mode's inline amount chips; hands-free reads "garlic, 4 cloves".
+- [x] **4b. Web: Add to plan period choice** (owner request, added mid-milestone): `<CreateMealSheet>` outside `/plan`
+      shows `<PeriodSwitch>` at the top (This period first) and adds to the chosen view's model (M26's next-period
+      model, no duplicate logic); on the Plan page the page's switch decides.
 - [x] **5. E2E**: cooking.spec (@R9.7 @R6.2 @R6.1: cell `planned` → `cooked` after Done cooking from the recipe page,
       off the list; a meal of several from one recipe's page; @R4.41; @R4.42), plan.spec (accent fill, cooked / eaten /
-      skipped not listed), leftovers.spec (@R9.5 reworked), offline.spec, review.spec (saved meal checked on the doc).
+      skipped not listed), leftovers.spec (@R9.5 reworked), offline.spec, review.spec (saved meal checked on the doc), plan.spec (@R3.2: Add to plan from the recipe page, Next period, the item
+      in the next period only; no choice in the sheet on the Plan page).
 - [x] **6. Docs**: PRD v0.15, spec, README row, this plan.
 - [x] **7. Screenshot check** (phone 430×932, desktop 1920×1080): mise en place from the recipe page of the planned
       dev dinner (Back, amounts, kicker), Plan after Done cooking (strip cell accent, list empty state, Pending
-      reviews). Fixed: the kicker "Planned · Mise en place" wrapped to three lines on the phone header; now "Planned"
+      reviews), Add to plan from the recipe page (phone; desktop with Next period chosen: dates, next-period budget impact).
+      Fixed: the kicker "Planned · Mise en place" wrapped to three lines on the phone header; now "Planned"
       on phones and "Planned dinner" from `sm`.
 
 ## Deviations
@@ -68,14 +75,16 @@ reviews). PRD v0.15. Spec §7 (What the Plan list shows), §12 (`<CoverageStrip>
 
 ## Verification
 
-- Typecheck, lint: clean. `pnpm e2e:coverage`: green, M29 6/6 tagged.
+- Typecheck, lint: clean. `pnpm e2e:coverage`: green, M29 7/7 tagged.
 - Unit: core 777 → 788, web 48.
-- Functions: 96 (no function change). Rules: 104 (no rule change).
+- Functions: 95/96 locally (no function change); the one failure is `ai.test.ts` "Gemini down", the order-dependent
+  flake M28 recorded. CI decides. Rules: 104 (no rule change).
 - E2E: written, not run locally (owner rule: memory); CI runs the matrix.
 
 ## Owner checks
 
 - With a recipe planned this period, open it from Recipes, tap **Cook →**: the header says PLANNED; Done cooking, then
   the Plan page: the meal is gone from the list, its cell is green, and Pending reviews has its Review.
+- Recipe page → **+ Plan**: pick **Next period**, add; it shows under Plan → Next period, not this period.
 - Mise en place: the **Back** button, and the amounts next to the prep tasks (try a recipe with "Mince 5 garlic cloves"
   at a different serving count).

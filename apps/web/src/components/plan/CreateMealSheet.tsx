@@ -26,6 +26,7 @@ import {
   type MealSide,
   type MealType,
   type RecipeRef,
+  type PeriodView,
 } from "@solving-food/core";
 import { CollectionView } from "@/components/CollectionView";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -35,9 +36,10 @@ import { SectionLabel } from "@/components/ui/chip";
 import { Button } from "@/components/ui/button";
 import { useNotify } from "@/components/notifications-context";
 import { useHouseholdFacts, useNotes } from "@/data/householdRecipes";
-import { addEatingOut, createMeal, useMeals, useRecipeDocs } from "@/data/plan";
+import { addEatingOut, createMeal, millis, useMeals, useRecipeDocs } from "@/data/plan";
 import { useIngredientsById } from "@/data/ingredients";
-import { useViewModel } from "@/data/planModel";
+import { usePlanModel, useViewModel } from "@/data/planModel";
+import { PeriodSwitch } from "./PeriodSwitch";
 import { useSides } from "@/data/sides";
 import { SidePicker } from "./SidePicker";
 import { MealTypePicker } from "./MealTypePicker";
@@ -107,9 +109,26 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
   }
 
   // M26 (R3.2): Create meal from the next-period view adds to the next period, with its budget and projected Supply.
-  const view = request.period ?? "current";
+  // M29 (R3.2): opened anywhere but the Plan page (whose own switch decides), the sheet has the same This period · Next
+  // period choice, This period first.
+  const [view, setView] = React.useState<PeriodView>(request.period ?? "current");
   const upcoming = view === "next";
   const model = useViewModel(view);
+  const current = usePlanModel();
+  const tz = current.household?.timezone ?? "America/Toronto";
+  const curStart = millis(current.period?.start);
+  const curEnd = millis(current.period?.end);
+  const periodChoice =
+    pathname !== "/plan" && current.upcoming ? (
+      <PeriodSwitch
+        view={view}
+        onChange={setView}
+        tz={tz}
+        current={curStart && curEnd ? { startMs: curStart, endMs: curEnd } : null}
+        next={{ startMs: current.upcoming.startMs, endMs: current.upcoming.endMs }}
+        className="max-w-none flex-none"
+      />
+    ) : null;
   // The picked recipes and sides, loaded here (M23: the shared plan model holds only what's planned).
   const pickedRecipes = useRecipeDocs(selected.map((r) => r.recipeId));
   const pickedIngredientIds = React.useMemo(() => [...new Set([...[...pickedRecipes.values()].flatMap((r) => r.ingredientIds), ...sides.map((x) => x.ingredientId)])], [pickedRecipes, sides]);
@@ -245,6 +264,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
           ) : undefined
         }
       >
+        {periodChoice}
         <div role="tablist" aria-label="Pick from" className="grid flex-none grid-cols-3 overflow-hidden rounded-ui border-2 border-line bg-base">
           {(["recipes", "meals", "out"] as const).map((t, i) => (
             <button
@@ -395,6 +415,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
         </div>
       }
     >
+      {periodChoice}
       <div className="flex items-stretch gap-2.5">
       <MealThumb ids={selected.map((r) => r.recipeId)} summary={(id) => byId.get(id) ?? recipeOf(id)} className="min-h-14" />
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
