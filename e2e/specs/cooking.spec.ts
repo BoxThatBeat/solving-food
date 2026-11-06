@@ -1,5 +1,6 @@
 // cooking.spec.ts (TECHNICAL_SPECS §14.1): mise en place; step mode navigation (swipe, tap, keys); inline amounts;
 // portrait/landscape and tablet layouts; wake lock requested; choosing the order of a multi-recipe meal.
+import { adminDb } from "../fixtures/admin";
 import { expect, test } from "../fixtures/test";
 import { PlanPage, seedPeriod, seedPlanItem } from "../pages/plan";
 import { cookEvents, expectSupply, fakeWakeLock, makeCookRecipe, seedNotedEvent, seedSupply } from "../pages/supply";
@@ -271,4 +272,110 @@ test("a missing ingredient with a substitute in Supply: mise en place offers the
   await page.getByRole("button", { name: "Next →" }).click();
   await expect(page.getByTestId("used-row").filter({ hasText: /garlic powder/i })).toContainText("0.8 g");
   await expect(page.getByTestId("used-row").filter({ hasText: /^Garlic$|^Garlic[^ ]/ })).toHaveCount(0);
+});
+
+// ---------- M29: a planned recipe cooked from its page, mise en place Back and amounts
+
+test("Cook on the page of a planned recipe cooks that planned meal: Done cooking turns its cell from planned to cooked and it leaves the Plan list (R9.7, R6.2, R6.1)", { tag: ["@R9.7", "@R6.2", "@R6.1"] }, async ({ page, household }) => {
+  const r = await makeCookRecipe("Planned from its page", { leftovers: 0 });
+  const pid = await seedPeriod(household.hid);
+  const itemId = await seedPlanItem(household.hid, pid, [r.id]);
+  const plan = new PlanPage(page);
+  await plan.goto();
+  const cell = page.getByTestId("strip-dinner").locator("td").nth(0);
+  await expect(cell).toHaveAttribute("data-state", "planned");
+  await expect(plan.item(r.title)).toHaveCount(1);
+
+  await page.goto(`/recipes/${r.id}`);
+  await page.getByRole("link", { name: "Cook →" }).click();
+  await expect(page.getByRole("heading", { name: "Mise en place" })).toBeVisible();
+  await expect(page.getByTestId("cook-kicker")).toHaveText(/^Planned · Mise en place$/i);
+  await page.getByRole("button", { name: "Done cooking", exact: true }).click();
+  await expect(page).toHaveURL(/\/review\//);
+  await page.getByRole("button", { name: "Review later" }).click();
+  await plan.goto();
+  await expect(cell).toHaveAttribute("data-state", "cooked");
+  await expect(plan.item(r.title)).toHaveCount(0);
+  await expect(page.getByTestId("pending-reviews").getByRole("link", { name: `Review ${r.title}` })).toBeVisible();
+  await expect.poll(async () => (await adminDb.doc(`households/${household.hid}/planItems/${itemId}`).get()).data()!.status, { timeout: 30_000 }).toBe("cooked");
+  const [ev] = await cookEvents(household.hid);
+  expect(ev!.planItemId).toBe(itemId);
+
+  // Not planned any more: Cook on the recipe page is a cook off the plan.
+  await page.goto(`/recipes/${r.id}/cook`);
+  await expect(page.getByRole("heading", { name: "Mise en place" })).toBeVisible();
+  await expect(page.getByTestId("cook-kicker")).toHaveText(/^Mise en place$/i);
+});
+
+test("a recipe planned in a meal of several cooks the whole meal from its page (R9.7)", { tag: ["@R9.7"] }, async ({ page, household }) => {
+  const a = await makeCookRecipe("Taco part", { leftovers: 0 });
+  const b = await makeCookRecipe("Rice part", { leftovers: 0, lines: "Boil @jasmine rice{300%g} for ~{12%minutes}." });
+  const pid = await seedPeriod(household.hid);
+  const itemId = await seedPlanItem(household.hid, pid, [a.id, b.id], { name: "Taco night" });
+  await page.goto(`/recipes/${a.id}/cook`);
+  const list = page.getByRole("list", { name: "Recipes in cooking order" });
+  await expect(list.getByTestId("cook-recipe")).toHaveCount(2);
+  await expect(page.getByTestId("cook-kicker")).toHaveText(/^Planned · Meal · 2 recipes$/i);
+  await expect(page.getByRole("region", { name: "Cooking Taco night" })).toBeVisible();
+  await page.getByRole("button", { name: "Done cooking", exact: true }).click();
+  await expect(page).toHaveURL(/\/review\//);
+  await expect.poll(async () => (await adminDb.doc(`households/${household.hid}/planItems/${itemId}`).get()).data()!.status, { timeout: 30_000 }).toBe("cooked");
+});
+
+test("mise en place has a Back button: to the recipe page for one recipe, to the list of recipes in a meal (R4.41)", { tag: ["@R4.41", "@R4.12"] }, async ({ page, household }) => {
+  const r = await makeCookRecipe("Mise back");
+  const b = await makeCookRecipe("Mise back second", { leftovers: 0, lines: "Boil @jasmine rice{300%g} for ~{12%minutes}." });
+  await page.goto(`/recipes/${r.id}/cook`);
+  const back = page.getByRole("button", { name: "Back to the recipe" });
+  await expect(back).toBeVisible();
+  const box = (await back.boundingBox())!;
+  expect(box.height).toBeGreaterThanOrEqual(44);
+  await back.click();
+  await expect(page).toHaveURL(new RegExp(`/recipes/${r.id}/?$`));
+  await expect(page.locator("#recipe-title")).toHaveText(r.title);
+
+  const pid = await seedPeriod(household.hid);
+  const itemId = await seedPlanItem(household.hid, pid, [r.id, b.id], { name: "Mise back two-part" });
+  await page.goto(`/plan/${itemId}/cook`);
+  const list = page.getByRole("list", { name: "Recipes in cooking order" });
+  await list.getByRole("button", { name: `Cook ${b.title}` }).click();
+  await expect(page.getByRole("heading", { name: "Mise en place" })).toBeVisible();
+  await page.getByRole("button", { name: "Back to the meal's recipes" }).click();
+  await expect(list).toBeVisible();
+  // Back popped the mise en place entry: browser Back now leaves the cook view (R4.12).
+  await page.goBack();
+  await expect(page).not.toHaveURL(/\/cook/);
+});
+
+test("mise en place shows each prep task's ingredient amounts inline, scaled to the servings (R4.42, R8.13)", { tag: ["@R4.42", "@R8.13"] }, async ({ page, household }) => {
+  const { makeRecipe, uniqueTitle, waitForIndexed } = await import("../fixtures/recipes");
+  const title = uniqueTitle("Prep amounts");
+  const id = await makeRecipe(title, {
+    cook: `---
+title: x
+servings: 4
+cuisine: other
+main_protein: chicken
+prep_time: 10
+cook_time: 20
+tags: [dinner]
+prep:
+  - Mince 2 garlic cloves
+  - Pat the chicken thigh dry
+  - Preheat the oven to 220°C
+---
+
+Sear @chicken thigh{600%g} with @garlic{2%cloves} for ~{10%minutes}.
+`,
+  });
+  await waitForIndexed(id);
+  await page.goto(`/recipes/${id}/cook?servings=8`);
+  const tasks = page.getByRole("list", { name: "Prep tasks" });
+  await expect(tasks.getByTestId("prep-task")).toHaveCount(3);
+  // The written quantity becomes the badge, scaled ×2; a name alone gets the recipe's amount, metric (R8.13).
+  await expect(tasks.getByTestId("prep-task").nth(0)).toHaveText("Mince garlic4 cloves");
+  await expect(tasks.getByTestId("prep-task").nth(1)).toHaveText("Pat the chicken thigh1200 g dry");
+  await expect(tasks.getByTestId("prep-task").nth(2)).toHaveText("Preheat the oven to 430°F");
+  await expect(tasks.getByTestId("prep-amount")).toHaveCount(2);
+  void household;
 });

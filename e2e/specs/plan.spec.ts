@@ -176,17 +176,29 @@ test.describe("coverage strip (R6.2)", () => {
     await expect(sheet.getByText(/\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b/)).toHaveCount(0);
   });
 
-  test("cooked meals are solid, planned ones outlined", { tag: ["@R6.2"] }, async ({ page, household }) => {
+  test("cooked meals are accent-filled, planned ones outlined; only the planned one is listed (M29)", { tag: ["@R6.2", "@R6.1"] }, async ({ page, household }) => {
     const r = await makePlanRecipe("Solid or outlined");
     const pid = await seedPeriod(household.hid);
     await seedPlanItem(household.hid, pid, [r.id], { status: "cooked" });
+    await seedPlanItem(household.hid, pid, [r.id], { status: "eaten" });
+    await seedPlanItem(household.hid, pid, [r.id], { status: "skipped" });
     await seedPlanItem(household.hid, pid, [r.id]);
     const plan = new PlanPage(page);
     await plan.goto();
     const row = page.getByTestId("strip-dinner");
     await expect(row.locator("td").nth(0)).toHaveAttribute("data-state", "cooked");
-    await expect(row.locator("td").nth(1)).toHaveAttribute("data-state", "planned");
-    await expect(row.locator("td").nth(2)).toHaveAttribute("data-state", "open");
+    await expect(row.locator("td").nth(1)).toHaveAttribute("data-state", "cooked");
+    await expect(row.locator("td").nth(2)).toHaveAttribute("data-state", "planned");
+    await expect(row.locator("td").nth(3)).toHaveAttribute("data-state", "open");
+    await expect(plan.stripCount("dinner")).toHaveText("3/7");
+    // The accent fill, not just a border: the cooked cell's face is the accent colour, the planned one the base.
+    const face = (i: number) => row.locator("td").nth(i).locator("span").first().evaluate((el) => getComputedStyle(el).backgroundColor);
+    const acc = await page.evaluate(() => { const d = document.createElement("div"); d.style.background = "var(--acc)"; document.body.append(d); const c = getComputedStyle(d).backgroundColor; d.remove(); return c; });
+    expect(await face(0)).toBe(acc);
+    expect(await face(2)).not.toBe(acc);
+    // Cooked, eaten and skipped items leave the list; the planned one stays.
+    await expect(plan.item(r.title)).toHaveCount(1);
+    await expect(plan.item(r.title).getByTestId("plan-item-status")).toHaveText(/to cook/i);
   });
 });
 

@@ -3,7 +3,7 @@
 // ingredients posts corrections for the difference; pending reviews completed later by another member; Save this meal.
 import { adminDb } from "../fixtures/admin";
 import { expect, test } from "../fixtures/test";
-import { PlanPage, seedPeriod, seedPlanItem } from "../pages/plan";
+import { seedPeriod, seedPlanItem } from "../pages/plan";
 import { uniqueTitle } from "../fixtures/recipes";
 import { commandsSettled, cookEvents, expectSupply, makeCookRecipe, seedNotedEvent, seedSupply } from "../pages/supply";
 
@@ -103,7 +103,8 @@ test("an unsaved meal of several recipes offers Save this meal; the meal is then
   expect(meal.size).toBe(1);
   const st = (await adminDb.doc(`households/${household.hid}/stats/meal_${meal.docs[0]!.id}`).get()).data();
   expect(st).toMatchObject({ ratingSum: 10, ratingCount: 1 });
-  await expect(new PlanPage(page).item(mealName)).toContainText(/Saved meal/i);
+  // The plan item takes the saved meal's name (it has left the Plan list once eaten, M29).
+  await expect.poll(async () => (await adminDb.doc(`households/${household.hid}/planItems/${itemId}`).get()).data()).toMatchObject({ savedMealId: meal.docs[0]!.id, name: mealName, status: "eaten" });
 });
 
 test("the review shows last time's note above the note field; Keep this note carries it into this cook (R9.6, R4.38)", { tag: ["@R9.6", "@R4.38"] }, async ({ page, household }) => {

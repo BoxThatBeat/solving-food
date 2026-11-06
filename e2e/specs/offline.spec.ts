@@ -46,7 +46,9 @@ test("finish a meal, correct supply, and tick groceries offline; they apply afte
   await page.getByRole("button", { name: "Done cooking", exact: true }).click();
   await expect(page.getByText(/Syncing · supply updates when you're back online/)).toBeVisible();
   await page.getByRole("button", { name: "Review later" }).click();
-  await expect(plan.item(r.title).getByTestId("plan-item-status")).toHaveText(/cooked/i);
+  // Cooked (from the queued command): it leaves the list at once and its strip cell is solid (M29).
+  await expect(plan.item(r.title)).toHaveCount(0);
+  await expect(page.getByTestId("strip-dinner").locator("td").nth(0)).toHaveAttribute("data-state", "cooked");
 
   // Nothing reached the server yet.
   expect((await adminDb.collection(`households/${household.hid}/commands`).get()).size).toBe(0);
