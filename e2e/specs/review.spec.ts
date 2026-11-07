@@ -59,7 +59,7 @@ test("a review can wait: Pending reviews on the Plan page; another member finish
   await expect(page).toHaveURL(/\/plan$/);
   const pending = page.getByTestId("pending-reviews");
   await expect(pending).toContainText(r.title);
-  await expect(pending).toContainText("NOT REVIEWED YET");
+  await expect(pending).toContainText("not reviewed yet");
 
   // Sam reviews it that evening.
   const sam = secondMember.page;
@@ -70,7 +70,7 @@ test("a review can wait: Pending reviews on the Plan page; another member finish
   await sam.getByRole("button", { name: "Save & update supply" }).click();
   await commandsSettled(household.hid, 2);
   // Now I'm asked only for my rating.
-  await expect(pending).toContainText("SAM RATED IT 6/10");
+  await expect(pending).toContainText("Sam rated it 6/10");
   await pending.getByRole("link", { name: `Rate ${r.title}` }).click();
   await expect(page.getByRole("tab")).toHaveCount(1);
   await page.getByTestId("rating-card").getByRole("button", { name: "9 out of 10" }).click();

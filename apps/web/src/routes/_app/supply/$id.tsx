@@ -30,7 +30,7 @@ function SupplyItemPage() {
         <ArrowLeft aria-hidden className="size-4" strokeWidth={3} />
         Supply
       </Link>
-      <PageHeader title={name} kicker={item ? `${amountText(recomputeAmount(item.lots), unitFor(item, ing)).toUpperCase()} IN SUPPLY` : "SUPPLY"} />
+      <PageHeader title={name} kicker={item ? `${amountText(recomputeAmount(item.lots), unitFor(item, ing))} in Supply` : "Supply"} />
       {supply.loading ? null : item ? (
         <div className="rounded-ui border-bw bg-base p-3.5 shadow-hard">
           <SupplyDetail item={item} ingredient={ing} hid={hh.id} uid={s.user.uid} tz={tz} nowMs={supply.now} members={members} />

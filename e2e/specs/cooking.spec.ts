@@ -20,7 +20,7 @@ test("mise en place lists the prep tasks, then step mode shows one step with inl
   await expect(tasks).toContainText("Preheat the oven to 430°F"); // the recipe's 220°C, Fahrenheit only (R8.13)
   await expect(tasks).not.toContainText("°C");
   await tasks.getByRole("checkbox", { name: /Dice the onion/ }).click();
-  await expect(page.getByTestId("mise-count")).toHaveText("1 OF 2 READY");
+  await expect(page.getByTestId("mise-count")).toHaveText("1 of 2 ready");
   await page.getByRole("button", { name: "Start step mode →" }).click();
 
   const card = page.getByTestId("step-card");

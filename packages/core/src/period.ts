@@ -145,7 +145,7 @@ export function isEnded(period: { endMs: number }, nowMs: number): boolean {
 
 export interface DayCell {
   date: LocalDate;
-  /** "MON" */
+  /** "Mon" */
   weekday: string;
   /** "10" */
   day: string;
@@ -153,14 +153,14 @@ export interface DayCell {
   label: string;
 }
 
-const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function cellOf(date: LocalDate): DayCell {
   const [y, m, d] = date.split("-").map(Number) as [number, number, number];
   const wd = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
   const w = WEEKDAYS[wd]!;
-  return { date, weekday: w, day: String(d), label: `${w.charAt(0)}${w.slice(1).toLowerCase()} ${d} ${MONTHS[m - 1]}` };
+  return { date, weekday: w, day: String(d), label: `${w} ${d} ${MONTHS[m - 1]}` };
 }
 
 /** One cell per day of the period, for the coverage strip (R6.2). */
@@ -177,13 +177,13 @@ export function dayOfPeriod(nowMs: number, startMs: number, endMs: number, tz: s
   return Math.min(total, Math.max(1, d));
 }
 
-/** "5–11 OCT", or "28 SEP–4 OCT" across months (the prototype's kicker). End is exclusive. */
+/** "5–11 Oct", or "28 Sep–4 Oct" across months (the prototype's kicker). End is exclusive. */
 export function formatPeriodRange(startMs: number, endMs: number, tz: string): string {
   const s = localDate(startMs, tz);
   const e = addDays(localDate(endMs, tz), -1);
   const [, sm, sd] = s.split("-").map(Number) as [number, number, number];
   const [, em, ed] = e.split("-").map(Number) as [number, number, number];
-  const mon = (m: number) => MONTHS[m - 1]!.toUpperCase();
+  const mon = (m: number) => MONTHS[m - 1]!;
   if (s === e) return `${sd} ${mon(sm)}`;
   return sm === em ? `${sd}–${ed} ${mon(em)}` : `${sd} ${mon(sm)}–${ed} ${mon(em)}`;
 }

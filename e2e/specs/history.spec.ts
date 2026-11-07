@@ -39,7 +39,7 @@ test("lists everything cooked with date, ratings, who cooked, notes, and deviati
   await expect(rows).toHaveCount(2);
   const first = rows.first();
   await expect(first).toContainText("Garlic Rice and Chicken");
-  await expect(first).toContainText(`COOKED BY ${household.displayName.toUpperCase()}`, { ignoreCase: true });
+  await expect(first).toContainText(`Cooked by ${household.displayName}`);
   await expect(first.getByLabel("Average rating 8.0")).toBeVisible();
   await expect(first).toContainText(/\+100 g chicken breast/i); // deviation from the recipe
   await expect(first).toContainText("“Needed more garlic.”");

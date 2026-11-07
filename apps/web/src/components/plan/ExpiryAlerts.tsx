@@ -44,7 +44,7 @@ export function ExpiryAlerts({
   const candidates = summaries.filter((r) => !plannedIds.has(r.id) && !scores.get(r.id)?.blocked);
   return (
     <section aria-label="Expiring supply" data-testid="expiry-alerts" className="flex flex-col gap-2.5 rounded-ui border-bw bg-peach p-3 text-onc shadow-hard">
-      <span className="tabular-nums text-[0.65625rem] font-extrabold tracking-[0.045rem]">USE IT OR LOSE IT</span>
+      <span className="tabular-nums text-[0.65625rem] font-extrabold tracking-[0.045rem]">Use it or lose it</span>
       {shown.map((a) => {
         const ing = ingredient(a.ingredientId);
         const name = ing?.name ?? a.ingredientId.replace(/-/g, " ");

@@ -300,7 +300,7 @@ export function RecipeDetail({
                 You&apos;ve made this {facts.timesCooked} time{facts.timesCooked === 1 ? "" : "s"}
                 {facts.lastCookedAtMs ? ` · last ${DATE.format(new Date(facts.lastCookedAtMs))}` : ""}
               </span>
-              <span className="tabular-nums text-[0.65625rem] font-semibold text-sub">{facts.rating ? `HOUSEHOLD ${facts.rating.toFixed(1)}` : "NO RATINGS YET"}</span>
+              <span className="tabular-nums text-[0.65625rem] font-semibold text-sub">{facts.rating ? `Household ${facts.rating.toFixed(1)}` : "No ratings yet"}</span>
             </span>
           </div>
         ) : null}
@@ -310,7 +310,7 @@ export function RecipeDetail({
         {recipe.tools.length ? (
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">TOOLS</span>
+              <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">Tools</span>
               {recipe.tools.map((t) => {
                 const lacks = missing.includes(t);
                 return (
@@ -335,7 +335,7 @@ export function RecipeDetail({
         <div className="flex items-center gap-2.5 rounded-ui border-2 border-line bg-base px-2.5 py-2">
           <span className="flex flex-1 flex-col gap-0.5">
             <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]" id="servings-label">
-              SERVINGS
+              Servings
             </span>
             <span className="text-[0.6875rem] font-semibold text-sub" aria-live="polite">
               {factor === 1 ? "As written" : `Scaled ×${Math.round(factor * 100) / 100} · amounts update`}
@@ -422,7 +422,7 @@ export function RecipeDetail({
         <div className="flex flex-col gap-1.5 tabular-nums text-[0.65625rem] leading-normal font-semibold text-sub">
           {recipe.sourceUrl ? (
             <span>
-              SOURCE ·{" "}
+              Source ·{" "}
               <a href={recipe.sourceUrl} target="_blank" rel="noreferrer noopener" className="text-ink">
                 {recipe.sourceUrl.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")} ↗
               </a>
@@ -430,7 +430,7 @@ export function RecipeDetail({
           ) : null}
           <span>
             V{recipe.version}
-            {editor ? ` · EDITED BY ${editor}` : ""}
+            {editor ? ` · edited by ${editor}` : ""}
             {updated ? ` · ${DATE.format(new Date(updated))}` : ""}
           </span>
           {/* Copy link lives down here with the other text actions (M7 review; the top bar was crowded). Signed-out visitors get it too. */}
@@ -485,11 +485,13 @@ export function RecipeDetail({
 /** The text actions under the recipe (Version history · Edit · Delete): underlined links, 44 px hit targets (M24). */
 const FOOTER_ACTION = "inline-flex min-h-11 min-w-11 justify-center cursor-pointer items-center bg-transparent p-0 font-sans text-[0.8125rem] font-extrabold text-ink underline";
 
+const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 function timerLabel(s: number): string {
-  if (s < 60) return `${s} SEC`;
-  if (s % 3600 === 0) return `${s / 3600} HR`;
-  if (s > 3600) return `${Math.floor(s / 3600)} HR ${Math.round((s % 3600) / 60)} MIN`;
-  return `${Math.round(s / 60)} MIN`;
+  if (s < 60) return `${s} sec`;
+  if (s % 3600 === 0) return `${s / 3600} hr`;
+  if (s > 3600) return `${Math.floor(s / 3600)} hr ${Math.round((s % 3600) / 60)} min`;
+  return `${Math.round(s / 60)} min`;
 }
 
 function IngredientsTable({
@@ -516,19 +518,19 @@ function IngredientsTable({
           Ingredients
         </h2>
         <span className="tabular-nums text-[0.65625rem] font-bold">
-          {recipe.ingredients.length} INGREDIENTS · {servings} SERVINGS
+          {recipe.ingredients.length} ingredients · {servings} servings
         </span>
       </div>
       <div className="overflow-hidden rounded-ui border-bw bg-base shadow-hard">
         <div className="flex justify-between bg-ink px-3 py-[0.4375rem] tabular-nums text-[0.625rem] font-bold tracking-[0.03rem] text-base" aria-hidden>
-          <span>INGREDIENT</span>
-          <span>{signedIn ? "NEED · IN SUPPLY" : "AMOUNT"}</span>
+          <span>Ingredient</span>
+          <span>{signedIn ? "Need · in Supply" : "Amount"}</span>
         </div>
         <ul className="m-0 list-none p-0">
           {recipe.ingredients.map((l, k) => {
             const ing = ingredients.get(l.ingredientId);
             const t = lineText(l, lookup, factor);
-            const hint = [l.optional ? "OPTIONAL" : "", ing?.freeUse ? "STAPLE" : "", ing ? ing.defaultLocation.toUpperCase() : "", signedIn && ing?.needsReview ? "NEEDS REVIEW" : "", signedIn && l.amount > 0 && unitDef(l.measure).kind === "container" ? "NEEDS A WEIGHT" : ""].filter(Boolean).join(" · ");
+            const hint = sentence([l.optional ? "optional" : "", ing?.freeUse ? "staple" : "", ing ? ing.defaultLocation : "", signedIn && ing?.needsReview ? "needs review" : "", signedIn && l.amount > 0 && unitDef(l.measure).kind === "container" ? "needs a weight" : ""].filter(Boolean).join(" · "));
             return (
               <li key={l.id} className={cn("flex items-center gap-2.5 px-3 py-2.5", k && "border-t-2 border-line")}>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -574,7 +576,7 @@ function HouseholdNotes({ hid, uid, recipeId }: { hid: string; uid: string; reci
   return (
     <div className="flex flex-col gap-1.5 rounded-ui border-2 border-line bg-base p-3">
       <label htmlFor="household-note" className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">
-        HOUSEHOLD NOTES
+        Household notes
       </label>
       <Textarea
         id="household-note"
@@ -644,7 +646,7 @@ function VersionHistory({
                   </span>
                 </span>
                 {isCurrent ? (
-                  <Badge className="bg-acc text-onc">CURRENT</Badge>
+                  <Badge className="bg-acc text-onc">Current</Badge>
                 ) : (
                   <Button size="sm" variant="secondary" onClick={() => restore(v.data, v.id)} aria-label={`Restore version ${v.id}`}>
                     Restore

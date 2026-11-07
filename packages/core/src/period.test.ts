@@ -39,7 +39,7 @@ describe("periods in America/Toronto", () => {
   it("spans the spring DST change (167 hours)", () => {
     const b = periodBounds("2027-03-12", 7, TZ); // DST starts 14 Mar 2027
     expect((b.endMs - b.startMs) / H).toBe(167);
-    expect(periodCells(b.startMs, b.endMs, TZ).map((c) => c.weekday)).toEqual(["FRI", "SAT", "SUN", "MON", "TUE", "WED", "THU"]);
+    expect(periodCells(b.startMs, b.endMs, TZ).map((c) => c.weekday)).toEqual(["Fri", "Sat", "Sun", "Mon", "Tue", "Wed", "Thu"]);
   });
 
   it("the first period starts today, local time", () => {
@@ -65,10 +65,10 @@ describe("periods in America/Toronto", () => {
   it("labels cells and the range", () => {
     const b = periodBounds("2026-10-05", 7, TZ);
     const cells = periodCells(b.startMs, b.endMs, TZ);
-    expect(cells[0]).toEqual({ date: "2026-10-05", weekday: "MON", day: "5", label: "Mon 5 Oct" });
-    expect(formatPeriodRange(b.startMs, b.endMs, TZ)).toBe("5–11 OCT");
+    expect(cells[0]).toEqual({ date: "2026-10-05", weekday: "Mon", day: "5", label: "Mon 5 Oct" });
+    expect(formatPeriodRange(b.startMs, b.endMs, TZ)).toBe("5–11 Oct");
     const c = periodBounds("2026-09-28", 7, TZ);
-    expect(formatPeriodRange(c.startMs, c.endMs, TZ)).toBe("28 SEP–4 OCT");
+    expect(formatPeriodRange(c.startMs, c.endMs, TZ)).toBe("28 Sep–4 Oct");
     expect(dayOfPeriod(Date.parse("2026-10-09T16:00:00Z"), b.startMs, b.endMs, TZ)).toBe(5);
   });
 

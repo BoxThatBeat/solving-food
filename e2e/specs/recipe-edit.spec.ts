@@ -85,7 +85,7 @@ test("manual entry: title, fixed cuisine and protein lists, tags, tools, ingredi
   await expect(page).toHaveURL(/\/recipes\/(?!new)[^/]+$/);
   const d = detail(page);
   await expect(d.locator("#recipe-title")).toHaveText(title);
-  await expect(d.getByText("KOREAN", { exact: true }).or(d.getByText("Korean", { exact: true })).first()).toBeVisible();
+  await expect(d.getByText("Korean", { exact: true }).first()).toBeVisible();
   await expect(d.locator("section[aria-labelledby=ing-h] li")).toHaveCount(2);
   await expect(d.locator("section[aria-labelledby=ing-h]")).toBeVisible();
   // A count reads as written, with no metric after it (R8.13 v3).
@@ -313,7 +313,7 @@ test("a photo added in the editor is resized in the browser to three WebP sizes 
   await page.goto(`/recipes/${id}/edit`);
   const form = page.getByRole("form", { name: "Edit recipe" });
   await form.getByLabel("Add photo").setInputFiles({ name: "salad.jpeg", mimeType: "image/jpeg", buffer: readFileSync(join(ATTACHMENTS_DIR, "IMG_6374.jpeg")) });
-  await expect(form.getByText("MAIN", { exact: true })).toBeVisible({ timeout: 20_000 });
+  await expect(form.getByText("Main", { exact: true })).toBeVisible({ timeout: 20_000 });
   await form.getByRole("button", { name: "Save recipe" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Saved as v2 for everyone" })).toBeVisible();
   const img = detail(page).getByRole("img", { name: title });

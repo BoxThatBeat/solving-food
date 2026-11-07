@@ -261,7 +261,7 @@ function PriceRow({ name, m }: { name: string; m: PriceMover }) {
     <div className="flex items-center gap-2.5" data-testid="price-mover">
       <span className="flex min-w-0 flex-1 flex-col leading-tight">
         <span className="truncate text-[0.8125rem] font-bold">{name}</span>
-        <span className="tabular-nums text-[0.5625rem] font-bold text-sub">usual {formatCents(m.usualCents)}</span>
+        <span className="tabular-nums text-[0.5625rem] font-bold text-sub">Usual {formatCents(m.usualCents)}</span>
       </span>
       <span className="tabular-nums text-[0.75rem] font-extrabold">{formatCents(m.cents)}</span>
       <Badge className={cn("w-[3.25rem] flex-none text-center", down ? "bg-acc text-onc" : "bg-red-soft text-onc")}>
@@ -273,7 +273,7 @@ function PriceRow({ name, m }: { name: string; m: PriceMover }) {
 }
 
 /** Spend per period (M25, R7.17): read from receipts, estimated, or some of each. */
-const SPEND_TAG: Record<SpendBasis, string> = { actual: "actual", estimated: "estimated", mixed: "part actual" };
+const SPEND_TAG: Record<SpendBasis, string> = { actual: "Actual", estimated: "Estimated", mixed: "Part actual" };
 
 function Bar({ label, value, tag, fraction, teal, inline, over, mono }: { label: string; value: string; tag?: string | undefined; fraction: number; teal?: boolean; inline?: boolean; over?: boolean; mono?: boolean }) {
   const bar = (
@@ -341,7 +341,7 @@ function HistoryRow({
   for (const r of ratings) byWho.set(r.uid, [...(byWho.get(r.uid) ?? []), r.score]);
   const devs = e.reviewStatus === "done" ? deviations(e.defaults ?? [], e.used) : [];
   const mineMissing = !byWho.has(uid);
-  const name = (who: string) => (members.get(who) ?? "Someone").toUpperCase();
+  const name = (who: string) => members.get(who) ?? "Someone";
   const multi = e.recipeIds.length > 1;
   return (
     <li className="flex items-start gap-3 rounded-ui border-bw bg-base p-3 shadow-hard" data-testid="history-row" aria-label={e.title ?? e.titles.join(" + ")}>

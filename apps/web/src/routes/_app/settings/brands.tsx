@@ -60,7 +60,7 @@ function BrandsPage() {
             <CardTitle>Brands</CardTitle>
             <p className="m-0 text-[0.8125rem] font-semibold">The grocery list uses these names so ChatGPT orders the right thing.</p>
           </div>
-          <div className="bg-ink px-3.5 py-2 tabular-nums text-[0.625rem] font-bold tracking-[0.045rem] text-base">INGREDIENT → PREFERRED PRODUCT</div>
+          <div className="bg-ink px-3.5 py-2 tabular-nums text-[0.625rem] font-bold tracking-[0.045rem] text-base">Ingredient → preferred product</div>
           <ul className="m-0 list-none p-0" aria-label="Brand mappings">
             {mappings.docs && rows.length === 0 ? <li className="p-3.5 text-[0.8125rem] font-semibold text-sub">No brands yet. Add one: the list then shows its name and rounds to its pack.</li> : null}
             {rows.map((r) => (
@@ -190,7 +190,7 @@ function MappingForm({
       {code ? (
         <div className="flex flex-wrap items-center gap-2 rounded-ui border-2 border-line bg-acc p-2.5 text-onc" data-testid="linked-product" role="status">
           <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">✓ SELECTED PC EXPRESS PRODUCT</span>
+            <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">✓ Selected PC Express product</span>
             <span className="text-[0.875rem] leading-tight font-extrabold">{product || code}</span>
             <span className="flex flex-wrap items-center gap-1.5 tabular-nums text-[0.625rem] font-semibold">
               <FromPcx />
@@ -205,14 +205,14 @@ function MappingForm({
       ) : null}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="bm-product" className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">
-          PRODUCT
+          Product
         </label>
         <Input id="bm-product" placeholder="Mutti Polpa chopped tomatoes" value={product} maxLength={120} onChange={(e) => setProduct(e.target.value)} />
       </div>
       <div className="flex flex-wrap items-end gap-2">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="bm-amount" className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">
-            PACK SIZE
+            Pack size
           </label>
           <Input id="bm-amount" inputMode="decimal" placeholder="400" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-[7rem]" />
         </div>
@@ -227,7 +227,7 @@ function MappingForm({
       </div>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="bm-store" className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">
-          STORE · A BRAND'S STORE BEATS SOURCING RULES
+          Store · a brand's store beats sourcing rules
         </label>
         <Select id="bm-store" value={storeId} onChange={(e) => setStoreId(e.target.value)}>
           {stores.map((st) => (

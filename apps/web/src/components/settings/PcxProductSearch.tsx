@@ -39,7 +39,7 @@ export function PcxProductSearch({
   };
   return (
     <div className="flex flex-col gap-2 rounded-ui border-2 border-dashed border-line p-2.5" data-testid="pcx-product-search">
-      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">SEARCH PC EXPRESS</span>
+      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">Search PC Express</span>
       <div className="flex gap-2">
         <Input
           aria-label="Search PC Express products"
@@ -89,7 +89,7 @@ export function PcxProductSearch({
                 </span>
                 <span className="flex flex-none flex-col items-end gap-1">
                   <span className="tabular-nums text-[0.875rem] font-extrabold">{p.priceCents !== undefined ? formatCents(p.priceCents) : "—"}</span>
-                  {on ? <span className="rounded-[calc(var(--r)*0.6)] border-2 border-line bg-base px-1.5 tabular-nums text-[0.5625rem] font-extrabold text-ink">✓ SELECTED</span> : null}
+                  {on ? <span className="rounded-[calc(var(--r)*0.6)] border-2 border-line bg-base px-1.5 tabular-nums text-[0.5625rem] font-extrabold text-ink">✓ Selected</span> : null}
                 </span>
               </button>
             </li>

@@ -70,7 +70,7 @@ function SidesPage() {
             </p>
             <p className="m-0 text-[0.75rem] font-semibold text-sub">A changed portion applies to meals you create afterwards. Meals already planned or saved keep theirs.</p>
           </div>
-          <div className="bg-ink px-3.5 py-2 tabular-nums text-[0.625rem] font-bold tracking-[0.045rem] text-base">SIDE · PORTION PER PERSON</div>
+          <div className="bg-ink px-3.5 py-2 tabular-nums text-[0.625rem] font-bold tracking-[0.045rem] text-base">Side · portion per person</div>
           <ul className="m-0 list-none p-0" aria-label="Sides">
             {list === undefined ? <li className="p-3.5 text-[0.8125rem] font-semibold text-sub">Loading…</li> : null}
             {list?.length === 0 ? <li className="p-3.5 text-[0.8125rem] font-semibold text-sub">No sides yet. Flag an ingredient to add one.</li> : null}

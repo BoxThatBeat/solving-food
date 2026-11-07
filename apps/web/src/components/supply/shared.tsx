@@ -10,7 +10,7 @@ const FLAG_CLASS: Record<ExpiryFlag, string> = {
   none: "bg-s0 text-ink",
 };
 
-/** "FRESH · 4D", "USE SOON · 2D", "EXPIRED", "❄ FROZEN · 5MO", "KEEPS" (R8.5, R8.6). */
+/** "Fresh · 4d", "Use soon · 2d", "Expired", "❄ Frozen · 5mo", "Keeps" (R8.5, R8.6). */
 export function ExpiryBadge({ flag, expiresMs, frozen, nowMs, tz, className }: { flag: ExpiryFlag; expiresMs: number | null; frozen?: boolean; nowMs: number; tz: string; className?: string }) {
   const d = expiresMs !== null ? Math.max(0, daysLeft(expiresMs, nowMs, tz)) : null;
   let text: string;

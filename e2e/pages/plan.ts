@@ -86,8 +86,8 @@ export class PlanPage {
 
   async goto(): Promise<void> {
     await this.page.goto("/plan");
-    await expect(this.page.getByTestId("period-range")).not.toHaveText(/SETTING UP/, { timeout: 20_000 });
-    await expect(this.page.getByTestId("plan-count")).not.toHaveText("LOADING…");
+    await expect(this.page.getByTestId("period-range")).not.toHaveText(/Setting up/, { timeout: 20_000 });
+    await expect(this.page.getByTestId("plan-count")).not.toHaveText("Loading…");
   }
 
   /** The visible budget figure (the phone meter or the desktop card). */
@@ -133,7 +133,7 @@ export class PlanPage {
     await expect(sheet).toBeVisible();
     if (opts.mealType) await sheet.getByRole("button", { name: opts.mealType, exact: true }).click();
     if (opts.servings) {
-      const group = sheet.getByRole("group", { name: "SERVINGS" });
+      const group = sheet.getByRole("group", { name: "Servings" });
       for (let i = 0; i < 20; i++) {
         const v = Number(await group.getByRole("status").textContent());
         if (v === opts.servings) break;

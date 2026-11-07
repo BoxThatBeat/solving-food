@@ -93,7 +93,7 @@ function LotRow({ lot, item, ingredient, unit, hid, uid, tz, nowMs }: { lot: Led
       <div className="flex flex-wrap items-center gap-2">
         <span className="flex min-w-[12rem] flex-1 flex-col gap-1">
           <span className="tabular-nums text-[0.8125rem] font-extrabold">
-            {amountText(lot.amount, unit)} <span className="text-[0.625rem] font-semibold text-sub">BOUGHT {dateText(lot.acquiredAtMs, tz)}</span>
+            {amountText(lot.amount, unit)} <span className="text-[0.625rem] font-semibold text-sub">Bought {dateText(lot.acquiredAtMs, tz)}</span>
           </span>
           <span className="flex flex-wrap gap-1">
             <ExpiryBadge flag={expiryFlag(e, nowMs, tz)} expiresMs={e} frozen={frozen} nowMs={nowMs} tz={tz} />
@@ -158,7 +158,7 @@ function LotRow({ lot, item, ingredient, unit, hid, uid, tz, nowMs }: { lot: Led
           }}
         >
           <label className="flex flex-1 items-center gap-2 tabular-nums text-[0.625rem] font-bold">
-            USE BY
+            Use by
             <Input
               type="date"
               value={dating}
@@ -185,7 +185,7 @@ function LotRow({ lot, item, ingredient, unit, hid, uid, tz, nowMs }: { lot: Led
       ) : null}
       {freezing !== null ? (
         <div className="flex flex-wrap items-center gap-2 rounded-ui border-2 border-line bg-blue-soft p-2 text-onc">
-          <span className="tabular-nums text-[0.625rem] font-bold">FREEZE HOW MUCH?</span>
+          <span className="tabular-nums text-[0.625rem] font-bold">Freeze how much?</span>
           <Stepper label="Amount to freeze" value={freezing} min={Math.min(step, lot.amount)} max={lot.amount} step={step} onChange={setFreezing} format={(v) => amountText(v, unit)} className="bg-base text-ink" />
           <Button
             size="sm"
@@ -316,7 +316,7 @@ function LedgerList({ hid, supplyId, unit, tz, members, limitTo }: { hid: string
   return (
     <section aria-label="History" className="flex flex-col gap-1">
       <SectionLabel hint={limitTo && l.rows.length > limitTo ? <Link to="/supply/$id" params={{ id: supplyId }} className="text-ink">Full history →</Link> : undefined}>History</SectionLabel>
-      {l.loading ? <span className="tabular-nums text-[0.6875rem] text-sub">LOADING…</span> : null}
+      {l.loading ? <span className="tabular-nums text-[0.6875rem] text-sub">Loading…</span> : null}
       {!l.loading && !rows.length ? <span className="text-[0.8125rem] font-semibold text-sub">No changes yet.</span> : null}
       <ol className="m-0 flex list-none flex-col p-0" data-testid="ledger">
         {rows.map((r) => (
@@ -339,7 +339,7 @@ function LedgerRow({ t, unit, tz, who }: { t: StoredTx; unit: AmountUnit; tz: st
   const sign = t.delta > 0 ? "+" : t.delta < 0 ? "−" : "";
   return (
     <li className="grid grid-cols-[4.25rem_minmax(0,1fr)_auto] items-baseline gap-2 border-b border-dashed border-line/40 py-1.5 tabular-nums text-[0.6875rem]" data-testid="ledger-row">
-      <span className="font-bold text-sub">{ms ? dateText(ms, tz) : "NOW"}</span>
+      <span className="font-bold text-sub">{ms ? dateText(ms, tz) : "Now"}</span>
       <span className="min-w-0 font-semibold">
         <span className="font-sans text-[0.8125rem] font-bold">{KIND_LABEL[t.kind] ?? t.kind}</span>
         {t.note ? <span className="text-sub"> · {t.note}</span> : null}

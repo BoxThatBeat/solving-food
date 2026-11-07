@@ -100,7 +100,7 @@ test.describe("filters and sorts", () => {
     let titles = await r.titles();
     expect(titles.length).toBeGreaterThanOrEqual(6);
     expect(titles).toEqual([...titles].sort((a, b) => a.localeCompare(b)));
-    await expect(page.getByTestId("recipe-count")).toContainText("NAME");
+    await expect(page.getByTestId("recipe-count")).toContainText("name");
 
     await r.goto("?cuisine=greek&sort=quickest");
     titles = await r.titles();
@@ -140,7 +140,7 @@ test.describe("filters and sorts", () => {
     await r.settled();
     await expect(r.list.getByTestId("card-skeleton")).toHaveCount(0);
     await expect(r.list.getByTestId("recipe-card").first()).toBeVisible();
-    await expect(page.getByTestId("recipe-count")).toContainText("SUGGESTED");
+    await expect(page.getByTestId("recipe-count")).toContainText("suggested");
   });
 
   test("the Meals page uses the same search, filter, and sort component", { tag: ["@R4.7"] }, async ({ page, household: _ }) => {
@@ -162,7 +162,7 @@ test.describe("favourites and cards", () => {
     await expect(star).toHaveAttribute("aria-pressed", "false");
     await star.click();
     await expect(star).toHaveAttribute("aria-pressed", "true");
-    await expect(card.getByText("★ FAV")).toBeVisible();
+    await expect(card.getByText("★ Fav")).toBeVisible();
 
     const id = await seedRecipeId("Garlic Shrimp With Smoked Paprika");
     await expect.poll(async () => (await adminDb.doc(`households/${household.hid}/favourites/recipe_${id}`).get()).exists).toBe(true);
@@ -210,19 +210,19 @@ test.describe("favourites and cards", () => {
     const r = new RecipesPage(page);
     await r.goto("?cuisine=greek");
     const tzatziki = r.card("Tzatziki Sauce");
-    await expect(tzatziki).toContainText(/5m · GREEK · 26 G PROTEIN/i); // uppercased by CSS, except the duration
+    await expect(tzatziki).toContainText("5m · Greek · 26 g protein");
     // Never cooked: no stats line at all (M7 review), not "never cooked" or "0×".
-    await expect(tzatziki).not.toContainText(/NEVER COOKED|MADE|0×/i);
+    await expect(tzatziki).not.toContainText(/never cooked|made|0×/i);
     await expect(tzatziki.getByRole("img", { name: "Tzatziki Sauce" })).toBeVisible();
 
     await r.goto(`?q=${encodeURIComponent(title)}`);
-    await expect(r.card(title)).toContainText(/~21 G PROTEIN/i); // 200 g greek yogurt at 10.3 g/100 g; the paste has no data
+    await expect(r.card(title)).toContainText("~21 g protein"); // 200 g greek yogurt at 10.3 g/100 g; the paste has no data
 
     // Stats come from the household's stats docs (written by functions from M3); the card reads them.
     const id = await seedRecipeId("Greek Salad");
     await adminDb.doc(`households/${household.hid}/stats/recipe_${id}`).set({ timesCooked: 14, lastCookedAt: new Date("2026-09-21T18:00:00-04:00"), ratingSum: 120, ratingCount: 14 });
     await r.goto("?cuisine=greek");
-    await expect(r.card("Greek Salad")).toContainText(/MADE 14× · LAST 21 SEP/i);
+    await expect(r.card("Greek Salad")).toContainText("Made 14× · last 21 Sep");
     await expect(r.card("Greek Salad")).toContainText("★ 8.6");
   });
 
@@ -270,7 +270,7 @@ test.describe("supply-based browsing (M3)", () => {
     const r = new RecipesPage(page);
     await r.goto(`?q=${encodeURIComponent(`Pantry ${tag}`)}`);
     await expect(r.card(full.title).getByTestId("can-make")).toBeVisible();
-    await expect(r.card(most.title)).toContainText("ALMOST");
+    await expect(r.card(most.title)).toContainText("Almost");
     await expect(r.card(none.title).getByTestId("can-make")).toHaveCount(0);
     await r.goto(`?q=${encodeURIComponent(`Pantry ${tag}`)}&supply=can`);
     await expect(page.getByTestId("recipe-card")).toHaveCount(1);

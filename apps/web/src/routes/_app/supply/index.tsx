@@ -185,7 +185,7 @@ function SupplyPage() {
         <Button onClick={() => setAdding(true)}>+ Add</Button>
       </div>
       <span className="sr-only" role="status" data-testid="supply-count">
-        {m.supply.loading ? "LOADING…" : `${inStock.length} IN SUPPLY${m.supply.pendingCount ? " · SYNCING" : ""}`}
+        {m.supply.loading ? "Loading…" : `${inStock.length} in Supply${m.supply.pendingCount ? " · syncing" : ""}`}
       </span>
 
       <div className="flex flex-col gap-2.5">
@@ -275,7 +275,7 @@ function SupplyPage() {
 
       {leftovers.length ? (
         <section aria-label="Leftovers" className="overflow-hidden rounded-ui border-bw bg-base shadow-hard">
-          <div className="border-b-2 border-line bg-[#c6a0f6] px-3 py-1.5 tabular-nums text-[0.625rem] font-bold tracking-[0.03125rem] text-[#4c4f69]">LEFTOVERS · PREPARED PORTIONS</div>
+          <div className="border-b-2 border-line bg-[#c6a0f6] px-3 py-1.5 tabular-nums text-[0.625rem] font-bold tracking-[0.03125rem] text-[#4c4f69]">Leftovers · prepared portions</div>
           {leftovers.map((lo, i) => {
             const n = recomputeAmount(lo.lots);
             const e = itemExpiry(lo.lots, now, tz);

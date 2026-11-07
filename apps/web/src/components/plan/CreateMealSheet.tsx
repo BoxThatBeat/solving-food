@@ -439,7 +439,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
       <div className="flex items-center justify-between gap-3 rounded-ui border-2 border-line bg-base px-3 py-2">
         <span className="flex flex-col gap-0.5">
           <span id="cm-servings" className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">
-            SERVINGS
+            Servings
           </span>
           <span className="text-[0.75rem] font-semibold text-sub">Each recipe is scaled to this</span>
         </span>
@@ -462,7 +462,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
           {saveAsMeal || selected.length > 1 ? (
             <div className="flex flex-col gap-1.5">
               <label htmlFor="cm-name" className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">
-                NAME{saveAsMeal ? "" : " (OPTIONAL)"}
+                Name{saveAsMeal ? "" : " (optional)"}
               </label>
               <Input
                 id="cm-name"
@@ -480,7 +480,7 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
       ) : null}
 
       <div className="flex flex-col gap-1 rounded-ui border-2 border-line bg-base px-3.5 py-3" data-testid="budget-impact">
-        <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">BUDGET IMPACT</span>
+        <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">Budget impact</span>
         {impact ? (
           <>
             <span className="text-[1.0625rem] font-extrabold">{impact.cents > 0 ? `+${formatCents(impact.cents)} to buy` : "Nothing extra to buy"}</span>

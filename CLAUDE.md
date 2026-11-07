@@ -25,7 +25,10 @@ it is history (like `THOUGHTS.md`), not a reference to match, and nothing compar
   sub `#5c5f77` (Subtext 1, for WCAG AA), base `#eff1f5`, mantle `#e6e9ef`, pg `#dce0e8`, s0 `#ccd0da`,
   onc `#4c4f69`, desk `#bcc0cc`, scrim `rgba(76,79,105,.55)`. Keep the token structure so a flavour or look
   could come back, but don't build or test others.
-- **Type:** Archivo (500–900) and Archivo Black for display, JetBrains Mono for numbers and amounts.
+- **Type:** Unbounded 800 for display (page and section titles, sheet titles, the wordmark, grocery store headers),
+  set 5% under its class size by `size-adjust`; Hanken Grotesk (600 base) for everything else, with `tabular-nums` on
+  prices, amounts and anything in columns. No monospace, no `uppercase`: labels are written in sentence case
+  (proper nouns and "L" excepted, units lowercase), label letter-spacing is small (0.015–0.045 rem).
 - **New UI reuses existing components** (`apps/web/src/components/ui`, the shared sheets, chips, steppers,
   pickers and cards) and the same spacing and kicker headings as the page it sits on. Accessibility rules
   (contrast, 44 px hit targets on phones, focus rings) are enforced by `e2e/specs/a11y.spec.ts` and win over

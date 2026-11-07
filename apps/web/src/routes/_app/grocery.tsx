@@ -367,7 +367,7 @@ function GroceryPage() {
 }
 
 function lineSub(it: GroceryItem, ing: IngredientEntry | undefined): string {
-  if (it.source === "manual" && !it.ingredientId) return "ADDED BY HAND";
+  if (it.source === "manual" && !it.ingredientId) return "Added by hand";
   const name = ing?.name ?? it.ingredientId ?? "";
   const unit = it.measure || "g";
   const pack = it.packAmount

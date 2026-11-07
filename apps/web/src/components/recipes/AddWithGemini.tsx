@@ -74,7 +74,7 @@ export function AddWithGemini({ onAdded }: { onAdded: (r: AddRecipeResult) => vo
 
   return (
     <section aria-label="Add with Gemini" className="flex flex-col gap-2.5" data-testid="add-with-gemini" onPaste={onPaste}>
-      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">LET GEMINI ADD IT</span>
+      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">Let Gemini add it</span>
       {off ? (
         <p className="m-0 rounded-ui border-2 border-dashed border-line px-2.5 py-2 text-[0.8125rem] font-bold">
           Gemini isn&apos;t set up yet{ai?.canEditKey ? "" : " (the app's owner adds its key)"}.{" "}

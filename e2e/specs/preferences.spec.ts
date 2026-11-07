@@ -81,7 +81,7 @@ test("fibre goals per meal type, like protein; the plan shows the fibre average 
   await plan.goto();
   // 200 g pearl barley (15.6 g/100 g) for 4 servings ≈ 8 g fibre per serving.
   await expect(page.getByTestId("fibre-dinner")).toContainText(/8 g · goal 9 g ↓/);
-  await expect(plan.item(r.title)).toContainText(/8 g FIBRE/i);
+  await expect(plan.item(r.title)).toContainText(/8 g fibre/i);
 });
 
 test("one switch hides protein and fibre everywhere and keeps the goals; switching back restores them (M9)", { tag: ["@R6.27"] }, async ({ page, household }) => {

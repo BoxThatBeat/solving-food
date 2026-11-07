@@ -98,7 +98,7 @@ export class SupplyPage {
   constructor(readonly page: Page) {}
   async goto(query = ""): Promise<void> {
     await this.page.goto(`/supply${query}`);
-    await expect(this.page.getByTestId("supply-count")).not.toHaveText("LOADING…", { timeout: 20_000 });
+    await expect(this.page.getByTestId("supply-count")).not.toHaveText("Loading…", { timeout: 20_000 });
   }
   row(name: string | RegExp): Locator {
     return this.page.getByTestId("supply-row").filter({ has: this.page.getByRole("button", { name: typeof name === "string" ? new RegExp(`^${name}`, "i") : name }) });

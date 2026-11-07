@@ -76,12 +76,12 @@ export function daysLeft(expiresMs: number, nowMs: number, tz: string): number {
   return Math.round((expiresMs - today) / DAY_MS) - 1;
 }
 
-/** "2D", "5MO", "1Y+" (the prototype's mono expiry label). */
+/** "2d", "5mo", "1y+" (the expiry badge's short duration). */
 export function shortDuration(days: number): string {
-  if (days < 0) return "0D";
-  if (days < 60) return `${days}D`;
-  if (days < 365) return `${Math.round(days / 30)}MO`;
-  return "1Y+";
+  if (days < 0) return "0d";
+  if (days < 60) return `${days}d`;
+  if (days < 365) return `${Math.round(days / 30)}mo`;
+  return "1y+";
 }
 
 /**

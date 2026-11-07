@@ -95,7 +95,7 @@ function MealsPage() {
         <div className="flex flex-col gap-[0.1875rem]">
           <h1 className="m-0 font-display text-[1.75rem] leading-none font-extrabold md:text-[2.25rem]">Meals</h1>
           <span className="tabular-nums text-[0.65625rem] font-bold" data-testid="meal-count">
-            {meals.docs ? `${result.items.length} OF ${rows.length} SAVED · ${SORT_LABELS[search.sort ?? "suggested"].toUpperCase()}` : "LOADING…"}
+            {meals.docs ? `${result.items.length} of ${rows.length} saved · ${SORT_LABELS[search.sort ?? "suggested"].toLowerCase()}` : "Loading…"}
           </span>
         </div>
         {meals.docs && rows.length === 0 ? (

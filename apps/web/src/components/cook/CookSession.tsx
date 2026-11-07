@@ -299,10 +299,10 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
         </span>
         {awake ? (
           <span className="rounded-ui border-2 border-line bg-yellow px-1.5 py-0.5 tabular-nums text-[0.5625rem] font-bold text-onc" title="The screen stays on while you cook" data-testid="awake">
-            ☀<span className="max-sm:sr-only"> AWAKE</span>
+            ☀<span className="max-sm:sr-only"> Awake</span>
           </span>
         ) : null}
-        {!online ? <span className="rounded-ui border-2 border-line bg-peach-soft px-1.5 py-0.5 tabular-nums text-[0.5625rem] font-bold text-onc">OFFLINE</span> : null}
+        {!online ? <span className="rounded-ui border-2 border-line bg-peach-soft px-1.5 py-0.5 tabular-nums text-[0.5625rem] font-bold text-onc">Offline</span> : null}
         {/* M11 (R4.31): hands-free from mise en place on; not on a meal's order list. */}
         {phase.kind !== "order" ? <HandsFreeToggle /> : null}
         <Button variant="ink" size="sm" onClick={finish} disabled={finished}>

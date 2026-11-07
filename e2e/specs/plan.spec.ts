@@ -212,7 +212,7 @@ test.describe("budget meter (R6.3–R6.5)", () => {
     await plan.createMeal({ recipes: [r.title] });
     // 1 kg chicken thighs $12.99 + 312 g baby spinach $4.99; olive oil is free-use.
     await expect(plan.budgetLeft()).toHaveText("$82.02");
-    await expect(plan.item(r.title)).toContainText("+$17.98 TO BUY");
+    await expect(plan.item(r.title)).toContainText("+$17.98 to buy");
     // The same recipe again: still inside the packs already bought, so it costs nothing extra.
     await plan.createMeal({ recipes: [r.title], servings: 2 });
     await expect(plan.budgetLeft()).toHaveText("$82.02");
@@ -320,7 +320,7 @@ test.describe("eating out (M9)", () => {
     const card = plan.item("Eating out · Pizza at Mom's");
     await expect(card).toBeVisible();
     await expect(card.getByTestId("plan-item-status")).toHaveText(/eating out/i);
-    await expect(card.getByTestId("plan-item-cost")).toHaveText("EATING OUT · NOTHING TO BUY OR COOK");
+    await expect(card.getByTestId("plan-item-cost")).toHaveText("Eating out · nothing to buy or cook");
     await expect(card.getByRole("button", { name: /^Cook / })).toHaveCount(0);
     await expect(card.getByRole("button", { name: /eaten$/ })).toHaveCount(0);
     // Covered: the cooked meal, then the hatched eating-out cell; 2/7.
@@ -369,7 +369,7 @@ test.describe("expiring first (M9)", () => {
     await seedSupply(household.hid, "baby-spinach", [{ amount: 200, expiresInDays: 2 }], { label: "baby spinach" });
     const plan = new PlanPage(page);
     await plan.goto();
-    await expect(page.getByTestId("plan-count")).toHaveText(/EXPIRING FIRST/);
+    await expect(page.getByTestId("plan-count")).toHaveText(/expiring first/);
     const titles = page.getByRole("region", { name: "Dinner" }).getByTestId("plan-item").getByRole("button", { name: /^Order / });
     await expect(titles).toHaveText([spinach.title, chicken.title, rice.title]);
     await expect(plan.item(spinach.title).getByTestId("expiry-badge")).toHaveText(/baby spinach expires (in 2 days|tomorrow)/i);
@@ -497,7 +497,7 @@ test.describe("the next period (M26)", () => {
 
     await page.getByRole("group", { name: "Period" }).getByRole("button", { name: /^Next period/ }).click();
     await expect(page).toHaveURL(/period=next/);
-    await expect(page.getByTestId("period-range")).toContainText(/STARTS (IN \d+ DAYS|TOMORROW)/);
+    await expect(page.getByTestId("period-range")).toContainText(/Starts (in \d+ days|tomorrow)/);
     await expect(page.getByText("Nothing planned for the next period yet.")).toBeVisible();
     await plan.createMeal({ recipes: [r.title] });
     await expect(page.getByTestId("notifications")).toContainText("Added to the next period · dinner");

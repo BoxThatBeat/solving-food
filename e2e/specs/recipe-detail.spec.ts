@@ -34,7 +34,7 @@ test("shows image, servings, times, ingredients, steps, tools, source, notes, pr
   await expect(d.getByText("air fryer", { exact: true })).toBeVisible();
   await expect(d.getByText("Before you start")).toBeVisible();
   await expect(d.getByText("Our thoughts: really juicy chicken")).toBeVisible();
-  await expect(d.getByLabel("HOUSEHOLD NOTES")).toBeVisible();
+  await expect(d.getByLabel("Household notes")).toBeVisible();
   // Footer: version line without a "Shared library" label, and Copy link at the bottom (M7 review).
   await expect(d.getByText(/^V1\b/)).toBeVisible();
   await expect(d.getByText(/shared library/i)).toHaveCount(0);
@@ -54,13 +54,13 @@ test("shows image, servings, times, ingredients, steps, tools, source, notes, pr
 test("household notes save per household", { tag: ["@R4.8"] }, async ({ page, household }) => {
   const id = await seedRecipeId("Easy Flatbread No Yeast");
   await page.goto(`/recipes/${id}`);
-  const note = detail(page).getByLabel("HOUSEHOLD NOTES");
+  const note = detail(page).getByLabel("Household notes");
   await note.fill("Use the cast iron pan.");
   await detail(page).getByRole("button", { name: "Save note" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Household note saved" })).toBeVisible();
   await expect.poll(async () => (await adminDb.doc(`households/${household.hid}/notes/${id}`).get()).data()?.text).toBe("Use the cast iron pan.");
   await page.reload();
-  await expect(detail(page).getByLabel("HOUSEHOLD NOTES")).toHaveValue("Use the cast iron pan.");
+  await expect(detail(page).getByLabel("Household notes")).toHaveValue("Use the cast iron pan.");
 });
 
 test("amounts show one unit system: imperial weights and pints convert to metric only, cups/spoons/counts as written, inline in the steps too", { tag: ["@R8.13", "@R4.11"] }, async ({ page, household: _ }) => {
@@ -72,7 +72,7 @@ test("amounts show one unit system: imperial weights and pints convert to metric
   await expect(row("Garlic").getByTestId("ingredient-amount")).toHaveText(/^3 cloves$/);
   await expect(row("Salmon fillet").getByTestId("ingredient-amount")).toHaveText(/^450 g$/);
   // No-amount ingredients are optional and say so.
-  await expect(row("Kosher salt")).toContainText("OPTIONAL");
+  await expect(row("Kosher salt")).toContainText("Optional");
 
   // Steps: the ingredient's name with its amount right where it's used.
   const steps = d.locator("section[aria-labelledby=steps-h]");
@@ -98,7 +98,7 @@ test("scaling servings updates every amount", { tag: ["@R4.13"] }, async ({ page
   await expect(d.getByText("Scaled ×2 · amounts update")).toBeVisible();
   await expect(rice).toHaveText(/^2 cups$/);
   await expect(d.locator("section[aria-labelledby=steps-h]")).toContainText(/jasmine rice\s*2 cups/i);
-  await expect(d.locator("section[aria-labelledby=ing-h]")).toContainText("4 SERVINGS");
+  await expect(d.locator("section[aria-labelledby=ing-h]")).toContainText("4 servings");
 
   await d.getByRole("button", { name: "Fewer servings" }).click();
   await d.getByRole("button", { name: "Fewer servings" }).click();

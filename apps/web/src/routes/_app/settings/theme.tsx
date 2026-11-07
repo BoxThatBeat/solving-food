@@ -29,10 +29,10 @@ function ThemePage() {
       <Card className="max-w-[30rem]">
         <div className="flex items-baseline justify-between">
           <h2 className="m-0 font-display text-[1.1875rem] font-extrabold">Theme</h2>
-          <span className="tabular-nums text-[0.625rem] font-bold">JUST YOU</span>
+          <span className="tabular-nums text-[0.625rem] font-bold">Just you</span>
         </div>
         <fieldset className="m-0 flex flex-col border-0 p-0">
-          <legend className="mb-2.5 tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">ACCENT</legend>
+          <legend className="mb-2.5 tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">Accent</legend>
           <div className="grid grid-cols-6 gap-2">
             {ACCENTS.map((a) => {
               const on = theme.accent === a;

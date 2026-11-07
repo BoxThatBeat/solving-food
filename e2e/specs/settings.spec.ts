@@ -147,8 +147,8 @@ test("brand mappings: add one by hand; the grocery list uses its name and pack (
   await page.goto("/settings/brands");
   await page.getByLabel("Ingredient").fill("baby spin");
   await page.getByRole("option", { name: /baby spinach/i }).first().click();
-  await page.getByLabel("PRODUCT", { exact: true }).fill("Organic baby spinach clamshell");
-  await page.getByLabel("PACK SIZE").fill("142");
+  await page.getByLabel("Product", { exact: true }).fill("Organic baby spinach clamshell");
+  await page.getByLabel("Pack size").fill("142");
   // A fixture household gets its default stores from the first rollover run (on opening the app); wait for them.
   await expect(page.locator("#bm-store")).not.toHaveValue("");
   await page.getByRole("button", { name: "Save brand" }).click();
@@ -164,7 +164,7 @@ test("brand mappings: add one by hand; the grocery list uses its name and pack (
   // Edit and delete.
   await page.goto("/settings/brands");
   await row.getByRole("button", { name: /^Edit brand/ }).click();
-  await page.getByLabel("PACK SIZE").fill("100");
+  await page.getByLabel("Pack size").fill("100");
   await page.getByRole("button", { name: "Save brand" }).click();
   await expect(row).toContainText("100 g");
   await row.getByRole("button", { name: /^Delete brand/ }).click();

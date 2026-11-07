@@ -42,8 +42,8 @@ test("product search links a brand to a PC Express product; the budget uses its 
   await result.click();
   // The picked product is plainly marked, in the results and above the form.
   await expect(result).toHaveAttribute("aria-pressed", "true");
-  await expect(result).toContainText("✓ SELECTED");
-  await expect(page.getByLabel("PRODUCT", { exact: true })).toHaveValue("No Name Diced Tomatoes");
+  await expect(result).toContainText("✓ Selected");
+  await expect(page.getByLabel("Product", { exact: true })).toHaveValue("No Name Diced Tomatoes");
   await expect(page.getByTestId("linked-product")).toContainText("STUB-TOM-796");
   await expect(page.getByTestId("linked-product")).toContainText("No Name Diced Tomatoes");
   await page.getByRole("button", { name: "Save brand" }).click();

@@ -50,8 +50,8 @@ function WeightsPage() {
           })}
         </div>
         {([
-          ["RAISES A SUGGESTION", 1],
-          ["LOWERS A SUGGESTION", -1],
+          ["Raises a suggestion", 1],
+          ["Lowers a suggestion", -1],
         ] as const).map(([title, sign]) => (
           <div key={title} className="flex flex-col gap-[0.4375rem]">
             <span className="mt-1 tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">{title}</span>

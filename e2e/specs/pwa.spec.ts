@@ -37,7 +37,7 @@ test("the service worker registers and the shell loads offline after the first v
   await context.setOffline(true);
   await page.reload();
   await expect(page.getByRole("heading", { name: "Recipes", level: 1 })).toBeVisible();
-  await expect(page.getByText("OFFLINE").first()).toBeAttached();
+  await expect(page.getByText("Offline").first()).toBeAttached();
   await page.goto("/settings");
   await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
   await context.setOffline(false);

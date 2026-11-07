@@ -38,12 +38,12 @@ export function MealCard({
           </div>
         ))}
         <div className="absolute top-[0.4375rem] left-[0.4375rem] flex flex-wrap gap-1">
-          {facts.favourite ? <Badge className="bg-yellow text-onc shadow-hard-sm">★ FAV</Badge> : null}
-          {inPlan ? <Badge className="bg-[color-mix(in_srgb,var(--blue)_55%,white)] text-[#4c4f69] shadow-hard-sm">IN PLAN</Badge> : null}
-          {row.missing.length ? <Badge className="bg-red text-onc shadow-hard-sm">RECIPE IN TRASH</Badge> : null}
+          {facts.favourite ? <Badge className="bg-yellow text-onc shadow-hard-sm">★ Fav</Badge> : null}
+          {inPlan ? <Badge className="bg-[color-mix(in_srgb,var(--blue)_55%,white)] text-[#4c4f69] shadow-hard-sm">In plan</Badge> : null}
+          {row.missing.length ? <Badge className="bg-red text-onc shadow-hard-sm">Recipe in trash</Badge> : null}
         </div>
         <span className="absolute right-[0.4375rem] bottom-[0.4375rem] rounded-[calc(var(--r)*0.5)] bg-ink px-[0.3125rem] py-[0.1875rem] tabular-nums text-[0.6875rem] font-extrabold text-base">
-          {facts.rating ? `★ ${facts.rating.toFixed(1)}` : "NEW"}
+          {facts.rating ? `★ ${facts.rating.toFixed(1)}` : "New"}
         </span>
       </div>
       <div className="flex flex-col gap-1 px-3.5 pt-3 pb-2.5">

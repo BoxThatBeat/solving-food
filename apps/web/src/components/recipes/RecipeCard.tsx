@@ -51,19 +51,19 @@ export function RecipeCard({
           {/* Absolutely placed so a photo's intrinsic height can't stretch the 4:5 box (aspect-ratio yields to content). */}
           <RecipeImage base={r.thumb} cuisine={r.cuisine} alt={r.title} sizes="(min-width: 768px) 18rem, 50vw" className="absolute inset-0" />
           <div className="absolute top-[0.4375rem] right-11 left-[0.4375rem] flex flex-wrap gap-1">
-            {facts.favourite ? <Badge className="bg-yellow text-onc shadow-hard-sm">★ FAV</Badge> : null}
+            {facts.favourite ? <Badge className="bg-yellow text-onc shadow-hard-sm">★ Fav</Badge> : null}
             {facts.canMake ? (
               <Badge className="bg-acc text-onc shadow-hard-sm" data-testid="can-make" title={facts.swaps ? "With a substitute from Supply" : undefined}>
-                {facts.swaps ? "CAN MAKE · SWAPS" : "CAN MAKE"}
+                {facts.swaps ? "Can make · swaps" : "Can make"}
               </Badge>
             ) : facts.supplyFraction !== undefined && facts.supplyFraction >= 0.85 ? (
-              <Badge className="bg-base text-ink shadow-hard-sm">ALMOST</Badge>
+              <Badge className="bg-base text-ink shadow-hard-sm">Almost</Badge>
             ) : null}
             {/* Lavender lightened toward white: the prototype's #c6a0f6 with ink text is 3.7:1. */}
-            {family ? <Badge className="bg-[color-mix(in_srgb,#c6a0f6_55%,white)] text-[#4c4f69] shadow-hard-sm">FAMILY</Badge> : null}
+            {family ? <Badge className="bg-[color-mix(in_srgb,#c6a0f6_55%,white)] text-[#4c4f69] shadow-hard-sm">Family</Badge> : null}
           </div>
           <span className="absolute right-[0.4375rem] bottom-[0.4375rem] rounded-[calc(var(--r)*0.5)] bg-ink px-[0.3125rem] py-[0.1875rem] tabular-nums text-[0.6875rem] font-extrabold text-base">
-            {facts.rating ? `★ ${facts.rating.toFixed(1)}` : "NEW"}
+            {facts.rating ? `★ ${facts.rating.toFixed(1)}` : "New"}
           </span>
         </div>
         <div className={cn("flex flex-col gap-[0.3125rem] px-2.5 pt-[0.5625rem] pb-[0.6875rem]", onPlan && "pr-12")}>
@@ -76,7 +76,7 @@ export function RecipeCard({
             ) : nutrition.on ? (
               <>
                 {" "}
-                · {protein === "—" ? "PROTEIN —" : `${protein} PROTEIN`} · {fibre === "—" ? "FIBRE —" : `${fibre} FIBRE`}
+                · {protein === "—" ? "protein —" : `${protein} protein`} · {fibre === "—" ? "fibre —" : `${fibre} fibre`}
               </>
             ) : null}
           </span>

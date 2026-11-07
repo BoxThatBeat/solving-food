@@ -464,7 +464,7 @@ export function RecipeEditor({
               ) : (
                 <RecipeImage base={p} cuisine={values.cuisine} alt={k === 0 ? "Main photo" : `Photo ${k + 1}`} sizes="7rem" />
               )}
-              {k === 0 ? <span className="absolute bottom-1 left-1 rounded border border-line bg-base px-1 tabular-nums text-[0.5625rem] font-bold">MAIN</span> : null}
+              {k === 0 ? <span className="absolute bottom-1 left-1 rounded border border-line bg-base px-1 tabular-nums text-[0.5625rem] font-bold">Main</span> : null}
               <button
                 type="button"
                 aria-label={`Remove photo ${k + 1}`}

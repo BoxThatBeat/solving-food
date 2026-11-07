@@ -238,7 +238,7 @@ function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, clos
         }
       >
         <div className="flex flex-col gap-2.5 rounded-ui border-bw bg-blue-soft p-4 text-onc shadow-hard" data-testid="freeze-prompt">
-          <span className="tabular-nums text-[0.65625rem] font-extrabold tracking-[0.045rem]">BULK BUY · {storeOf(current.item.storeId)?.name.toUpperCase()}</span>
+          <span className="tabular-nums text-[0.65625rem] font-extrabold tracking-[0.045rem]">Bulk buy · {storeOf(current.item.storeId)?.name}</span>
           <span className="font-display font-extrabold text-[1.5rem] leading-[1.05]">Freeze some of this?</span>
           <span className="text-[0.875rem] font-semibold">
             {formatCanonical(total, unit.u, unit.w)} of {ing.name} arrived. Whatever you freeze keeps {keeps ? `about ${Math.round(keeps / 30)} months` : "much longer"}; the rest stays in the {ing.defaultLocation}.
@@ -313,7 +313,7 @@ function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, clos
                 <span className={cn("flex min-w-0 flex-1 flex-col gap-0.5", l.missing && "opacity-60")}>
                   <span className={cn("text-[0.875rem] leading-tight font-extrabold", l.missing && "line-through decoration-2", l.from?.swap && receiptMark)}>{label}</span>
                   <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
-                    {l.swap ? `instead of ${l.item.productName} · ` : ing ? `${ing.name} · ` : ""}
+                    {l.swap ? `Instead of ${l.item.productName} · ` : ing ? `${ing.name} · ` : ""}
                     {st?.name.replace(/ \(.*\)$/, "") ?? ""}
                     {ing && !l.missing ? ` · ${formatCanonical(amountOf(l), (l.swap ?? ing).canonicalUnit, (l.swap ?? ing).unitWeightG)}` : ""}
                   </span>
@@ -335,7 +335,7 @@ function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, clos
                   aria-label={`${l.item.productName} ${l.missing ? "didn't come" : "arrived"}`}
                   className={cn("h-11 min-w-[4.25rem] flex-none cursor-pointer rounded-ui border-2 border-line px-1.5 tabular-nums text-[0.625rem] font-bold", l.missing ? "bg-ink text-base" : "bg-base text-ink", l.from?.missing && l.missing && receiptMark)}
                 >
-                  {l.missing ? "DIDN'T COME" : "GOT IT"}
+                  {l.missing ? "Didn't come" : "Got it"}
                 </button>
               </div>
               {receipt && !l.missing ? (
@@ -374,7 +374,7 @@ function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, clos
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="text-[0.875rem] leading-tight font-extrabold">{x.line.description}</span>
                       <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
-                        {x.ingredient ? `${x.ingredient.name}${amt ? ` · ${formatCanonical(amt, x.ingredient.canonicalUnit, x.ingredient.unitWeightG)}` : " · no size on the receipt"}` : "no ingredient matched"}
+                        {x.ingredient ? `${x.ingredient.name}${amt ? ` · ${formatCanonical(amt, x.ingredient.canonicalUnit, x.ingredient.unitWeightG)}` : " · no size on the receipt"}` : "No ingredient matched"}
                         {x.paidCents != null ? ` · ${formatCents(x.paidCents)}` : ""}
                       </span>
                     </span>
@@ -386,7 +386,7 @@ function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, clos
                       aria-label={`Add ${x.line.description} to Supply`}
                       className={cn("h-11 min-w-[5.5rem] flex-none cursor-pointer rounded-ui border-2 border-line px-1.5 tabular-nums text-[0.625rem] font-bold disabled:cursor-not-allowed disabled:opacity-50", x.add ? "bg-acc text-onc" : "bg-base text-ink")}
                     >
-                      {x.add ? "✓ ADD TO SUPPLY" : "IGNORE"}
+                      {x.add ? "✓ Add to Supply" : "Ignore"}
                     </button>
                   </div>
                   {x.picking ? (

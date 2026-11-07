@@ -191,7 +191,7 @@ function DropPage() {
                     r.status === "uploaded" ? "bg-acc text-onc" : r.status === "error" ? "bg-red text-onc" : "bg-base text-ink",
                   )}
                 >
-                  {r.status}
+                  {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
                 </span>
               </li>
             ))}

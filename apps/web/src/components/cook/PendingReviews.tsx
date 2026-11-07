@@ -23,8 +23,8 @@ export function PendingReviews({ hid, uid }: { hid: string; uid: string }) {
         const theirs = (ratings.docs ?? []).filter((r) => r.data.cookEventId === e.id && r.data.uid !== uid);
         const byWho = new Map<string, number[]>();
         for (const r of theirs) byWho.set(r.data.uid, [...(byWho.get(r.data.uid) ?? []), r.data.score]);
-        const rated = [...byWho].map(([who, scores]) => `${(members.get(who) ?? "someone").toUpperCase()} RATED IT ${Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)}/10`);
-        const sub = e.reason === "review" ? [`COOKED BY ${(members.get(e.cookedBy) ?? "someone").toUpperCase()}`, "NOT REVIEWED YET"] : [...rated, "ADD YOURS"];
+        const rated = [...byWho].map(([who, scores]) => `${members.get(who) ?? "Someone"} rated it ${Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)}/10`);
+        const sub = e.reason === "review" ? [`Cooked by ${members.get(e.cookedBy) ?? "someone"}`, "not reviewed yet"] : [...rated, "add yours"];
         const title = e.title ?? e.titles.join(" + ");
         return (
           <div key={e.id} className={cn("flex items-center gap-3 px-3.5 py-3", i && "border-t-2 border-line")}>

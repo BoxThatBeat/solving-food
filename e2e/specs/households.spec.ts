@@ -180,7 +180,7 @@ test("invite by name: someone with an account gets a banner on any page, joins, 
   await people.getByRole("button", { name: `Invite ${kimName}` }).click();
   await expect(page.getByText(`Invite sent to ${kimName}.`)).toBeVisible();
   await expect(people.getByRole("button", { name: `${kimName} invited` })).toBeDisabled();
-  await expect(page.getByRole("list", { name: "Pending invites" })).toContainText("invited by name");
+  await expect(page.getByRole("list", { name: "Pending invites" })).toContainText("Invited by name");
 
   // Kim is on Recipes in her own household; the banner appears there without a reload.
   const banner = kim.page.getByRole("region", { name: "Invites" });

@@ -180,7 +180,7 @@ test("the Claude skill embeds the same fixed lists as the app, and its examples 
   await expect(ok).toBeVisible({ timeout: 45_000 });
   await expect(ok).not.toContainText("new ingredient");
   await ok.getByRole("link", { name: "Open recipe" }).click();
-  await expect(detail(page).getByText("AMERICAN").first()).toBeVisible();
+  await expect(detail(page).getByText("American").first()).toBeVisible();
   await expect(detail(page).locator("section[aria-labelledby=ing-h]")).toContainText(/walnuts/i);
 });
 

@@ -103,7 +103,7 @@ export function MiseEnPlace({
       ) : null}
       <div className="flex flex-col gap-1">
         <span className="kicker" data-testid="mise-count">
-          {done.size} OF {items.length} READY
+          {done.size} of {items.length} ready
         </span>
         <h1 className="m-0 font-display text-[2rem] leading-[0.95] font-extrabold md:text-[2.5rem]">Mise en place</h1>
         <span className="text-[0.9375rem] font-bold">{recipe.title}</span>
@@ -435,7 +435,7 @@ function StepNoteBody({ step, text, onSave }: { step: number; text: string; onSa
       }
     >
       <label className="flex flex-col gap-1.5">
-        <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">SHOWN UNDER THIS STEP NEXT TIME</span>
+        <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">Shown under this step next time</span>
         <Textarea rows={3} maxLength={STEP_NOTE_MAX} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Pan hotter than you think." autoFocus aria-label={`Note on step ${step + 1}`} />
       </label>
       <p className="m-0 text-[0.8125rem] font-semibold text-sub">Saved with Done cooking, for everyone in the household.</p>
@@ -447,7 +447,7 @@ function StepIngredients({ lines, lookup, factor, big, boxed }: { lines: RecipeI
   if (!lines.length) return null;
   return (
     <div className={cn("flex flex-col gap-1.5", boxed ? "rounded-ui border-bw bg-base p-3 shadow-hard" : "max-h-[35%] flex-none overflow-y-auto border-t-2 border-dashed border-line pt-3")} data-testid="step-ingredients" {...(boxed ? {} : { tabIndex: 0, role: "group", "aria-label": "This step's ingredients" })}>
-      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">FOR THIS STEP</span>
+      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">For this step</span>
       {lines.map((l) => {
         const t = lineText(l, lookup, factor);
         return (
@@ -464,7 +464,7 @@ function StepIngredients({ lines, lookup, factor, big, boxed }: { lines: RecipeI
 function IngredientChecklist({ recipe, lookup, factor, current, checked, setChecked, compact }: { recipe: StoredRecipe; lookup: IngredientLookup; factor: number; current: string[]; checked: Set<string>; setChecked: (s: Set<string>) => void; compact?: boolean }) {
   return (
     <aside className="flex min-h-0 flex-col overflow-hidden rounded-ui border-bw bg-base shadow-hard" aria-label="Ingredients">
-      <div className="bg-ink px-3 py-1.5 tabular-nums text-[0.625rem] font-bold tracking-[0.03rem] text-base">INGREDIENTS</div>
+      <div className="bg-ink px-3 py-1.5 tabular-nums text-[0.625rem] font-bold tracking-[0.03rem] text-base">Ingredients</div>
       <ul className="m-0 min-h-0 flex-1 list-none overflow-y-auto p-0">
         {recipe.ingredients.map((l, k) => {
           const t = lineText(l, lookup, factor);
@@ -494,7 +494,7 @@ function IngredientChecklist({ recipe, lookup, factor, current, checked, setChec
 function NextStep({ text, recipe, lookup, factor }: { text: string; recipe: StoredRecipe; lookup: IngredientLookup; factor: number }) {
   return (
     <div className="flex flex-col gap-1.5 rounded-ui border-2 border-dashed border-line bg-base p-3" data-testid="next-step">
-      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">NEXT</span>
+      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">Next</span>
       <p className="m-0 text-[1rem] leading-snug font-semibold text-sub">{renderStep(text, recipe.ingredients, lookup, factor).map((s) => (s.kind === "text" ? s.text : s.name)).join("")}</p>
     </div>
   );
@@ -559,7 +559,7 @@ function OtherTimers({ timers, except }: { timers: Timers; except: string }) {
       {list.map((t) => (
         <li key={t.id} className={cn("flex items-center justify-between gap-2 rounded-ui border-2 border-line px-2.5 py-1.5", t.state === "done" ? "bg-red-soft text-onc" : "bg-base")}>
           <span className="text-[0.8125rem] font-bold">{t.label}</span>
-          <span className="tabular-nums text-[1.125rem] font-extrabold tabular-nums">{t.state === "done" ? "DONE" : formatClock(remainingMs(t, timers.now))}</span>
+          <span className="tabular-nums text-[1.125rem] font-extrabold">{t.state === "done" ? "Done" : formatClock(remainingMs(t, timers.now))}</span>
           {t.state === "done" ? (
             <Button size="sm" variant="chip" onClick={() => timers.dismiss(t.id)} className="relative z-20" aria-label={`Dismiss ${t.label}`}>
               Dismiss

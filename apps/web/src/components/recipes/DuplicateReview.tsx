@@ -70,7 +70,7 @@ function PendingItem({ id, recipe }: { id: string; recipe: StoredRecipe }) {
       setBusy(false);
     }
   };
-  const created = recipe.createdAt?.toMillis ? DATE.format(new Date(recipe.createdAt.toMillis())).toUpperCase() : "";
+  const created = recipe.createdAt?.toMillis ? DATE.format(new Date(recipe.createdAt.toMillis())) : "";
   return (
     <article className="flex flex-col gap-2.5 rounded-ui border-bw bg-base p-3.5 shadow-hard" aria-label={`Possible duplicate: ${recipe.title}`}>
       <div className="flex flex-col gap-1">

@@ -58,25 +58,25 @@ export interface PlanItemView {
   deal?: string | undefined;
 }
 
-/** Uppercased by CSS; the duration stays lower case ("45m", not "45M"). Protein and fibre only while tracked (R6.27). */
+/** "45m · Italian · 30 g protein". Protein and fibre only while tracked (R6.27). */
 function RecipeMeta({ r }: { r: StoredRecipe | undefined }) {
   const nutrition = useNutrition();
   if (!r) return <>Loading…</>;
   return (
     <>
-      <span>{formatMinutes(r.prepMin + r.cookMin)}</span> · {taxonomyLabel(r.cuisine).toUpperCase()}
-      {nutrition.on ? ` · ${formatProtein(r.proteinPerServingG, r.proteinApproximate)} PROTEIN · ${formatFibre(r.fibrePerServingG, r.fibreApproximate)} FIBRE` : null}
+      <span>{formatMinutes(r.prepMin + r.cookMin)}</span> · {taxonomyLabel(r.cuisine)}
+      {nutrition.on ? ` · ${formatProtein(r.proteinPerServingG, r.proteinApproximate)} protein · ${formatFibre(r.fibrePerServingG, r.fibreApproximate)} fibre` : null}
     </>
   );
 }
 
 function costLine(v: PlanItemView): string {
-  if (v.item.kind === "out") return "EATING OUT · NOTHING TO BUY OR COOK";
-  if (v.status !== "planned") return v.status.toUpperCase();
-  if (v.item.kind === "leftover") return "ALREADY PAID FOR";
-  if (!v.cost) return "PRICING…";
-  const unknown = v.cost.unknown ? ` · ${v.cost.unknown} PRICE${v.cost.unknown === 1 ? "" : "S"} UNKNOWN` : "";
-  return v.cost.cents > 0 ? `+${formatCents(v.cost.cents)} TO BUY${unknown}` : `$0 · NOTHING EXTRA TO BUY${unknown}`;
+  if (v.item.kind === "out") return "Eating out · nothing to buy or cook";
+  if (v.status !== "planned") return v.status.charAt(0).toUpperCase() + v.status.slice(1);
+  if (v.item.kind === "leftover") return "Already paid for";
+  if (!v.cost) return "Pricing…";
+  const unknown = v.cost.unknown ? ` · ${v.cost.unknown} price${v.cost.unknown === 1 ? "" : "s"} unknown` : "";
+  return v.cost.cents > 0 ? `+${formatCents(v.cost.cents)} to buy${unknown}` : `$0 · nothing extra to buy${unknown}`;
 }
 
 export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v: PlanItemView; recipes: ReadonlyMap<string, StoredRecipe>; ingredients: ReadonlyMap<string, IngredientEntry>; onOpen: () => void; hid: string; uid: string }) {
@@ -116,7 +116,7 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
             {v.title}
           </button>
           <Badge className={cn("flex-none rounded-[calc(var(--r)*0.5)] px-1.5 py-1 text-[0.5625rem]", status === "planned" ? "bg-base" : "bg-acc text-onc")} data-testid="plan-item-status">
-            {out ? "Eating out" : status === "planned" ? (leftover ? "Leftover" : v.upcoming ? "Next period" : "To cook") : status}
+            {out ? "Eating out" : status === "planned" ? (leftover ? "Leftover" : v.upcoming ? "Next period" : "To cook") : status.charAt(0).toUpperCase() + status.slice(1)}
           </Badge>
         </div>
         {sides ? (
@@ -320,7 +320,7 @@ function PlanItemBody({
       {out ? null : (
       <div className="flex items-center justify-between gap-3 rounded-ui border-2 border-line bg-base px-3 py-2">
         <span id="pi-servings" className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">
-          SERVINGS
+          Servings
         </span>
         <Stepper label="Servings" decLabel="Fewer servings" incLabel="More servings" labelledBy="pi-servings" value={servings} min={1} max={SERVINGS_MAX} onChange={setServings} />
       </div>

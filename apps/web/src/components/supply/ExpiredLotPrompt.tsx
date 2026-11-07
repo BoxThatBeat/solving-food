@@ -57,7 +57,7 @@ function ExpiredRow({ e, first, hid, uid, tz, nowMs }: { e: ExpiredEntry; first:
           }}
         >
           <label className="flex flex-1 items-center gap-2 tabular-nums text-[0.6875rem] font-bold">
-            GOOD UNTIL
+            Good until
             <Input type="date" value={date} min={minDate} onChange={(ev) => setDate(ev.target.value)} className="min-w-0 flex-1 py-2" aria-label={`${name} good until`} />
           </label>
           <Button size="sm" type="submit" disabled={date < minDate}>

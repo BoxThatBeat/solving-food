@@ -74,9 +74,9 @@ function WelcomePage() {
           </Button>
         </form>
         <p className="m-0 tabular-nums text-[0.6875rem] font-semibold text-sub">
-          SIGNED IN AS {user.email.toUpperCase()} ·{" "}
+          Signed in as {user.email} ·{" "}
           <button type="button" className="cursor-pointer bg-transparent p-0 tabular-nums font-bold text-ink underline" onClick={() => void signOut(auth)}>
-            SIGN OUT
+            Sign out
           </button>
         </p>
       </Card>

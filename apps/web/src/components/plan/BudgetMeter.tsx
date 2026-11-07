@@ -28,7 +28,7 @@ export function BudgetMeterCompact({ b, className }: { b: BudgetState; className
         <span className="tabular-nums text-[1.375rem] leading-none font-extrabold" data-testid="budget-left">
           {formatCents(b.remainingCents)}
         </span>
-        <span className="tabular-nums text-[0.59375rem] font-bold">{b.over ? "over" : "left"} of {formatCents(b.budgetCents)}</span>
+        <span className="tabular-nums text-[0.59375rem] font-bold">{b.over ? "Over" : "Left"} of {formatCents(b.budgetCents)}</span>
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <Bar b={b} />

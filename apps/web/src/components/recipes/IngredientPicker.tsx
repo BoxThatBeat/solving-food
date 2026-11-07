@@ -254,7 +254,7 @@ function NewIngredientForm({
 
   return (
     <div className="mt-1 flex flex-col gap-3 rounded-ui border-2 border-dashed border-line bg-base p-3" role="group" aria-label="New ingredient">
-      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">NEW INGREDIENT</span>
+      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">New ingredient</span>
       <div className="flex flex-col gap-1">
         <Label htmlFor="new-ing-name">Name</Label>
         <Input id="new-ing-name" value={name} onChange={(e) => setName(e.target.value)} className="py-2.5 shadow-hard-sm" aria-invalid={taken || undefined} />

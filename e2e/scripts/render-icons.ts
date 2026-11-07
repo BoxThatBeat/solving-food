@@ -1,11 +1,11 @@
-// Renders the PWA icons from the prototype's mark ("SOLVING FOOD", Archivo Black, base on ink) with Playwright's
+// Renders the PWA icons from the app's mark ("Solving Food", Unbounded 800, base on ink) with Playwright's
 // Chromium, using the app's self-hosted font. Output: apps/web/public/icons/*.png. Run: pnpm --filter @solving-food/e2e icons
 import { readFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { chromium } from "@playwright/test";
 
 const web = fileURLToPath(new URL("../../apps/web/public/", import.meta.url));
-const font = readFileSync(`${web}fonts/archivo-black-latin-400.woff2`).toString("base64");
+const font = readFileSync(`${web}fonts/unbounded-latin-800.woff2`).toString("base64");
 const out = `${web}icons/`;
 mkdirSync(out, { recursive: true });
 
@@ -17,13 +17,13 @@ const ACC = "#a6da95";
 function html(size: number, opts: { safe: number; mini?: boolean }) {
   const inner = Math.round(size * opts.safe);
   const fs = opts.mini ? inner * 0.62 : inner * 0.27;
-  const text = opts.mini ? "SF" : "SOLVING<br>FOOD";
+  const text = opts.mini ? "SF" : "Solving<br>Food";
   const bar = Math.max(2, Math.round(size * 0.045));
   return `<!doctype html><html><head><style>
-    @font-face { font-family: AB; src: url(data:font/woff2;base64,${font}) format("woff2"); }
+    @font-face { font-family: UB; font-weight: 800; src: url(data:font/woff2;base64,${font}) format("woff2"); }
     html,body { margin:0; width:${size}px; height:${size}px; }
     body { background:${INK}; display:grid; place-items:center; }
-    .m { font-family: AB; color:${BASE}; font-size:${fs}px; line-height:1.0; letter-spacing:${fs * 0.02}px;
+    .m { font-family: UB; font-weight: 800; color:${BASE}; font-size:${fs}px; line-height:1.0; letter-spacing:${fs * 0.02}px;
          display:inline-block; text-align:left; padding-bottom:${bar * 1.6}px; border-bottom:${bar}px solid ${ACC}; }
   </style></head><body><div class="m">${text}</div></body></html>`;
 }

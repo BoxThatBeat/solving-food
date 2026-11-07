@@ -133,7 +133,7 @@ function PlanPage() {
           if (m.deals.size) v.deal = mealDeal(needs.keys(), m.deals, (id) => m.ingredients.get(id), (id) => (m.removedIds.has(id) ? null : (m.built.items[id]?.estPriceCents ?? null)))?.label;
           if (e && (e.expiresMs <= (endMs ?? 0) || daysLeft(e.expiresMs, supplyNow, tz) <= USE_SOON_DAYS)) {
             const name = m.ingredients.get(e.ingredientId)?.name ?? e.ingredientId.replace(/-/g, " ");
-            v.expiry = `${name} ${expiresPhrase(e.expiresMs, supplyNow, tz)}`;
+            v.expiry = `${name.charAt(0).toUpperCase()}${name.slice(1)} ${expiresPhrase(e.expiresMs, supplyNow, tz)}`;
           }
         }
         if (i.data.kind === "leftover" && i.data.leftoverSupplyId) {
@@ -227,9 +227,9 @@ function PlanPage() {
           <span className="kicker" data-testid="period-range">
             {startMs && endMs
               ? upcoming
-                ? `${formatPeriodRange(startMs, endMs, tz)} · ${startsIn(daysBetween(localDate(now, tz), localDate(startMs, tz)))} · ${cells.length} DAYS`
-                : `${formatPeriodRange(startMs, endMs, tz)} · DAY ${dayOfPeriod(now, startMs, endMs, tz)} OF ${cells.length}`
-              : "SETTING UP THE PERIOD…"}
+                ? `${formatPeriodRange(startMs, endMs, tz)} · ${startsIn(daysBetween(localDate(now, tz), localDate(startMs, tz)))} · ${cells.length} days`
+                : `${formatPeriodRange(startMs, endMs, tz)} · Day ${dayOfPeriod(now, startMs, endMs, tz)} of ${cells.length}`
+              : "Setting up the period…"}
           </span>
           <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-extrabold">Plan</h1>
         </div>
@@ -266,7 +266,7 @@ function PlanPage() {
               <div className="flex items-baseline justify-between gap-2">
                 <h2 className="m-0 font-display text-[1.375rem] font-extrabold">{upcoming ? "Next period" : "This period"}</h2>
                 <span className="tabular-nums text-[0.65625rem] font-bold" data-testid="plan-count">
-                  {m.loading ? "LOADING…" : `${planned} TO COOK · ${SORT_LABELS[search.sort ?? PLAN_DEFAULT_SORT].toUpperCase()}`}
+                  {m.loading ? "Loading…" : `${planned} to cook · ${SORT_LABELS[search.sort ?? PLAN_DEFAULT_SORT].toLowerCase()}`}
                 </span>
               </div>
             }
@@ -439,7 +439,7 @@ function ProteinCard({
 }
 
 function startsIn(days: number): string {
-  return days <= 0 ? "STARTS TODAY" : days === 1 ? "STARTS TOMORROW" : `STARTS IN ${days} DAYS`;
+  return days <= 0 ? "Starts today" : days === 1 ? "Starts tomorrow" : `Starts in ${days} days`;
 }
 
 /**

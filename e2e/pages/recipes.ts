@@ -24,7 +24,7 @@ export class RecipesPage {
 
   async goto(query = ""): Promise<void> {
     await this.page.goto(`/recipes${query}`);
-    await expect(this.page.getByTestId("recipe-count")).not.toHaveText("LOADING…");
+    await expect(this.page.getByTestId("recipe-count")).not.toHaveText("Loading…");
     if (await this.list.count()) await this.settled();
   }
 

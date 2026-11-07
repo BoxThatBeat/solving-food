@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_app/settings/preferences")({
 });
 
 type Kind = "likes" | "dislikes";
-const KIND_LABEL: Record<Kind, string> = { likes: "LIKE", dislikes: "DISLIKE" };
+const KIND_LABEL: Record<Kind, string> = { likes: "Like", dislikes: "Dislike" };
 
 function PreferencesPage() {
   const hh = useActiveHousehold();
@@ -58,10 +58,10 @@ function PreferencesPage() {
   const options = React.useMemo(() => {
     if (!q) return [] as Array<{ entry: string; label: string; hint: string }>;
     const out: Array<{ entry: string; label: string; hint: string }> = [];
-    for (const c of CUISINES) if (c !== "other" && taxonomyLabel(c).toLowerCase().includes(q)) out.push({ entry: `cuisine:${c}`, label: taxonomyLabel(c), hint: "cuisine" });
-    for (const p of MAIN_PROTEINS) if (p !== "none" && taxonomyLabel(p).toLowerCase().includes(q)) out.push({ entry: `protein:${p}`, label: taxonomyLabel(p), hint: "main protein" });
-    for (const i of searchIngredients(ing.list ?? [], q, 5)) out.push({ entry: `ingredient:${i.id}`, label: i.name.charAt(0).toUpperCase() + i.name.slice(1), hint: "ingredient" });
-    out.push({ entry: formatPref({ kind: "text", value: q }), label: `Anything with “${q}”`, hint: "word" });
+    for (const c of CUISINES) if (c !== "other" && taxonomyLabel(c).toLowerCase().includes(q)) out.push({ entry: `cuisine:${c}`, label: taxonomyLabel(c), hint: "Cuisine" });
+    for (const p of MAIN_PROTEINS) if (p !== "none" && taxonomyLabel(p).toLowerCase().includes(q)) out.push({ entry: `protein:${p}`, label: taxonomyLabel(p), hint: "Main protein" });
+    for (const i of searchIngredients(ing.list ?? [], q, 5)) out.push({ entry: `ingredient:${i.id}`, label: i.name.charAt(0).toUpperCase() + i.name.slice(1), hint: "Ingredient" });
+    out.push({ entry: formatPref({ kind: "text", value: q }), label: `Anything with “${q}”`, hint: "Word" });
     return out.slice(0, 8);
   }, [q, ing.list]);
 
@@ -72,7 +72,7 @@ function PreferencesPage() {
         <p className="m-0 text-[0.8125rem] font-semibold">Set once for the whole household. Likes raise a suggestion; dislikes and restrictions keep recipes out of suggestions and the optimiser.</p>
         {(["likes", "dislikes"] as const).map((k) => (
           <div key={k} className="flex flex-col gap-1.5">
-            <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">{k === "likes" ? "LIKES" : "DISLIKES"}</span>
+            <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">{k === "likes" ? "Likes" : "Dislikes"}</span>
             <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0" aria-label={k === "likes" ? "Likes" : "Dislikes"}>
               {prefs[k].length === 0 ? <li className="text-[0.8125rem] font-semibold text-sub">None yet.</li> : null}
               {prefs[k].map((e) => (
@@ -130,7 +130,7 @@ function PreferencesPage() {
         </form>
         <div role="group" aria-labelledby="diets-h" className="flex flex-col gap-1.5">
           <span id="diets-h" className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">
-            DIETARY RESTRICTIONS
+            Dietary restrictions
           </span>
           <div className="flex flex-wrap gap-1.5">
             {DIETS.map((d) => (

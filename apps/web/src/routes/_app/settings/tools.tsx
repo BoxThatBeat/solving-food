@@ -46,7 +46,7 @@ function ToolsPage() {
         <CardTitle>Kitchen tools</CardTitle>
         <p className="m-0 text-[0.8125rem] font-semibold">Recipes that need a tool you don't own get flagged.</p>
         <div className="flex flex-col gap-2">
-          <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">YOU OWN · {tools.length}</span>
+          <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">You own · {tools.length}</span>
           <ul className="m-0 flex list-none flex-wrap gap-2 p-0" aria-label="Tools you own">
             {tools.length === 0 ? <li className="text-[0.8125rem] font-semibold text-sub">None yet. Until you add some, missing tools aren't flagged.</li> : null}
             {tools.map((t) => (
@@ -61,7 +61,7 @@ function ToolsPage() {
           </ul>
         </div>
         <div className="flex flex-col gap-2">
-          <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">SUGGESTIONS</span>
+          <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">Suggestions</span>
           <ul className="m-0 flex list-none flex-wrap gap-2 p-0" aria-label="Suggested tools">
             {suggestions.map((g) => (
               <li key={g.key}>

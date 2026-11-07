@@ -76,7 +76,7 @@ describe("expiry estimates (R8.5)", () => {
     expect(expiringWhen(addLocalDays(NOW, 4, TZ), NOW, TZ)).toBe(new Intl.DateTimeFormat("en-CA", { weekday: "long", timeZone: TZ }).format(addLocalDays(NOW, 3, TZ) + 3_600_000));
     expect(expiringWhen(addLocalDays(NOW, 20, TZ), NOW, TZ)).toMatch(/^[A-Z][a-z]{2}\.? \d{1,2}$/);
     expect(expiringWhen(NOW - 1, NOW, TZ)).toBe("already expired");
-    expect(shortDuration(150)).toBe("5MO");
+    expect(shortDuration(150)).toBe("5mo");
   });
 });
 

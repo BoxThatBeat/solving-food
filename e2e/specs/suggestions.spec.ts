@@ -60,7 +60,7 @@ test("Suggested and Expiring first sort any list; Uses expiring filters it (R6.1
   await seedPeriod(household.hid);
   await seedSupply(household.hid, "salmon-fillet", [{ amount: 340, expiresInDays: 2 }], { label: "salmon fillet" });
   await page.goto("/recipes?exp=true&sort=expiry");
-  await expect(page.getByTestId("recipe-count")).toContainText("EXPIRING FIRST", { timeout: 20_000 });
+  await expect(page.getByTestId("recipe-count")).toContainText("expiring first", { timeout: 20_000 });
   await expect(page.getByRole("link", { name: new RegExp(r.title) }).first()).toBeVisible({ timeout: 20_000 });
   // Every recipe left uses salmon.
   const titles = await page.getByRole("list", { name: "Recipes" }).getByRole("listitem").allInnerTexts();
@@ -223,5 +223,5 @@ test("a missing ingredient with a substitute in Supply counts as covered: the re
   await page.goto("/recipes?supply=can");
   const rc = page.getByTestId("recipe-card").filter({ hasText: r.title });
   await expect(rc).toBeVisible({ timeout: 30_000 });
-  await expect(rc.getByTestId("can-make")).toHaveText("CAN MAKE · SWAPS");
+  await expect(rc.getByTestId("can-make")).toHaveText("Can make · swaps");
 });

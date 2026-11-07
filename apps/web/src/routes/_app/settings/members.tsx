@@ -170,7 +170,7 @@ function MembersPage() {
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-[0.875rem] font-extrabold">{label}</span>
                       <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
-                        {i.inviteeUid ? "invited by name" : "invited by email · waiting for sign-up"}
+                        {i.inviteeUid ? "Invited by name" : "Invited by email · waiting for sign-up"}
                         {i.invitedByName ? ` · from ${i.invitedByName}` : ""}
                       </span>
                     </span>

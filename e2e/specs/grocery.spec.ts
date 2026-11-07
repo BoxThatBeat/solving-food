@@ -147,7 +147,7 @@ test("manual additions: free text or an ingredient; they don't count against the
   const add = page.getByRole("form", { name: "Add to the list" });
   await add.getByLabel("Add any food item").fill("Bananas");
   await add.getByRole("button", { name: "Add", exact: true }).click();
-  await expect(line(page, "Bananas")).toContainText("ADDED BY HAND");
+  await expect(line(page, "Bananas")).toContainText("Added by hand");
   await add.getByLabel("Add any food item").fill("milk");
   await add.getByRole("button", { name: "milk", exact: true }).click();
   await add.getByLabel("Quantity").fill("2");

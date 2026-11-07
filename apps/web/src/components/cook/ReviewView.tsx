@@ -233,7 +233,7 @@ function ReviewFlow({
               ))}
               {!savedMealId && source.recipeIds.length > 1 ? (
                 <div className="flex flex-col gap-2 rounded-ui border-bw bg-base p-3.5 shadow-hard" data-testid="save-meal-prompt">
-                  <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">SAVE THIS MEAL?</span>
+                  <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">Save this meal?</span>
                   <span className="text-[0.8125rem] font-semibold text-sub">Keep it in Meals to plan it again and rate the meal as a whole.</span>
                   <div className="flex gap-2">
                     <Input aria-label="Meal name" value={mealName} maxLength={80} onChange={(e) => setMealName(e.target.value)} className="flex-1" />
@@ -260,7 +260,7 @@ function ReviewFlow({
                       <li key={u.ingredientId} className={cn("flex items-center gap-2 px-3 py-2.5", i && "border-t-2 border-line")} data-testid="used-row">
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                           <span className="text-[0.9375rem] font-extrabold">{name}</span>
-                          <span className="tabular-nums text-[0.5625rem] font-bold text-sub">{def === undefined ? "added" : Math.abs(def - u.canonicalAmount) < 1e-6 ? "as written" : `recipe ${formatCanonical(def, unit, ing?.unitWeightG)}`}</span>
+                          <span className="tabular-nums text-[0.5625rem] font-bold text-sub">{def === undefined ? "Added" : Math.abs(def - u.canonicalAmount) < 1e-6 ? "As written" : `Recipe ${formatCanonical(def, unit, ing?.unitWeightG)}`}</span>
                         </span>
                         <div className="flex flex-none overflow-hidden rounded-ui border-2 border-line" role="group" aria-label={`${name} used`}>
                           <button type="button" aria-label={`Less ${name}`} onClick={() => setUsed((l) => l.map((x) => (x.ingredientId === u.ingredientId ? { ...x, canonicalAmount: Math.max(0, x.canonicalAmount - stepAmt) } : x)))} className="size-11 cursor-pointer bg-pg text-lg font-extrabold">
@@ -283,7 +283,7 @@ function ReviewFlow({
               ) : (
                 <p className="m-0 text-sm font-semibold">Nothing tracked was used.</p>
               )}
-              <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">ADD SOMETHING YOU USED</span>
+              <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">Add something you used</span>
               <div className="flex flex-wrap gap-1.5">
                 {[...supply.items.values()]
                   .filter((i) => i.ingredientId && !used.some((u) => u.ingredientId === i.ingredientId) && i.lots.length)
@@ -327,7 +327,7 @@ function ReviewFlow({
                   <output className="font-extrabold tabular-nums text-[3rem] leading-none" aria-label="Leftover portions" data-testid="leftover-count">
                     {leftovers}
                   </output>
-                  <span className="tabular-nums text-[0.5625rem] font-bold">PORTIONS</span>
+                  <span className="tabular-nums text-[0.5625rem] font-bold">Portions</span>
                 </span>
                 <span className="flex flex-col gap-1.5">
                   <Button size="icon" onClick={() => setLeftovers((n) => Math.min(50, n + 1))} aria-label="More leftovers">
@@ -349,7 +349,7 @@ function ReviewFlow({
                 </div>
               ) : null}
               <label className="flex flex-col gap-1.5">
-                <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">NOTES FOR NEXT TIME (OPTIONAL)</span>
+                <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">Notes for next time (optional)</span>
                 <Textarea rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Pork could go five minutes longer." />
               </label>
             </>

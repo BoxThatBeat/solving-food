@@ -10,7 +10,7 @@ test("Copy link gives a link that opens for someone without an account, without 
   await adminDb.doc(`households/${household.hid}/notes/${id}`).set({ text: "Secret family tweak", updatedBy: household.uid });
   if (browserName === "chromium") await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.goto(`/recipes/${id}`);
-  await expect(detail(page).getByLabel("HOUSEHOLD NOTES")).toHaveValue("Secret family tweak");
+  await expect(detail(page).getByLabel("Household notes")).toHaveValue("Secret family tweak");
   // No .cook download on the recipe page (R4.22 withdrawn in M7); Copy link stays.
   await expect(detail(page).getByRole("button", { name: "Export .cook file" })).toHaveCount(0);
   await expect(detail(page).getByRole("button", { name: ".cook" })).toHaveCount(0);
@@ -27,13 +27,13 @@ test("Copy link gives a link that opens for someone without an account, without 
   await expect(d.locator("#recipe-title")).toHaveText("Baked Feta Pasta");
   await expect(d.getByRole("img", { name: "Baked Feta Pasta" })).toBeVisible();
   await expect(d.locator("section[aria-labelledby=ing-h] li")).toHaveCount(8);
-  await expect(d.locator("section[aria-labelledby=ing-h]")).toContainText("AMOUNT");
+  await expect(d.locator("section[aria-labelledby=ing-h]")).toContainText("Amount");
   await expect(d.locator("section[aria-labelledby=ing-h]")).toContainText("225 g"); // feta, 8 oz: converted to metric only (R8.13)
   await expect(d.locator("section[aria-labelledby=ing-h]")).not.toContainText(/\boz\b/);
   await expect(d.locator("section[aria-labelledby=steps-h] ol > li")).toHaveCount(6);
   // No household data, no edit controls.
   await expect(v.getByText("Secret family tweak")).toHaveCount(0);
-  await expect(d.getByLabel("HOUSEHOLD NOTES")).toHaveCount(0);
+  await expect(d.getByLabel("Household notes")).toHaveCount(0);
   await expect(d.getByRole("link", { name: "Edit", exact: true })).toHaveCount(0);
   await expect(d.getByRole("button", { name: /Save$/ })).toHaveCount(0);
   await expect(d.getByRole("button", { name: "Delete", exact: true })).toHaveCount(0);

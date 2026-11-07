@@ -37,7 +37,7 @@ export function amountText(amount: number, u: AmountUnit): string {
 }
 
 export function dateText(ms: number, tz: string): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: tz, day: "numeric", month: "short" }).format(ms).toUpperCase();
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tz, day: "numeric", month: "short" }).format(ms);
 }
 
 /** The worst expiry state among an item's lots: expired, then the soonest use-by. */

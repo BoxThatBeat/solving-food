@@ -71,7 +71,7 @@ test("a timer that ends after moving on shows under Other timers; Dismiss clears
   await expect(card).toContainText("Step 3 of 3", { ignoreCase: true });
   const others = page.getByRole("list", { name: "Other timers" });
   await expect(others).toContainText("Step 2: 3 s");
-  await expect(others).toContainText("DONE", { timeout: 10_000 });
+  await expect(others).toContainText("Done", { timeout: 10_000 });
   await others.getByRole("button", { name: /^Dismiss/ }).click();
   await expect(others).toBeHidden();
   await expect(card).toContainText("Step 3 of 3", { ignoreCase: true });

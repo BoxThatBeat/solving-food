@@ -191,7 +191,7 @@ function CreateHouseholdPage() {
           </fieldset>
           <p className="m-0 tabular-nums text-[0.6875rem] leading-relaxed font-semibold text-sub">
             {CURRENCY} · {DEFAULT_PERIOD_DAYS}-DAY PLAN PERIOD · ${DEFAULT_BUDGET_CENTS / 100} BUDGET · CHANGE THESE LATER IN
-            SETTINGS
+            Settings
           </p>
           <FieldError id="hh-error">{error}</FieldError>
           <Button type="submit" size="lg" disabled={busy || atLimit}>
@@ -204,9 +204,9 @@ function CreateHouseholdPage() {
           </Link>
         ) : (
           <p className="m-0 tabular-nums text-[0.6875rem] font-semibold text-sub">
-            SIGNED IN AS {user.email.toUpperCase()} ·{" "}
+            Signed in as {user.email} ·{" "}
             <button type="button" className="cursor-pointer bg-transparent p-0 tabular-nums font-bold text-ink underline" onClick={() => void signOut(auth)}>
-              SIGN OUT
+              Sign out
             </button>
           </p>
         )}

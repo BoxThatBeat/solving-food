@@ -230,7 +230,7 @@ function RestartPeriod({ hid, household }: { hid: string; household: HouseholdDo
           Restart period
         </span>
         <span className="tabular-nums text-[0.625rem] font-bold text-sub">
-          {current ? `Now ${formatPeriodRange(current.startMs, current.endMs, tz)} · ` : ""}start a new {household.periodDays}-day period
+          {current ? `Now ${formatPeriodRange(current.startMs, current.endMs, tz)} · start` : "Start"} a new {household.periodDays}-day period
         </span>
       </span>
       <div role="group" aria-labelledby="hs-restart" className="flex gap-2">

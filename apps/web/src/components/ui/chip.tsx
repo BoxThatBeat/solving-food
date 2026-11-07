@@ -26,7 +26,7 @@ export function ToggleChip({
   );
 }
 
-/** Small mono badge (card badges, tags): 2px border, half radius. */
+/** Small badge (card badges, tags): 2px border, half radius. */
 export function Badge({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
@@ -39,7 +39,7 @@ export function Badge({ className, ...props }: React.HTMLAttributes<HTMLSpanElem
   );
 }
 
-/** Mono section label with optional right-hand hint, as the prototype's "SORT BY · MATCH ALL". */
+/** Section label with optional right-hand hint, as the prototype's "SORT BY · MATCH ALL". */
 export function SectionLabel({ children, hint, id }: { children: React.ReactNode; hint?: React.ReactNode; id?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-2">

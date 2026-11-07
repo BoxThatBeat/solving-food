@@ -47,7 +47,7 @@ export function UseItUp({
   return (
     <section aria-label="Use it up before you order" data-testid="use-it-up" className="flex flex-col overflow-hidden rounded-ui border-bw bg-base text-ink shadow-hard">
       <div className="flex items-baseline justify-between gap-2 border-b-2 border-line bg-acc px-3 py-1.5 tabular-nums text-[0.65625rem] font-extrabold tracking-[0.045rem] text-onc">
-        <span>USE IT UP · BEFORE YOU ORDER</span>
+        <span>Use it up · before you order</span>
         <span>{list.length}</span>
       </div>
       <div className="flex flex-col gap-3 p-3">

@@ -89,7 +89,7 @@ test("recipe pages and sheets (M1)", async ({ page, household, browser }) => {
   const id = await seedRecipeId("Garlic Rice and Chicken");
   await makeRecipe(uniqueTitle("A11y Trashed"), { status: "trashed", extra: { trashedAt: new Date(), trashedBy: household.uid } });
   await makeRecipe(uniqueTitle("A11y Pending"), { status: "pendingDuplicateReview" });
-  // Every card badge on screen: FAMILY (tag) and ★ FAV (this household's favourite).
+  // Every card badge on screen: Family (tag) and ★ Fav (this household's favourite).
   await makeRecipe(uniqueTitle("A11y Family"), { content: { tags: ["dinner", "family recipe"] } });
   const { adminDb } = await import("../fixtures/admin");
   await adminDb.doc(`households/${household.hid}/favourites/recipe_${id}`).set({ type: "recipe", targetId: id });
@@ -254,7 +254,7 @@ test("every button and link is at least 44 px on a phone (M24)", { tag: ["@R12.2
   await seedSupply(household.hid, "milk", [{ amount: 1000, expiresInDays: -1 }], { label: "milk" });
   await seedSupply(household.hid, "salmon-fillet", [{ amount: 340, expiresInDays: 2 }], { label: "salmon fillet" });
   const pages: Array<[string, () => Promise<void>]> = [
-    ["/plan", () => expect(page.getByTestId("plan-count")).not.toHaveText("LOADING…")],
+    ["/plan", () => expect(page.getByTestId("plan-count")).not.toHaveText("Loading…")],
     ["/recipes", () => expect(page.getByTestId("recipe-card").first()).toBeVisible()],
     ["/recipes?meal=dinner", () => expect(page.getByRole("button", { name: "Remove filter Dinner" })).toBeVisible()],
     [`/recipes/${r.id}`, () => expect(page.getByRole("heading", { name: r.title })).toBeVisible()],

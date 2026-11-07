@@ -92,7 +92,7 @@ function SyncStatus() {
   return (
     <span className="flex items-center gap-1.5 tabular-nums text-[0.65625rem] font-bold">
       <span aria-hidden className={cn("size-2 border-[1.5px] border-line", online ? "bg-[#a6da95]" : "bg-peach")} />
-      {online ? "SYNCED" : "OFFLINE · CHANGES QUEUED"}
+      {online ? "Synced" : "Offline · changes queued"}
     </span>
   );
 }
@@ -105,7 +105,7 @@ function PhoneOffline() {
   if (online) return null;
   return (
     <span role="status" className="flex items-center gap-1 rounded-ui border-2 border-line bg-peach px-1.5 py-0.5 tabular-nums text-[0.625rem] font-bold text-onc" data-testid="phone-offline">
-      OFFLINE
+      Offline
     </span>
   );
 }
@@ -201,7 +201,7 @@ function HouseholdButton({ compact }: { compact?: boolean }) {
           <span className="font-extrabold text-sm">{name.slice(0, 2).toUpperCase()}</span>
         ) : (
           <>
-            <span className="tabular-nums text-[0.59375rem] font-bold tracking-[0.03125rem] text-sub">HOUSEHOLD</span>
+            <span className="tabular-nums text-[0.59375rem] font-bold tracking-[0.03125rem] text-sub">Household</span>
             <span className="flex items-center gap-1 text-[0.9375rem] font-extrabold">
               {name}
               <ChevronDown aria-hidden className="size-3.5" strokeWidth={3} />
@@ -229,8 +229,8 @@ function NavList({ compact }: { compact?: boolean }) {
     "/plan": planned,
     "/recipes": recipeCount,
     "/meals": meals,
-    "/supply": soon ? `${soon} SOON` : undefined,
-    "/history": toRate ? `${toRate} TO RATE` : undefined,
+    "/supply": soon ? `${soon} soon` : undefined,
+    "/history": toRate ? `${toRate} to rate` : undefined,
   };
   return (
     <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
@@ -444,7 +444,7 @@ function ReadyShell({ children, uid }: { children: React.ReactNode; uid: string 
   );
 }
 
-/** Kicker + Archivo Black title, as every prototype page header. */
+/** Kicker + display (Unbounded) title, as every prototype page header. */
 export function PageHeader({ title, kicker, children }: { title: string; kicker?: string; children?: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-2.5">

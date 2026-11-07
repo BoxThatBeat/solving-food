@@ -46,7 +46,7 @@ export function PcxStorePicker({ hid, storeId, storeName }: { hid: string; store
       <p className="m-0 text-[0.8125rem] font-semibold">Live prices come from this store. Without PC Express, the estimated price list is used.</p>
       <div className="flex flex-col gap-0.5 rounded-ui border-2 border-line bg-mantle px-2.5 py-2">
         <span className="flex items-center justify-between gap-2 tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">
-          CURRENT STORE
+          Current store
           {storeName ? <FromPcx /> : null}
         </span>
         <span className="text-[0.9375rem] font-extrabold" data-testid="pcx-current-store">
@@ -78,7 +78,7 @@ export function PcxStorePicker({ hid, storeId, storeName }: { hid: string; store
                 <span className="tabular-nums text-[0.625rem] font-semibold text-sub">{st.address}</span>
               </span>
               {st.storeId === storeId ? (
-                <span className="tabular-nums text-[0.625rem] font-bold">CURRENT</span>
+                <span className="tabular-nums text-[0.625rem] font-bold">Current</span>
               ) : (
                 <Button
                   size="sm"

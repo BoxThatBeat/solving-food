@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-/** The prototype's mark: "SOLVING FOOD" in Archivo Black, base on ink, tilted by the look's --tilt. */
+/** The prototype's mark: "Solving Food" in Unbounded, base on ink, tilted by the look's --tilt. */
 export function Wordmark({
   stacked,
   compact,
@@ -18,12 +18,12 @@ export function Wordmark({
     </>
   ) : stacked ? (
     <>
-      SOLVING
+      Solving
       <br />
-      FOOD
+      Food
     </>
   ) : (
-    "SOLVING FOOD"
+    "Solving Food"
   );
   return (
     <span

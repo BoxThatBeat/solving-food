@@ -200,10 +200,10 @@ export function OptimiserCard({
           <div className="flex flex-col overflow-hidden rounded-ui border-2 border-line" data-testid="optimiser-set">
             <div className="flex justify-between gap-2 bg-ink px-2.5 py-2 tabular-nums text-[0.625rem] font-bold tracking-[0.015rem] text-base">
               <span>
-                SET {index + 1}
-                {atEnd ? ` OF ${sets.length}` : ""}
+                Set {index + 1}
+                {atEnd ? ` of ${sets.length}` : ""}
               </span>
-              <span>{formatCents(current.costCents)} TO BUY</span>
+              <span>{formatCents(current.costCents)} to buy</span>
             </div>
             <ul className="m-0 list-none p-0" aria-label="Recipes in this set">
               {current.ids.map((id, i) => {

@@ -90,7 +90,7 @@ function FinishPage() {
         ) : null}
         {phase.kind === "working" ? (
           <p className="m-0 tabular-nums text-xs font-bold" role="status">
-            CHECKING YOUR LINK…
+            Checking your link…
           </p>
         ) : null}
         {phase.kind === "error" || phase.kind === "notALink" ? (

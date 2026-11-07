@@ -87,7 +87,7 @@ export function RecipeBrowser({
   });
 
   const pendingCount = pending.docs?.length ?? 0;
-  const sortLabel = SORT_LABELS[search.sort ?? "suggested"].toUpperCase();
+  const sortLabel = SORT_LABELS[search.sort ?? "suggested"].toLowerCase();
 
   return (
     <CollectionView
@@ -130,7 +130,7 @@ export function RecipeBrowser({
         <div className="flex flex-col gap-[0.1875rem]">
           <h1 className="m-0 font-display text-[1.75rem] leading-none font-extrabold md:text-[2.25rem]">Recipes</h1>
           <span className="tabular-nums text-[0.65625rem] font-bold" data-testid="recipe-count">
-            {summaries ? `${result.items.length} OF ${result.total} · ${sortLabel}` : "LOADING…"}
+            {summaries ? `${result.items.length} of ${result.total} · ${sortLabel}` : "Loading…"}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -202,7 +202,7 @@ function AddRecipeSheet() {
             void navigate({ to: "/recipes/$id", params: { id: r.recipeId } });
           }}
         />
-        <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">OR</span>
+        <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">Or</span>
         <SheetClose asChild>
           <Link to="/recipes/new" className="flex items-center justify-between rounded-ui border-bw bg-base p-3.5 text-ink no-underline shadow-hard">
             <span className="flex flex-col gap-1">

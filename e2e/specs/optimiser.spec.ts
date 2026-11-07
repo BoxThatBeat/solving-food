@@ -31,19 +31,19 @@ test("4 dinners under $60: a set under budget, Next / Back, Accept adds all four
   await card.getByRole("button", { name: "Find sets" }).click();
   const set = card.getByTestId("optimiser-set");
   await expect(set).toBeVisible({ timeout: 30_000 });
-  await expect(set).toContainText("SET 1");
+  await expect(set).toContainText("Set 1");
   const recipes = set.getByRole("list", { name: "Recipes in this set" }).getByRole("listitem");
   await expect(recipes).toHaveCount(4);
-  const cost = Number(/\$(\d+\.\d\d) TO BUY/.exec((await set.innerText()) ?? "")?.[1]);
+  const cost = Number(/\$(\d+\.\d\d) to buy/.exec((await set.innerText()) ?? "")?.[1]);
   expect(cost).toBeLessThanOrEqual(60);
   const first = await recipes.allInnerTexts();
 
   await card.getByRole("button", { name: "Next →" }).click();
-  await expect(set).toContainText("SET 2", { timeout: 30_000 });
+  await expect(set).toContainText("Set 2", { timeout: 30_000 });
   const second = await recipes.allInnerTexts();
   expect(second).not.toEqual(first);
   await card.getByRole("button", { name: "← Back" }).click();
-  await expect(set).toContainText("SET 1");
+  await expect(set).toContainText("Set 1");
   expect(await recipes.allInnerTexts()).toEqual(first);
 
   await card.getByRole("button", { name: "Accept · add 4" }).click();
