@@ -516,7 +516,9 @@ function TimerBox({ timers, recipeId, step, seconds }: { timers: Timers; recipeI
           {formatClock(left)}
         </span>
       </div>
-      <div className="flex flex-wrap gap-2">
+      {/* Above the edge strips (z-10), like the Note button: in the wide and phone-landscape layouts the timers sit at
+          the right edge, under the invisible Next step strip, which otherwise takes the tap and moves the step. */}
+      <div className="relative z-20 flex flex-wrap gap-2">
         {state === "running" ? (
           <Button size="sm" variant="secondary" onClick={() => timers.pause(id)}>
             Pause
@@ -548,7 +550,7 @@ function TimerBox({ timers, recipeId, step, seconds }: { timers: Timers; recipeI
   );
 }
 
-/** Timers from other steps that are still going, so a propped-up tablet shows them all. */
+/** Timers from other steps that are still going (or finished and not yet dismissed), so a propped-up tablet shows them all. */
 function OtherTimers({ timers, except }: { timers: Timers; except: string }) {
   const list = timers.timers.filter((t) => t.id !== except && t.state !== "paused");
   if (!list.length) return null;
@@ -559,8 +561,8 @@ function OtherTimers({ timers, except }: { timers: Timers; except: string }) {
           <span className="text-[0.8125rem] font-bold">{t.label}</span>
           <span className="font-mono text-[1.125rem] font-extrabold tabular-nums">{t.state === "done" ? "DONE" : formatClock(remainingMs(t, timers.now))}</span>
           {t.state === "done" ? (
-            <Button size="sm" variant="chip" onClick={() => timers.dismiss(t.id)}>
-              OK
+            <Button size="sm" variant="chip" onClick={() => timers.dismiss(t.id)} className="relative z-20" aria-label={`Dismiss ${t.label}`}>
+              Dismiss
             </Button>
           ) : null}
         </li>

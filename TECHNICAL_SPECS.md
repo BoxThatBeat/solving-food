@@ -1459,7 +1459,10 @@ Timers must keep running and **alert even when the phone is locked** or the app 
 - **Offline:** if the device is offline when a timer starts, the push can't be scheduled. The timer still runs in the page, and a banner warns that it won't alert while the phone is locked.
 
 As built (M3): `packages/core/timers.ts` holds the timer state (wall-clock end, pause keeps what's left); the page keeps
-its timers in sessionStorage per cook session. The alarm is synthesised with Web Audio (three square-wave beeps) plus
+its timers in sessionStorage per cook session. Step mode shows the current step's timer and, under it, the other steps'
+running or finished timers ("Other timers", DONE with a **Dismiss** chip; dismissing only clears the timer, the step stays).
+Timer buttons sit above the invisible edge strips (`z-20`, like the Note button): in the wide and phone-landscape layouts
+the timers are at the right edge, under the Next step strip, which otherwise took the tap (owner bug, Nov 2026). The alarm is synthesised with Web Audio (three square-wave beeps) plus
 `navigator.vibrate`, so there's no audio file to cache. `functions/src/timers.ts`: callables `scheduleTimer` and
 `cancelTimer` and the task function `timers` (`onTaskDispatched`; its deploy creates the Cloud Tasks queue `timers`
 in us-east1). Scheduling writes `users/{uid}/timers/{timerId}` with the task name `t-<uid>-<timerId>-<endsAt>`

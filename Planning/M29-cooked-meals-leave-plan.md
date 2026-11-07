@@ -78,6 +78,10 @@ reviews). PRD v0.15. Spec §7 (What the Plan list shows), §12 (`<CoverageStrip>
   The second run showed the switch kept the first session's state (a meal shown at one recipe's mise en place):
   `<CookSession>` is now keyed by its target, so the planned session mounts fresh.
 - **Recipe page "Before you start" unchanged.** Only mise en place renders amounts, as asked.
+- **Owner bug after release (6 Nov 2026): a finished timer from an earlier step.** Its row under Other timers had an
+  OK chip that, on desktop and phone landscape, sat under the invisible Next step edge strip, so the tap moved the step
+  and the timer stayed. The chip now says **Dismiss**, and the timer button rows sit above the strips (`z-20`, like the
+  Note button). `timers.spec.ts` covers it (@R4.23, @R4.10); spec §12 "Cooking timers" updated.
 
 ## Verification
 

@@ -57,6 +57,30 @@ test("when a timer ends in the page, it rings and says so (R4.23)", { tag: ["@R4
   void household;
 });
 
+test("a timer that ends after moving on shows under Other timers; Dismiss clears it and the step stays (R4.23, R4.10)", { tag: ["@R4.23", "@R4.10"] }, async ({ page, household }) => {
+  // Owner bug (Nov 2026): on desktop and phone landscape the finished timer's button sat under the invisible Next
+  // step edge strip, so the tap moved the step and the timer stayed.
+  const r = await makeCookRecipe("Other timers");
+  await page.goto(`/recipes/${r.id}/cook?step=1`);
+  const timer = page.getByTestId("timer");
+  await expect(timer.getByRole("timer")).toHaveText("0:03");
+  await timer.getByRole("button", { name: "Start timer" }).click();
+  await dismissInstall(page);
+  await page.getByRole("button", { name: "Next step →" }).click();
+  const card = page.getByTestId("step-card");
+  await expect(card).toContainText("Step 3 of 3", { ignoreCase: true });
+  const others = page.getByRole("list", { name: "Other timers" });
+  await expect(others).toContainText("Step 2: 3 s");
+  await expect(others).toContainText("DONE", { timeout: 10_000 });
+  await others.getByRole("button", { name: /^Dismiss/ }).click();
+  await expect(others).toBeHidden();
+  await expect(card).toContainText("Step 3 of 3", { ignoreCase: true });
+  // Back on its step the timer is idle again, ready to start over.
+  await page.getByRole("button", { name: "← Back" }).click();
+  await expect(timer).toHaveAttribute("data-state", "idle");
+  void household;
+});
+
 test("first timer on iPhone Safari asks to install the app; offline, it warns there'll be no lock-screen alert (R4.23)", { tag: ["@R4.23"] }, async ({ page, household, context, browserName }) => {
   const r = await makeCookRecipe("Install flow");
   await page.goto(`/recipes/${r.id}/cook?step=0`);
