@@ -67,6 +67,10 @@ export function useCookTimers(sessionKey: string, ctx: TimerContext) {
     ctxRef.current = ctx;
   });
   const askedInstall = React.useRef(false);
+  const timersRef = React.useRef(timers);
+  React.useEffect(() => {
+    timersRef.current = timers;
+  });
 
   React.useEffect(() => {
     try {
@@ -82,15 +86,15 @@ export function useCookTimers(sessionKey: string, ctx: TimerContext) {
     const tick = () => {
       const n = Date.now();
       setNow(n);
-      setTimers((list) => {
-        const r = tickTimers(list, n);
-        if (!r.finished.length) return list;
-        for (const f of r.finished) {
-          playAlarm();
-          ctxRef.current.onFinished?.(f);
-        }
-        return r.timers;
-      });
+      // The alarm and the banner are side effects, so they run here and not inside the state updater (React runs
+      // updaters during render, twice in StrictMode: a doubled alarm and a "setState while rendering" error).
+      const { finished } = tickTimers(timersRef.current, n);
+      if (!finished.length) return;
+      setTimers((list) => tickTimers(list, n).timers);
+      for (const f of finished) {
+        playAlarm();
+        ctxRef.current.onFinished?.(f);
+      }
     };
     const id = setInterval(tick, 250);
     document.addEventListener("visibilitychange", tick);
