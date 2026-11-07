@@ -218,7 +218,7 @@ function GroceryPage() {
 
   return (
     <PageBody className="max-w-[112.5rem]">
-      <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">Grocery List</h1>
+      <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-extrabold">Grocery List</h1>
       <PeriodSwitch
         view={view}
         onChange={(v) => void navigate({ to: "/grocery", search: v === "next" ? { period: "next" } : {} })}
@@ -301,7 +301,7 @@ function GroceryPage() {
           Regenerate
         </Button>
         {removedCount ? (
-          <span className="font-mono text-[0.6875rem] font-bold text-sub uppercase" data-testid="removed-count">
+          <span className="tabular-nums text-[0.6875rem] font-bold text-sub" data-testid="removed-count">
             {removedCount} removed · Regenerate puts {removedCount === 1 ? "it" : "them"} back
           </span>
         ) : null}
@@ -315,7 +315,7 @@ function GroceryPage() {
 
       {(m.ordered ?? []).length ? (
         <section aria-labelledby="ordered-h" className="flex flex-col gap-3">
-          <h2 id="ordered-h" className="m-0 font-display text-[1.375rem] font-normal">
+          <h2 id="ordered-h" className="m-0 font-display text-[1.375rem] font-extrabold">
             {upcoming ? "Ordered for the next period" : "Ordered · waiting to arrive"}
           </h2>
           <p className="m-0 text-[0.8125rem] font-semibold text-sub">
@@ -408,10 +408,10 @@ function StoreCard({
     <section aria-label={store.name} className="flex flex-col overflow-hidden rounded-ui border-bw bg-base shadow-hard" data-testid={`store-${store.kind}`}>
       <header className="flex items-start justify-between gap-2 bg-ink px-3.5 py-2.5 text-base">
         <span className="flex flex-col gap-0.5">
-          <span className="font-display text-[1.0625rem] uppercase">{store.name}</span>
-          <span className="font-mono text-[0.5625rem] font-bold tracking-[0.06rem] uppercase">{store.kind === "pcExpress" ? "Paste into ChatGPT · PC Express plugin" : store.bulk ? "In-store checklist · bulk" : "In-store checklist"}</span>
+          <span className="font-display font-extrabold text-[1.0625rem]">{store.name}</span>
+          <span className="tabular-nums text-[0.5625rem] font-bold tracking-[0.03rem]">{store.kind === "pcExpress" ? "Paste into ChatGPT · PC Express plugin" : store.bulk ? "In-store checklist · bulk" : "In-store checklist"}</span>
         </span>
-        <span className="font-mono text-[0.75rem] font-extrabold whitespace-nowrap">
+        <span className="tabular-nums text-[0.75rem] font-extrabold whitespace-nowrap">
           ≈ {formatCents(total)}
           {unknown ? ` + ${unknown}?` : ""}
         </span>
@@ -420,7 +420,7 @@ function StoreCard({
         {lines.map(([id, it], i) => (
           <React.Fragment key={id}>
           {(it.source === "staple" || it.source === "cadence") && (i === 0 || (lines[i - 1]![1].source !== "staple" && lines[i - 1]![1].source !== "cadence")) ? (
-            <li aria-hidden className="border-t-2 border-line bg-mantle px-3.5 py-1 font-mono text-[0.5625rem] font-bold tracking-[0.06rem] uppercase first:border-t-0" data-testid="staples-divider">
+            <li aria-hidden className="border-t-2 border-line bg-mantle px-3.5 py-1 tabular-nums text-[0.5625rem] font-bold tracking-[0.03rem] first:border-t-0" data-testid="staples-divider">
               Staples
             </li>
           ) : null}
@@ -440,17 +440,17 @@ function StoreCard({
                 {it.productName}
                 {it.packLabel && !it.productName.includes(it.packLabel) ? `, ${it.packLabel}` : ""}
               </span>
-              <span className="font-mono text-[0.625rem] font-semibold text-sub">{lineSub(it, it.ingredientId ? ingredients.get(it.ingredientId) : undefined)}</span>
+              <span className="tabular-nums text-[0.625rem] font-semibold text-sub">{lineSub(it, it.ingredientId ? ingredients.get(it.ingredientId) : undefined)}</span>
               {it.ingredientId && deals?.get(it.ingredientId) ? <DealChip deal={deals.get(it.ingredientId)!} usual /> : null}
               {it.ingredientId && swapHints?.get(it.ingredientId) ? (
-                <Badge className="w-fit border-dashed bg-base text-ink uppercase" data-testid="swap-hint" title="Something that can stand in for it is already in Supply: take the line off if you'll use that instead">
+                <Badge className="w-fit border-dashed bg-base text-ink" data-testid="swap-hint" title="Something that can stand in for it is already in Supply: take the line off if you'll use that instead">
                   Have {swapHints.get(it.ingredientId)}
                 </Badge>
               ) : null}
             </span>
             <span className="flex flex-none flex-col items-end">
-              <span className="font-mono text-[0.8125rem] font-extrabold">×{it.packs}</span>
-              <span className="font-mono text-[0.625rem] font-semibold text-sub">{it.estPriceCents === null ? "price ?" : formatCents(it.estPriceCents)}</span>
+              <span className="tabular-nums text-[0.8125rem] font-extrabold">×{it.packs}</span>
+              <span className="tabular-nums text-[0.625rem] font-semibold text-sub">{it.estPriceCents === null ? "price ?" : formatCents(it.estPriceCents)}</span>
             </span>
             {onRemove && !readOnlyRemove ? (
               <button type="button" aria-label={`Remove ${it.productName}`} title="Remove from the list" onClick={() => onRemove(id)} className="grid size-11 flex-none cursor-pointer place-items-center rounded-ui border-2 border-line bg-base text-ink">
@@ -472,7 +472,7 @@ function OrderedList({ id, list, stores, ingredients, onTick, onUndo, onReceive,
   return (
     <div className="flex flex-col gap-2.5 rounded-ui border-2 border-dashed border-line p-3" data-testid="ordered-list" data-list={id}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="font-mono text-[0.6875rem] font-bold uppercase">
+        <span className="tabular-nums text-[0.6875rem] font-bold">
           {store ? `${store.name} · ` : ""}Ordered {at ? ORDERED_AT.format(new Date(at)) : "just now"} · {Object.keys(list.items).length} items
         </span>
         <Button size="sm" variant="secondary" onClick={onUndo} disabled={receiving}>
@@ -539,7 +539,7 @@ function AddItem({ stores, defaultStoreId, onAdd }: { stores: readonly StoreEntr
       </div>
       {suggestions.length ? (
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="font-mono text-[0.625rem] font-bold text-sub uppercase">Use ingredient:</span>
+          <span className="tabular-nums text-[0.625rem] font-bold text-sub">Use ingredient:</span>
           {suggestions.map((i) => (
             <button key={i.id} type="button" onClick={() => setPicked(i)} className="min-h-11 cursor-pointer rounded-ui border-2 border-line bg-base px-2 py-1 text-xs font-extrabold text-ink shadow-hard-sm">
               {i.name}

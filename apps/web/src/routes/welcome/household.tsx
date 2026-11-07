@@ -109,7 +109,7 @@ function CreateHouseholdPage() {
         <Card className="gap-4 p-4">
           <div className="flex flex-col gap-1">
             <span className="kicker">{ready ? "Invites" : `Welcome, ${displayName}`}</span>
-            <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">{ready ? "You're invited" : "Join a household"}</h1>
+            <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-extrabold">{ready ? "You're invited" : "Join a household"}</h1>
           </div>
           <InviteList invites={invites!} me={{ uid: user.uid, email: user.email, displayName }} onJoined={() => (ready ? void navigate({ to: "/" }) : undefined)} />
         </Card>
@@ -124,9 +124,9 @@ function CreateHouseholdPage() {
                 : `Welcome, ${displayName} · step 2 of 2`}
           </span>
           {ready || hasInvites ? (
-            <h2 className="m-0 font-display text-[1.75rem] leading-[0.95] font-normal">{ready ? "Create a household" : "Create your household"}</h2>
+            <h2 className="m-0 font-display text-[1.75rem] leading-[0.95] font-extrabold">{ready ? "Create a household" : "Create your household"}</h2>
           ) : (
-            <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">Create your household</h1>
+            <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-extrabold">Create your household</h1>
           )}
         </div>
         {atLimit ? (
@@ -167,7 +167,7 @@ function CreateHouseholdPage() {
             </div>
           </div>
           <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-            <legend className="mb-2 font-mono text-[0.6875rem] font-bold tracking-[0.09rem] uppercase">Planned meal types</legend>
+            <legend className="mb-2 tabular-nums text-[0.6875rem] font-bold tracking-[0.045rem]">Planned meal types</legend>
             <div className="grid grid-cols-3 gap-2">
               {PLANNABLE_MEAL_TYPES.map((t) => {
                 const on = form.plannedMealTypes.includes(t);
@@ -189,7 +189,7 @@ function CreateHouseholdPage() {
             </div>
             <span className="text-[0.8125rem] font-semibold text-sub">Snacks are always available.</span>
           </fieldset>
-          <p className="m-0 font-mono text-[0.6875rem] leading-relaxed font-semibold text-sub">
+          <p className="m-0 tabular-nums text-[0.6875rem] leading-relaxed font-semibold text-sub">
             {CURRENCY} · {DEFAULT_PERIOD_DAYS}-DAY PLAN PERIOD · ${DEFAULT_BUDGET_CENTS / 100} BUDGET · CHANGE THESE LATER IN
             SETTINGS
           </p>
@@ -203,9 +203,9 @@ function CreateHouseholdPage() {
             Cancel
           </Link>
         ) : (
-          <p className="m-0 font-mono text-[0.6875rem] font-semibold text-sub">
+          <p className="m-0 tabular-nums text-[0.6875rem] font-semibold text-sub">
             SIGNED IN AS {user.email.toUpperCase()} ·{" "}
-            <button type="button" className="cursor-pointer bg-transparent p-0 font-mono font-bold text-ink underline" onClick={() => void signOut(auth)}>
+            <button type="button" className="cursor-pointer bg-transparent p-0 tabular-nums font-bold text-ink underline" onClick={() => void signOut(auth)}>
               SIGN OUT
             </button>
           </p>

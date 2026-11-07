@@ -284,7 +284,7 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
           <X aria-hidden className="size-5" strokeWidth={3} />
         </button>
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate font-mono text-[0.625rem] font-bold tracking-[0.09rem] uppercase" data-testid="cook-kicker">
+          <span className="truncate tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]" data-testid="cook-kicker">
             {/* M29 (R9.7): a planned meal says so, however the cook was started ("Planned dinner"); the phase is the
                 page's own heading or step badge, so it gives way on the narrow header. */}
             {target.planItemId ? (
@@ -298,11 +298,11 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
           <span className="truncate text-[0.9375rem] font-extrabold">{current && !single ? current.title : target.title}</span>
         </span>
         {awake ? (
-          <span className="rounded-ui border-2 border-line bg-yellow px-1.5 py-0.5 font-mono text-[0.5625rem] font-bold text-onc" title="The screen stays on while you cook" data-testid="awake">
+          <span className="rounded-ui border-2 border-line bg-yellow px-1.5 py-0.5 tabular-nums text-[0.5625rem] font-bold text-onc" title="The screen stays on while you cook" data-testid="awake">
             ☀<span className="max-sm:sr-only"> AWAKE</span>
           </span>
         ) : null}
-        {!online ? <span className="rounded-ui border-2 border-line bg-peach-soft px-1.5 py-0.5 font-mono text-[0.5625rem] font-bold text-onc">OFFLINE</span> : null}
+        {!online ? <span className="rounded-ui border-2 border-line bg-peach-soft px-1.5 py-0.5 tabular-nums text-[0.5625rem] font-bold text-onc">OFFLINE</span> : null}
         {/* M11 (R4.31): hands-free from mise en place on; not on a meal's order list. */}
         {phase.kind !== "order" ? <HandsFreeToggle /> : null}
         <Button variant="ink" size="sm" onClick={finish} disabled={finished}>
@@ -317,7 +317,7 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
           <div className="mx-auto flex w-full max-w-[50rem] flex-col gap-3 px-4 pt-4 pb-6">
             <div className="flex flex-col gap-1">
               <span className="kicker">Choose the order · check each one off</span>
-              <h1 className="m-0 font-display text-[2rem] leading-[0.95] font-normal">{target.title}</h1>
+              <h1 className="m-0 font-display text-[2rem] leading-[0.95] font-extrabold">{target.title}</h1>
             </div>
             <ol className="m-0 flex list-none flex-col gap-3 p-0" aria-label="Recipes in cooking order">
               {order.map((id, i) => {
@@ -331,7 +331,7 @@ export function CookSession({ target, hid, uid, tools, initialStep }: { target: 
                     <RecipeThumb base={thumbOf(r)} cuisine={r.cuisine} />
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className={cn("text-[1.0625rem] leading-tight font-extrabold", on && "line-through decoration-2")}>{r.title}</span>
-                      <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
+                      <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
                         {formatMinutes(r.prepMin + r.cookMin)} total · {formatMinutes(r.prepMin)} active
                       </span>
                     </span>

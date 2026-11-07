@@ -25,7 +25,7 @@ function WhyChips({ reasons, className }: { reasons: readonly Reason[]; classNam
           key={r.key + r.label}
           data-tone={r.tone}
           className={cn(
-            "rounded-[0.1875rem] border-[1.5px] border-line px-1 py-px font-mono text-[0.625rem] leading-[1.3] font-bold",
+            "rounded-[0.1875rem] border-[1.5px] border-line px-1 py-px tabular-nums text-[0.625rem] leading-[1.3] font-bold",
             r.tone === "expiry" ? "bg-peach text-onc" : r.tone === "good" ? "bg-acc text-onc" : "bg-s0 text-ink",
           )}
         >
@@ -68,10 +68,10 @@ export function SuggestedSection({
   return (
     <section aria-labelledby="suggested-h" className="flex flex-col gap-3" data-testid="suggested">
       <div className="flex items-baseline justify-between gap-2">
-        <h2 id="suggested-h" className="m-0 font-display text-[1.3125rem] font-normal">
+        <h2 id="suggested-h" className="m-0 font-display text-[1.3125rem] font-extrabold">
           Suggested
         </h2>
-        <Link to="/settings/weights" className="inline-flex min-h-11 items-center font-mono text-[0.65625rem] font-bold text-ink uppercase underline">
+        <Link to="/settings/weights" className="inline-flex min-h-11 items-center tabular-nums text-[0.65625rem] font-bold text-ink underline">
           Weights: {preset}
         </Link>
       </div>
@@ -83,19 +83,19 @@ export function SuggestedSection({
           <div key={x.id} data-testid="suggestion" className="flex items-stretch gap-2.5 rounded-ui border-bw bg-base p-2 shadow-hard">
             <Link to="/recipes/$id" params={{ id: r.id }} className="flex min-w-0 flex-1 items-stretch gap-2.5 text-ink no-underline">
               <RecipeThumb base={r.thumb} cuisine={r.cuisine}>
-                <span className="absolute bottom-[0.1875rem] left-[0.1875rem] rounded-[0.1875rem] bg-ink px-1 py-px font-mono text-[0.625rem] font-extrabold text-base" aria-label={`Score ${x.score}`}>
+                <span className="absolute bottom-[0.1875rem] left-[0.1875rem] rounded-[0.1875rem] bg-ink px-1 py-px tabular-nums text-[0.625rem] font-extrabold text-base" aria-label={`Score ${x.score}`}>
                   {x.score}
                 </span>
               </RecipeThumb>
               <span className="flex min-w-0 flex-col gap-[0.3125rem] py-0.5">
                 <span className="text-[0.90625rem] leading-tight font-extrabold">{r.title}</span>
-                <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
+                <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
                   {formatMinutes(r.totalMin)}
                   <NutritionText r={r} />
                   {x.costCents !== null ? ` · +${formatCents(x.costCents)}` : ""}
                 </span>
                 {x.deal ? (
-                  <Badge className="w-fit bg-acc whitespace-normal text-onc uppercase" data-testid="deal-chip">
+                  <Badge className="w-fit bg-acc whitespace-normal text-onc" data-testid="deal-chip">
                     Deal{x.reasons.some((rr) => rr.key === "onSale") ? "" : ` · ${x.deal.label}`}
                   </Badge>
                 ) : null}

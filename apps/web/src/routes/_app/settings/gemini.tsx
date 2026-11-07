@@ -35,7 +35,7 @@ function GeminiPage() {
               ).
             </li>
           </ul>
-          <p role="status" className={ai?.connected ? "m-0 font-mono text-[0.6875rem] font-bold uppercase" : "m-0 rounded-ui border-2 border-dashed border-line px-2.5 py-2 text-[0.8125rem] font-bold"}>
+          <p role="status" className={ai?.connected ? "m-0 tabular-nums text-[0.6875rem] font-bold" : "m-0 rounded-ui border-2 border-dashed border-line px-2.5 py-2 text-[0.8125rem] font-bold"}>
             {!ai ? "Checking Gemini…" : ai.connected ? "Gemini is set up" : ai.canEditKey ? "Gemini isn't set up yet: paste its API key." : "Gemini isn't set up yet. The app's owner adds its key here."}
           </p>
         </Card>

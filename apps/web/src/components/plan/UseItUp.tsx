@@ -46,7 +46,7 @@ export function UseItUp({
   const candidates = summaries.filter((r) => !plannedIds.has(r.id) && !scores.get(r.id)?.blocked);
   return (
     <section aria-label="Use it up before you order" data-testid="use-it-up" className="flex flex-col overflow-hidden rounded-ui border-bw bg-base text-ink shadow-hard">
-      <div className="flex items-baseline justify-between gap-2 border-b-2 border-line bg-acc px-3 py-1.5 font-mono text-[0.65625rem] font-extrabold tracking-[0.09rem] text-onc">
+      <div className="flex items-baseline justify-between gap-2 border-b-2 border-line bg-acc px-3 py-1.5 tabular-nums text-[0.65625rem] font-extrabold tracking-[0.045rem] text-onc">
         <span>USE IT UP · BEFORE YOU ORDER</span>
         <span>{list.length}</span>
       </div>
@@ -65,7 +65,7 @@ export function UseItUp({
                   <span className="text-[1rem] leading-tight font-extrabold">
                     {Name}: {amount(a.amount)} spare
                   </span>
-                  <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
+                  <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
                     Buying {amount(a.bought)} · {keepsPhrase(a.daysLeft)}
                   </span>
                 </span>
@@ -90,7 +90,7 @@ export function UseItUp({
                         <RecipeThumb base={summaries.find((x) => x.id === recipe.id)?.thumb} cuisine={recipe.cuisine} className="min-h-10" />
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                           <span>{recipe.title}</span>
-                          <span className="font-mono text-[0.65625rem] font-bold" data-testid="use-it-up-uses">
+                          <span className="tabular-nums text-[0.65625rem] font-bold" data-testid="use-it-up-uses">
                             uses {amount(uses)} of the spare {name}
                           </span>
                         </span>

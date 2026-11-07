@@ -89,7 +89,7 @@ export default function VoiceDiagnostics() {
         }
       >
         <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1 font-mono text-[0.6875rem] font-bold tracking-[0.06rem] text-sub uppercase">Listen while reading aloud</legend>
+          <legend className="mb-1 tabular-nums text-[0.6875rem] font-bold tracking-[0.03rem] text-sub">Listen while reading aloud</legend>
           <div className="flex flex-wrap gap-2">
             {(
               [
@@ -107,7 +107,7 @@ export default function VoiceDiagnostics() {
           <p className="m-0 text-sm text-sub">Applies the next time hands-free is switched on.</p>
         </fieldset>
         {events.length ? (
-          <ol ref={listRef} aria-label="Voice events" className="m-0 flex list-none flex-col gap-1 p-0 font-mono text-[0.75rem] leading-snug">
+          <ol ref={listRef} aria-label="Voice events" className="m-0 flex list-none flex-col gap-1 p-0 tabular-nums text-[0.75rem] leading-snug">
             {events.map((e, i) => (
               <li key={`${e.at}-${i}`} className="rounded-ui border-2 border-line bg-base px-2 py-1 break-words">
                 <span className="text-sub">{new Date(e.at).toISOString().slice(11, 23)}</span> <strong>{e.event}</strong>

@@ -207,7 +207,7 @@ function IngredientForm({ id, initial }: { id: string; initial: IngredientDoc })
       <Card>
         <SectionLabel hint="R4.30 · per 100 g · optional">Nutrition facts</SectionLabel>
         <NutrientInputs value={nutrients} onChange={setNutrients} idPrefix="ing-nf" />
-        {initial.nutrientSource ? <p className="m-0 font-mono text-[0.625rem] font-semibold text-sub">Source: {initial.nutrientSource}</p> : null}
+        {initial.nutrientSource ? <p className="m-0 tabular-nums text-[0.625rem] font-semibold text-sub">Source: {initial.nutrientSource}</p> : null}
       </Card>
       <Card>
         <SectionLabel hint="Days; blank = not kept there">Shelf life</SectionLabel>

@@ -25,7 +25,7 @@ function NotFound() {
   return (
     <div className="grid min-h-dvh place-items-center p-4">
       <div className="flex flex-col items-center gap-3 text-center">
-        <h1 className="m-0 font-display text-4xl font-normal">Not found</h1>
+        <h1 className="m-0 font-display text-4xl font-extrabold">Not found</h1>
         <a href="/" className="font-extrabold">
           Go home
         </a>

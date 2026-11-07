@@ -84,7 +84,7 @@ function SignInPage() {
       <Card className="gap-4 p-4">
         <div className="flex flex-col gap-1">
           <span className="kicker">Invite only · no password</span>
-          <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">Sign in</h1>
+          <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-extrabold">Sign in</h1>
         </div>
         {sentTo ? (
           <div className="flex flex-col gap-3" role="status">
@@ -127,7 +127,7 @@ function SignInPage() {
       </Card>
 
       <Card className="gap-3 p-4">
-        <h2 className="m-0 font-display text-[1.1875rem] font-normal">Paste sign-in link</h2>
+        <h2 className="m-0 font-display text-[1.1875rem] font-extrabold">Paste sign-in link</h2>
         <p className="m-0 text-[0.8125rem] leading-snug font-semibold text-sub">
           Using the app from your home screen? The email opens in the browser instead. Long-press the link in the
           email, copy it, and paste it here. Use the same email address as above.

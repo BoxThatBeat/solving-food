@@ -19,7 +19,7 @@ export function FieldError({ id, children }: { id: string; children?: React.Reac
   if (!children) return null;
   return (
     <p id={id} role="alert" className="m-0 text-[0.8125rem] font-bold text-ink">
-      <span className="mr-1.5 inline-block rounded-[3px] border-[1.5px] border-line bg-red px-1 font-mono text-[0.625rem]">!</span>
+      <span className="mr-1.5 inline-block rounded-[3px] border-[1.5px] border-line bg-red px-1 tabular-nums text-[0.625rem]">!</span>
       {children}
     </p>
   );

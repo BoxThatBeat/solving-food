@@ -23,7 +23,7 @@ function AccountPage() {
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <Card>
           <CardTitle>Account</CardTitle>
-          <span className="font-mono text-[0.6875rem] leading-snug font-semibold text-sub uppercase">
+          <span className="tabular-nums text-[0.6875rem] leading-snug font-semibold text-sub">
             Signed in as {s.displayName} · {s.user.email}
           </span>
           <Button

@@ -93,8 +93,8 @@ function MealsPage() {
         }
       >
         <div className="flex flex-col gap-[0.1875rem]">
-          <h1 className="m-0 font-display text-[1.75rem] leading-none font-normal md:text-[2.25rem]">Meals</h1>
-          <span className="font-mono text-[0.65625rem] font-bold" data-testid="meal-count">
+          <h1 className="m-0 font-display text-[1.75rem] leading-none font-extrabold md:text-[2.25rem]">Meals</h1>
+          <span className="tabular-nums text-[0.65625rem] font-bold" data-testid="meal-count">
             {meals.docs ? `${result.items.length} OF ${rows.length} SAVED · ${SORT_LABELS[search.sort ?? "suggested"].toUpperCase()}` : "LOADING…"}
           </span>
         </div>

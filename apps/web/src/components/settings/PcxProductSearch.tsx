@@ -39,7 +39,7 @@ export function PcxProductSearch({
   };
   return (
     <div className="flex flex-col gap-2 rounded-ui border-2 border-dashed border-line p-2.5" data-testid="pcx-product-search">
-      <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">SEARCH PC EXPRESS</span>
+      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">SEARCH PC EXPRESS</span>
       <div className="flex gap-2">
         <Input
           aria-label="Search PC Express products"
@@ -79,17 +79,17 @@ export function PcxProductSearch({
                 )}
               >
                 <span className="grid size-12 flex-none place-items-center overflow-hidden rounded-[calc(var(--r)*0.6)] border-2 border-line bg-mantle">
-                  {p.imageUrl ? <img src={p.imageUrl} alt="" className="size-full object-contain" loading="lazy" /> : <span aria-hidden className="font-mono text-[0.625rem] font-bold">PC</span>}
+                  {p.imageUrl ? <img src={p.imageUrl} alt="" className="size-full object-contain" loading="lazy" /> : <span aria-hidden className="tabular-nums text-[0.625rem] font-bold">PC</span>}
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="text-[0.8125rem] leading-tight font-extrabold">{p.name}</span>
-                  <span className={cn("font-mono text-[0.625rem] font-semibold uppercase", on ? "text-onc" : "text-sub")}>
+                  <span className={cn("tabular-nums text-[0.625rem] font-semibold", on ? "text-onc" : "text-sub")}>
                     {[p.brand, p.packageSize].filter(Boolean).join(" · ") || "Pack size unknown"}
                   </span>
                 </span>
                 <span className="flex flex-none flex-col items-end gap-1">
-                  <span className="font-mono text-[0.875rem] font-extrabold">{p.priceCents !== undefined ? formatCents(p.priceCents) : "—"}</span>
-                  {on ? <span className="rounded-[calc(var(--r)*0.6)] border-2 border-line bg-base px-1.5 font-mono text-[0.5625rem] font-extrabold text-ink">✓ SELECTED</span> : null}
+                  <span className="tabular-nums text-[0.875rem] font-extrabold">{p.priceCents !== undefined ? formatCents(p.priceCents) : "—"}</span>
+                  {on ? <span className="rounded-[calc(var(--r)*0.6)] border-2 border-line bg-base px-1.5 tabular-nums text-[0.5625rem] font-extrabold text-ink">✓ SELECTED</span> : null}
                 </span>
               </button>
             </li>

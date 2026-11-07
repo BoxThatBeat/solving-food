@@ -11,7 +11,7 @@ const STATE_TEXT = { cooked: "cooked", out: "eating out", planned: "planned", op
 export function CoverageStrip({ rows, cells, todayIndex }: { rows: StripRow[]; cells: DayCell[]; todayIndex: number }) {
   return (
     <section aria-label="Period coverage" className="flex flex-col gap-2.5 rounded-ui border-bw bg-base p-3.5 shadow-hard" data-testid="coverage-strip">
-      <span className="font-mono text-[0.6875rem] font-bold tracking-[0.09rem] uppercase">Coverage</span>
+      <span className="tabular-nums text-[0.6875rem] font-bold tracking-[0.045rem]">Coverage</span>
       <table className="w-full table-fixed border-separate border-spacing-[0.1875rem]">
         <caption className="sr-only">Meals planned this period by meal type. Solid cells are cooked, hatched cells are eating out, outlined cells are planned.</caption>
         <thead>
@@ -20,7 +20,7 @@ export function CoverageStrip({ rows, cells, todayIndex }: { rows: StripRow[]; c
               <span className="sr-only">Meal type</span>
             </th>
             {cells.map((c, i) => (
-              <th key={c.date} scope="col" title={c.label} className={cn("p-0 text-center font-mono text-[0.5625rem] leading-tight font-bold", i === todayIndex ? "text-ink underline decoration-2 underline-offset-2" : "text-sub")}>
+              <th key={c.date} scope="col" title={c.label} className={cn("p-0 text-center tabular-nums text-[0.5625rem] leading-tight font-bold", i === todayIndex ? "text-ink underline decoration-2 underline-offset-2" : "text-sub")}>
                 <span aria-hidden>
                   {c.weekday.slice(0, cells.length > 10 ? 1 : 3)}
                   <br />
@@ -55,7 +55,7 @@ export function CoverageStrip({ rows, cells, todayIndex }: { rows: StripRow[]; c
                   </span>
                 </td>
               ))}
-              <td className="p-0 text-right font-mono text-[0.75rem] font-extrabold whitespace-nowrap" data-testid={`strip-count-${r.mealType}`}>
+              <td className="p-0 text-right tabular-nums text-[0.75rem] font-extrabold whitespace-nowrap" data-testid={`strip-count-${r.mealType}`}>
                 {stripCount(r)}
               </td>
             </tr>

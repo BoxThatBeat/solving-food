@@ -154,7 +154,7 @@ function HistoryPage() {
         hide={["show", "tools", "cost", "supply"]}
       >
           <div className="flex flex-col gap-3.5">
-            <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">History</h1>
+            <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-extrabold">History</h1>
             <div className="grid grid-cols-1 items-start gap-3.5 md:grid-cols-2 2xl:grid-cols-4">
               <StatTile title="Most cooked" testId="stat-most-cooked">
                 {most.length ? (
@@ -205,8 +205,8 @@ function HistoryPage() {
               </StatTile>
             </div>
             <div className="flex items-baseline justify-between gap-2">
-              <h2 className="m-0 font-display text-[1.375rem] font-normal">Cooked</h2>
-              <span className="font-mono text-[0.65625rem] font-bold uppercase" data-testid="history-count">
+              <h2 className="m-0 font-display text-[1.375rem] font-extrabold">Cooked</h2>
+              <span className="tabular-nums text-[0.65625rem] font-bold" data-testid="history-count">
                 {events.docs === undefined ? "Loading…" : `${result.items.length} ${result.items.length === 1 ? "entry" : "entries"} · ${SORT_LABELS[effective.sort]}`}
               </span>
             </div>
@@ -236,7 +236,7 @@ function HistoryPage() {
 function StatTile({ title, children, testId }: { title: string; children: React.ReactNode; testId: string }) {
   return (
     <section aria-label={title} className="flex flex-col gap-2 rounded-ui border-bw bg-base p-3.5 shadow-hard" data-testid={testId}>
-      <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem] uppercase">{title}</span>
+      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">{title}</span>
       {children}
     </section>
   );
@@ -261,9 +261,9 @@ function PriceRow({ name, m }: { name: string; m: PriceMover }) {
     <div className="flex items-center gap-2.5" data-testid="price-mover">
       <span className="flex min-w-0 flex-1 flex-col leading-tight">
         <span className="truncate text-[0.8125rem] font-bold">{name}</span>
-        <span className="font-mono text-[0.5625rem] font-bold text-sub uppercase">usual {formatCents(m.usualCents)}</span>
+        <span className="tabular-nums text-[0.5625rem] font-bold text-sub">usual {formatCents(m.usualCents)}</span>
       </span>
-      <span className="font-mono text-[0.75rem] font-extrabold">{formatCents(m.cents)}</span>
+      <span className="tabular-nums text-[0.75rem] font-extrabold">{formatCents(m.cents)}</span>
       <Badge className={cn("w-[3.25rem] flex-none text-center", down ? "bg-acc text-onc" : "bg-red-soft text-onc")}>
         {down ? "−" : "+"}
         {pct}%<span className="sr-only"> {down ? "below" : "above"} usual</span>
@@ -284,15 +284,15 @@ function Bar({ label, value, tag, fraction, teal, inline, over, mono }: { label:
   if (inline)
     return (
       <div className="flex items-center gap-2.5">
-        <span className={cn("w-[7.5rem] flex-none truncate text-[0.8125rem] font-bold", mono && "font-mono text-[0.6875rem] uppercase")}>{label}</span>
+        <span className={cn("w-[7.5rem] flex-none truncate text-[0.8125rem] font-bold", mono && "tabular-nums text-[0.6875rem]")}>{label}</span>
         {bar}
         {tag ? (
           <span className="flex w-[4.75rem] flex-none flex-col items-end leading-tight" data-testid="spend-value">
-            <span className="font-mono text-[0.75rem] font-extrabold">{value}</span>
-            <span className="font-mono text-[0.5625rem] font-bold text-sub uppercase">{tag}</span>
+            <span className="tabular-nums text-[0.75rem] font-extrabold">{value}</span>
+            <span className="tabular-nums text-[0.5625rem] font-bold text-sub">{tag}</span>
           </span>
         ) : (
-          <span className="w-12 flex-none text-right font-mono text-[0.75rem] font-extrabold">{value}</span>
+          <span className="w-12 flex-none text-right tabular-nums text-[0.75rem] font-extrabold">{value}</span>
         )}
       </div>
     );
@@ -300,7 +300,7 @@ function Bar({ label, value, tag, fraction, teal, inline, over, mono }: { label:
     <div className="flex flex-col gap-1">
       <div className="flex justify-between gap-2 text-[0.8125rem] font-bold">
         <span className="truncate">{label}</span>
-        <span className="font-mono font-extrabold">{value}</span>
+        <span className="tabular-nums font-extrabold">{value}</span>
       </div>
       {bar}
     </div>
@@ -345,15 +345,15 @@ function HistoryRow({
   const multi = e.recipeIds.length > 1;
   return (
     <li className="flex items-start gap-3 rounded-ui border-bw bg-base p-3 shadow-hard" data-testid="history-row" aria-label={e.title ?? e.titles.join(" + ")}>
-      <span className={cn("grid size-[3.25rem] flex-none place-items-center rounded-ui border-2 border-line font-mono text-[1.125rem] font-extrabold", avg === null ? "bg-mantle" : avg >= 9 ? "bg-acc text-onc" : "bg-[#8bd5ca] text-onc")} aria-label={avg === null ? "Not rated" : `Average rating ${avg.toFixed(1)}`}>
+      <span className={cn("grid size-[3.25rem] flex-none place-items-center rounded-ui border-2 border-line tabular-nums text-[1.125rem] font-extrabold", avg === null ? "bg-mantle" : avg >= 9 ? "bg-acc text-onc" : "bg-[#8bd5ca] text-onc")} aria-label={avg === null ? "Not rated" : `Average rating ${avg.toFixed(1)}`}>
         {avg === null ? "–" : avg.toFixed(1)}
       </span>
       <MealThumb ids={e.recipeIds} summary={summary} className="h-[3.25rem] self-start" />
       <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <span className="font-mono text-[0.625rem] font-bold uppercase">{fmt.format(at)}</span>
+        <span className="tabular-nums text-[0.625rem] font-bold">{fmt.format(at)}</span>
         <span className="text-[1rem] leading-tight font-extrabold">{e.title ?? e.titles.join(" + ")}</span>
         {sides && !(e.title ?? "").toLowerCase().includes(sides.toLowerCase()) ? (
-          <span className="font-mono text-[0.625rem] font-bold uppercase" data-testid="history-sides">
+          <span className="tabular-nums text-[0.625rem] font-bold" data-testid="history-sides">
             With {sides}
           </span>
         ) : null}
@@ -376,29 +376,29 @@ function HistoryRow({
           </span>
         ) : null}
         <span className="flex flex-wrap gap-1">
-          <Badge className="bg-base uppercase">{e.savedMealId ? "Meal · " : ""}Cooked by {name(e.cookedBy)}</Badge>
+          <Badge className="bg-base">{e.savedMealId ? "Meal · " : ""}Cooked by {name(e.cookedBy)}</Badge>
           {[...byWho].map(([who, scores]) => (
-            <Badge key={who} className="bg-s0 uppercase">
+            <Badge key={who} className="bg-s0">
               {name(who)} {Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10}
             </Badge>
           ))}
           {e.reviewStatus === "pending" ? (
-            <Badge className="bg-yellow text-onc uppercase">Not reviewed yet</Badge>
+            <Badge className="bg-yellow text-onc">Not reviewed yet</Badge>
           ) : devs.length ? (
             devs.slice(0, 4).map((d) => {
               const u = unitOf(d.ingredientId);
               return (
-                <Badge key={d.ingredientId} className="bg-peach-soft text-onc uppercase">
+                <Badge key={d.ingredientId} className="bg-peach-soft text-onc">
                   {d.delta > 0 ? "+" : "−"}
                   {formatCanonical(Math.abs(d.delta), u.u, u.w)} {ingredientName(d.ingredientId)}
                 </Badge>
               );
             })
           ) : (
-            <Badge className="bg-base uppercase">As written</Badge>
+            <Badge className="bg-base">As written</Badge>
           )}
-          {mineMissing && e.reviewStatus === "done" ? <Badge className="bg-yellow text-onc uppercase">Your rating missing</Badge> : null}
-          {e.leftoverPortions ? <Badge className="bg-[color-mix(in_srgb,#c6a0f6_55%,white)] text-[#4c4f69] uppercase">{e.leftoverPortions} leftover{e.leftoverPortions === 1 ? "" : "s"}</Badge> : null}
+          {mineMissing && e.reviewStatus === "done" ? <Badge className="bg-yellow text-onc">Your rating missing</Badge> : null}
+          {e.leftoverPortions ? <Badge className="bg-[color-mix(in_srgb,#c6a0f6_55%,white)] text-[#4c4f69]">{e.leftoverPortions} leftover{e.leftoverPortions === 1 ? "" : "s"}</Badge> : null}
         </span>
         {e.note ? <span className="text-[0.8125rem] font-semibold text-sub">“{e.note}”</span> : null}
       </span>

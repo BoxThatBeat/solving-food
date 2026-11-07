@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 export function DealChip({ deal, usual, className }: { deal: Pick<PriceDeal, "dealPct" | "usualCents">; usual?: boolean; className?: string }) {
   return (
-    <Badge className={cn("w-fit bg-acc text-onc uppercase", className)} data-testid="deal-chip" title={`Usually ${formatCents(deal.usualCents)}`}>
+    <Badge className={cn("w-fit bg-acc text-onc", className)} data-testid="deal-chip" title={`Usually ${formatCents(deal.usualCents)}`}>
       {dealLabel(deal)}
       {usual ? ` · usual ${formatCents(deal.usualCents)}` : ""}
     </Badge>

@@ -77,7 +77,7 @@ export function SidePicker({
                 <span className="flex flex-col leading-tight">
                   <span className="text-[0.8125rem] font-extrabold first-letter:uppercase">{name}</span>
                   {each ? (
-                    <span className="font-mono text-[0.625rem] font-bold">
+                    <span className="tabular-nums text-[0.625rem] font-bold">
                       {each} each{servings && ing ? ` · × ${servings} = ${formatPortion(v.portion * servings, ing)}` : ""}
                     </span>
                   ) : null}
@@ -153,7 +153,7 @@ export function SidePicker({
                 className={cn("flex cursor-pointer items-center justify-between gap-2 px-3 py-2 text-sm font-bold", k && "border-t-2 border-line", k === active ? "bg-acc text-onc" : "text-ink")}
               >
                 <span className="first-letter:uppercase">{o.ingredient.name}</span>
-                <span className="font-mono text-[0.625rem] font-semibold whitespace-nowrap uppercase">{formatPortion(o.portion, o.ingredient)} / person</span>
+                <span className="tabular-nums text-[0.625rem] font-semibold whitespace-nowrap">{formatPortion(o.portion, o.ingredient)} / person</span>
               </li>
             ))}
           </ul>

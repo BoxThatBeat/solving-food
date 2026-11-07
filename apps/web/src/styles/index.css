@@ -1,27 +1,23 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Self-hosted fonts (no Google Fonts at runtime). Latin subsets; OFL in /fonts/OFL.txt. */
+/* Self-hosted fonts (no Google Fonts at runtime, so the PWA works offline). Latin subsets downloaded from Google
+   Fonts; OFL in /fonts/OFL.txt. Unbounded 800 is the display face; `size-adjust: 95%` sets every display title 5%
+   smaller than its declared font-size (owner's type update), so the size classes keep their old numbers. */
 @font-face {
-  font-family: "Archivo";
+  font-family: "Unbounded";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  size-adjust: 95%;
+  src: url("/fonts/unbounded-latin-800.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Hanken Grotesk";
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url("/fonts/archivo-latin-wght.woff2") format("woff2-variations");
-}
-@font-face {
-  font-family: "Archivo Black";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/archivo-black-latin-400.woff2") format("woff2");
-}
-@font-face {
-  font-family: "JetBrains Mono";
-  font-style: normal;
-  font-weight: 100 800;
-  font-display: swap;
-  src: url("/fonts/jetbrains-mono-latin-wght.woff2") format("woff2-variations");
+  src: url("/fonts/hanken-grotesk-latin-wght.woff2") format("woff2-variations");
 }
 
 /*
@@ -59,9 +55,8 @@
   --breakpoint-xl: 90rem;
   --breakpoint-2xl: 120rem;
   --breakpoint-3xl: 137.5rem;
-  --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Archivo Black", "Archivo", ui-sans-serif, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Unbounded", "Hanken Grotesk", ui-sans-serif, sans-serif;
 }
 
 /* Prototype tokens as Tailwind colours (bg-base, text-ink, border-line …) plus the shadcn/ui token names. */
@@ -149,18 +144,16 @@
   }
 }
 @utility kicker {
-  font-family: var(--font-mono);
   font-weight: 700;
   font-size: 0.6875rem;
-  letter-spacing: 0.0625rem;
-  text-transform: uppercase;
+  letter-spacing: 0.03125rem;
 }
 
 @layer base {
   /* Fluid root size: rem-based text, spacing, borders, and shadows scale smoothly from phone to 4K (spec §12). */
   html {
     font-size: clamp(16px, 0.3vw + 12px, 22px);
-    /* The prototype sets type with the \`font:\` shorthand, which resets line-height to normal (~1.1 for Archivo). */
+    /* The prototype sets type with the \`font:\` shorthand, which resets line-height to normal (~1.1). */
     line-height: 1.15;
     background: var(--pg);
     color: var(--ink);
@@ -170,6 +163,7 @@
     margin: 0;
     min-height: 100dvh;
     font-family: var(--font-sans);
+    font-weight: 600;
     background: var(--pg);
     color: var(--ink);
     -webkit-font-smoothing: antialiased;

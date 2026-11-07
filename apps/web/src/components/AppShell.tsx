@@ -90,7 +90,7 @@ function ConnectivityProbe({ hid }: { hid: string }) {
 function SyncStatus() {
   const online = useOnline();
   return (
-    <span className="flex items-center gap-1.5 font-mono text-[0.65625rem] font-bold">
+    <span className="flex items-center gap-1.5 tabular-nums text-[0.65625rem] font-bold">
       <span aria-hidden className={cn("size-2 border-[1.5px] border-line", online ? "bg-[#a6da95]" : "bg-peach")} />
       {online ? "SYNCED" : "OFFLINE · CHANGES QUEUED"}
     </span>
@@ -104,7 +104,7 @@ function PhoneOffline() {
   const online = useOnline();
   if (online) return null;
   return (
-    <span role="status" className="flex items-center gap-1 rounded-ui border-2 border-line bg-peach px-1.5 py-0.5 font-mono text-[0.625rem] font-bold text-onc" data-testid="phone-offline">
+    <span role="status" className="flex items-center gap-1 rounded-ui border-2 border-line bg-peach px-1.5 py-0.5 tabular-nums text-[0.625rem] font-bold text-onc" data-testid="phone-offline">
       OFFLINE
     </span>
   );
@@ -118,7 +118,7 @@ function PhoneHeader() {
       <PhoneOffline />
       <HouseholdSheet>
         <SheetTrigger
-          className="min-h-11 cursor-pointer whitespace-nowrap rounded-ui border-2 border-line bg-base px-2.5 py-2 font-mono text-[0.6875rem] font-bold text-ink uppercase shadow-hard-sm"
+          className="min-h-11 cursor-pointer whitespace-nowrap rounded-ui border-2 border-line bg-base px-2.5 py-2 tabular-nums text-[0.6875rem] font-bold text-ink shadow-hard-sm"
           aria-label={`Household: ${name}. Switch household`}
         >
           <span className="inline-flex items-center gap-1">
@@ -198,15 +198,15 @@ function HouseholdButton({ compact }: { compact?: boolean }) {
         )}
       >
         {compact ? (
-          <span className="font-display text-sm">{name.slice(0, 2).toUpperCase()}</span>
+          <span className="font-extrabold text-sm">{name.slice(0, 2).toUpperCase()}</span>
         ) : (
           <>
-            <span className="font-mono text-[0.59375rem] font-bold tracking-[0.0625rem] text-sub">HOUSEHOLD</span>
+            <span className="tabular-nums text-[0.59375rem] font-bold tracking-[0.03125rem] text-sub">HOUSEHOLD</span>
             <span className="flex items-center gap-1 text-[0.9375rem] font-extrabold">
               {name}
               <ChevronDown aria-hidden className="size-3.5" strokeWidth={3} />
             </span>
-            <span className="font-mono text-[0.65625rem] font-semibold uppercase">{memberNames.join(" · ")}</span>
+            <span className="tabular-nums text-[0.65625rem] font-semibold">{memberNames.join(" · ")}</span>
           </>
         )}
       </SheetTrigger>
@@ -256,7 +256,7 @@ function NavList({ compact }: { compact?: boolean }) {
                 <>
                   <span>{p.label}</span>
                   {counts[p.to] ? (
-                    <span className="font-mono text-[0.6875rem] font-bold" data-testid="nav-count">
+                    <span className="tabular-nums text-[0.6875rem] font-bold" data-testid="nav-count">
                       {counts[p.to]}
                     </span>
                   ) : null}
@@ -338,9 +338,9 @@ function SideNav() {
       <Wordmark stacked />
       <HouseholdButton />
       <NavList />
-      <div className="mt-auto flex flex-col gap-1.5 font-mono text-[0.65625rem] font-bold">
+      <div className="mt-auto flex flex-col gap-1.5 tabular-nums text-[0.65625rem] font-bold">
         <SyncStatus />
-        <span className="uppercase">Signed in as {s.displayName}</span>
+        <span>Signed in as {s.displayName}</span>
       </div>
     </nav>
   );
@@ -450,7 +450,7 @@ export function PageHeader({ title, kicker, children }: { title: string; kicker?
     <div className="flex flex-wrap items-end justify-between gap-2.5">
       <div className="flex flex-col gap-1">
         {kicker ? <span className="kicker">{kicker}</span> : null}
-        <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">{title}</h1>
+        <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-extrabold">{title}</h1>
       </div>
       {children}
     </div>

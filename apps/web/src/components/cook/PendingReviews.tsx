@@ -18,7 +18,7 @@ export function PendingReviews({ hid, uid }: { hid: string; uid: string }) {
   if (!list.length) return null;
   return (
     <section aria-label="Pending reviews" className="overflow-hidden rounded-ui border-bw bg-base shadow-hard" data-testid="pending-reviews">
-      <div className="bg-ink px-3.5 py-2 font-mono text-[0.6875rem] font-bold tracking-[0.09rem] text-base uppercase">Pending reviews · {list.length}</div>
+      <div className="bg-ink px-3.5 py-2 tabular-nums text-[0.6875rem] font-bold tracking-[0.045rem] text-base">Pending reviews · {list.length}</div>
       {list.map((e, i) => {
         const theirs = (ratings.docs ?? []).filter((r) => r.data.cookEventId === e.id && r.data.uid !== uid);
         const byWho = new Map<string, number[]>();
@@ -31,7 +31,7 @@ export function PendingReviews({ hid, uid }: { hid: string; uid: string }) {
             <MealThumb ids={e.recipeIds} summary={(id) => thumbs.get(id)} />
             <span className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="text-[0.9375rem] leading-tight font-extrabold">{title}</span>
-              <span className="font-mono text-[0.625rem] font-semibold text-sub">{sub.join(" · ")}</span>
+              <span className="tabular-nums text-[0.625rem] font-semibold text-sub">{sub.join(" · ")}</span>
             </span>
             <Link
               to="/review/$eventId"

@@ -464,7 +464,7 @@ export function RecipeEditor({
               ) : (
                 <RecipeImage base={p} cuisine={values.cuisine} alt={k === 0 ? "Main photo" : `Photo ${k + 1}`} sizes="7rem" />
               )}
-              {k === 0 ? <span className="absolute bottom-1 left-1 rounded border border-line bg-base px-1 font-mono text-[0.5625rem] font-bold">MAIN</span> : null}
+              {k === 0 ? <span className="absolute bottom-1 left-1 rounded border border-line bg-base px-1 tabular-nums text-[0.5625rem] font-bold">MAIN</span> : null}
               <button
                 type="button"
                 aria-label={`Remove photo ${k + 1}`}
@@ -526,7 +526,7 @@ export function RecipeEditor({
             return (
               <li key={f.id} className="flex flex-col gap-1.5 rounded-ui border-2 border-line bg-pg p-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="grid size-7 flex-none place-items-center rounded-ui border-2 border-line bg-acc font-mono text-xs font-extrabold text-onc">{k + 1}</span>
+                  <span className="grid size-7 flex-none place-items-center rounded-ui border-2 border-line bg-acc tabular-nums text-xs font-extrabold text-onc">{k + 1}</span>
                   <Input {...register(`steps.${k}.section`)} placeholder="Section (optional)" aria-label={`Step ${k + 1} section`} className="py-1.5 text-xs pointer-coarse:text-[1rem] shadow-none" />
                   <Input {...register(`steps.${k}.timerMinutes`)} inputMode="decimal" placeholder="Timer min" aria-label={`Step ${k + 1} timer minutes`} className="w-24 flex-none py-1.5 text-xs pointer-coarse:text-[1rem] shadow-none" />
                   <IconBtn label={`Move step ${k + 1} up`} disabled={k === 0} onClick={() => steps.move(k, k - 1)}>
@@ -743,7 +743,7 @@ function ChipChoice<N extends "cuisine" | "mainProtein">({ label, control, name,
       name={name}
       render={({ field }) => (
         <div role="radiogroup" aria-labelledby={lid} className="flex flex-col gap-2">
-          <span id={lid} className="font-mono text-[0.6875rem] font-bold tracking-[0.09rem] uppercase">
+          <span id={lid} className="tabular-nums text-[0.6875rem] font-bold tracking-[0.045rem]">
             {label}
           </span>
           <div className="flex flex-wrap gap-2">
@@ -852,7 +852,7 @@ function IngredientLine({
   return (
     <li className="flex flex-col gap-2 rounded-ui border-2 border-line bg-pg p-2.5">
       <div className="flex items-start gap-2">
-        <span className="grid size-7 flex-none place-items-center pt-2 font-mono text-xs font-extrabold">{index + 1}</span>
+        <span className="grid size-7 flex-none place-items-center pt-2 tabular-nums text-xs font-extrabold">{index + 1}</span>
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <IngredientPicker
             ingredients={ingredients}

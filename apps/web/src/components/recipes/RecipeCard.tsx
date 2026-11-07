@@ -62,13 +62,13 @@ export function RecipeCard({
             {/* Lavender lightened toward white: the prototype's #c6a0f6 with ink text is 3.7:1. */}
             {family ? <Badge className="bg-[color-mix(in_srgb,#c6a0f6_55%,white)] text-[#4c4f69] shadow-hard-sm">FAMILY</Badge> : null}
           </div>
-          <span className="absolute right-[0.4375rem] bottom-[0.4375rem] rounded-[calc(var(--r)*0.5)] bg-ink px-[0.3125rem] py-[0.1875rem] font-mono text-[0.6875rem] font-extrabold text-base">
+          <span className="absolute right-[0.4375rem] bottom-[0.4375rem] rounded-[calc(var(--r)*0.5)] bg-ink px-[0.3125rem] py-[0.1875rem] tabular-nums text-[0.6875rem] font-extrabold text-base">
             {facts.rating ? `★ ${facts.rating.toFixed(1)}` : "NEW"}
           </span>
         </div>
         <div className={cn("flex flex-col gap-[0.3125rem] px-2.5 pt-[0.5625rem] pb-[0.6875rem]", onPlan && "pr-12")}>
-          <span className="font-mono text-[0.625rem] leading-[1.35] font-semibold text-sub uppercase">
-            <span className="normal-case">{formatMinutes(r.totalMin)}</span> · {taxonomyLabel(r.cuisine)}
+          <span className="tabular-nums text-[0.625rem] leading-[1.35] font-semibold text-sub">
+            <span>{formatMinutes(r.totalMin)}</span> · {taxonomyLabel(r.cuisine)}
             {/* Nutrition (R6.15, R6.26), hidden when the household turned tracking off (R6.27). M24: a recipe with no
                 weighable ingredient says so instead of "0 g protein". */}
             {needsIngredients(r) ? (
@@ -81,7 +81,7 @@ export function RecipeCard({
             ) : null}
           </span>
           <h3 className="m-0 text-[0.9375rem] leading-[1.15] font-extrabold text-pretty @[16rem]:text-[1.0625rem]">{r.title}</h3>
-          {facts.timesCooked ? <span className="font-mono text-[0.625rem] font-semibold">{madeLine(facts)}</span> : null}
+          {facts.timesCooked ? <span className="tabular-nums text-[0.625rem] font-semibold">{madeLine(facts)}</span> : null}
         </div>
       </Link>
       {/* M24: 44 px hit areas around the prototype's 34 / 38 px faces. */}

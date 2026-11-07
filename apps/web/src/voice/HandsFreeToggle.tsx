@@ -55,7 +55,7 @@ export function HandsFreeToggle({ className }: { className?: string }) {
       )}
     >
       <Icon aria-hidden className={cn("size-5", state === "loading" && "motion-safe:animate-spin", heard && "motion-safe:animate-pulse")} strokeWidth={2.5} />
-      <span className="hidden font-mono text-[0.625rem] font-bold tracking-[0.06rem] uppercase md:inline">Hands-free</span>
+      <span className="hidden tabular-nums text-[0.625rem] font-bold tracking-[0.03rem] md:inline">Hands-free</span>
       <span aria-hidden className={cn("relative h-5 w-8 flex-none rounded-full border-2 border-line", on ? "bg-ink" : "bg-mantle")}>
         <span className={cn("absolute top-0.5 size-3 rounded-full border-2 border-line", on ? "right-0.5 bg-acc" : "left-0.5 bg-base")} />
       </span>

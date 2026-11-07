@@ -92,17 +92,17 @@ function AddSupplyBody({ hid, uid, tz, nowMs, close }: { hid: string; uid: strin
           <div className="flex flex-col gap-2">
             <SectionLabel id="add-amount">Amount</SectionLabel>
             <div className="flex flex-wrap gap-2">
-              <Input aria-labelledby="add-amount" inputMode="decimal" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value)} className="min-w-0 flex-1 basis-32 font-mono text-[1.125rem] font-extrabold" />
+              <Input aria-labelledby="add-amount" inputMode="decimal" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value)} className="min-w-0 flex-1 basis-32 tabular-nums text-[1.125rem] font-extrabold" />
               <div role="group" aria-label="Unit" className="flex flex-wrap gap-1">
                 {units.map((u) => (
-                  <button key={u} type="button" aria-pressed={unit === u} onClick={() => setUnit(u)} className={cn("min-h-11 min-w-11 cursor-pointer rounded-ui border-2 border-line px-3 font-mono text-[0.8125rem] font-extrabold", unit === u ? "bg-acc text-onc" : "bg-base text-ink")}>
+                  <button key={u} type="button" aria-pressed={unit === u} onClick={() => setUnit(u)} className={cn("min-h-11 min-w-11 cursor-pointer rounded-ui border-2 border-line px-3 tabular-nums text-[0.8125rem] font-extrabold", unit === u ? "bg-acc text-onc" : "bg-base text-ink")}>
                     {u === "count" ? "count" : unitLabel(u, 2)}
                   </button>
                 ))}
               </div>
             </div>
             {canon && !canon.ok ? <span className="text-[0.75rem] font-bold text-ink">This ingredient can't be entered that way.</span> : null}
-            {canon?.ok ? <span className="font-mono text-[0.6875rem] font-semibold text-sub">= {amountText(canon.canonicalAmount, { canonicalUnit: pick.canonicalUnit, unitWeightG: pick.unitWeightG })}</span> : null}
+            {canon?.ok ? <span className="tabular-nums text-[0.6875rem] font-semibold text-sub">= {amountText(canon.canonicalAmount, { canonicalUnit: pick.canonicalUnit, unitWeightG: pick.unitWeightG })}</span> : null}
           </div>
           <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
             <legend className="mb-2 p-0">
@@ -121,7 +121,7 @@ function AddSupplyBody({ hid, uid, tz, nowMs, close }: { hid: string; uid: strin
               <SectionLabel id="add-useby">Use by</SectionLabel>
               {dating === null ? (
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="min-w-0 flex-1 font-mono text-[0.75rem] font-bold uppercase" data-testid="add-useby-typical">
+                  <span className="min-w-0 flex-1 tabular-nums text-[0.75rem] font-bold" data-testid="add-useby-typical">
                     {typical ? `${dateText(typical - 1, tz)} · typical in the ${LOCATION_LABEL[location].toLowerCase()}` : "No typical date"}
                   </span>
                   <Button

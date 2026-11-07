@@ -13,7 +13,7 @@ export function ExpiredLotPrompts({ entries, hid, uid, tz, nowMs }: { entries: E
   if (!entries.length) return null;
   return (
     <section aria-label="Expired in supply" className="flex flex-col overflow-hidden rounded-ui border-bw bg-base shadow-hard" data-testid="expired-prompts">
-      <div className="border-b-2 border-line bg-red-soft px-3 py-1.5 font-mono text-[0.625rem] font-bold tracking-[0.0625rem] text-onc uppercase">
+      <div className="border-b-2 border-line bg-red-soft px-3 py-1.5 tabular-nums text-[0.625rem] font-bold tracking-[0.03125rem] text-onc">
         Expired · not counted until you say
       </div>
       {entries.map((e, i) => (
@@ -43,9 +43,9 @@ function ExpiredRow({ e, first, hid, uid, tz, nowMs }: { e: ExpiredEntry; first:
     <div className={first ? "flex flex-col gap-2 px-3 py-2.5" : "flex flex-col gap-2 border-t-2 border-line px-3 py-2.5"} data-testid="expired-lot">
       <div className="flex flex-wrap items-baseline justify-between gap-x-2">
         <span className="text-[0.9375rem] font-extrabold">{name}</span>
-        <span className="font-mono text-[0.6875rem] font-bold">{amountText(e.lot.amount, e.unit)}</span>
+        <span className="tabular-nums text-[0.6875rem] font-bold">{amountText(e.lot.amount, e.unit)}</span>
       </div>
-      <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
+      <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
         Bought {dateText(e.lot.acquiredAtMs, tz)} · expired{e.lot.expiryExtendedToMs ? " again" : ""} · is it still good?
       </span>
       {picking ? (
@@ -56,7 +56,7 @@ function ExpiredRow({ e, first, hid, uid, tz, nowMs }: { e: ExpiredEntry; first:
             if (date >= minDate) stillGood(localMidnight(addDays(date, 1), tz));
           }}
         >
-          <label className="flex flex-1 items-center gap-2 font-mono text-[0.6875rem] font-bold">
+          <label className="flex flex-1 items-center gap-2 tabular-nums text-[0.6875rem] font-bold">
             GOOD UNTIL
             <Input type="date" value={date} min={minDate} onChange={(ev) => setDate(ev.target.value)} className="min-w-0 flex-1 py-2" aria-label={`${name} good until`} />
           </label>

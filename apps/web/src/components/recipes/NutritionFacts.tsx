@@ -12,8 +12,8 @@ export function NutritionFactsPanel({ recipe, servings, className }: { recipe: N
     <details className={cn("group rounded-ui border-2 border-line bg-base", className)} data-testid="nutrition-facts">
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 [&::-webkit-details-marker]:hidden">
         <span className="flex flex-col gap-0.5">
-          <span className="font-display text-[1.0625rem] leading-none uppercase">Nutrition facts</span>
-          <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
+          <span className="font-display font-extrabold text-[1.0625rem] leading-none">Nutrition facts</span>
+          <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
             {facts?.calories ? `${facts.calories} calories · per serving` : "Per serving"}
           </span>
         </span>
@@ -26,16 +26,16 @@ export function NutritionFactsPanel({ recipe, servings, className }: { recipe: N
           <div className="flex max-w-[26rem] flex-col">
             <span className="text-[0.8125rem] font-bold">Per serving (1 of {servings})</span>
             <div className="flex items-end justify-between border-b-[6px] border-line pb-1">
-              <span className="font-display text-[1.375rem] leading-none">Calories {facts.calories ?? "—"}</span>
-              <span className="text-right font-mono text-[0.625rem] leading-tight font-bold">% Daily Value*</span>
+              <span className="font-extrabold tabular-nums text-[1.375rem] leading-none">Calories {facts.calories ?? "—"}</span>
+              <span className="text-right tabular-nums text-[0.625rem] leading-tight font-bold">% Daily Value*</span>
             </div>
             <dl className="m-0" aria-label="Nutrition facts per serving">
               {facts.rows.map((r) => (
                 <div key={r.key} className={cn("flex items-baseline justify-between gap-2 border-b border-line py-1 text-[0.875rem]", r.sub && "pl-4")} data-testid={`nf-${r.key}`}>
                   <dt className={cn(r.sub ? "font-semibold" : "font-extrabold")}>
-                    {r.label} <span className="font-mono font-semibold">{r.amount}</span>
+                    {r.label} <span className="tabular-nums font-semibold">{r.amount}</span>
                   </dt>
-                  <dd className="m-0 font-mono font-extrabold">{r.dv ?? ""}</dd>
+                  <dd className="m-0 tabular-nums font-extrabold">{r.dv ?? ""}</dd>
                 </div>
               ))}
             </dl>

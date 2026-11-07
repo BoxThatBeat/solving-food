@@ -25,10 +25,10 @@ export function BudgetMeterCompact({ b, className }: { b: BudgetState; className
   return (
     <section aria-label="Budget" data-testid="budget-meter" data-over={b.over || undefined} className={cn("flex items-center gap-3 rounded-ui border-bw bg-base px-3.5 py-2.5 shadow-hard", b.over && "bg-red", className)}>
       <div className="flex flex-none flex-col">
-        <span className="font-mono text-[1.375rem] leading-none font-extrabold" data-testid="budget-left">
+        <span className="tabular-nums text-[1.375rem] leading-none font-extrabold" data-testid="budget-left">
           {formatCents(b.remainingCents)}
         </span>
-        <span className="font-mono text-[0.59375rem] font-bold uppercase">{b.over ? "over" : "left"} of {formatCents(b.budgetCents)}</span>
+        <span className="tabular-nums text-[0.59375rem] font-bold">{b.over ? "over" : "left"} of {formatCents(b.budgetCents)}</span>
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <Bar b={b} />
@@ -42,15 +42,15 @@ export function BudgetMeterCompact({ b, className }: { b: BudgetState; className
 export function BudgetMeterCard({ b, className, period = "this period" }: { b: BudgetState; className?: string; /** M26: "next period" in the next-period view. */ period?: string }) {
   return (
     <section aria-label="Budget" data-testid="budget-meter" data-over={b.over || undefined} className={cn("@container flex flex-col gap-2 rounded-ui border-bw bg-base p-4 shadow-hard", b.over && "bg-red", className)}>
-      <span className="font-mono text-[0.6875rem] font-bold tracking-[0.09rem] uppercase">Budget · {period}</span>
-      <span className="font-display text-[2.25rem] leading-none @[22rem]:text-[2.5rem]" data-testid="budget-left">
+      <span className="tabular-nums text-[0.6875rem] font-bold tracking-[0.045rem]">Budget · {period}</span>
+      <span className="font-extrabold tabular-nums text-[2.25rem] leading-none @[22rem]:text-[2.5rem]" data-testid="budget-left">
         {formatCents(b.remainingCents)}
       </span>
       <span className="text-[0.8125rem] font-bold">
         {b.over ? "over" : "left of"} {b.over ? `the ${formatCents(b.budgetCents)} budget` : `${formatCents(b.budgetCents)} for ${period === "this period" ? "this period" : `the ${period}`}`}
       </span>
       <Bar b={b} />
-      <span className="font-mono text-[0.625rem] leading-relaxed font-bold uppercase">
+      <span className="tabular-nums text-[0.625rem] leading-relaxed font-bold">
         Next order {formatCents(b.spentCents)} · only what supply and ordered lists don't cover counts
       </span>
       <SourceMix b={b} />
@@ -70,7 +70,7 @@ function sourceMixText(b: Pick<BudgetState, "livePrices" | "estimatedPrices" | "
 function SourceMix({ b }: { b: BudgetState }) {
   const t = sourceMixText(b);
   return t ? (
-    <span className="font-mono text-[0.59375rem] font-bold uppercase" data-testid="price-sources">
+    <span className="tabular-nums text-[0.59375rem] font-bold" data-testid="price-sources">
       Prices: {t}
     </span>
   ) : null;

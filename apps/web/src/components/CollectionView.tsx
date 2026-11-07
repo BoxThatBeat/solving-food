@@ -155,7 +155,7 @@ export function CollectionView(p: CollectionViewProps) {
           >
             <FilterIcon />
             {n ? (
-              <span className="absolute -top-[0.5625rem] -right-[0.5625rem] box-border h-[1.375rem] min-w-[1.375rem] rounded-full border-2 border-line bg-ink px-1 text-center font-mono text-[0.6875rem] leading-[1.125rem] font-extrabold text-base">
+              <span className="absolute -top-[0.5625rem] -right-[0.5625rem] box-border h-[1.375rem] min-w-[1.375rem] rounded-full border-2 border-line bg-ink px-1 text-center tabular-nums text-[0.6875rem] leading-[1.125rem] font-extrabold text-base">
                 {n}
               </span>
             ) : null}
@@ -174,7 +174,7 @@ export function CollectionView(p: CollectionViewProps) {
                 {/* M24: a 44 px hit area around the chip. */}
                 <span className="flex items-center gap-1.5 rounded-ui border-2 border-line bg-acc px-2 py-1.5 text-xs font-extrabold whitespace-nowrap text-onc">
                   {c.label}
-                  <span aria-hidden className="font-mono">
+                  <span aria-hidden className="tabular-nums">
                     ✕
                   </span>
                 </span>

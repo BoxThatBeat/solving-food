@@ -9,7 +9,7 @@ export function PcxKeyCard({ hid }: { hid: string }) {
   return (
     <ApiKeyCard status={status} title="PC Express API key" service="PC Express" testId="pcx-key" onSave={(k) => setPcxKey(hid, k)}>
       <p className="m-0">
-        The public key the loblaws.ca website sends with every request. It isn&apos;t tied to an account. If prices stop updating, Loblaw may have changed it: open loblaws.ca, open the browser&apos;s developer tools on the Network tab, search for any product, click a <span className="font-mono">pcx-bff</span> request, and copy its <span className="font-mono">x-apikey</span> header here.
+        The public key the loblaws.ca website sends with every request. It isn&apos;t tied to an account. If prices stop updating, Loblaw may have changed it: open loblaws.ca, open the browser&apos;s developer tools on the Network tab, search for any product, click a <span className="tabular-nums">pcx-bff</span> request, and copy its <span className="tabular-nums">x-apikey</span> header here.
       </p>
     </ApiKeyCard>
   );

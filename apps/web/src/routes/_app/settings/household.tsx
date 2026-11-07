@@ -97,7 +97,7 @@ function HouseholdForm({ hid, household }: { hid: string; household: HouseholdDo
             <span id="hs-servings" className="text-[0.9375rem] font-extrabold">
               Default servings
             </span>
-            <span className="font-mono text-[0.625rem] font-bold text-sub uppercase">Recipes are planned for this many</span>
+            <span className="tabular-nums text-[0.625rem] font-bold text-sub">Recipes are planned for this many</span>
           </span>
           <Stepper label="Default servings" decLabel="Fewer servings" incLabel="More servings" labelledBy="hs-servings" value={form.defaultServings} min={1} max={SERVINGS_MAX} onChange={(v) => setForm((f) => ({ ...f, defaultServings: v }))} />
         </div>
@@ -110,7 +110,7 @@ function HouseholdForm({ hid, household }: { hid: string; household: HouseholdDo
             <span id="hs-period" className="text-[0.9375rem] font-extrabold">
               Plan period
             </span>
-            <span className="font-mono text-[0.625rem] font-bold text-sub uppercase">Meals roll over when it ends · applies from the next period</span>
+            <span className="tabular-nums text-[0.625rem] font-bold text-sub">Meals roll over when it ends · applies from the next period</span>
           </span>
           <Stepper label="Plan period" labelledBy="hs-period" value={form.periodDays} min={1} max={PERIOD_DAYS_MAX} format={(v) => `${v} day${v === 1 ? "" : "s"}`} onChange={(v) => setForm((f) => ({ ...f, periodDays: v }))} />
         </div>
@@ -119,10 +119,10 @@ function HouseholdForm({ hid, household }: { hid: string; household: HouseholdDo
             <label htmlFor="hs-budget" className="text-[0.9375rem] font-extrabold">
               Budget per period
             </label>
-            <span className="font-mono text-[0.625rem] font-bold text-sub uppercase">Planned meals only · CAD · {formatCents(form.budgetCents)}</span>
+            <span className="tabular-nums text-[0.625rem] font-bold text-sub">Planned meals only · CAD · {formatCents(form.budgetCents)}</span>
           </span>
           <div className="flex items-center gap-1.5">
-            <span className="font-mono font-extrabold">$</span>
+            <span className="tabular-nums font-extrabold">$</span>
             <Input
               id="hs-budget"
               inputMode="decimal"
@@ -132,13 +132,13 @@ function HouseholdForm({ hid, household }: { hid: string; household: HouseholdDo
                 const n = Number(e.target.value.replace(/[$,\s]/g, ""));
                 setForm((f) => ({ ...f, budgetCents: Number.isFinite(n) ? Math.round(n * 100) : -1 }));
               }}
-              className="w-[7rem] text-right font-mono"
+              className="w-[7rem] text-right tabular-nums"
             />
           </div>
         </div>
         <RestartPeriod hid={hid} household={household} />
         <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-          <legend className="mb-2 font-mono text-[0.6875rem] font-bold tracking-[0.09rem] uppercase">Planned meal types</legend>
+          <legend className="mb-2 tabular-nums text-[0.6875rem] font-bold tracking-[0.045rem]">Planned meal types</legend>
           <div className="grid grid-cols-3 gap-2">
             {PLANNABLE_MEAL_TYPES.map((t) => {
               const on = form.plannedMealTypes.includes(t);
@@ -229,7 +229,7 @@ function RestartPeriod({ hid, household }: { hid: string; household: HouseholdDo
         <span id="hs-restart" className="text-[0.9375rem] font-extrabold">
           Restart period
         </span>
-        <span className="font-mono text-[0.625rem] font-bold text-sub uppercase">
+        <span className="tabular-nums text-[0.625rem] font-bold text-sub">
           {current ? `Now ${formatPeriodRange(current.startMs, current.endMs, tz)} · ` : ""}start a new {household.periodDays}-day period
         </span>
       </span>

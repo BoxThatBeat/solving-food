@@ -30,7 +30,7 @@ function HouseholdRow({ hid, active, onPick }: { hid: string; active: boolean; o
       >
         <span className="flex flex-col gap-1">
           <span className="text-lg font-extrabold">{hh.data?.name ?? "…"}</span>
-          <span className="font-mono text-[0.65625rem] font-semibold uppercase">
+          <span className="tabular-nums text-[0.65625rem] font-semibold">
             {n === undefined ? "" : `${n} member${n === 1 ? "" : "s"}`}
             {hh.data ? ` · ${hh.data.timezone} · serves ${hh.data.defaultServings}` : ""}
           </span>

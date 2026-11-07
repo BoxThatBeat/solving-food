@@ -105,16 +105,16 @@ export function MiseEnPlace({
         <span className="kicker" data-testid="mise-count">
           {done.size} OF {items.length} READY
         </span>
-        <h1 className="m-0 font-display text-[2rem] leading-[0.95] font-normal md:text-[2.5rem]">Mise en place</h1>
+        <h1 className="m-0 font-display text-[2rem] leading-[0.95] font-extrabold md:text-[2.5rem]">Mise en place</h1>
         <span className="text-[0.9375rem] font-bold">{recipe.title}</span>
       </div>
       {recipe.tools.length ? (
-        <div className={cn("rounded-ui border-2 border-dashed border-line px-3 py-2 font-mono text-[0.6875rem] font-bold uppercase", missingTools.length && "border-solid bg-red-soft text-onc")}>
-          Get out · <span className="normal-case">{recipe.tools.map(toolLabel).join(" · ")}</span>
+        <div className={cn("rounded-ui border-2 border-dashed border-line px-3 py-2 tabular-nums text-[0.6875rem] font-bold", missingTools.length && "border-solid bg-red-soft text-onc")}>
+          Get out · <span>{recipe.tools.map(toolLabel).join(" · ")}</span>
           {missingTools.length ? (
             <>
               {" "}
-              · not in your kitchen: <span className="normal-case">{missingTools.map(toolLabel).join(", ")}</span>
+              · not in your kitchen: <span>{missingTools.map(toolLabel).join(", ")}</span>
             </>
           ) : null}
         </div>
@@ -125,7 +125,7 @@ export function MiseEnPlace({
           {swaps.map((sw) => (
             <li key={sw.ingredientId} className={cn("flex items-center gap-3 rounded-ui border-2 border-line px-3 py-2", sw.accepted ? "bg-[color-mix(in_srgb,var(--acc)_35%,var(--base))]" : "bg-base")} data-testid="swap">
               <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="font-mono text-[0.5625rem] font-bold tracking-[0.09rem] uppercase">{sw.accepted ? "Swapped · Done cooking takes this from Supply" : "Not in Supply · swap"}</span>
+                <span className="tabular-nums text-[0.5625rem] font-bold tracking-[0.045rem]">{sw.accepted ? "Swapped · Done cooking takes this from Supply" : "Not in Supply · swap"}</span>
                 <span className="text-[0.9375rem] leading-snug font-bold first-letter:uppercase">{sw.text}</span>
                 {sw.note ? <span className="text-[0.8125rem] font-semibold text-sub first-letter:uppercase">{sw.note}</span> : null}
               </span>
@@ -166,7 +166,7 @@ export function MiseEnPlace({
                       ) : (
                         <React.Fragment key={k}>
                           {seg.name}
-                          {seg.amount ? <span className="mx-1 inline-block rounded-[calc(var(--r)*0.5)] border-2 border-line bg-acc px-1 align-middle font-mono text-[0.75rem] leading-[1.4] font-extrabold whitespace-nowrap text-onc" data-testid="prep-amount">{seg.amount}</span> : null}
+                          {seg.amount ? <span className="mx-1 inline-block rounded-[calc(var(--r)*0.5)] border-2 border-line bg-acc px-1 align-middle tabular-nums text-[0.75rem] leading-[1.4] font-extrabold whitespace-nowrap text-onc" data-testid="prep-amount">{seg.amount}</span> : null}
                         </React.Fragment>
                       ),
                     )}
@@ -291,7 +291,7 @@ export function StepMode({
   const stepCard = (
     <section aria-label={`Step ${i + 1} of ${n}`} className="flex min-h-0 flex-1 flex-col gap-4 rounded-ui border-bw bg-base p-[clamp(1rem,2.5vw,2.25rem)] shadow-hard" data-testid="step-card">
       <div className="flex flex-none items-center justify-between gap-2">
-        <span className="rounded-ui border-2 border-line bg-acc px-2.5 py-1 font-display text-[0.8125rem] text-onc uppercase">
+        <span className="rounded-ui border-2 border-line bg-acc px-2.5 py-1 font-extrabold text-[0.8125rem] text-onc">
           Step {i + 1} of {n}
           {s.section ? ` · ${s.section}` : ""}
         </span>
@@ -313,14 +313,14 @@ export function StepMode({
           ) : (
             <React.Fragment key={k}>
               {seg.name}
-              {seg.amount ? <span className="mx-1 inline-block rounded-ui border-2 border-line bg-acc px-1.5 align-middle font-mono text-[0.55em] leading-[1.5] font-extrabold whitespace-nowrap text-onc">{seg.amount}</span> : null}
+              {seg.amount ? <span className="mx-1 inline-block rounded-ui border-2 border-line bg-acc px-1.5 align-middle tabular-nums text-[0.55em] leading-[1.5] font-extrabold whitespace-nowrap text-onc">{seg.amount}</span> : null}
             </React.Fragment>
           ),
         )}
       </p>
       {stepNote ? (
         <p className="mt-3 mb-0 rounded-ui border-2 border-dashed border-line bg-mantle px-3 py-2 text-[clamp(0.9375rem,1.6vw,1.375rem)] leading-snug font-bold" data-testid="step-note">
-          <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem] uppercase">Note · </span>
+          <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">Note · </span>
           {stepNote}
         </p>
       ) : null}
@@ -435,7 +435,7 @@ function StepNoteBody({ step, text, onSave }: { step: number; text: string; onSa
       }
     >
       <label className="flex flex-col gap-1.5">
-        <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">SHOWN UNDER THIS STEP NEXT TIME</span>
+        <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">SHOWN UNDER THIS STEP NEXT TIME</span>
         <Textarea rows={3} maxLength={STEP_NOTE_MAX} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Pan hotter than you think." autoFocus aria-label={`Note on step ${step + 1}`} />
       </label>
       <p className="m-0 text-[0.8125rem] font-semibold text-sub">Saved with Done cooking, for everyone in the household.</p>
@@ -447,13 +447,13 @@ function StepIngredients({ lines, lookup, factor, big, boxed }: { lines: RecipeI
   if (!lines.length) return null;
   return (
     <div className={cn("flex flex-col gap-1.5", boxed ? "rounded-ui border-bw bg-base p-3 shadow-hard" : "max-h-[35%] flex-none overflow-y-auto border-t-2 border-dashed border-line pt-3")} data-testid="step-ingredients" {...(boxed ? {} : { tabIndex: 0, role: "group", "aria-label": "This step's ingredients" })}>
-      <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">FOR THIS STEP</span>
+      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">FOR THIS STEP</span>
       {lines.map((l) => {
         const t = lineText(l, lookup, factor);
         return (
           <div key={l.id} className={cn("flex items-baseline justify-between gap-3 font-bold", big ? "text-[1.375rem]" : "text-[1rem]")}>
             <span className="first-letter:uppercase">{t.name}</span>
-            <span className="text-right font-mono font-extrabold">{t.amount}</span>
+            <span className="text-right tabular-nums font-extrabold">{t.amount}</span>
           </div>
         );
       })}
@@ -464,7 +464,7 @@ function StepIngredients({ lines, lookup, factor, big, boxed }: { lines: RecipeI
 function IngredientChecklist({ recipe, lookup, factor, current, checked, setChecked, compact }: { recipe: StoredRecipe; lookup: IngredientLookup; factor: number; current: string[]; checked: Set<string>; setChecked: (s: Set<string>) => void; compact?: boolean }) {
   return (
     <aside className="flex min-h-0 flex-col overflow-hidden rounded-ui border-bw bg-base shadow-hard" aria-label="Ingredients">
-      <div className="bg-ink px-3 py-1.5 font-mono text-[0.625rem] font-bold tracking-[0.06rem] text-base">INGREDIENTS</div>
+      <div className="bg-ink px-3 py-1.5 tabular-nums text-[0.625rem] font-bold tracking-[0.03rem] text-base">INGREDIENTS</div>
       <ul className="m-0 min-h-0 flex-1 list-none overflow-y-auto p-0">
         {recipe.ingredients.map((l, k) => {
           const t = lineText(l, lookup, factor);
@@ -481,7 +481,7 @@ function IngredientChecklist({ recipe, lookup, factor, current, checked, setChec
               >
                 <span className={cn("grid size-5 flex-none place-items-center rounded-[calc(var(--r)*0.5)] border-2 border-line", on ? "bg-acc text-onc" : "bg-base")}>{on ? <Check aria-hidden className="size-3" strokeWidth={4} /> : null}</span>
                 <span className={cn("min-w-0 flex-1 text-[0.875rem] font-bold first-letter:uppercase", on && "line-through")}>{t.name}</span>
-                <span className="font-mono text-[0.6875rem] font-bold">{t.amount}</span>
+                <span className="tabular-nums text-[0.6875rem] font-bold">{t.amount}</span>
               </button>
             </li>
           );
@@ -494,7 +494,7 @@ function IngredientChecklist({ recipe, lookup, factor, current, checked, setChec
 function NextStep({ text, recipe, lookup, factor }: { text: string; recipe: StoredRecipe; lookup: IngredientLookup; factor: number }) {
   return (
     <div className="flex flex-col gap-1.5 rounded-ui border-2 border-dashed border-line bg-base p-3" data-testid="next-step">
-      <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">NEXT</span>
+      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">NEXT</span>
       <p className="m-0 text-[1rem] leading-snug font-semibold text-sub">{renderStep(text, recipe.ingredients, lookup, factor).map((s) => (s.kind === "text" ? s.text : s.name)).join("")}</p>
     </div>
   );
@@ -512,7 +512,7 @@ function TimerBox({ timers, recipeId, step, seconds }: { timers: Timers; recipeI
     <div className={cn("flex flex-col gap-2 rounded-ui border-bw p-3", state === "done" ? "bg-red-soft text-onc" : state === "running" ? "bg-yellow text-onc" : "bg-base")} data-testid="timer" data-state={state}>
       <div className="flex items-center justify-between gap-3">
         <span className="text-[0.875rem] font-extrabold">{state === "idle" ? `Start ${formatDuration(seconds * 1000)} timer` : state === "done" ? "Time's up!" : state === "paused" ? "Paused" : "Running"}</span>
-        <span className="font-mono text-[clamp(2rem,4vw,3.5rem)] leading-none font-extrabold tabular-nums" role="timer" aria-label={`${formatClock(left)} left`}>
+        <span className="tabular-nums text-[clamp(2rem,4vw,3.5rem)] leading-none font-extrabold tabular-nums" role="timer" aria-label={`${formatClock(left)} left`}>
           {formatClock(left)}
         </span>
       </div>
@@ -559,7 +559,7 @@ function OtherTimers({ timers, except }: { timers: Timers; except: string }) {
       {list.map((t) => (
         <li key={t.id} className={cn("flex items-center justify-between gap-2 rounded-ui border-2 border-line px-2.5 py-1.5", t.state === "done" ? "bg-red-soft text-onc" : "bg-base")}>
           <span className="text-[0.8125rem] font-bold">{t.label}</span>
-          <span className="font-mono text-[1.125rem] font-extrabold tabular-nums">{t.state === "done" ? "DONE" : formatClock(remainingMs(t, timers.now))}</span>
+          <span className="tabular-nums text-[1.125rem] font-extrabold tabular-nums">{t.state === "done" ? "DONE" : formatClock(remainingMs(t, timers.now))}</span>
           {t.state === "done" ? (
             <Button size="sm" variant="chip" onClick={() => timers.dismiss(t.id)} className="relative z-20" aria-label={`Dismiss ${t.label}`}>
               Dismiss

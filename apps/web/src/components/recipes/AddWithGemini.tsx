@@ -74,7 +74,7 @@ export function AddWithGemini({ onAdded }: { onAdded: (r: AddRecipeResult) => vo
 
   return (
     <section aria-label="Add with Gemini" className="flex flex-col gap-2.5" data-testid="add-with-gemini" onPaste={onPaste}>
-      <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">LET GEMINI ADD IT</span>
+      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">LET GEMINI ADD IT</span>
       {off ? (
         <p className="m-0 rounded-ui border-2 border-dashed border-line px-2.5 py-2 text-[0.8125rem] font-bold">
           Gemini isn&apos;t set up yet{ai?.canEditKey ? "" : " (the app's owner adds its key)"}.{" "}
@@ -112,7 +112,7 @@ export function AddWithGemini({ onAdded }: { onAdded: (r: AddRecipeResult) => vo
         >
           <div className="flex items-start gap-3">
             {preview ? <img src={preview} alt="The chosen photo" className="size-20 flex-none rounded-ui border-2 border-line object-cover" onError={(e) => (e.currentTarget.style.visibility = "hidden")} /> : null}
-            <span className="min-w-0 flex-1 truncate pt-1 font-mono text-[0.6875rem] font-bold uppercase">{photo.name || "Pasted image"}</span>
+            <span className="min-w-0 flex-1 truncate pt-1 tabular-nums text-[0.6875rem] font-bold">{photo.name || "Pasted image"}</span>
             <Button type="button" size="sm" variant="secondary" aria-label="Remove the photo" disabled={!!busy} onClick={() => setPhoto(null)}>
               <X aria-hidden className="size-4" strokeWidth={2.5} />
             </Button>
@@ -143,7 +143,7 @@ export function AddWithGemini({ onAdded }: { onAdded: (r: AddRecipeResult) => vo
         </>
       )}
       {busy ? (
-        <p role="status" className="m-0 font-mono text-[0.6875rem] font-bold uppercase" data-testid="gemini-busy">
+        <p role="status" className="m-0 tabular-nums text-[0.6875rem] font-bold" data-testid="gemini-busy">
           Gemini is reading the {busy === "link" ? "page" : "photo"} and writing the recipe… this takes 10–60 seconds
         </p>
       ) : null}

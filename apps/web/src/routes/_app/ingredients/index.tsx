@@ -58,7 +58,7 @@ function IngredientsPage() {
           <li key={i.id}>
             <Link to="/ingredients/$id" params={{ id: i.id }} className="flex items-center justify-between gap-2 rounded-ui border-2 border-line bg-base px-3 py-2.5 text-ink no-underline shadow-hard-sm">
               <span className="text-sm font-extrabold first-letter:uppercase">{i.name}</span>
-              <span className="font-mono text-[0.625rem] font-semibold uppercase">
+              <span className="tabular-nums text-[0.625rem] font-semibold">
                 {taxonomyLabel(i.category)}
                 {reviewReasons(i).length ? " · incomplete" : ""}
                 {i.freeUse ? " · staple" : ""}
@@ -182,10 +182,10 @@ function WaitingNames({ hid, waiting, ing, ai }: { hid: string; waiting: Ingredi
       </div>
       {pasting ? (
         <div className="flex flex-col gap-2">
-          <Textarea aria-label="Claude's answer" rows={5} value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Paste Claude's whole reply" className="font-mono text-[0.8125rem]" />
+          <Textarea aria-label="Claude's answer" rows={5} value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Paste Claude's whole reply" className="tabular-nums text-[0.8125rem]" />
           {plan && verdicts ? (
             <>
-              <p role="status" data-testid="claude-plan" className="m-0 font-mono text-[0.6875rem] font-bold uppercase">
+              <p role="status" data-testid="claude-plan" className="m-0 tabular-nums text-[0.6875rem] font-bold">
                 Merge {plan.same} · keep {plan.new} as new · {plan.unsure} still unsure
               </p>
               {plan.same && !ai?.canEditKey ? (

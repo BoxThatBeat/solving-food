@@ -21,7 +21,7 @@ export function SupplyBadge({ need, have, ingredient, name }: { need: number; ha
     label = have > 0 ? `${name}: ${amt} in supply${enough ? "" : need > 0 ? ", not enough" : ""}` : `${name}: none in supply`;
   }
   return (
-    <span className={cn("min-w-[5.25rem] flex-none rounded-[calc(var(--r)*0.5)] border-2 border-line px-1 py-[0.1875rem] text-center font-mono text-[0.65625rem] font-bold", cls)} aria-label={label} data-testid="supply-badge">
+    <span className={cn("min-w-[5.25rem] flex-none rounded-[calc(var(--r)*0.5)] border-2 border-line px-1 py-[0.1875rem] text-center tabular-nums text-[0.65625rem] font-bold", cls)} aria-label={label} data-testid="supply-badge">
       {text}
     </span>
   );

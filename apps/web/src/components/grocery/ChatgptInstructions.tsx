@@ -22,7 +22,7 @@ export function ChatgptInstructions({ hid, saved, rows = 2, className }: { hid: 
   };
   return (
     <label className={cn("flex flex-col gap-1", className)}>
-      <span className="font-mono text-[0.625rem] font-bold tracking-[0.06rem] uppercase">Instructions for ChatGPT</span>
+      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.03rem]">Instructions for ChatGPT</span>
       <Textarea rows={rows} maxLength={COPY_INSTRUCTIONS_MAX} value={text} onChange={(e) => setText(e.target.value)} onBlur={save} placeholder="e.g. Default to No Name or President's Choice brands if not specified." className="text-[0.8125rem]" />
     </label>
   );

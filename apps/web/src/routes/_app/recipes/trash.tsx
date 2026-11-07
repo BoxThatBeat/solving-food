@@ -64,7 +64,7 @@ function TrashPage() {
                   <Link to="/recipes/$id" params={{ id }} className="text-[0.9375rem] font-extrabold text-ink no-underline">
                     {r.title}
                   </Link>
-                  <span className="font-mono text-[0.625rem] font-semibold uppercase">
+                  <span className="tabular-nums text-[0.625rem] font-semibold">
                     {taxonomyLabel(r.cuisine)} · {left} day{left === 1 ? "" : "s"} left
                   </span>
                 </div>

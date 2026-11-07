@@ -9,5 +9,5 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
 }
 
 export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h2 className={cn("m-0 font-display font-normal text-[1.1875rem] leading-tight", className)} {...props} />;
+  return <h2 className={cn("m-0 font-display font-extrabold text-[1.1875rem] leading-tight", className)} {...props} />;
 }

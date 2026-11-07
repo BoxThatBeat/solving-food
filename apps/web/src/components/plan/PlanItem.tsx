@@ -64,7 +64,7 @@ function RecipeMeta({ r }: { r: StoredRecipe | undefined }) {
   if (!r) return <>Loading…</>;
   return (
     <>
-      <span className="normal-case">{formatMinutes(r.prepMin + r.cookMin)}</span> · {taxonomyLabel(r.cuisine).toUpperCase()}
+      <span>{formatMinutes(r.prepMin + r.cookMin)}</span> · {taxonomyLabel(r.cuisine).toUpperCase()}
       {nutrition.on ? ` · ${formatProtein(r.proteinPerServingG, r.proteinApproximate)} PROTEIN · ${formatFibre(r.fibrePerServingG, r.fibreApproximate)} FIBRE` : null}
     </>
   );
@@ -115,43 +115,43 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
           <button type="button" onClick={onOpen} className="-my-2.5 min-h-11 cursor-pointer bg-transparent p-0 text-left text-[1.0625rem] leading-tight font-extrabold text-ink hover:underline">
             {v.title}
           </button>
-          <Badge className={cn("flex-none rounded-[calc(var(--r)*0.5)] px-1.5 py-1 text-[0.5625rem] uppercase", status === "planned" ? "bg-base" : "bg-acc text-onc")} data-testid="plan-item-status">
+          <Badge className={cn("flex-none rounded-[calc(var(--r)*0.5)] px-1.5 py-1 text-[0.5625rem]", status === "planned" ? "bg-base" : "bg-acc text-onc")} data-testid="plan-item-status">
             {out ? "Eating out" : status === "planned" ? (leftover ? "Leftover" : v.upcoming ? "Next period" : "To cook") : status}
           </Badge>
         </div>
         {sides ? (
-          <span className="font-mono text-[0.625rem] font-bold uppercase" data-testid="plan-item-sides">
+          <span className="tabular-nums text-[0.625rem] font-bold" data-testid="plan-item-sides">
             With {sides}
           </span>
         ) : null}
         {leftover ? (
-          <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">Leftovers · 1 portion{v.leftover?.useBy ? ` · use by ${v.leftover.useBy}` : ""}</span>
+          <span className="tabular-nums text-[0.625rem] font-semibold text-sub">Leftovers · 1 portion{v.leftover?.useBy ? ` · use by ${v.leftover.useBy}` : ""}</span>
         ) : out ? (
-          <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">{MEAL_LABEL[it.mealType]} · covered, nothing to buy</span>
+          <span className="tabular-nums text-[0.625rem] font-semibold text-sub">{MEAL_LABEL[it.mealType]} · covered, nothing to buy</span>
         ) : !multi ? (
-          <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase"><RecipeMeta r={recipes.get(it.recipes[0]?.recipeId ?? "")} /></span>
+          <span className="tabular-nums text-[0.625rem] font-semibold text-sub"><RecipeMeta r={recipes.get(it.recipes[0]?.recipeId ?? "")} /></span>
         ) : null}
         <div className="flex flex-wrap gap-1">
-          {leftover || out ? null : <Badge className="bg-s0 uppercase">{it.servings} serving{it.servings === 1 ? "" : "s"}</Badge>}
-          {it.carriedFromId ? <Badge className="bg-peach-soft text-onc uppercase">Carried over</Badge> : null}
-          {it.savedMealId ? <Badge className="bg-[color-mix(in_srgb,var(--blue)_55%,white)] text-[#4c4f69] uppercase">Saved meal</Badge> : null}
+          {leftover || out ? null : <Badge className="bg-s0">{it.servings} serving{it.servings === 1 ? "" : "s"}</Badge>}
+          {it.carriedFromId ? <Badge className="bg-peach-soft text-onc">Carried over</Badge> : null}
+          {it.savedMealId ? <Badge className="bg-[color-mix(in_srgb,var(--blue)_55%,white)] text-[#4c4f69]">Saved meal</Badge> : null}
           {leftovers.map((t) => (
-            <Badge key={t} className="bg-[color-mix(in_srgb,#c6a0f6_55%,white)] text-[#4c4f69] uppercase">
+            <Badge key={t} className="bg-[color-mix(in_srgb,#c6a0f6_55%,white)] text-[#4c4f69]">
               Meal prep · +{it.coverage[t]} {t === "lunch" ? "lunches" : "breakfasts"}
             </Badge>
           ))}
-          {trashed ? <Badge className="bg-red-soft text-onc uppercase">Recipe in Trash</Badge> : null}
+          {trashed ? <Badge className="bg-red-soft text-onc">Recipe in Trash</Badge> : null}
           {v.deal && status === "planned" ? (
-            <Badge className="bg-acc whitespace-normal text-onc uppercase" data-testid="deal-chip">
+            <Badge className="bg-acc whitespace-normal text-onc" data-testid="deal-chip">
               Deal · {v.deal}
             </Badge>
           ) : null}
           {v.expiry && status === "planned" ? (
-            <Badge className="bg-peach-soft text-onc uppercase" data-testid="expiry-badge">
+            <Badge className="bg-peach-soft text-onc" data-testid="expiry-badge">
               {v.expiry}
             </Badge>
           ) : null}
-          {v.leftover?.expired && status === "planned" ? <Badge className="bg-red-soft text-onc uppercase">Past its use-by</Badge> : v.leftover && status === "planned" ? <Badge className="bg-peach-soft text-onc uppercase">Eat soon</Badge> : null}
+          {v.leftover?.expired && status === "planned" ? <Badge className="bg-red-soft text-onc">Past its use-by</Badge> : v.leftover && status === "planned" ? <Badge className="bg-peach-soft text-onc">Eat soon</Badge> : null}
         </div>
       </div>
       </div>
@@ -168,7 +168,7 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
                       {rec?.title ?? "Recipe"}
                       {r.servingsMultiplier !== 1 ? ` ×${r.servingsMultiplier}` : ""}
                     </span>
-                    <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase"><RecipeMeta r={rec} /></span>
+                    <span className="tabular-nums text-[0.625rem] font-semibold text-sub"><RecipeMeta r={rec} /></span>
                   </span>
                   <span aria-hidden className="text-sub">
                     →
@@ -180,7 +180,7 @@ export function PlanItemCard({ v, recipes, ingredients, onOpen, hid, uid }: { v:
         </ul>
       ) : null}
       <div className="flex items-center gap-2 border-t-2 border-line bg-mantle px-3.5 py-2">
-        <span className="flex-1 font-mono text-[0.6875rem] font-bold" data-testid="plan-item-cost">
+        <span className="flex-1 tabular-nums text-[0.6875rem] font-bold" data-testid="plan-item-cost">
           {costLine(v)}
         </span>
         <button type="button" onClick={remove} aria-label={`Remove ${v.title} from the plan`} className="-m-0.5 grid size-11 flex-none cursor-pointer place-items-center bg-transparent p-0">
@@ -319,7 +319,7 @@ function PlanItemBody({
       <MealTypePicker types={types} value={mealType} onChange={setMealType} disabled={!editable} />
       {out ? null : (
       <div className="flex items-center justify-between gap-3 rounded-ui border-2 border-line bg-base px-3 py-2">
-        <span id="pi-servings" className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">
+        <span id="pi-servings" className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">
           SERVINGS
         </span>
         <Stepper label="Servings" decLabel="Fewer servings" incLabel="More servings" labelledBy="pi-servings" value={servings} min={1} max={SERVINGS_MAX} onChange={setServings} />

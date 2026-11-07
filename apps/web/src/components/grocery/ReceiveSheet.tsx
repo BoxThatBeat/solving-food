@@ -238,8 +238,8 @@ function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, clos
         }
       >
         <div className="flex flex-col gap-2.5 rounded-ui border-bw bg-blue-soft p-4 text-onc shadow-hard" data-testid="freeze-prompt">
-          <span className="font-mono text-[0.65625rem] font-extrabold tracking-[0.09rem]">BULK BUY · {storeOf(current.item.storeId)?.name.toUpperCase()}</span>
-          <span className="font-display text-[1.5rem] leading-[1.05]">Freeze some of this?</span>
+          <span className="tabular-nums text-[0.65625rem] font-extrabold tracking-[0.045rem]">BULK BUY · {storeOf(current.item.storeId)?.name.toUpperCase()}</span>
+          <span className="font-display font-extrabold text-[1.5rem] leading-[1.05]">Freeze some of this?</span>
           <span className="text-[0.875rem] font-semibold">
             {formatCanonical(total, unit.u, unit.w)} of {ing.name} arrived. Whatever you freeze keeps {keeps ? `about ${Math.round(keeps / 30)} months` : "much longer"}; the rest stays in the {ing.defaultLocation}.
           </span>
@@ -281,7 +281,7 @@ function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, clos
       <p className="m-0 text-[0.8125rem] leading-snug font-semibold">Fix anything that changed: substitutions, out-of-stock, different pack counts. Change nothing and we assume it all arrived.</p>
       {receipt ? (
         <div role="status" className="flex flex-col gap-1 rounded-ui border-bw bg-peach-soft px-3 py-2.5 text-onc shadow-hard-sm" data-testid="receipt-summary">
-          <span className="font-mono text-[0.625rem] font-extrabold tracking-[0.09rem] uppercase">
+          <span className="tabular-nums text-[0.625rem] font-extrabold tracking-[0.045rem]">
             From receipt{receipt.store ? ` · ${receipt.store}` : ""}
             {receipt.date ? ` · ${receipt.date}` : ""}
             {receipt.totalCents != null ? ` · total ${formatCents(receipt.totalCents)}` : ""}
@@ -312,7 +312,7 @@ function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, clos
               <div className="flex items-center gap-2">
                 <span className={cn("flex min-w-0 flex-1 flex-col gap-0.5", l.missing && "opacity-60")}>
                   <span className={cn("text-[0.875rem] leading-tight font-extrabold", l.missing && "line-through decoration-2", l.from?.swap && receiptMark)}>{label}</span>
-                  <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
+                  <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
                     {l.swap ? `instead of ${l.item.productName} · ` : ing ? `${ing.name} · ` : ""}
                     {st?.name.replace(/ \(.*\)$/, "") ?? ""}
                     {ing && !l.missing ? ` · ${formatCanonical(amountOf(l), (l.swap ?? ing).canonicalUnit, (l.swap ?? ing).unitWeightG)}` : ""}
@@ -333,7 +333,7 @@ function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, clos
                   aria-pressed={l.missing}
                   onClick={() => edit(l.id, "missing", { missing: !l.missing })}
                   aria-label={`${l.item.productName} ${l.missing ? "didn't come" : "arrived"}`}
-                  className={cn("h-11 min-w-[4.25rem] flex-none cursor-pointer rounded-ui border-2 border-line px-1.5 font-mono text-[0.625rem] font-bold", l.missing ? "bg-ink text-base" : "bg-base text-ink", l.from?.missing && l.missing && receiptMark)}
+                  className={cn("h-11 min-w-[4.25rem] flex-none cursor-pointer rounded-ui border-2 border-line px-1.5 tabular-nums text-[0.625rem] font-bold", l.missing ? "bg-ink text-base" : "bg-base text-ink", l.from?.missing && l.missing && receiptMark)}
                 >
                   {l.missing ? "DIDN'T COME" : "GOT IT"}
                 </button>
@@ -342,7 +342,7 @@ function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, clos
                 <PaidField key={l.paidCents ?? "none"} label={`Paid for ${l.item.productName}`} cents={l.paidCents ?? null} marked={!!l.from?.paid} onChange={(c) => edit(l.id, "paid", { paidCents: c })} />
               ) : null}
               {from.length ? (
-                <span className="self-start rounded-ui border-2 border-line bg-peach-soft px-1.5 py-0.5 font-mono text-[0.5625rem] font-extrabold tracking-[0.06rem] text-onc uppercase" data-testid="from-receipt">
+                <span className="self-start rounded-ui border-2 border-line bg-peach-soft px-1.5 py-0.5 tabular-nums text-[0.5625rem] font-extrabold tracking-[0.03rem] text-onc" data-testid="from-receipt">
                   From receipt: {from.map((f) => RECEIPT_FIELD_LABEL[f]).join(" · ")}
                 </span>
               ) : null}
@@ -361,7 +361,7 @@ function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, clos
       </ul>
       {extras.length ? (
         <section aria-labelledby="not-on-list-h" className="flex flex-col gap-2">
-          <h3 id="not-on-list-h" className="m-0 font-mono text-[0.6875rem] font-extrabold tracking-[0.09rem] uppercase">
+          <h3 id="not-on-list-h" className="m-0 tabular-nums text-[0.6875rem] font-extrabold tracking-[0.045rem]">
             Not on the list · {extras.length}
           </h3>
           <p className="m-0 text-[0.75rem] font-semibold text-sub">On the receipt but not in this order. Add any you want in Supply; the rest are ignored.</p>
@@ -373,7 +373,7 @@ function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, clos
                   <div className="flex items-center gap-2">
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="text-[0.875rem] leading-tight font-extrabold">{x.line.description}</span>
-                      <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
+                      <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
                         {x.ingredient ? `${x.ingredient.name}${amt ? ` · ${formatCanonical(amt, x.ingredient.canonicalUnit, x.ingredient.unitWeightG)}` : " · no size on the receipt"}` : "no ingredient matched"}
                         {x.paidCents != null ? ` · ${formatCents(x.paidCents)}` : ""}
                       </span>
@@ -384,7 +384,7 @@ function ReceiveBody({ listId, items, stores, ingredients: given, hid, uid, clos
                       disabled={!x.ingredient || !amt}
                       onClick={() => updateExtra(x.id, { add: !x.add })}
                       aria-label={`Add ${x.line.description} to Supply`}
-                      className={cn("h-11 min-w-[5.5rem] flex-none cursor-pointer rounded-ui border-2 border-line px-1.5 font-mono text-[0.625rem] font-bold disabled:cursor-not-allowed disabled:opacity-50", x.add ? "bg-acc text-onc" : "bg-base text-ink")}
+                      className={cn("h-11 min-w-[5.5rem] flex-none cursor-pointer rounded-ui border-2 border-line px-1.5 tabular-nums text-[0.625rem] font-bold disabled:cursor-not-allowed disabled:opacity-50", x.add ? "bg-acc text-onc" : "bg-base text-ink")}
                     >
                       {x.add ? "✓ ADD TO SUPPLY" : "IGNORE"}
                     </button>
@@ -412,7 +412,7 @@ function PaidField({ label, cents, marked, onChange }: { label: string; cents: n
   // Remounted (key) when the price changes from outside, so the text starts from it.
   const [text, setText] = React.useState(cents != null ? (cents / 100).toFixed(2) : "");
   return (
-    <label className="flex items-center gap-2 self-start font-mono text-[0.6875rem] font-bold uppercase">
+    <label className="flex items-center gap-2 self-start tabular-nums text-[0.6875rem] font-bold">
       Paid $
       <Input
         aria-label={label}
@@ -425,7 +425,7 @@ function PaidField({ label, cents, marked, onChange }: { label: string; cents: n
           if (c === undefined) setText(cents != null ? (cents / 100).toFixed(2) : "");
           else if (c !== cents) onChange(c);
         }}
-        className={cn("h-11 w-24 font-mono", marked && receiptMark)}
+        className={cn("h-11 w-24 tabular-nums", marked && receiptMark)}
       />
     </label>
   );
@@ -508,7 +508,7 @@ function ReceiptStep({ hid, listId, onBack, onRead }: { hid: string; listId: str
           </Button>
         </form>
         {busy ? (
-          <p role="status" className="m-0 font-mono text-[0.6875rem] font-bold uppercase" data-testid="receipt-busy">
+          <p role="status" className="m-0 tabular-nums text-[0.6875rem] font-bold" data-testid="receipt-busy">
             Gemini is reading the {busy === "photo" ? "receipt" : "email"}… this takes 5–30 seconds
           </p>
         ) : null}

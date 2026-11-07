@@ -39,7 +39,7 @@ function InviteRow({ invite, me, onJoined }: { invite: MyInvite; me: Me; onJoine
     <li className="flex flex-wrap items-center justify-between gap-2.5">
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="text-[0.9375rem] font-extrabold">{invite.householdName}</span>
-        <span className="font-mono text-[0.65625rem] font-semibold uppercase">{who} invited you</span>
+        <span className="tabular-nums text-[0.65625rem] font-semibold">{who} invited you</span>
       </span>
       <span className="flex gap-2">
         <Button size="sm" variant="secondary" disabled={!!busy} onClick={() => void run("decline")} aria-label={`Decline the invite to ${invite.householdName}`}>
@@ -72,7 +72,7 @@ export function InviteBanner({ me, householdIds }: { me: Me; householdIds: strin
       aria-label="Invites"
       className="mx-4 mt-2 mb-2 flex flex-col gap-2.5 rounded-ui border-bw bg-yellow md:mb-0 p-3 text-ink shadow-hard md:mx-7 md:mt-4 min-[95rem]:mx-auto min-[95rem]:w-[calc(93.75rem-3.5rem)]"
     >
-      <span className="flex items-center gap-1.5 font-mono text-[0.6875rem] font-bold tracking-[0.06rem] uppercase">
+      <span className="flex items-center gap-1.5 tabular-nums text-[0.6875rem] font-bold tracking-[0.03rem]">
         <Mail aria-hidden className="size-3.5" strokeWidth={3} />
         {invites.length === 1 ? "You're invited to a household" : `You're invited to ${invites.length} households`}
       </span>

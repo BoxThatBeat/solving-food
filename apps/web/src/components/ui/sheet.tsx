@@ -37,7 +37,7 @@ export function SheetContent({
         )}
       >
         <div className="flex flex-none items-center justify-between gap-2 border-b-bw bg-base px-4 pt-3.5 pb-3">
-          <Dialog.Title className="m-0 font-display font-normal text-[1.375rem]">{title}</Dialog.Title>
+          <Dialog.Title className="m-0 font-display font-extrabold text-[1.375rem]">{title}</Dialog.Title>
           <span className="ml-auto" />
           {headerExtra}
           <Dialog.Close

@@ -42,7 +42,7 @@ export function MealCard({
           {inPlan ? <Badge className="bg-[color-mix(in_srgb,var(--blue)_55%,white)] text-[#4c4f69] shadow-hard-sm">IN PLAN</Badge> : null}
           {row.missing.length ? <Badge className="bg-red text-onc shadow-hard-sm">RECIPE IN TRASH</Badge> : null}
         </div>
-        <span className="absolute right-[0.4375rem] bottom-[0.4375rem] rounded-[calc(var(--r)*0.5)] bg-ink px-[0.3125rem] py-[0.1875rem] font-mono text-[0.6875rem] font-extrabold text-base">
+        <span className="absolute right-[0.4375rem] bottom-[0.4375rem] rounded-[calc(var(--r)*0.5)] bg-ink px-[0.3125rem] py-[0.1875rem] tabular-nums text-[0.6875rem] font-extrabold text-base">
           {facts.rating ? `★ ${facts.rating.toFixed(1)}` : "NEW"}
         </span>
       </div>
@@ -52,14 +52,14 @@ export function MealCard({
             {row.title}
           </Link>
         </h3>
-        <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
+        <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
           {row.recipeIds.length} recipe{row.recipeIds.length === 1 ? "" : "s"}
           {facts.costPerServingCents != null ? ` · ${formatCents(facts.costPerServingCents)}/serv` : ""}
           <NutritionText r={row} />
           {facts.timesCooked ? ` · made ${facts.timesCooked}×` : ""}
         </span>
         {sides ? (
-          <span className="font-mono text-[0.625rem] font-bold uppercase" data-testid="meal-sides">
+          <span className="tabular-nums text-[0.625rem] font-bold" data-testid="meal-sides">
             With {sides}
           </span>
         ) : null}
@@ -73,7 +73,7 @@ export function MealCard({
                 <span className="flex flex-col gap-0.5">
                   <span className="text-[0.875rem] font-bold">{r?.title ?? "Recipe in Trash"}</span>
                   {r ? (
-                    <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
+                    <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
                       {formatMinutes(r.totalMin)} total · {formatMinutes(r.activeMin)} active
                     </span>
                   ) : null}

@@ -54,7 +54,7 @@ function WeightsPage() {
           ["LOWERS A SUGGESTION", -1],
         ] as const).map(([title, sign]) => (
           <div key={title} className="flex flex-col gap-[0.4375rem]">
-            <span className="mt-1 font-mono text-[0.625rem] font-bold tracking-[0.09rem]">{title}</span>
+            <span className="mt-1 tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">{title}</span>
             {FACTORS.filter((f) => f.sign === sign && shown(f.key)).map((f) => (
               <div key={f.key} role="radiogroup" aria-label={`${f.label} weight`} className="flex items-center gap-2.5" data-testid={`weight-${f.key}`}>
                 <span className="flex min-w-0 flex-1 flex-col">

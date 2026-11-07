@@ -21,7 +21,7 @@ export function ToggleChip({
       {...props}
     >
       {children}
-      {count !== undefined ? <span className="font-mono text-[0.625rem] font-bold">{count}</span> : null}
+      {count !== undefined ? <span className="tabular-nums text-[0.625rem] font-bold">{count}</span> : null}
     </button>
   );
 }
@@ -31,7 +31,7 @@ export function Badge({ className, ...props }: React.HTMLAttributes<HTMLSpanElem
   return (
     <span
       className={cn(
-        "inline-block rounded-[calc(var(--r)*0.5)] border-2 border-line px-1 py-0.5 font-mono text-[0.625rem] leading-[1.2] font-bold whitespace-nowrap",
+        "inline-block rounded-[calc(var(--r)*0.5)] border-2 border-line px-1 py-0.5 tabular-nums text-[0.625rem] leading-[1.2] font-bold whitespace-nowrap",
         className,
       )}
       {...props}
@@ -43,10 +43,10 @@ export function Badge({ className, ...props }: React.HTMLAttributes<HTMLSpanElem
 export function SectionLabel({ children, hint, id }: { children: React.ReactNode; hint?: React.ReactNode; id?: string }) {
   return (
     <div className="flex items-baseline justify-between gap-2">
-      <span id={id} className="font-mono text-[0.65625rem] font-bold tracking-[0.09rem] uppercase">
+      <span id={id} className="tabular-nums text-[0.65625rem] font-bold tracking-[0.045rem]">
         {children}
       </span>
-      {hint ? <span className="font-mono text-[0.65625rem] font-bold text-sub uppercase">{hint}</span> : null}
+      {hint ? <span className="tabular-nums text-[0.65625rem] font-bold text-sub">{hint}</span> : null}
     </div>
   );
 }

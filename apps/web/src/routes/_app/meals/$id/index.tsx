@@ -100,9 +100,9 @@ function MealPage() {
             </Button>
           </form>
         ) : (
-          <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">{data.name}</h1>
+          <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-extrabold">{data.name}</h1>
         )}
-        <span className="font-mono text-[0.6875rem] font-bold uppercase" data-testid="meal-times">
+        <span className="tabular-nums text-[0.6875rem] font-bold" data-testid="meal-times">
           {total} min total · {active} min active
         </span>
       </div>
@@ -144,7 +144,7 @@ function MealPage() {
                     {rec?.status === "trashed" ? " (in Trash)" : ""}
                   </span>
                   {rec ? (
-                    <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
+                    <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
                       {formatMinutes(rec.prepMin + rec.cookMin)} total · {formatMinutes(rec.prepMin)} active · {taxonomyLabel(rec.cuisine)}
                       <NutritionText r={rec} />
                     </span>
@@ -200,7 +200,7 @@ function MealPage() {
               return (
                 <li key={x.ingredientId} className="rounded-ui border-2 border-line bg-base px-3 py-1.5 text-[0.8125rem] font-extrabold first-letter:uppercase">
                   {ing?.name ?? "Side"}
-                  {ing ? <span className="ml-1.5 font-mono text-[0.625rem] font-bold">{formatPortion(x.portion, ing)}</span> : null}
+                  {ing ? <span className="ml-1.5 tabular-nums text-[0.625rem] font-bold">{formatPortion(x.portion, ing)}</span> : null}
                 </li>
               );
             })}

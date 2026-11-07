@@ -21,14 +21,14 @@ const DATE = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", 
 function Side({ label, r }: { label: string; r: RecipeDoc | null | undefined }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-1.5 rounded-ui border-2 border-line bg-pg p-2.5">
-      <span className="font-mono text-[0.625rem] font-bold tracking-[0.06rem] uppercase">{label}</span>
+      <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.03rem]">{label}</span>
       {r ? (
         <>
           <span className="flex items-center gap-2">
             <RecipeThumb base={thumbOf(r)} cuisine={r.cuisine} className="min-h-12" />
             <span className="min-w-0 text-[0.9375rem] leading-tight font-extrabold">{r.title}</span>
           </span>
-          <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
+          <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
             {formatMinutes(r.prepMin + r.cookMin)} · serves {r.servings} · {taxonomyLabel(r.cuisine)}
             <NutritionText r={r} />
           </span>
@@ -75,7 +75,7 @@ function PendingItem({ id, recipe }: { id: string; recipe: StoredRecipe }) {
     <article className="flex flex-col gap-2.5 rounded-ui border-bw bg-base p-3.5 shadow-hard" aria-label={`Possible duplicate: ${recipe.title}`}>
       <div className="flex flex-col gap-1">
         <h3 className="m-0 text-[1.0625rem] font-extrabold">{recipe.title}</h3>
-        <span className="font-mono text-[0.625rem] font-semibold uppercase">Dropped {created}</span>
+        <span className="tabular-nums text-[0.625rem] font-semibold">Dropped {created}</span>
         <span className="text-[0.8125rem] font-bold">{match ? describeMatch(match) : existing.data ? `Flagged as similar to ${existing.data.title}.` : existing.data === null ? "The recipe it matched is gone." : "Checking…"}</span>
       </div>
       <div className="flex flex-col gap-2 sm:flex-row">

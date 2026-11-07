@@ -181,7 +181,7 @@ function SupplyPage() {
   return (
     <PageBody className="max-w-[68.75rem]">
       <div className="flex items-end justify-between gap-2">
-        <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">Supply</h1>
+        <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-extrabold">Supply</h1>
         <Button onClick={() => setAdding(true)}>+ Add</Button>
       </div>
       <span className="sr-only" role="status" data-testid="supply-count">
@@ -199,7 +199,7 @@ function SupplyPage() {
           >
             <FilterIcon />
             {applied.length ? (
-              <span className="absolute -top-[0.5625rem] -right-[0.5625rem] box-border h-[1.375rem] min-w-[1.375rem] rounded-full border-2 border-line bg-ink px-1 text-center font-mono text-[0.6875rem] leading-[1.125rem] font-extrabold text-base">
+              <span className="absolute -top-[0.5625rem] -right-[0.5625rem] box-border h-[1.375rem] min-w-[1.375rem] rounded-full border-2 border-line bg-ink px-1 text-center tabular-nums text-[0.6875rem] leading-[1.125rem] font-extrabold text-base">
                 {applied.length}
               </span>
             ) : null}
@@ -218,7 +218,7 @@ function SupplyPage() {
                 {/* M24: a 44 px hit area around the chip. */}
                 <span className="flex items-center gap-1.5 rounded-ui border-2 border-line bg-acc px-2 py-1.5 text-xs font-extrabold whitespace-nowrap text-onc">
                   {c.label}
-                  <span aria-hidden className="font-mono">
+                  <span aria-hidden className="tabular-nums">
                     ✕
                   </span>
                 </span>
@@ -275,7 +275,7 @@ function SupplyPage() {
 
       {leftovers.length ? (
         <section aria-label="Leftovers" className="overflow-hidden rounded-ui border-bw bg-base shadow-hard">
-          <div className="border-b-2 border-line bg-[#c6a0f6] px-3 py-1.5 font-mono text-[0.625rem] font-bold tracking-[0.0625rem] text-[#4c4f69]">LEFTOVERS · PREPARED PORTIONS</div>
+          <div className="border-b-2 border-line bg-[#c6a0f6] px-3 py-1.5 tabular-nums text-[0.625rem] font-bold tracking-[0.03125rem] text-[#4c4f69]">LEFTOVERS · PREPARED PORTIONS</div>
           {leftovers.map((lo, i) => {
             const n = recomputeAmount(lo.lots);
             const e = itemExpiry(lo.lots, now, tz);
@@ -283,13 +283,13 @@ function SupplyPage() {
               <div key={lo.id} className={cn("flex items-center gap-2.5 px-3 py-2.5", i && "border-t-2 border-line")} data-testid="leftover-row">
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
                   <span className="text-[0.9375rem] font-extrabold">{lo.label}</span>
-                  <span className="font-mono text-[0.65625rem] font-semibold text-sub uppercase">
+                  <span className="tabular-nums text-[0.65625rem] font-semibold text-sub">
                     {amountText(n, { canonicalUnit: "count", portions: true })}
                     {e.expiresMs ? ` · use by ${dateText(e.expiresMs - 1, tz)}` : ""}
                   </span>
                 </span>
                 <ExpiryBadge flag={e.flag} expiresMs={e.expiresMs} frozen={e.frozenOnly} nowMs={now} tz={tz} />
-                <span className="font-mono text-[0.9375rem] font-extrabold">×{Math.round(n * 10) / 10}</span>
+                <span className="tabular-nums text-[0.9375rem] font-extrabold">×{Math.round(n * 10) / 10}</span>
                 <Button size="sm" variant="secondary" className="shadow-hard-sm" onClick={() => ateOne(lo)} aria-label={`Ate one portion of ${lo.label}`}>
                   Ate one
                 </Button>
@@ -326,7 +326,7 @@ function SupplyPage() {
 
       {staples.length ? (
         <section aria-labelledby="staples-h" className="flex flex-col gap-2">
-          <h2 id="staples-h" className="m-0 font-display text-[1.375rem] font-normal">
+          <h2 id="staples-h" className="m-0 font-display text-[1.375rem] font-extrabold">
             Staples
           </h2>
           <span className="text-[0.75rem] font-semibold text-sub">Used freely, so not tracked by amount. The app learns how long each lasts.</span>
@@ -334,7 +334,7 @@ function SupplyPage() {
             {staples.map((st, i) => (
               <li key={st.id} className={cn("flex items-center justify-between gap-2 px-3 py-2.5", i && "border-t-2 border-line")}>
                 <span className="text-[0.9375rem] font-extrabold">{st.name.charAt(0).toUpperCase() + st.name.slice(1)}</span>
-                <span className="text-right font-mono text-[0.65625rem] font-semibold uppercase">
+                <span className="text-right tabular-nums text-[0.65625rem] font-semibold">
                   {st.last ? `Bought ${dateText(st.last, tz)}` : ""}
                   {st.runOut ? ` · ${st.runOut <= now ? "probably out" : `runs out ~${dateText(st.runOut, tz)}`}` : ""}
                 </span>
@@ -362,24 +362,24 @@ function SupplyRow({ r, first, open, onToggle, tz, now, children }: { r: Row; fi
           <span className="text-[0.9375rem] font-extrabold">{name}</span>
           <span className="flex flex-wrap gap-1">
             {[...r.locations].map((l) => (
-              <Badge key={l} className="bg-base uppercase">
+              <Badge key={l} className="bg-base">
                 {LOCATION_LABEL[l]}
               </Badge>
             ))}
             {r.current > 1e-6 ? <ExpiryBadge flag={r.exp.flag} expiresMs={r.exp.expiresMs} frozen={r.exp.frozenOnly} nowMs={now} tz={tz} /> : null}
-            {frozenLots && !r.exp.frozenOnly ? <Badge className="bg-blue-soft text-onc uppercase">❄ {frozenLots} frozen</Badge> : null}
-            {r.low ? <Badge className="bg-yellow text-onc uppercase">Low</Badge> : null}
-            {purchases > 1 ? <Badge className="bg-base uppercase">{purchases} purchases</Badge> : null}
-            {r.item.shortAtMs ? <Badge className="bg-yellow text-onc uppercase">Check amount</Badge> : null}
-            {r.item.pending ? <Badge className="bg-base uppercase">Syncing</Badge> : null}
+            {frozenLots && !r.exp.frozenOnly ? <Badge className="bg-blue-soft text-onc">❄ {frozenLots} frozen</Badge> : null}
+            {r.low ? <Badge className="bg-yellow text-onc">Low</Badge> : null}
+            {purchases > 1 ? <Badge className="bg-base">{purchases} purchases</Badge> : null}
+            {r.item.shortAtMs ? <Badge className="bg-yellow text-onc">Check amount</Badge> : null}
+            {r.item.pending ? <Badge className="bg-base">Syncing</Badge> : null}
           </span>
         </span>
         <span className="flex flex-none flex-col items-end gap-0.5 text-right">
-          <span className="font-mono text-[0.9375rem] font-extrabold" data-testid="supply-current">
+          <span className="tabular-nums text-[0.9375rem] font-extrabold" data-testid="supply-current">
             {amountText(r.current, unit)}
           </span>
           {r.needed > 1e-6 ? (
-            <span className="font-mono text-[0.6875rem] font-semibold text-sub" data-testid="supply-projected">
+            <span className="tabular-nums text-[0.6875rem] font-semibold text-sub" data-testid="supply-projected">
               ({r.projected < -1e-6 ? `−${amountText(-r.projected, unit)}` : amountText(r.projected, unit)})
             </span>
           ) : null}

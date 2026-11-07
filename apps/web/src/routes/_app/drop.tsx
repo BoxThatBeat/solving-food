@@ -183,11 +183,11 @@ function DropPage() {
           <ul className="m-0 flex list-none flex-col p-0" aria-label="Uploaded files">
             {rows.map((r, k) => (
               <li key={r.key} className={cn("flex items-center gap-2.5 py-2", k && "border-t-2 border-line")}>
-                <span className="min-w-0 flex-1 truncate font-mono text-xs font-bold">{r.name}</span>
+                <span className="min-w-0 flex-1 truncate tabular-nums text-xs font-bold">{r.name}</span>
                 <span className="text-xs font-semibold text-sub">{r.note}</span>
                 <span
                   className={cn(
-                    "flex-none rounded-[calc(var(--r)*0.5)] border-2 border-line px-1.5 py-0.5 font-mono text-[0.625rem] font-bold uppercase",
+                    "flex-none rounded-[calc(var(--r)*0.5)] border-2 border-line px-1.5 py-0.5 tabular-nums text-[0.625rem] font-bold",
                     r.status === "uploaded" ? "bg-acc text-onc" : r.status === "error" ? "bg-red text-onc" : "bg-base text-ink",
                   )}
                 >
@@ -204,7 +204,7 @@ function DropPage() {
         <SectionLabel hint={`${Object.keys(SKILL_FILES).length} files`}>Let AI add for me</SectionLabel>
         <p className="m-0 text-sm leading-normal font-semibold">
           The <strong>Solving Food skill</strong> teaches Claude (or any AI that reads skills) to turn a recipe link, pasted text, or photo into the
-          exact <code className="font-mono text-xs">.cook</code> file this app imports: cuisine, main protein, tags, and the ingredient names it knows.
+          exact <code className="tabular-nums text-xs">.cook</code> file this app imports: cuisine, main protein, tags, and the ingredient names it knows.
         </p>
         <button
           type="button"
@@ -216,12 +216,12 @@ function DropPage() {
         </button>
         <ol className="m-0 flex flex-col gap-2 pl-5 text-sm leading-normal font-semibold">
           <li>
-            Unzip it. You get a folder named <code className="font-mono text-xs">{SKILL_NAME}</code> with <code className="font-mono text-xs">SKILL.md</code>{" "}
+            Unzip it. You get a folder named <code className="tabular-nums text-xs">{SKILL_NAME}</code> with <code className="tabular-nums text-xs">SKILL.md</code>{" "}
             inside. Put that folder where your AI looks for skills:
             <ul className="mt-1.5 mb-0 flex list-disc flex-col gap-1 pl-5">
               <li>
-                <strong>Claude Code:</strong> <code className="font-mono text-xs">~/.claude/skills/{SKILL_NAME}/</code> for every project, or a project&apos;s{" "}
-                <code className="font-mono text-xs">.claude/skills/{SKILL_NAME}/</code>.
+                <strong>Claude Code:</strong> <code className="tabular-nums text-xs">~/.claude/skills/{SKILL_NAME}/</code> for every project, or a project&apos;s{" "}
+                <code className="tabular-nums text-xs">.claude/skills/{SKILL_NAME}/</code>.
               </li>
               <li>
                 <strong>Claude.ai and the Claude desktop app:</strong> Settings → Capabilities → Skills → upload the zip as a custom skill.
@@ -230,12 +230,12 @@ function DropPage() {
           </li>
           <li>
             Then just paste a recipe&apos;s web link (or attach a photo of the recipe) and say <em>&ldquo;Add this recipe to Solving Food&rdquo;</em>. The AI
-            writes the <code className="font-mono text-xs">.cook</code> file and tells you where it saved it.
+            writes the <code className="tabular-nums text-xs">.cook</code> file and tells you where it saved it.
           </li>
           <li>Drop the file here (with its photo, if the photo is a file rather than a link). The file is deleted once it&apos;s imported.</li>
           <li>
             Or upload from a terminal (the project owner, signed in to gcloud):
-            <pre className="mt-1.5 rounded-ui border-2 border-line bg-pg p-2.5 font-mono text-[0.6875rem] leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
+            <pre className="mt-1.5 rounded-ui border-2 border-line bg-pg p-2.5 tabular-nums text-[0.6875rem] leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
               gcloud storage cp photo.jpg recipe.cook gs://{BUCKET}/recipe-drop/{s.user.uid}/
             </pre>
           </li>

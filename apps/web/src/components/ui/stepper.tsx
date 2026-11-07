@@ -45,7 +45,7 @@ export function Stepper({
       >
         <Minus aria-hidden className="size-4" strokeWidth={3} />
       </button>
-      <output aria-live="polite" aria-label={label} className={cn("grid place-items-center border-x-2 border-line px-2 font-mono text-[1rem] font-extrabold whitespace-nowrap", compact ? "min-w-11" : "min-w-14")}>
+      <output aria-live="polite" aria-label={label} className={cn("grid place-items-center border-x-2 border-line px-2 tabular-nums text-[1rem] font-extrabold whitespace-nowrap", compact ? "min-w-11" : "min-w-14")}>
         {format(value)}
       </output>
       <button

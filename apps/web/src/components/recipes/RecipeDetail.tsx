@@ -240,25 +240,25 @@ export function RecipeDetail({
         <div className="size-full overflow-hidden rounded-[calc(var(--r)-var(--bw))]">
           <RecipeImage base={recipe.imagePaths[0]} cuisine={recipe.cuisine} alt={recipe.title} sizes={pane ? "36rem" : "(min-width: 1024px) 60rem, 100vw"} eager />
         </div>
-        <span className="absolute -top-2.5 right-3.5 rotate-3 rounded-ui border-2 border-line bg-acc px-2 py-1 font-display text-[0.8125rem] text-onc uppercase">
+        <span className="absolute -top-2.5 right-3.5 rotate-3 rounded-ui border-2 border-line bg-acc px-2 py-1 font-extrabold text-[0.8125rem] text-onc">
           {taxonomyLabel(recipe.cuisine)}
         </span>
       </div>
 
       <div className="flex flex-col gap-4 px-4 pt-5 pb-6">
-        <h1 id="recipe-title" className="m-0 font-display text-[1.875rem] leading-none font-normal text-pretty">
+        <h1 id="recipe-title" className="m-0 font-display text-[1.875rem] leading-none font-extrabold text-pretty">
           {recipe.title}
         </h1>
         <div className="-mt-1.5 flex flex-wrap gap-[0.3125rem]" aria-label="Tags">
           {/* The prototype's blue with dark text is 3.6:1; lightened toward white it passes AA in every flavour (dark text on it). */}
-          <Badge className="rounded-[3px] border-[1.5px] bg-[color-mix(in_srgb,var(--blue)_55%,white)] text-[#4c4f69] uppercase">{taxonomyLabel(recipe.mainProtein)}</Badge>
+          <Badge className="rounded-[3px] border-[1.5px] bg-[color-mix(in_srgb,var(--blue)_55%,white)] text-[#4c4f69]">{taxonomyLabel(recipe.mainProtein)}</Badge>
           {meals.map((t) => (
-            <Badge key={t} className="rounded-[3px] border-[1.5px] bg-s0 text-ink uppercase">
+            <Badge key={t} className="rounded-[3px] border-[1.5px] bg-s0 text-ink">
               {t}
             </Badge>
           ))}
           {otherTags.map((t) => (
-            <Badge key={t} className="rounded-[3px] border-[1.5px] bg-base text-ink uppercase">
+            <Badge key={t} className="rounded-[3px] border-[1.5px] bg-base text-ink">
               {t}
             </Badge>
           ))}
@@ -278,15 +278,15 @@ export function RecipeDetail({
               : []),
           ].map(([k, v]) => (
             <div key={k} className="flex flex-col-reverse gap-[0.1875rem] rounded-ui border-2 border-line bg-base px-1 pt-[0.5625rem] pb-[0.4375rem] text-center">
-              <dt className="font-mono text-[0.5625rem] font-bold tracking-[0.03rem] text-sub uppercase">{k === "Protein" || k === "Fibre" ? `${k} / serv` : k}</dt>
-              <dd className="m-0 font-mono text-[1rem] font-extrabold" data-testid={`meta-${k!.toLowerCase()}`}>
+              <dt className="tabular-nums text-[0.5625rem] font-bold tracking-[0.015rem] text-sub">{k === "Protein" || k === "Fibre" ? `${k} / serv` : k}</dt>
+              <dd className="m-0 tabular-nums text-[1rem] font-extrabold" data-testid={`meta-${k!.toLowerCase()}`}>
                 {v}
               </dd>
             </div>
           ))}
         </dl>
         {nutrition.on && (recipe.proteinApproximate || recipe.fibreApproximate) ? (
-          <p className="-mt-2 m-0 font-mono text-[0.625rem] font-semibold text-sub">
+          <p className="-mt-2 m-0 tabular-nums text-[0.625rem] font-semibold text-sub">
             ~ Some ingredients have no {recipe.proteinApproximate && recipe.fibreApproximate ? "protein or fibre" : recipe.proteinApproximate ? "protein" : "fibre"} data yet, so this is approximate.
           </p>
         ) : null}
@@ -294,13 +294,13 @@ export function RecipeDetail({
         {/* Only real history shows (M7 review): a never-cooked recipe has no stats row at all. */}
         {ctx && facts.timesCooked ? (
           <div className="flex items-center gap-3 rounded-ui border-2 border-dashed border-line bg-base px-3 py-2.5">
-            <span className="font-display text-[1.875rem] leading-none text-acc [-webkit-text-stroke:1px_var(--line)]">{facts.timesCooked}×</span>
+            <span className="font-extrabold tabular-nums text-[1.875rem] leading-none text-acc [-webkit-text-stroke:1px_var(--line)]">{facts.timesCooked}×</span>
             <span className="flex flex-col gap-[0.1875rem]">
               <span className="text-sm leading-snug font-bold">
                 You&apos;ve made this {facts.timesCooked} time{facts.timesCooked === 1 ? "" : "s"}
                 {facts.lastCookedAtMs ? ` · last ${DATE.format(new Date(facts.lastCookedAtMs))}` : ""}
               </span>
-              <span className="font-mono text-[0.65625rem] font-semibold text-sub">{facts.rating ? `HOUSEHOLD ${facts.rating.toFixed(1)}` : "NO RATINGS YET"}</span>
+              <span className="tabular-nums text-[0.65625rem] font-semibold text-sub">{facts.rating ? `HOUSEHOLD ${facts.rating.toFixed(1)}` : "NO RATINGS YET"}</span>
             </span>
           </div>
         ) : null}
@@ -310,7 +310,7 @@ export function RecipeDetail({
         {recipe.tools.length ? (
           <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">TOOLS</span>
+              <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">TOOLS</span>
               {recipe.tools.map((t) => {
                 const lacks = missing.includes(t);
                 return (
@@ -326,7 +326,7 @@ export function RecipeDetail({
                 Needs {missing.map(toolLabel).join(" and ")}. {missing.length === 1 ? "It's" : "They're"} not in your kitchen tools.
               </div>
             ) : ctx && !toolsConfigured ? (
-              <p className="m-0 font-mono text-[0.625rem] font-semibold text-sub">No kitchen tools configured for this household yet, so missing tools can&apos;t be flagged.</p>
+              <p className="m-0 tabular-nums text-[0.625rem] font-semibold text-sub">No kitchen tools configured for this household yet, so missing tools can&apos;t be flagged.</p>
             ) : null}
           </div>
         ) : null}
@@ -334,7 +334,7 @@ export function RecipeDetail({
         {/* Servings sits right above the ingredients it scales (M7 review). */}
         <div className="flex items-center gap-2.5 rounded-ui border-2 border-line bg-base px-2.5 py-2">
           <span className="flex flex-1 flex-col gap-0.5">
-            <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]" id="servings-label">
+            <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]" id="servings-label">
               SERVINGS
             </span>
             <span className="text-[0.6875rem] font-semibold text-sub" aria-live="polite">
@@ -351,7 +351,7 @@ export function RecipeDetail({
 
         {recipe.prepTasks.length ? (
           <section aria-labelledby="prep-h" className="flex flex-col gap-2">
-            <h2 id="prep-h" className="m-0 mt-1.5 font-display text-[1.3125rem] font-normal">
+            <h2 id="prep-h" className="m-0 mt-1.5 font-display text-[1.3125rem] font-extrabold">
               Before you start
             </h2>
             <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
@@ -366,7 +366,7 @@ export function RecipeDetail({
         ) : null}
 
         <section aria-labelledby="steps-h" className="flex flex-col gap-3">
-          <h2 id="steps-h" className="m-0 mt-1.5 font-display text-[1.3125rem] font-normal">
+          <h2 id="steps-h" className="m-0 mt-1.5 font-display text-[1.3125rem] font-extrabold">
             Steps
           </h2>
           <ol className="m-0 flex list-none flex-col gap-3 p-0">
@@ -374,9 +374,9 @@ export function RecipeDetail({
               const header = sectionHeaders[i];
               return (
                 <li key={i} className="flex flex-col gap-2">
-                  {header ? <h3 className="m-0 mt-1 font-mono text-[0.6875rem] font-bold tracking-[0.09rem] uppercase">{header}</h3> : null}
+                  {header ? <h3 className="m-0 mt-1 tabular-nums text-[0.6875rem] font-bold tracking-[0.045rem]">{header}</h3> : null}
                   <div className="flex gap-3">
-                    <span aria-hidden className="box-border grid size-[1.875rem] flex-none place-items-center rounded-ui border-2 border-line bg-acc font-mono text-sm font-extrabold text-onc">
+                    <span aria-hidden className="box-border grid size-[1.875rem] flex-none place-items-center rounded-ui border-2 border-line bg-acc tabular-nums text-sm font-extrabold text-onc">
                       {i + 1}
                     </span>
                     <div className="flex min-w-0 flex-col gap-[0.3125rem] pt-1">
@@ -389,7 +389,7 @@ export function RecipeDetail({
                             <React.Fragment key={k}>
                               {seg.name}
                               {seg.amount ? (
-                                <span className="mx-px ml-1 inline-block rounded border-[1.5px] border-line bg-mantle px-1 font-mono text-[0.8em] leading-[1.4] font-extrabold whitespace-nowrap text-ink">
+                                <span className="mx-px ml-1 inline-block rounded border-[1.5px] border-line bg-mantle px-1 tabular-nums text-[0.8em] leading-[1.4] font-extrabold whitespace-nowrap text-ink">
                                   {seg.amount}
                                 </span>
                               ) : null}
@@ -398,7 +398,7 @@ export function RecipeDetail({
                         )}
                       </p>
                       {s.timerSeconds ? (
-                        <span className="self-start rounded-[3px] border-[1.5px] border-line px-[0.3125rem] py-px font-mono text-[0.625rem] font-bold">
+                        <span className="self-start rounded-[3px] border-[1.5px] border-line px-[0.3125rem] py-px tabular-nums text-[0.625rem] font-bold">
                           ⏱ {timerLabel(s.timerSeconds)}
                         </span>
                       ) : null}
@@ -419,7 +419,7 @@ export function RecipeDetail({
 
         {ctx ? <HouseholdNotes hid={ctx.hid} uid={ctx.uid} recipeId={id} /> : null}
 
-        <div className="flex flex-col gap-1.5 font-mono text-[0.65625rem] leading-normal font-semibold text-sub">
+        <div className="flex flex-col gap-1.5 tabular-nums text-[0.65625rem] leading-normal font-semibold text-sub">
           {recipe.sourceUrl ? (
             <span>
               SOURCE ·{" "}
@@ -428,7 +428,7 @@ export function RecipeDetail({
               </a>
             </span>
           ) : null}
-          <span className="uppercase">
+          <span>
             V{recipe.version}
             {editor ? ` · EDITED BY ${editor}` : ""}
             {updated ? ` · ${DATE.format(new Date(updated))}` : ""}
@@ -455,7 +455,7 @@ export function RecipeDetail({
             ) : null}
           </span>
           {!ctx ? (
-            <span className="normal-case">
+            <span>
               Shared from Solving Food. <Link to="/sign-in" className="font-extrabold text-ink">Sign in</Link> to save it, add notes, or plan it.
             </span>
           ) : null}
@@ -483,7 +483,7 @@ export function RecipeDetail({
 }
 
 /** The text actions under the recipe (Version history · Edit · Delete): underlined links, 44 px hit targets (M24). */
-const FOOTER_ACTION = "inline-flex min-h-11 min-w-11 justify-center cursor-pointer items-center bg-transparent p-0 font-sans text-[0.8125rem] font-extrabold text-ink normal-case underline";
+const FOOTER_ACTION = "inline-flex min-h-11 min-w-11 justify-center cursor-pointer items-center bg-transparent p-0 font-sans text-[0.8125rem] font-extrabold text-ink underline";
 
 function timerLabel(s: number): string {
   if (s < 60) return `${s} SEC`;
@@ -512,15 +512,15 @@ function IngredientsTable({
   return (
     <section aria-labelledby="ing-h" className="flex flex-col gap-2.5">
       <div className="mt-1 flex items-baseline justify-between gap-2">
-        <h2 id="ing-h" className="m-0 font-display text-[1.3125rem] font-normal">
+        <h2 id="ing-h" className="m-0 font-display text-[1.3125rem] font-extrabold">
           Ingredients
         </h2>
-        <span className="font-mono text-[0.65625rem] font-bold">
+        <span className="tabular-nums text-[0.65625rem] font-bold">
           {recipe.ingredients.length} INGREDIENTS · {servings} SERVINGS
         </span>
       </div>
       <div className="overflow-hidden rounded-ui border-bw bg-base shadow-hard">
-        <div className="flex justify-between bg-ink px-3 py-[0.4375rem] font-mono text-[0.625rem] font-bold tracking-[0.06rem] text-base" aria-hidden>
+        <div className="flex justify-between bg-ink px-3 py-[0.4375rem] tabular-nums text-[0.625rem] font-bold tracking-[0.03rem] text-base" aria-hidden>
           <span>INGREDIENT</span>
           <span>{signedIn ? "NEED · IN SUPPLY" : "AMOUNT"}</span>
         </div>
@@ -534,7 +534,7 @@ function IngredientsTable({
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="text-[0.9375rem] font-bold first-letter:uppercase">{t.name}</span>
                   {hint ? (
-                    <span className="font-mono text-[0.65625rem] font-semibold text-sub">
+                    <span className="tabular-nums text-[0.65625rem] font-semibold text-sub">
                       {signedIn && ing?.needsReview ? (
                         <Link to="/ingredients/$id" params={{ id: l.ingredientId }} className="text-sub">
                           {hint}
@@ -545,7 +545,7 @@ function IngredientsTable({
                     </span>
                   ) : null}
                 </span>
-                <span className="max-w-[55%] flex-none text-right font-mono text-[0.8125rem] font-extrabold" data-testid="ingredient-amount">
+                <span className="max-w-[55%] flex-none text-right tabular-nums text-[0.8125rem] font-extrabold" data-testid="ingredient-amount">
                   {t.amount || "—"}
                 </span>
                 {signedIn && have ? <SupplyBadge need={l.optional ? 0 : l.canonicalAmount * factor} have={have.get(l.ingredientId) ?? 0} ingredient={ing} name={t.name} /> : null}
@@ -573,7 +573,7 @@ function HouseholdNotes({ hid, uid, recipeId }: { hid: string; uid: string; reci
   };
   return (
     <div className="flex flex-col gap-1.5 rounded-ui border-2 border-line bg-base p-3">
-      <label htmlFor="household-note" className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">
+      <label htmlFor="household-note" className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">
         HOUSEHOLD NOTES
       </label>
       <Textarea
@@ -639,7 +639,7 @@ function VersionHistory({
                   <span className="text-[0.9375rem] font-extrabold">
                     v{v.id} · {v.data.title}
                   </span>
-                  <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
+                  <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
                     {at ? DATE_TIME.format(new Date(at)) : ""} · {v.data.status === "trashed" ? "moved to trash" : `${v.data.ingredients?.length ?? 0} ingredients · ${v.data.steps?.length ?? 0} steps`}
                   </span>
                 </span>

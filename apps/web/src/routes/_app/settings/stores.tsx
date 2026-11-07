@@ -91,7 +91,7 @@ function StoresPage() {
               }, err("add the store"));
             }}
           >
-            <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">ADD A STORE</span>
+            <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">ADD A STORE</span>
             <div className="flex flex-wrap gap-2">
               <Input aria-label="New store name" placeholder="Farmers' market" value={newName} maxLength={80} onChange={(e) => setNewName(e.target.value)} className="min-w-[10rem] flex-1" />
               <Select aria-label="New store kind" value={newKind} onChange={(e) => setNewKind(e.target.value as StoreDoc["kind"])} className="w-auto">
@@ -114,7 +114,7 @@ function StoresPage() {
           <div className="px-3.5 pt-3.5">
             <CardTitle>Sourcing rules</CardTitle>
           </div>
-          <div className="bg-ink px-3.5 py-2 font-mono text-[0.625rem] font-bold tracking-[0.09rem] text-base">STORE BY CATEGORY</div>
+          <div className="bg-ink px-3.5 py-2 tabular-nums text-[0.625rem] font-bold tracking-[0.045rem] text-base">STORE BY CATEGORY</div>
           <ul className="m-0 grid list-none grid-cols-1 gap-2 px-3.5 p-0 sm:grid-cols-2" aria-label="Store by category">
             {INGREDIENT_CATEGORIES.map((c) => {
               const r = catRule(c);
@@ -144,7 +144,7 @@ function StoresPage() {
               );
             })}
           </ul>
-          <div className="bg-ink px-3.5 py-2 font-mono text-[0.625rem] font-bold tracking-[0.09rem] text-base">STORE BY INGREDIENT · BEATS CATEGORY</div>
+          <div className="bg-ink px-3.5 py-2 tabular-nums text-[0.625rem] font-bold tracking-[0.045rem] text-base">STORE BY INGREDIENT · BEATS CATEGORY</div>
           <ul className="m-0 flex list-none flex-col gap-1.5 px-3.5 p-0" aria-label="Store by ingredient">
             {ingRules.length === 0 ? <li className="text-[0.8125rem] font-semibold text-sub">No ingredient rules.</li> : null}
             {ingRules.map((r) => {

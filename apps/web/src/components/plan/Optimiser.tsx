@@ -138,7 +138,7 @@ export function OptimiserCard({
   return (
     <section aria-labelledby="optimiser-h" data-testid="optimiser" className="flex flex-col gap-3 rounded-ui border-bw bg-base p-3.5 shadow-hard">
       <div className="flex flex-col gap-[0.1875rem]">
-        <h2 id="optimiser-h" className="m-0 font-display text-[1.1875rem] font-normal">
+        <h2 id="optimiser-h" className="m-0 font-display text-[1.1875rem] font-extrabold">
           Budget optimiser
         </h2>
         <span className="text-[0.78125rem] leading-snug font-semibold text-sub">A full set that shares ingredients but varies cuisine and protein.</span>
@@ -198,7 +198,7 @@ export function OptimiserCard({
       {current ? (
         <>
           <div className="flex flex-col overflow-hidden rounded-ui border-2 border-line" data-testid="optimiser-set">
-            <div className="flex justify-between gap-2 bg-ink px-2.5 py-2 font-mono text-[0.625rem] font-bold tracking-[0.03rem] text-base">
+            <div className="flex justify-between gap-2 bg-ink px-2.5 py-2 tabular-nums text-[0.625rem] font-bold tracking-[0.015rem] text-base">
               <span>
                 SET {index + 1}
                 {atEnd ? ` OF ${sets.length}` : ""}
@@ -216,7 +216,7 @@ export function OptimiserCard({
                       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="text-[0.875rem] font-extrabold">{r?.title ?? "Recipe"}</span>
                       {r ? (
-                        <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
+                        <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
                           {taxonomyLabel(r.cuisine)} · {taxonomyLabel(r.mainProtein)} · {formatProtein(r.proteinPerServingG, r.proteinApproximate)}
                           {c !== null && c !== undefined ? ` · +${formatCents(c)}` : ""}
                         </span>
@@ -227,7 +227,7 @@ export function OptimiserCard({
                 );
               })}
             </ul>
-            <div className="border-t-2 border-line bg-mantle px-2.5 py-[0.4375rem] font-mono text-[0.625rem] leading-snug font-bold uppercase">
+            <div className="border-t-2 border-line bg-mantle px-2.5 py-[0.4375rem] tabular-nums text-[0.625rem] leading-snug font-bold">
               {current.shared.length ? `Shares ${current.shared.map((x) => x.replace(/-/g, " ")).join(", ")}` : "No shared ingredients"}
             </div>
           </div>

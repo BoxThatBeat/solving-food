@@ -68,7 +68,7 @@ function DownloadCard() {
         settings, plus the recipes and meals it uses (as .cook files). There are no automatic backups, so keep the file
         somewhere safe.
       </p>
-      <span className="font-mono text-[0.6875rem] font-semibold text-sub uppercase" data-testid="read-estimate">
+      <span className="tabular-nums text-[0.6875rem] font-semibold text-sub" data-testid="read-estimate">
         {estimate === null ? "Estimating reads…" : `About ${nf.format(estimate)} Firestore reads`}
       </span>
       <Button className="self-start" onClick={() => void run()} disabled={!!progress}>
@@ -76,7 +76,7 @@ function DownloadCard() {
         {progress ? "Downloading…" : "Download household data"}
       </Button>
       {progress ? (
-        <p role="status" className="m-0 font-mono text-[0.6875rem] font-bold uppercase">
+        <p role="status" className="m-0 tabular-nums text-[0.6875rem] font-bold">
           {progress}
         </p>
       ) : null}
@@ -88,7 +88,7 @@ function SummaryRow({ label, n }: { label: string; n: number }) {
   return (
     <div className="flex justify-between gap-3 border-b-2 border-dashed border-line py-1 last:border-b-0">
       <dt className="text-[0.8125rem] font-bold">{label}</dt>
-      <dd className="m-0 font-mono text-[0.8125rem] font-bold">{nf.format(n)}</dd>
+      <dd className="m-0 tabular-nums text-[0.8125rem] font-bold">{nf.format(n)}</dd>
     </div>
   );
 }
@@ -145,7 +145,7 @@ function ImportCard() {
         and settings. Members stay as they are.
       </p>
       <label className="flex flex-col gap-1.5">
-        <span className="font-mono text-[0.6875rem] font-bold tracking-[0.06rem] uppercase">Export file (.zip)</span>
+        <span className="tabular-nums text-[0.6875rem] font-bold tracking-[0.03rem]">Export file (.zip)</span>
         <input
           ref={inputRef}
           type="file"
@@ -162,7 +162,7 @@ function ImportCard() {
       ) : null}
       {sm ? (
         <section aria-label="File summary" className="flex flex-col gap-2 rounded-ui border-2 border-line bg-pg p-3">
-          <span className="font-mono text-[0.6875rem] font-bold uppercase">
+          <span className="tabular-nums text-[0.6875rem] font-bold">
             {sm.householdName} · exported {new Intl.DateTimeFormat("en-CA", { dateStyle: "medium", timeStyle: "short" }).format(sm.exportedAt)} · format v
             {sm.version}
           </span>
@@ -176,7 +176,7 @@ function ImportCard() {
             <SummaryRow label="Favourites" n={sm.counts.favourites} />
             <SummaryRow label="Recipes and meals used" n={sm.counts.recipes + sm.counts.meals} />
           </dl>
-          <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">About {nf.format(sm.documents)} documents to write</span>
+          <span className="tabular-nums text-[0.625rem] font-semibold text-sub">About {nf.format(sm.documents)} documents to write</span>
         </section>
       ) : null}
       {file ? (
@@ -186,7 +186,7 @@ function ImportCard() {
         </Button>
       ) : null}
       {cmdId ? (
-        <p role="status" className="m-0 font-mono text-[0.6875rem] font-bold uppercase">
+        <p role="status" className="m-0 tabular-nums text-[0.6875rem] font-bold">
           {status === "applied"
             ? `Imported. ${cmd.data?.result ?? ""}`
             : status === "failed"

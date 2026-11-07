@@ -34,7 +34,7 @@ export function PeriodSwitch({
           className={cn("flex min-h-11 cursor-pointer flex-col items-center justify-center gap-0.5 px-2 py-1.5 text-center", i && "border-l-2 border-line", view === o.v ? "bg-acc text-onc" : "bg-transparent text-ink")}
         >
           <span className="text-[0.875rem] leading-tight font-extrabold">{o.label}</span>
-          {o.range ? <span className="font-mono text-[0.625rem] leading-tight font-bold">{formatPeriodRange(o.range.startMs, o.range.endMs, tz)}</span> : null}
+          {o.range ? <span className="tabular-nums text-[0.625rem] leading-tight font-bold">{formatPeriodRange(o.range.startMs, o.range.endMs, tz)}</span> : null}
         </button>
       ))}
     </div>

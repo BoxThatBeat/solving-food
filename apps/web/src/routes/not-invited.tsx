@@ -22,7 +22,7 @@ function NotInvitedPage() {
     <AuthLayout>
       <Card className="gap-4 p-4">
         <span className="kicker">Invite only</span>
-        <h1 className="m-0 font-display text-[2rem] leading-[0.95] font-normal">This address hasn&apos;t been invited</h1>
+        <h1 className="m-0 font-display text-[2rem] leading-[0.95] font-extrabold">This address hasn&apos;t been invited</h1>
         <p className="m-0 text-[0.9375rem] leading-snug font-semibold">
           {email ? (
             <>

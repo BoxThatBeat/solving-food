@@ -97,7 +97,7 @@ function MembersPage() {
       <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <Card className="gap-3">
           <CardTitle>{name || "Household"}</CardTitle>
-          <span className="font-mono text-[0.6875rem] leading-snug font-semibold text-sub uppercase">
+          <span className="tabular-nums text-[0.6875rem] leading-snug font-semibold text-sub">
             {name}
             {creator ? ` · created by ${creator}` : ""} · you&apos;ve created {s.profile.householdsCreated} of {MAX_HOUSEHOLDS_CREATED} · no roles, everyone
             can do everything
@@ -121,7 +121,7 @@ function MembersPage() {
                       {m.displayName}
                       {me ? " (you)" : ""}
                     </span>
-                    <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">{joined(m.joinedAtMs)}</span>
+                    <span className="tabular-nums text-[0.625rem] font-semibold text-sub">{joined(m.joinedAtMs)}</span>
                   </span>
                   {me ? null : (
                     <Button variant="secondary" size="sm" className="border-2 px-2 py-1.5 text-[0.6875rem] shadow-none" onClick={() => setRemoving(m)} aria-label={`Remove ${m.displayName}`}>
@@ -169,7 +169,7 @@ function MembersPage() {
                   <li key={i.key} className="flex items-center gap-2.5">
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="truncate text-[0.875rem] font-extrabold">{label}</span>
-                      <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
+                      <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
                         {i.inviteeUid ? "invited by name" : "invited by email · waiting for sign-up"}
                         {i.invitedByName ? ` · from ${i.invitedByName}` : ""}
                       </span>

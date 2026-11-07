@@ -45,7 +45,7 @@ export function MealThumb({
   return (
     <RecipeThumb base={base} cuisine={first?.cuisine} className={className}>
       {ids.length > 1 ? (
-        <span aria-hidden className="absolute right-[0.1875rem] bottom-[0.1875rem] rounded-[0.1875rem] bg-ink px-1 py-px font-mono text-[0.625rem] font-extrabold text-base">
+        <span aria-hidden className="absolute right-[0.1875rem] bottom-[0.1875rem] rounded-[0.1875rem] bg-ink px-1 py-px tabular-nums text-[0.625rem] font-extrabold text-base">
           +{ids.length - 1}
         </span>
       ) : null}

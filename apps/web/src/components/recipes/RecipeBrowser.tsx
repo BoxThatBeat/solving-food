@@ -116,7 +116,7 @@ export function RecipeBrowser({
           onClick={() => setReview(true)}
           className="flex max-w-[60rem] cursor-pointer items-center gap-2.5 rounded-ui border-2 border-dashed border-line bg-base px-3 py-[0.5625rem] text-left text-[0.8125rem] font-bold text-ink"
         >
-          <span className="rounded border-2 border-line bg-yellow px-1.5 py-0.5 font-mono text-[0.625rem] font-extrabold text-onc">{pendingCount}</span>
+          <span className="rounded border-2 border-line bg-yellow px-1.5 py-0.5 tabular-nums text-[0.625rem] font-extrabold text-onc">{pendingCount}</span>
           <span className="flex-1">
             {pendingCount === 1 ? "Possible duplicate from the drop folder. Review it." : `${pendingCount} possible duplicates from the drop folder. Review them.`}
           </span>
@@ -128,8 +128,8 @@ export function RecipeBrowser({
 
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <div className="flex flex-col gap-[0.1875rem]">
-          <h1 className="m-0 font-display text-[1.75rem] leading-none font-normal md:text-[2.25rem]">Recipes</h1>
-          <span className="font-mono text-[0.65625rem] font-bold" data-testid="recipe-count">
+          <h1 className="m-0 font-display text-[1.75rem] leading-none font-extrabold md:text-[2.25rem]">Recipes</h1>
+          <span className="tabular-nums text-[0.65625rem] font-bold" data-testid="recipe-count">
             {summaries ? `${result.items.length} OF ${result.total} · ${sortLabel}` : "LOADING…"}
           </span>
         </div>
@@ -202,7 +202,7 @@ function AddRecipeSheet() {
             void navigate({ to: "/recipes/$id", params: { id: r.recipeId } });
           }}
         />
-        <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">OR</span>
+        <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">OR</span>
         <SheetClose asChild>
           <Link to="/recipes/new" className="flex items-center justify-between rounded-ui border-bw bg-base p-3.5 text-ink no-underline shadow-hard">
             <span className="flex flex-col gap-1">

@@ -231,7 +231,7 @@ function PlanPage() {
                 : `${formatPeriodRange(startMs, endMs, tz)} · DAY ${dayOfPeriod(now, startMs, endMs, tz)} OF ${cells.length}`
               : "SETTING UP THE PERIOD…"}
           </span>
-          <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">Plan</h1>
+          <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-extrabold">Plan</h1>
         </div>
         <Button onClick={() => openCreateMeal()}>+ Create meal</Button>
       </div>
@@ -264,8 +264,8 @@ function PlanPage() {
             sticky={false}
             header={
               <div className="flex items-baseline justify-between gap-2">
-                <h2 className="m-0 font-display text-[1.375rem] font-normal">{upcoming ? "Next period" : "This period"}</h2>
-                <span className="font-mono text-[0.65625rem] font-bold" data-testid="plan-count">
+                <h2 className="m-0 font-display text-[1.375rem] font-extrabold">{upcoming ? "Next period" : "This period"}</h2>
+                <span className="tabular-nums text-[0.65625rem] font-bold" data-testid="plan-count">
                   {m.loading ? "LOADING…" : `${planned} TO COOK · ${SORT_LABELS[search.sort ?? PLAN_DEFAULT_SORT].toUpperCase()}`}
                 </span>
               </div>
@@ -292,7 +292,7 @@ function PlanPage() {
             ) : (
               groups.map((g) => (
                 <section key={g.type} aria-label={MEAL_LABEL[g.type]} className="flex flex-col gap-2.5">
-                  <div className="flex justify-between border-b-2 border-line pb-1 font-mono text-[0.6875rem] font-bold tracking-[0.09rem] uppercase">
+                  <div className="flex justify-between border-b-2 border-line pb-1 tabular-nums text-[0.6875rem] font-bold tracking-[0.045rem]">
                     <span>{MEAL_LABEL[g.type]}</span>
                     <span>
                       {g.items.length} item{g.items.length === 1 ? "" : "s"}
@@ -405,7 +405,7 @@ function ProteinCard({
     const pct = goal !== undefined ? (avg !== null ? Math.min(100, (avg / goal) * 100) : 0) : avg !== null ? 100 : 0;
     return (
       <div className="flex flex-col gap-1" data-testid={key}>
-        <div className="flex justify-between gap-2 font-mono text-[0.6875rem] font-bold uppercase">
+        <div className="flex justify-between gap-2 tabular-nums text-[0.6875rem] font-bold">
           <span>{label}</span>
           <span>
             {avg !== null ? `${avg} g` : "—"} · {goal !== undefined ? `goal ${goal} g` : "no goal"}
@@ -420,7 +420,7 @@ function ProteinCard({
   };
   return (
     <section aria-label="Protein and fibre per serving" data-testid="protein-summary" className="flex flex-col gap-2.5 rounded-ui border-bw bg-base px-3.5 py-3 shadow-hard">
-      <div className="flex justify-between font-mono text-[0.65625rem] font-bold tracking-[0.09rem] uppercase">
+      <div className="flex justify-between tabular-nums text-[0.65625rem] font-bold tracking-[0.045rem]">
         <span>Protein &amp; fibre / serving</span>
         <span className="text-sub">Plan avg</span>
       </div>

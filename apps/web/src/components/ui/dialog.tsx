@@ -39,7 +39,7 @@ export function ConfirmDialog({
           role="alertdialog"
           className="fixed top-1/2 left-1/2 z-50 flex w-[min(30rem,92vw)] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-ui border-bw bg-base p-5 text-ink shadow-hard"
         >
-          <Dialog.Title className="m-0 font-display text-[1.375rem] leading-tight font-normal">{title}</Dialog.Title>
+          <Dialog.Title className="m-0 font-display text-[1.375rem] leading-tight font-extrabold">{title}</Dialog.Title>
           <Dialog.Description asChild>
             <div className="text-[0.9375rem] leading-normal font-semibold">{children}</div>
           </Dialog.Description>

@@ -52,7 +52,7 @@ function WelcomePage() {
       <Card className="gap-4 p-4">
         <div className="flex flex-col gap-1">
           <span className="kicker">Welcome · step 1 of 2</span>
-          <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-normal">What should we call you?</h1>
+          <h1 className="m-0 font-display text-[2.25rem] leading-[0.95] font-extrabold">What should we call you?</h1>
         </div>
         <form className="flex flex-col gap-3" onSubmit={submit} noValidate>
           <Label htmlFor="display-name">Display name</Label>
@@ -73,9 +73,9 @@ function WelcomePage() {
             {busy ? "Saving…" : "Continue"}
           </Button>
         </form>
-        <p className="m-0 font-mono text-[0.6875rem] font-semibold text-sub">
+        <p className="m-0 tabular-nums text-[0.6875rem] font-semibold text-sub">
           SIGNED IN AS {user.email.toUpperCase()} ·{" "}
-          <button type="button" className="cursor-pointer bg-transparent p-0 font-mono font-bold text-ink underline" onClick={() => void signOut(auth)}>
+          <button type="button" className="cursor-pointer bg-transparent p-0 tabular-nums font-bold text-ink underline" onClick={() => void signOut(auth)}>
             SIGN OUT
           </button>
         </p>

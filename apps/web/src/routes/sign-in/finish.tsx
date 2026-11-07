@@ -52,7 +52,7 @@ function FinishPage() {
   return (
     <AuthLayout>
       <Card className="gap-4 p-4">
-        <h1 className="m-0 font-display text-[2rem] leading-[0.95] font-normal">
+        <h1 className="m-0 font-display text-[2rem] leading-[0.95] font-extrabold">
           {phase.kind === "askEmail" ? "Confirm your email" : phase.kind === "working" ? "Signing you in…" : "Sign-in link problem"}
         </h1>
         {phase.kind === "askEmail" ? (
@@ -89,7 +89,7 @@ function FinishPage() {
           </form>
         ) : null}
         {phase.kind === "working" ? (
-          <p className="m-0 font-mono text-xs font-bold" role="status">
+          <p className="m-0 tabular-nums text-xs font-bold" role="status">
             CHECKING YOUR LINK…
           </p>
         ) : null}

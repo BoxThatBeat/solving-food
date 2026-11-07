@@ -72,7 +72,7 @@ function PreferencesPage() {
         <p className="m-0 text-[0.8125rem] font-semibold">Set once for the whole household. Likes raise a suggestion; dislikes and restrictions keep recipes out of suggestions and the optimiser.</p>
         {(["likes", "dislikes"] as const).map((k) => (
           <div key={k} className="flex flex-col gap-1.5">
-            <span className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">{k === "likes" ? "LIKES" : "DISLIKES"}</span>
+            <span className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">{k === "likes" ? "LIKES" : "DISLIKES"}</span>
             <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0" aria-label={k === "likes" ? "Likes" : "Dislikes"}>
               {prefs[k].length === 0 ? <li className="text-[0.8125rem] font-semibold text-sub">None yet.</li> : null}
               {prefs[k].map((e) => (
@@ -105,7 +105,7 @@ function PreferencesPage() {
               type="button"
               onClick={() => setKind(kind === "likes" ? "dislikes" : "likes")}
               aria-label={`Adding to ${kind}; switch`}
-              className="flex-none cursor-pointer rounded-ui border-2 border-line bg-base px-2.5 font-mono text-[0.6875rem] font-bold text-ink"
+              className="flex-none cursor-pointer rounded-ui border-2 border-line bg-base px-2.5 tabular-nums text-[0.6875rem] font-bold text-ink"
             >
               {KIND_LABEL[kind]}
             </button>
@@ -121,7 +121,7 @@ function PreferencesPage() {
                     <span>
                       {kind === "likes" ? "Like" : "Dislike"} {o.label}
                     </span>
-                    <span className="font-mono text-[0.625rem] font-bold text-sub uppercase">{o.hint}</span>
+                    <span className="tabular-nums text-[0.625rem] font-bold text-sub">{o.hint}</span>
                   </button>
                 </li>
               ))}
@@ -129,7 +129,7 @@ function PreferencesPage() {
           ) : null}
         </form>
         <div role="group" aria-labelledby="diets-h" className="flex flex-col gap-1.5">
-          <span id="diets-h" className="font-mono text-[0.625rem] font-bold tracking-[0.09rem]">
+          <span id="diets-h" className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">
             DIETARY RESTRICTIONS
           </span>
           <div className="flex flex-wrap gap-1.5">

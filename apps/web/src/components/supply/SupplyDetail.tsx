@@ -92,12 +92,12 @@ function LotRow({ lot, item, ingredient, unit, hid, uid, tz, nowMs }: { lot: Led
     <li className="flex flex-col gap-2 rounded-ui border-2 border-line bg-base p-2.5" data-testid="lot">
       <div className="flex flex-wrap items-center gap-2">
         <span className="flex min-w-[12rem] flex-1 flex-col gap-1">
-          <span className="font-mono text-[0.8125rem] font-extrabold">
+          <span className="tabular-nums text-[0.8125rem] font-extrabold">
             {amountText(lot.amount, unit)} <span className="text-[0.625rem] font-semibold text-sub">BOUGHT {dateText(lot.acquiredAtMs, tz)}</span>
           </span>
           <span className="flex flex-wrap gap-1">
             <ExpiryBadge flag={expiryFlag(e, nowMs, tz)} expiresMs={e} frozen={frozen} nowMs={nowMs} tz={tz} />
-            <span className="font-mono text-[0.625rem] font-semibold text-sub uppercase">
+            <span className="tabular-nums text-[0.625rem] font-semibold text-sub">
               {LOCATION_LABEL[lot.location]}
               {e ? ` · use by ${dateText(e - 1, tz)}` : ""}
               {lot.expiryExtendedToMs ? " · date set" : ""}
@@ -157,7 +157,7 @@ function LotRow({ lot, item, ingredient, unit, hid, uid, tz, nowMs }: { lot: Led
             setDating(null);
           }}
         >
-          <label className="flex flex-1 items-center gap-2 font-mono text-[0.625rem] font-bold">
+          <label className="flex flex-1 items-center gap-2 tabular-nums text-[0.625rem] font-bold">
             USE BY
             <Input
               type="date"
@@ -185,7 +185,7 @@ function LotRow({ lot, item, ingredient, unit, hid, uid, tz, nowMs }: { lot: Led
       ) : null}
       {freezing !== null ? (
         <div className="flex flex-wrap items-center gap-2 rounded-ui border-2 border-line bg-blue-soft p-2 text-onc">
-          <span className="font-mono text-[0.625rem] font-bold">FREEZE HOW MUCH?</span>
+          <span className="tabular-nums text-[0.625rem] font-bold">FREEZE HOW MUCH?</span>
           <Stepper label="Amount to freeze" value={freezing} min={Math.min(step, lot.amount)} max={lot.amount} step={step} onChange={setFreezing} format={(v) => amountText(v, unit)} className="bg-base text-ink" />
           <Button
             size="sm"
@@ -251,17 +251,17 @@ function SupplyAdjust({ item, ingredient, unit, hid, uid }: { item: SupplyItem; 
     >
       <SectionLabel id={id}>Correct it · I actually have</SectionLabel>
       <div className="flex items-center gap-2">
-        <Input aria-labelledby={id} inputMode="decimal" value={text} onChange={(e) => setText(e.target.value)} className="flex-1 font-mono text-[1.125rem] font-extrabold" aria-invalid={!valid || undefined} />
+        <Input aria-labelledby={id} inputMode="decimal" value={text} onChange={(e) => setText(e.target.value)} className="flex-1 tabular-nums text-[1.125rem] font-extrabold" aria-invalid={!valid || undefined} />
         {units.length > 1 ? (
           <div role="group" aria-label="Unit" className="flex gap-1">
             {units.map((x) => (
-              <button key={x} type="button" aria-pressed={u === x} onClick={() => setU(x)} className={cn("min-h-11 min-w-11 cursor-pointer rounded-ui border-2 border-line px-2 font-mono text-[0.8125rem] font-extrabold", u === x ? "bg-acc text-onc" : "bg-base text-ink")}>
+              <button key={x} type="button" aria-pressed={u === x} onClick={() => setU(x)} className={cn("min-h-11 min-w-11 cursor-pointer rounded-ui border-2 border-line px-2 tabular-nums text-[0.8125rem] font-extrabold", u === x ? "bg-acc text-onc" : "bg-base text-ink")}>
                 {x === "count" ? "×" : unitLabel(x, 2)}
               </button>
             ))}
           </div>
         ) : (
-          <span className="font-mono text-[0.8125rem] font-bold">{unit.portions ? "portions" : u === "count" ? "×" : unitLabel(u, 2)}</span>
+          <span className="tabular-nums text-[0.8125rem] font-bold">{unit.portions ? "portions" : u === "count" ? "×" : unitLabel(u, 2)}</span>
         )}
         <Button type="submit" disabled={!valid}>
           Apply
@@ -276,7 +276,7 @@ function SupplyAdjust({ item, ingredient, unit, hid, uid }: { item: SupplyItem; 
             size="sm"
             onClick={() => setText(String(Math.max(0, Math.round(((valid ? value : 0) + s) * 100) / 100)))}
             aria-label={`${s > 0 ? "Add" : "Take off"} ${Math.abs(s)} ${u === "count" ? "" : unitLabel(u, Math.abs(s))}`.replace(/\s+/g, " ").trim()}
-            className="font-mono"
+            className="tabular-nums"
           >
             {s > 0 ? "+" : "−"}
             {Math.abs(s)}
@@ -316,7 +316,7 @@ function LedgerList({ hid, supplyId, unit, tz, members, limitTo }: { hid: string
   return (
     <section aria-label="History" className="flex flex-col gap-1">
       <SectionLabel hint={limitTo && l.rows.length > limitTo ? <Link to="/supply/$id" params={{ id: supplyId }} className="text-ink">Full history →</Link> : undefined}>History</SectionLabel>
-      {l.loading ? <span className="font-mono text-[0.6875rem] text-sub">LOADING…</span> : null}
+      {l.loading ? <span className="tabular-nums text-[0.6875rem] text-sub">LOADING…</span> : null}
       {!l.loading && !rows.length ? <span className="text-[0.8125rem] font-semibold text-sub">No changes yet.</span> : null}
       <ol className="m-0 flex list-none flex-col p-0" data-testid="ledger">
         {rows.map((r) => (
@@ -338,12 +338,12 @@ function LedgerRow({ t, unit, tz, who }: { t: StoredTx; unit: AmountUnit; tz: st
   const ms = millis(t.createdAt);
   const sign = t.delta > 0 ? "+" : t.delta < 0 ? "−" : "";
   return (
-    <li className="grid grid-cols-[4.25rem_minmax(0,1fr)_auto] items-baseline gap-2 border-b border-dashed border-line/40 py-1.5 font-mono text-[0.6875rem]" data-testid="ledger-row">
+    <li className="grid grid-cols-[4.25rem_minmax(0,1fr)_auto] items-baseline gap-2 border-b border-dashed border-line/40 py-1.5 tabular-nums text-[0.6875rem]" data-testid="ledger-row">
       <span className="font-bold text-sub">{ms ? dateText(ms, tz) : "NOW"}</span>
       <span className="min-w-0 font-semibold">
         <span className="font-sans text-[0.8125rem] font-bold">{KIND_LABEL[t.kind] ?? t.kind}</span>
         {t.note ? <span className="text-sub"> · {t.note}</span> : null}
-        {who ? <span className="text-sub uppercase"> · {who}</span> : null}
+        {who ? <span className="text-sub"> · {who}</span> : null}
       </span>
       <span className="font-extrabold whitespace-nowrap">{t.delta ? `${sign}${amountText(Math.abs(t.delta), unit)}` : "±0"}</span>
     </li>

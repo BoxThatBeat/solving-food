@@ -44,7 +44,7 @@ export function ExpiryAlerts({
   const candidates = summaries.filter((r) => !plannedIds.has(r.id) && !scores.get(r.id)?.blocked);
   return (
     <section aria-label="Expiring supply" data-testid="expiry-alerts" className="flex flex-col gap-2.5 rounded-ui border-bw bg-peach p-3 text-onc shadow-hard">
-      <span className="font-mono text-[0.65625rem] font-extrabold tracking-[0.09rem]">USE IT OR LOSE IT</span>
+      <span className="tabular-nums text-[0.65625rem] font-extrabold tracking-[0.045rem]">USE IT OR LOSE IT</span>
       {shown.map((a) => {
         const ing = ingredient(a.ingredientId);
         const name = ing?.name ?? a.ingredientId.replace(/-/g, " ");
@@ -82,7 +82,7 @@ export function ExpiryAlerts({
                       {/* M24: one sentence, "Veggie Pizza Squares uses 120 g of the broccoli expiring Friday". */}
                       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                         <span>{recipe.title}</span>
-                        <span className="font-mono text-[0.65625rem] font-bold" data-testid="alert-uses">
+                        <span className="tabular-nums text-[0.65625rem] font-bold" data-testid="alert-uses">
                           uses {amount(uses)} of the {name} expiring {expiringWhen(a.expiresMs, nowMs, tz)}
                         </span>
                       </span>
