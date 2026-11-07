@@ -75,8 +75,9 @@ test("a timer that ends after moving on shows under Other timers; Dismiss clears
   await others.getByRole("button", { name: /^Dismiss/ }).click();
   await expect(others).toBeHidden();
   await expect(card).toContainText("Step 3 of 3", { ignoreCase: true });
-  // Back on its step the timer is idle again, ready to start over.
-  await page.getByRole("button", { name: "← Back" }).click();
+  // Back on its step the timer is idle again, ready to start over (the key, like cooking.spec: on desktop the Back
+  // button sits under the Previous step edge strip, which does the same thing, and Playwright won't click through it).
+  await page.keyboard.press("ArrowLeft");
   await expect(timer).toHaveAttribute("data-state", "idle");
   void household;
 });
