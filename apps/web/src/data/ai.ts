@@ -4,6 +4,7 @@ import { httpsCallable } from "firebase/functions";
 import { ref, uploadBytes } from "firebase/storage";
 import type { MatchedLine, PcxStatus } from "@solving-food/core";
 import { functions, storage } from "@/firebase/app";
+import { shrinkPhoto } from "@/lib/images";
 import { useCallableStatus } from "./callableStatus";
 
 export interface AiStatus extends PcxStatus {
@@ -48,7 +49,7 @@ export interface AddRecipeResult {
   warnings: string[];
 }
 
-const addRecipe = (data: { source: "link"; url: string } | { source: "photo"; path: string; text?: string }) =>
+const addRecipe = (data: { source: "link"; url: string } | { source: "photo"; paths: string[]; text?: string }) =>
   httpsCallable<typeof data, AddRecipeResult>(functions, "addRecipeWithGemini", { timeout: 240_000 })(data).then((r) => r.data);
 
 /** Add with Gemini from a web link (R4.37). */
@@ -56,20 +57,28 @@ export function addRecipeFromLink(url: string): Promise<AddRecipeResult> {
   return addRecipe({ source: "link", url });
 }
 
+/** The most photos one recipe takes (the function checks it too). */
+export { MAX_RECIPE_PHOTOS } from "@solving-food/core";
+
 const PHOTO_EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic", "image/heif": "heif", "image/avif": "avif", "image/gif": "gif" };
 
-/** Add with Gemini from a photo (R4.37), optionally with the recipe's text: uploaded to recipe-photos/{uid}/ (the
- * function deletes it), then read. */
-export async function addRecipeFromPhoto(uid: string, file: File, text = ""): Promise<AddRecipeResult> {
-  const type = file.type || "image/jpeg";
+/** One photo shrunk (≤ 2048 px, JPEG) and uploaded to recipe-photos/{uid}/ for the function, which deletes it. */
+async function uploadPhoto(uid: string, file: File): Promise<string> {
+  const blob = await shrinkPhoto(file, 2048, 4 * 1024 * 1024);
+  const type = blob.type || "image/jpeg";
   const ext = PHOTO_EXT[type];
   if (!ext) throw new Error("That isn't a photo the app can read (JPEG, PNG, WebP, HEIC)");
-  if (file.size > 10 * 1024 * 1024) throw new Error("That photo is over 10 MB");
   const path = `recipe-photos/${uid}/${crypto.randomUUID().replace(/-/g, "")}.${ext}`;
-  await uploadBytes(ref(storage, path), file, { contentType: type });
-  return addRecipe(text.trim() ? { source: "photo", path, text: text.trim() } : { source: "photo", path });
+  await uploadBytes(ref(storage, path), blob, { contentType: type });
+  return path;
 }
 
+/** Add with Gemini from photos (R4.37): the pages of a recipe and maybe the finished dish, in order, optionally with
+ * the recipe's text. Gemini works out which photo is which. */
+export async function addRecipeFromPhotos(uid: string, files: File[], text = ""): Promise<AddRecipeResult> {
+  const paths = await Promise.all(files.map((f) => uploadPhoto(uid, f)));
+  return addRecipe(text.trim() ? { source: "photo", paths, text: text.trim() } : { source: "photo", paths });
+}
 
 export interface ReceiptResult {
   store: string | null;

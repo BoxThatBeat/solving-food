@@ -95,20 +95,54 @@ describe("a photo with the recipe's text", () => {
   it("the text goes with the photo; a dish photo becomes the recipe's picture, a photo of the recipe doesn't", async () => {
     const dishPath = `recipe-photos/${UID}/dish.png`;
     await bucket().file(dishPath).save(png(), { contentType: "image/png", resumable: false });
-    await stub({ recipe: "PHOTO: dish\n```cooklang\n" + cook("Dish Toast") + "```" });
+    await stub({ recipe: "DISH: 1\n```cooklang\n" + cook("Dish Toast") + "```" });
     const r = await addRecipeWithGemini(UID, { source: "photo", path: dishPath, text: "Buttered toast\r\n\r\n\r\n1 tbsp butter, 2 slices bread  " });
     expect(r.title).toBe("Dish Toast");
     expect((await db.doc(`recipes/${r.recipeId}`).get()).data()!.imagePaths).toHaveLength(1);
-    expect(stubGenerateRequests[0]!.system).toContain("PHOTO: dish");
+    expect(stubGenerateRequests[0]!.system).toContain("DISH: <number>");
     expect(JSON.stringify(stubGenerateRequests[0]!.contents)).toContain("The recipe's text:\\nButtered toast\\n\\n1 tbsp butter, 2 slices bread");
     expect(await fileExists(dishPath)).toBe(false);
 
     const pagePath = `recipe-photos/${UID}/page.png`;
     await bucket().file(pagePath).save(png(), { contentType: "image/png", resumable: false });
-    await stub({ recipe: "PHOTO: recipe\n```cooklang\n" + cook("Page Toast") + "```" });
+    await stub({ recipe: "DISH: none\n```cooklang\n" + cook("Page Toast") + "```" });
     const p = await addRecipeWithGemini(UID, { source: "photo", path: pagePath, text: "Toast, butter." });
     expect((await db.doc(`recipes/${p.recipeId}`).get()).data()!.imagePaths).toEqual([]);
     await expect(addRecipeWithGemini(UID, { source: "photo", path: pagePath, text: 5 })).rejects.toMatchObject({ message: "Bad request" });
+  });
+});
+
+describe("several photos", () => {
+  const png = () => readFileSync(join(ATTACHMENTS_DIR, "Pasted image 20240116181103.png"));
+  it("go to Gemini numbered in order; the photo it names as the dish becomes the picture; all are deleted", async () => {
+    const paths = [1, 2, 3].map((i) => `recipe-photos/${UID}/m${i}.png`);
+    for (const p of paths) await bucket().file(p).save(png(), { contentType: "image/png", resumable: false });
+    await stub({ recipe: "DISH: 3\n```cooklang\n" + cook("Two Page Toast") + "```" });
+    const r = await addRecipeWithGemini(UID, { source: "photo", paths });
+    expect(r.title).toBe("Two Page Toast");
+    expect((await db.doc(`recipes/${r.recipeId}`).get()).data()!.imagePaths).toHaveLength(1);
+    const req = stubGenerateRequests[0]!;
+    expect(req.system).toContain("3 photos, numbered 1 to 3");
+    const parts = req.contents[0]!.parts;
+    expect(parts.map((p) => ("text" in p ? p.text : "image"))).toEqual(["Photo 1:", "image", "Photo 2:", "image", "Photo 3:", "image", "Write the .cook file for the recipe in these photos."]);
+    for (const p of paths) expect(await fileExists(p)).toBe(false);
+  });
+
+  it("a dish number out of range keeps no picture; too many, repeated or someone else's photos are refused and nothing is left", async () => {
+    const paths = [1, 2].map((i) => `recipe-photos/${UID}/n${i}.png`);
+    for (const p of paths) await bucket().file(p).save(png(), { contentType: "image/png", resumable: false });
+    await stub({ recipe: "DISH: 7\n```cooklang\n" + cook("Out Of Range Toast") + "```" });
+    const r = await addRecipeWithGemini(UID, { source: "photo", paths });
+    expect((await db.doc(`recipes/${r.recipeId}`).get()).data()!.imagePaths).toEqual([]);
+
+    const mine = `recipe-photos/${UID}/o1.png`;
+    await bucket().file(mine).save(png(), { contentType: "image/png", resumable: false });
+    await expect(addRecipeWithGemini(UID, { source: "photo", paths: [mine, "recipe-photos/someone/p.jpg"] })).rejects.toMatchObject({ message: "That photo isn't yours" });
+    expect(await fileExists(mine)).toBe(false);
+    const seven = Array.from({ length: 7 }, (_, i) => `recipe-photos/${UID}/x${i}.png`);
+    await expect(addRecipeWithGemini(UID, { source: "photo", paths: seven })).rejects.toMatchObject({ message: "Bad request" });
+    await expect(addRecipeWithGemini(UID, { source: "photo", paths: [mine, mine] })).rejects.toMatchObject({ message: "Bad request" });
+    await expect(addRecipeWithGemini(UID, { source: "photo", paths: [] })).rejects.toMatchObject({ message: "Bad request" });
   });
 });
 

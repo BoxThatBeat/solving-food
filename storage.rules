@@ -5,8 +5,8 @@ rules_version = '2';
 //                                 WebP (JPEG where the browser can't encode WebP) ≤ 2 MB
 //   recipe-drop/{uid}/{file}      drop folder: the owner uploads .cook files (≤ 1 MB) and the images they
 //                                 reference (≤ 10 MB); only functions read and delete
-//   recipe-photos/{uid}/{file}    Add with Gemini (M16, R4.37): a person uploads a photo of a recipe (image, ≤ 10 MB);
-//                                 only the addRecipeWithGemini function reads it, then deletes it
+//   recipe-photos/{uid}/{file}    Add with Gemini (M16, R4.37): a person uploads photos of a recipe (images, ≤ 10 MB
+//                                 each, up to 6 per request); only the addRecipeWithGemini function reads them, then deletes them
 //   imports/{hid}/{file}          household data import (M4, §13): members of that household upload one zip
 //                                 (≤ 20 MB); nobody reads it but the importHousehold function, which deletes it
 // Everything else is denied.

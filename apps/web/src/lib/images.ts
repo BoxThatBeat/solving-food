@@ -69,11 +69,11 @@ function toBase64(buf: ArrayBuffer): string {
 }
 
 /**
- * A photo for Gemini to read (M25, a receipt): its longest side at most `maxEdge` px (2048 keeps a long till receipt's
- * small print readable), JPEG, as base64 for a callable. Never uploaded anywhere. A photo the browser can't decode (HEIC
- * outside Safari) goes as it is when it's small enough.
+ * A photo shrunk for Gemini: its longest side at most `maxEdge` px (2048 keeps a long till receipt's small print and a
+ * cookbook page readable), JPEG. A photo the browser can't decode (HEIC outside Safari) goes as it is when it's small
+ * enough.
  */
-export async function photoForGemini(file: File, maxEdge = 2048, maxBytes = 4 * 1024 * 1024): Promise<{ mimeType: string; data: string }> {
+export async function shrinkPhoto(file: File, maxEdge = 2048, maxBytes = 4 * 1024 * 1024): Promise<Blob> {
   let bitmap: ImageBitmap | null;
   try {
     bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
@@ -84,7 +84,7 @@ export async function photoForGemini(file: File, maxEdge = 2048, maxBytes = 4 * 
     const type = file.type || "image/jpeg";
     if (!GEMINI_TYPES.has(type)) throw new Error("That isn't a photo the app can read (JPEG, PNG, WebP, HEIC)");
     if (file.size > maxBytes) throw new Error("That photo is too large; take it again or crop it");
-    return { mimeType: type, data: toBase64(await file.arrayBuffer()) };
+    return file.type ? file : new Blob([file], { type });
   }
   try {
     const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
@@ -99,10 +99,16 @@ export async function photoForGemini(file: File, maxEdge = 2048, maxBytes = 4 * 
     ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     for (const q of [0.85, 0.7, 0.55]) {
       const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", q));
-      if (blob && blob.size <= maxBytes) return { mimeType: "image/jpeg", data: toBase64(await blob.arrayBuffer()) };
+      if (blob && blob.size <= maxBytes) return blob;
     }
     throw new Error("That photo is too large even after shrinking it");
   } finally {
     bitmap.close();
   }
+}
+
+/** A photo for Gemini to read (M25, a receipt): shrunk (`shrinkPhoto`), as base64 for a callable. Never uploaded. */
+export async function photoForGemini(file: File, maxEdge = 2048, maxBytes = 4 * 1024 * 1024): Promise<{ mimeType: string; data: string }> {
+  const blob = await shrinkPhoto(file, maxEdge, maxBytes);
+  return { mimeType: blob.type, data: toBase64(await blob.arrayBuffer()) };
 }

@@ -89,6 +89,29 @@ R11.15 (new: the Gemini section), R4.36 (changed: the key lives there), R4.37 (n
       Tests: core 2, functions 1 (dish photo kept, recipe photo not, text cleaned, bad text refused) + 404 vs 403
       messages, e2e 1 (@R4.37: 403 message, photo + text, remove photo, dish picture kept).
 
+## Multiple photos (2026-11-11)
+
+Owner request: "Add ability to add or take multiple photos when adding a recipe (instead of always just one). Often
+there are multiple pages the recipe is on and I want a photo of the actual finished recipe too. The LLM can determine
+what is what when uploaded."
+
+- [x] Core: `MAX_RECIPE_PHOTOS` (6); the photo frame numbers the photos, says pages continue in order (or join them by
+      what they say), and always asks for `DISH: <n>` / `DISH: none` (a printed picture on a page isn't the dish);
+      `dishPhotoIndex` replaces `photoIsDish` (still reads `PHOTO: dish`); `notARecipe` skips a DISH line. Without text a
+      dish photo now counts too (before, a lone photo without text was never kept). Tests updated (8).
+- [x] Function: `{ source: "photo", paths, text? }` (1–6 distinct, all the caller's; the old `path` still accepted),
+      read in parallel, ≤ 14 MB together (Gemini's 20 MB request after base64), each after a "Photo n:" label, one
+      rate-limit hit per recipe, every upload deleted in `finally`. Tests: several photos (order, labels, dish 3 kept,
+      all deleted), out-of-range dish, someone else's path (own one still deleted), 7 / repeated / none refused.
+- [x] Web: `shrinkPhoto` (≤ 2048 px JPEG, shared with the receipt's `photoForGemini`) before upload, so six photos fit
+      one Gemini request; `addRecipeFromPhotos`. The sheet: **Upload photos** (`multiple`) / **Take photos**; chosen
+      photos as numbered thumbnails with a remove × (a 28 px box in a 44 px hit area), **Add a photo** / **Take a photo**
+      until 6, "Up to 6 photos for one recipe" past that, pasting several pictures works. Blob URLs made and revoked in
+      one effect (StrictMode had revoked the old preview's URL in dev).
+- [x] E2E (@R4.37): labels updated; a new test adds two pages, then a dish, hits the 6 limit, removes three, and the
+      named dish becomes the picture. PRD R4.37, spec §2 row, §9, components, storage.rules comment updated.
+- [x] Screenshot check: phone 430×932 and desktop 1920×1080, the sheet empty and with three photos.
+
 ## What's left for the owner
 
 1. Deploy (hosting, functions, storage rules).

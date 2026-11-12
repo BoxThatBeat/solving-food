@@ -2,11 +2,12 @@
 // recipe uploaded to `recipe-photos/{uid}/`, becomes a .cook file written by Gemini following the Claude skill
 // (SKILL_TEXT, generated from it), which then goes through the drop-folder importer (`importCook`: validation, the
 // M15 ingredient judge, duplicates, the link's image, the notification). Allowlisted callers; the owner's Gemini key;
-// 10 per person per hour (`aiRate/{uid}`). A file that fails the importer's checks goes back to Gemini once with the
-// reason. A photo may come with the recipe's text (copied from a page that won't let the app read it, or a book); then
-// Gemini says whether the photo is the finished dish, and a dish photo becomes the recipe's picture. A photo of the
-// recipe itself never does. The upload is deleted afterwards.
-import { cleanRecipeText, CooklangError, dropLocalImage, extractCook, notARecipe, pageContent, photoIsDish, recipeInstruction, safeRecipeUrl, siteRefusesApps, type RecipeSource } from "@solving-food/core";
+// 10 per person per hour (`aiRate/{uid}`; one per recipe, however many photos). A file that fails the importer's checks
+// goes back to Gemini once with the reason. Up to MAX_RECIPE_PHOTOS photos go together (the pages of a recipe that runs
+// over several, and the finished dish), optionally with the recipe's text (copied from a page that won't let the app
+// read it, or a book); Gemini says which photo, if any, is the finished dish (`DISH: n`), and that one becomes the
+// recipe's picture. A photo of the recipe itself never does. The uploads are deleted afterwards.
+import { cleanRecipeText, CooklangError, dishPhotoIndex, dropLocalImage, extractCook, MAX_RECIPE_PHOTOS, notARecipe, pageContent, recipeInstruction, safeRecipeUrl, siteRefusesApps, type RecipeSource } from "@solving-food/core";
 import { bucket, db } from "../admin";
 import { importCook } from "../dropFolder";
 import { CallError, rateLimit } from "../pcx";
@@ -19,17 +20,26 @@ export const ADD_PER_HOUR = 10;
 const PAGE_TIMEOUT_MS = 15_000;
 const MAX_PAGE_BYTES = 3 * 1024 * 1024;
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+/** All the photos of one recipe together: Gemini takes at most 20 MB per request, and inline data grows by a third as
+ * base64. The sheet shrinks each photo to well under this (≤ 2048 px, ~0.3–1 MB). */
+const MAX_PHOTOS_BYTES = 14 * 1024 * 1024;
 export const MAX_RECIPE_TEXT = 30_000;
 
-type AddInput = { source: "link"; url: string } | { source: "photo"; path: string; text: string };
+type AddInput = { source: "link"; url: string } | { source: "photo"; paths: string[]; text: string };
+
+const isPath = (p: unknown): p is string => typeof p === "string" && p.length >= 1 && p.length <= 300;
 
 function parseInput(data: unknown): AddInput | null {
-  const d = (data ?? {}) as { source?: unknown; url?: unknown; path?: unknown; text?: unknown };
+  const d = (data ?? {}) as { source?: unknown; url?: unknown; path?: unknown; paths?: unknown; text?: unknown };
   if (d.source === "link" && typeof d.url === "string" && d.url.trim().length >= 8 && d.url.length <= 2000) return { source: "link", url: d.url.trim() };
-  if (d.source === "photo" && typeof d.path === "string" && d.path.length >= 1 && d.path.length <= 300 && (d.text === undefined || (typeof d.text === "string" && d.text.length <= MAX_RECIPE_TEXT * 2)))
-    return { source: "photo", path: d.path, text: cleanRecipeText(typeof d.text === "string" ? d.text : "", MAX_RECIPE_TEXT) };
-  return null;
+  if (d.source !== "photo" || !(d.text === undefined || (typeof d.text === "string" && d.text.length <= MAX_RECIPE_TEXT * 2))) return null;
+  // `path` is the one-photo request from a sheet loaded before multiple photos.
+  const paths = d.paths === undefined && isPath(d.path) ? [d.path] : d.paths;
+  if (!Array.isArray(paths) || paths.length < 1 || paths.length > MAX_RECIPE_PHOTOS || !paths.every(isPath) || new Set(paths).size !== paths.length) return null;
+  return { source: "photo", paths, text: cleanRecipeText(typeof d.text === "string" ? d.text : "", MAX_RECIPE_TEXT) };
 }
+
+const ownPhoto = (uid: string, path: string) => path.startsWith(`recipe-photos/${uid}/`) && !path.includes("..");
 
 export interface AddRecipeResult {
   status: "imported" | "pendingDuplicateReview";
@@ -74,8 +84,9 @@ async function fetchPage(uid: string, url: URL): Promise<string> {
   }
 }
 
-async function readPhoto(uid: string, path: string): Promise<{ part: GeminiPart; data: Buffer; file: ReturnType<ReturnType<typeof bucket>["file"]> }> {
-  if (!path.startsWith(`recipe-photos/${uid}/`) || path.includes("..")) throw new CallError("invalid-argument", "That photo isn't yours");
+type Photo = { part: GeminiPart; data: Buffer };
+
+async function readPhoto(path: string): Promise<Photo> {
   const file = bucket().file(path);
   const [exists] = await file.exists();
   if (!exists) throw new CallError("invalid-argument", "The photo didn't arrive; try again");
@@ -83,7 +94,15 @@ async function readPhoto(uid: string, path: string): Promise<{ part: GeminiPart;
   const mimeType = String(meta.contentType ?? "image/jpeg");
   if (!mimeType.startsWith("image/") || Number(meta.size ?? 0) > MAX_PHOTO_BYTES) throw new CallError("invalid-argument", "That isn't a photo the app can read");
   const [buf] = await file.download();
-  return { part: { inlineData: { mimeType, data: buf.toString("base64") } }, data: buf, file };
+  return { part: { inlineData: { mimeType, data: buf.toString("base64") } }, data: buf };
+}
+
+/** The request's photos in order, each one this person's own, all together small enough for one Gemini request. */
+async function readPhotos(uid: string, paths: string[]): Promise<Photo[]> {
+  if (!paths.every((p) => ownPhoto(uid, p))) throw new CallError("invalid-argument", "That photo isn't yours");
+  const photos = await Promise.all(paths.map(readPhoto));
+  if (photos.reduce((n, p) => n + p.data.length, 0) > MAX_PHOTOS_BYTES) throw new CallError("invalid-argument", "Those photos are too large together; add fewer");
+  return photos;
 }
 
 export async function addRecipeWithGemini(uid: string, data: unknown): Promise<AddRecipeResult> {
@@ -91,7 +110,7 @@ export async function addRecipeWithGemini(uid: string, data: unknown): Promise<A
   if (!req) throw new CallError("invalid-argument", "Bad request");
   if (!(await geminiReady(uid))) throw new CallError("invalid-argument", AI_NOT_SET_UP);
 
-  let photo: Awaited<ReturnType<typeof readPhoto>> | null = null;
+  let photos: Photo[] = [];
   try {
     let source: RecipeSource;
     let first: GeminiPart[];
@@ -106,22 +125,26 @@ export async function addRecipeWithGemini(uid: string, data: unknown): Promise<A
       first = [{ text: content }];
       fileName = url.hostname;
     } else {
-      photo = await readPhoto(uid, req.path);
+      photos = await readPhotos(uid, req.paths);
       await rateLimit(uid, Date.now(), { collection: "aiRate", limit: ADD_PER_HOUR, message: `That's ${ADD_PER_HOUR} recipes with Gemini this hour; try again later` });
-      source = { kind: "photo", withText: !!req.text };
-      first = req.text ? [photo.part, { text: `The recipe's text:\n${req.text}` }] : [photo.part, { text: "Write the .cook file for the recipe in this photo." }];
-      fileName = "your photo";
+      const n = photos.length;
+      source = { kind: "photo", count: n, withText: !!req.text };
+      // Each photo labelled with its number, so Gemini's DISH line can name one.
+      first = photos.flatMap((p, i): GeminiPart[] => (n > 1 ? [{ text: `Photo ${i + 1}:` }, p.part] : [p.part]));
+      first.push({ text: req.text ? `The recipe's text:\n${req.text}` : n > 1 ? "Write the .cook file for the recipe in these photos." : "Write the .cook file for the recipe in this photo." });
+      fileName = n > 1 ? "your photos" : "your photo";
     }
 
     const system = recipeInstruction(SKILL_TEXT, source);
     const contents: GeminiTurn[] = [{ role: "user", parts: first }];
     for (let attempt = 0; ; attempt++) {
       const answer = await geminiGenerate(uid, system, contents);
-      if (notARecipe(answer)) throw new CallError("invalid-argument", source.kind === "link" ? "Gemini found no recipe on that page" : "Gemini found no recipe in that photo");
+      if (notARecipe(answer)) throw new CallError("invalid-argument", source.kind === "link" ? "Gemini found no recipe on that page" : photos.length > 1 ? "Gemini found no recipe in those photos" : "Gemini found no recipe in that photo");
       const cook = extractCook(answer);
       try {
         if (!cook) throw new CooklangError("the answer had no .cook file");
-        const dish = source.kind === "photo" && source.withText && photo && photoIsDish(answer) ? photo.data : undefined;
+        const dishAt = source.kind === "photo" ? dishPhotoIndex(answer, photos.length) : null;
+        const dish = dishAt === null ? undefined : photos[dishAt]!.data;
         const out = await importCook(uid, fileName, dropLocalImage(cook), { imageWaitMs: 0, imageData: dish });
         if (out.status !== "imported" && out.status !== "pendingDuplicateReview") throw new CooklangError("it wasn't imported");
         const title = String((await db.doc(`recipes/${out.recipeId}`).get()).data()?.title ?? "");
@@ -137,7 +160,6 @@ export async function addRecipeWithGemini(uid: string, data: unknown): Promise<A
     if (e instanceof AiError) throw new CallError("invalid-argument", e.message);
     throw e;
   } finally {
-    await photo?.file.delete({ ignoreNotFound: true }).catch(() => undefined);
-    if (!photo && req.source === "photo" && req.path.startsWith(`recipe-photos/${uid}/`) && !req.path.includes("..")) await bucket().file(req.path).delete({ ignoreNotFound: true }).catch(() => undefined);
+    if (req.source === "photo") await Promise.all(req.paths.filter((p) => ownPhoto(uid, p)).map((p) => bucket().file(p).delete({ ignoreNotFound: true }).catch(() => undefined)));
   }
 }

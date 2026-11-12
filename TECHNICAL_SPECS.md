@@ -107,7 +107,7 @@ So the project uses the **Blaze (pay-as-you-go) plan, designed so the bill stays
 | Ingredient merge callable (`mergeIngredient`, M8) | counted in the 2M above | one per **Merge into…** (plus one dry run when the confirm opens): rare, < 100 / month after the one-off cleanup. Each reads the recipes and version snapshots that use the duplicate (array-contains queries), the saved meals, and per household ~6 small reads (supply rows, planned items, open grocery lists, keyed docs); writes one per changed doc plus the copied Supply history: < 200 reads and < 100 writes per merge at the design scale. 256 MiB, ≤ 300 s | — |
 | Ingredients page names to decide (M15) | in the 50,000 reads / day | none extra: the waiting names come from the full ingredient list the Ingredients page already reads; `aiStatus` reads the household-made ingredients (~100) once per page view. The M8 needs-review listener (Settings count, Recipes banner, More sheet, Drop page) was removed | — |
 | Gemini (M15, R4.27) | outside Firebase: the Gemini API free tier, key from a Google project **without billing** (so it can't be charged; at the limit a call fails and names wait) | one request per import with unknown names (≤ 20 names each) and per 20 names on Check with Gemini: < 100 / month. Callables `aiStatus`, `aiSetKey`, `checkIngredientNames` counted in the 2M above; outbound requests in the egress row below | — |
-| Add with Gemini (M16, R4.37) | Gemini free tier as above; Storage 5 GB / 1 GB-day egress (us-east1); callable in the 2M invocations | one Gemini request per added recipe (plus one repair round when the file fails the checks), ~20 / month, each ~20k input tokens (the skill is the prompt); 10 per person per hour (`aiRate/{uid}`: 1 read + 1 write). Photos (≤ 10 MB) live in `recipe-photos/{uid}/` only for the call (deleted after): no lasting storage. The function's own page fetch is ≤ 3 MB: < 100 MB / month egress-in. `addRecipeWithGemini` runs at 512 MiB for up to 240 s: ~20 × 60 s × 0.5 GiB = 600 GiB-s / month of the 360k | — |
+| Add with Gemini (M16, R4.37) | Gemini free tier as above; Storage 5 GB / 1 GB-day egress (us-east1); callable in the 2M invocations | one Gemini request per added recipe (plus one repair round when the file fails the checks), ~20 / month, each ~20k input tokens (the skill is the prompt); 10 per person per hour (`aiRate/{uid}`: 1 read + 1 write). Photos (up to 6 per recipe, shrunk to ≤ 2048 px in the browser, ~0.3–1 MB each, each image ~1–2k input tokens) live in `recipe-photos/{uid}/` only for the call (deleted after): no lasting storage. The function's own page fetch is ≤ 3 MB: < 100 MB / month egress-in. `addRecipeWithGemini` runs at 512 MiB for up to 240 s: ~20 × 60 s × 0.5 GiB = 600 GiB-s / month of the 360k | — |
 | From a receipt (M25, R7.15) | Gemini free tier as above (key from a project without billing); callable `readReceipt` in the 2M invocations; Cloud Run 360k GiB-s | **one Gemini request per receipt** (no repair round): a photo downscaled in the browser to ≤ 2048 px on its long side, JPEG (~0.3–1 MB, ≤ 4 MB), sent inline in the call and in the Gemini request (an image is ~1–2k input tokens at that size; a pasted email ~2–5k), plus the instruction with the ordered lines (< 2k tokens); the JSON answer is ~1–4k output tokens. ~10 receipts / month per household, < 50 / month at the design scale, far inside the free tier's daily request cap. 10 per person per hour (`receiptRate/{uid}`: 1 read + 1 write). Reads per call: the member doc, the list, and the ingredient catalogue once per warm instance (~480 reads, cached 5 minutes, shared with the drop-folder importer). Writes nothing: the photo is never stored (no Storage, no Firestore). 512 MiB for up to 120 s, ~15 s typical: 50 × 15 s × 0.5 GiB ≈ 400 GiB-s / month. The confirm then sends the usual `receiveGroceries` command (+1 brand-mapping write per paid line that has a mapping) | — |
 | Nutrition facts (M10, R4.30) | in the 1 GiB storage, 20,000 writes and 50,000 reads / day | ingredients gain `nutrients` (~250 bytes × 480) and recipes `nutrition` (~250 bytes each); the recipe index summaries are unchanged (the panel isn't on cards). The one-off `pnpm ingredients:upload` after deploy writes ≤ 480 ingredients; each fires `ingredientRecipes`, which re-derives the recipes using it (one query + one ingredient `getAll` per recipe): about recipes × ingredients-per-recipe × 11 reads, < 10,000 reads and one write per recipe at today's library (~50 recipes), done once | 5× on that day |
 | Timer callables (`scheduleTimer`, `cancelTimer`, M3) | counted in the 2M above | one per timer start, pause, adjust, cancel: < 3,000 / month | — |
@@ -1029,25 +1029,30 @@ flowchart TD
   Claude** builds the same prompt client-side (`claudePrompt`) and **Paste Claude's answer** reads the first JSON in the
   reply (`parseClaudeAnswer`), then applies merges with the `mergeIngredient` callable and `new` with a client write
   of `nameCheck` (rules allow only `new` / `unsure`).
-- **Add with Gemini** (M16, R4.37): callable `addRecipeWithGemini({ source: "link", url } | { source: "photo", path, text? })`,
+- **Add with Gemini** (M16, R4.37): callable `addRecipeWithGemini({ source: "link", url } | { source: "photo", paths, text? })`,
   allowlisted callers, 10 per person per hour (`aiRate/{uid}`). A link must be a public http(s) address
   (`safeRecipeUrl`: no localhost, private or link-local IPs, single-label or `.internal` hosts; a redirect is checked
   again); the function fetches it (15 s, ≤ 3 MB, HTML) and sends Gemini the page's schema.org Recipe JSON-LD
-  (`extractRecipeJsonLd`, also inside `@graph`), or else its visible text (`htmlToText`, ≤ 30k chars). A photo is
-  uploaded by the client to `recipe-photos/{uid}/{random}.{ext}` (image, ≤ 10 MB), sent inline (`inlineData`) and
-  deleted after the call. A photo may carry the recipe's text (≤ 30k chars, `cleanRecipeText`; the sheet takes a picture
-  pasted into it too): then the frame asks Gemini to start with `PHOTO: dish` or `PHOTO: recipe` (`photoIsDish`), and a
-  dish photo is stored as the recipe's image (`importCook`'s `imageData`). A page answering 401, 403, 429 or 451
+  (`extractRecipeJsonLd`, also inside `@graph`), or else its visible text (`htmlToText`, ≤ 30k chars). Photos (1 to
+  `MAX_RECIPE_PHOTOS` = 6, distinct; the pages of a recipe that runs over several and the finished dish) are shrunk by
+  the client (`shrinkPhoto`: ≤ 2048 px, JPEG, ≤ 4 MB), uploaded to `recipe-photos/{uid}/{random}.{ext}` (image,
+  ≤ 10 MB each), sent inline (`inlineData`, each after a "Photo n:" label when there are several; ≤ 14 MB together,
+  under Gemini's 20 MB request once base64'd) and all deleted after the call, also when it fails. A one-photo request's
+  `path` (a sheet loaded before M16's multiple photos) still works. Photos may carry the recipe's text (≤ 30k chars,
+  `cleanRecipeText`; the sheet takes pictures pasted into it too). The frame numbers the photos, says pages continue in
+  order, and asks Gemini to start with `DISH: <n>` (the photo of the prepared food itself, not a page with a printed
+  picture) or `DISH: none` (`dishPhotoIndex`, which also reads the older `PHOTO: dish`); that photo is stored as the
+  recipe's image (`importCook`'s `imageData`). One request counts once against the hourly limit, however many photos. A page answering 401, 403, 429 or 451
   (`siteRefusesApps`: bot protection on servers) gets a message pointing to a photo with the text; the app never
   disguises its fetch. Every failed call is logged (`add with Gemini failed`: uid, source, host, message; never the
   page, photo or text). The system instruction is the Claude skill itself (`SKILL_TEXT` in
   `functions/src/ai/skillText.generated.ts`, written by `pnpm gen:skill` from SKILL.md and the syntax, conventions,
   taxonomy and ingredients references; `skill.test.ts` fails when it's stale) with a frame (`recipeInstruction`: skip
   the delivery step, answer with one ```cooklang block, or NOT A RECIPE; for a link use it as `source` and the page's
-  image URL as `image`; for a photo no `source` or `image`). The answer's file (`extractCook`) goes to `importCook`, the
-  drop folder's importer, under the link's host name or "your photo" as the file name; a `CooklangError` goes back to
-  Gemini once with the reason, then the call fails with it. The photo never becomes the recipe's image
-  (`dropLocalImage`). Under the emulator Gemini and the page fetch are stubs: `_stubLlm/{uid}` (or `config`)
+  image URL as `image`; for photos no `image`, and `source` only from the text). The answer's file (`extractCook`) goes to `importCook`, the
+  drop folder's importer, under the link's host name or "your photo(s)" as the file name; a `CooklangError` goes back to
+  Gemini once with the reason, then the call fails with it. A photo of the recipe itself never becomes the recipe's
+  image, and a relative `image:` is dropped (`dropLocalImage`). Under the emulator Gemini and the page fetch are stubs: `_stubLlm/{uid}` (or `config`)
   `{ pages: { url: html | "!status" }, recipe: string | string[], mode }`.
 - **Images** referenced in front matter are always **downloaded into Storage** (never hot-linked) and resized to the three standard sizes. If the download fails, the recipe is still imported without an image, and the notification says so.
 - **Results** are reported through the notification system (§12): a success or error banner appears at the bottom of **whatever page the uploader is on**, linking to the new recipe or describing the error.
@@ -1403,8 +1408,9 @@ Live sync (NFR5) comes from Firestore listeners and adds little complexity. A fe
 - **Settings → Gemini** (M16, R11.15, R4.36): what Gemini does and whether it's set up for everyone; the owner's
   `<ApiKeyCard>` for the Gemini key (moved off the Ingredients page, which now links here when Gemini is off).
 - **`<AddWithGemini>`** (M16, R4.37): in the Add recipe sheet, above Manual entry and Drop a .cook file: a link field,
-  **Upload a photo of a recipe** (`accept="image/*"`) and **Take a photo of a recipe** (`capture="environment"`), a
-  status line while Gemini works, the error in a dashed alert, then the new recipe opens.
+  **Upload photos of a recipe** (`accept="image/*" multiple`) and **Take photos of a recipe** (`capture="environment"`);
+  chosen photos wait as numbered thumbnails (each with a remove ×) with **Add a photo** / **Take a photo** for more pages
+  (up to 6) and the optional Recipe text box; a status line while Gemini works, the error in a dashed alert, then the new recipe opens.
 - **`<ReceiveSheet>`** (M3, R7.8–R7.9; M25 R7.15–R7.17): the confirm groceries sheet (prototype "conf"): pack steppers, Got it / Didn't come, Got something else instead, the freeze prompt; since M25 a **From a receipt** step (upload, camera, pasted email text) that prefills it, with "from receipt" marks, Paid $ fields and a **Not on the list** section (§8 "From a receipt").
 - **`<FromPcx>`** (R6.29): the "From PC Express" tag on store and product search results, the current store, a brand's
   linked product and live price; the budget meter says "N live from PC Express".

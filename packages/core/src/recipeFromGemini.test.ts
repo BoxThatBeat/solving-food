@@ -9,7 +9,7 @@ import {
   htmlToText,
   notARecipe,
   pageContent,
-  photoIsDish,
+  dishPhotoIndex,
   recipeInstruction,
   renderSkillPrompt,
   safeRecipeUrl,
@@ -42,7 +42,10 @@ describe("the prompt", () => {
     expect(link).toContain("https://example.com/r");
     expect(link).toContain("Skip its delivery step");
     expect(link).toContain("contents of SKILL.md");
-    expect(recipeInstruction(text, { kind: "photo" })).toMatch(/Leave out `source` and `image`/);
+    const photo = recipeInstruction(text, { kind: "photo" });
+    expect(photo).toContain("one photo (photo 1)");
+    expect(photo).toContain("leave out `source`");
+    expect(photo).toContain("If no photo shows a recipe (only food), answer NOT A RECIPE");
   });
 });
 
@@ -91,17 +94,29 @@ describe("web pages", () => {
   });
 });
 
-describe("a photo with the recipe's text", () => {
-  it("asks which the photo shows and reads the PHOTO line; NOT A RECIPE still counts after it", () => {
-    const sys = recipeInstruction("SKILL", { kind: "photo", withText: true });
-    expect(sys).toContain("PHOTO: dish");
-    expect(sys).toContain("except the PHOTO line");
-    expect(recipeInstruction("SKILL", { kind: "photo" })).not.toContain("PHOTO: dish");
-    expect(photoIsDish("PHOTO: dish\n```cooklang\n---\n```")).toBe(true);
-    expect(photoIsDish("PHOTO: recipe\n```cooklang")).toBe(false);
-    expect(photoIsDish("```cooklang\nPHOTO: dish")).toBe(false);
+describe("photos, with or without the recipe's text", () => {
+  it("numbers several photos and asks which one is the dish; reads the DISH line; NOT A RECIPE still counts after it", () => {
+    const many = recipeInstruction("SKILL", { kind: "photo", count: 3 });
+    expect(many).toContain("3 photos, numbered 1 to 3");
+    expect(many).toContain("continues from one photo to the next");
+    expect(many).toContain("DISH: <number>");
+    expect(many).toContain("except the DISH line");
+    const withText = recipeInstruction("SKILL", { kind: "photo", count: 1, withText: true });
+    expect(withText).toContain("the recipe's text below");
+    expect(withText).not.toContain("only food), answer NOT A RECIPE");
+    expect(recipeInstruction("SKILL", { kind: "link", url: "https://e.com/r" })).not.toContain("DISH");
+
+    expect(dishPhotoIndex("DISH: 3\n```cooklang\n---\n```", 3)).toBe(2);
+    expect(dishPhotoIndex("DISH: photo 2\n```cooklang", 3)).toBe(1);
+    expect(dishPhotoIndex("DISH: none\n```cooklang", 3)).toBeNull();
+    expect(dishPhotoIndex("DISH: 4\n```cooklang", 3)).toBeNull();
+    expect(dishPhotoIndex("DISH: 0\n```cooklang", 3)).toBeNull();
+    expect(dishPhotoIndex("```cooklang\nDISH: 1", 3)).toBeNull();
+    expect(dishPhotoIndex("PHOTO: dish\n```cooklang", 1)).toBe(0);
+    expect(dishPhotoIndex("PHOTO: recipe\n```cooklang", 1)).toBeNull();
+    expect(notARecipe("DISH: none\nNOT A RECIPE")).toBe(true);
     expect(notARecipe("PHOTO: dish\nNOT A RECIPE")).toBe(true);
-    expect(extractCook("PHOTO: dish\n```cooklang\n" + COOK + "```")).toBe(COOK.trim() + "\n");
+    expect(extractCook("DISH: 2\n```cooklang\n" + COOK + "```")).toBe(COOK.trim() + "\n");
   });
 
   it("cleans pasted text; knows a site refusing apps", () => {
