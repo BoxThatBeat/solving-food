@@ -69,7 +69,8 @@ test("a photo of a recipe becomes a recipe; Gemini not set up says where to set 
   let sheet = await openAddSheet(page);
   await sheet.getByLabel("Upload photos of a recipe").setInputFiles({ name: "card.jpg", mimeType: "image/jpeg", buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 16, 74, 70, 73, 70]) });
   const chosen = sheet.getByTestId("gemini-photo");
-  await expect(chosen.getByRole("img", { name: "Photo 1" })).toHaveCount(1);
+  // An undecodable photo hides its <img> (onError), so count the tile.
+  await expect(chosen.getByRole("listitem")).toHaveCount(1);
   await chosen.getByRole("button", { name: "Add", exact: true }).click();
   await expect(page.getByRole("heading", { name: title, level: 1 })).toBeVisible({ timeout: 60_000 });
   const recipe = (await adminDb.collection("recipes").where("title", "==", title).get()).docs[0]!.data();
