@@ -23,6 +23,7 @@ import {
   refsIn,
   renderStepText,
   taxonomyLabel,
+  tracksLeftovers,
   unitDef,
   unitLabel,
   UNITS,
@@ -577,6 +578,12 @@ export function RecipeEditor({
         <Button type="button" variant="secondary" size="sm" className="self-start" onClick={() => prep.append({ text: "" })}>
           <Plus aria-hidden /> Add prep task
         </Button>
+        {/* M30 (R6.36): a snack recipe tracks no leftovers, so the estimate isn't asked for (the value is kept). */}
+        {!tracksLeftovers({ tags: values.tags }) ? (
+          <p className="m-0 rounded-ui border-2 border-dashed border-line bg-base px-3 py-2.5 text-[0.8125rem] font-semibold text-sub" data-testid="snack-leftovers-note">
+            Snacks don&apos;t track leftovers: the batch is eaten over time, not saved as portions for later meals.
+          </p>
+        ) : (
         <div className="grid grid-cols-2 gap-2.5">
           <Field label="Leftover portions" error={formState.errors.defaultLeftoverPortions?.message}>
             {(fid) => <Input id={fid} type="number" min={0} inputMode="numeric" {...register("defaultLeftoverPortions")} />}
@@ -587,13 +594,14 @@ export function RecipeEditor({
                 <option value="">—</option>
                 {MEAL_TYPES.map((m) => (
                   <option key={m} value={m}>
-                    {taxonomyLabel(m)}
+                    {m === "snack" ? "Snack (not tracked)" : taxonomyLabel(m)}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
         </div>
+        )}
         <Field label="Recipe notes" error={formState.errors.notes?.message}>
           {(fid) => <Textarea id={fid} rows={3} {...register("notes")} placeholder="Notes that belong to the recipe for everyone (household notes live on the recipe page)" />}
         </Field>

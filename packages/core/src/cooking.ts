@@ -2,7 +2,7 @@
 // R9.1–R9.5; TECHNICAL_SPECS §6, §7, §8). Pure: functions and the web app share these.
 
 import type { MealType, PlannableMealType } from "./taxonomy";
-import type { Coverage, RecipeRef } from "./plan";
+import { leftoverPortionsOf, type Coverage, type CoverageRecipe, type RecipeRef } from "./plan";
 import { isPlannable } from "./taxonomy";
 import { needsFor, type BuildContext, type GroceryIngredient, type PlanItemInput, type RecipeLines, type SideRef } from "./grocery";
 import { activeExpiry, isExpired, type LedgerLot } from "./ledger";
@@ -20,19 +20,17 @@ export function mealRequirements(refs: readonly RecipeRef[], servings: number, c
   return needsFor([{ id: "meal", status: "planned", servings, recipes: refs, sides }], ctx);
 }
 
-export interface LeftoverRecipe {
-  defaultLeftoverPortions: number;
-  leftoverMealType?: MealType | undefined;
-}
+export type LeftoverRecipe = CoverageRecipe;
 
-/** Leftover portions a meal makes by meal type (each recipe's estimate, lunch by default; not scaled, §7). */
+/** Leftover portions a meal makes by meal type (each recipe's estimate, lunch by default; not scaled, §7; none from a snack, M30). */
 export function leftoverPortionsByType(refs: readonly RecipeRef[], recipeOf: (id: string) => LeftoverRecipe | undefined): Partial<Record<PlannableMealType, number>> {
   const out: Partial<Record<PlannableMealType, number>> = {};
   for (const r of refs) {
     const rec = recipeOf(r.recipeId);
-    if (!rec || !(rec.defaultLeftoverPortions > 0)) continue;
+    const n = rec ? leftoverPortionsOf(rec) : 0;
+    if (!rec || !(n > 0)) continue;
     const t = rec.leftoverMealType && isPlannable(rec.leftoverMealType) ? rec.leftoverMealType : "lunch";
-    out[t] = (out[t] ?? 0) + rec.defaultLeftoverPortions;
+    out[t] = (out[t] ?? 0) + n;
   }
   return out;
 }

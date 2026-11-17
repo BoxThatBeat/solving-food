@@ -119,6 +119,17 @@ describe("cooking", () => {
     expect(cookedCoverage("dinner")).toEqual({ dinner: 1 });
     expect(cookedCoverage("snack")).toEqual({});
   });
+  it("snack recipes make no leftovers (M30, R6.36): the old snack-to-lunch fallback is gone", () => {
+    const by = leftoverPortionsByType(
+      [
+        { recipeId: "bars", servingsMultiplier: 1 },
+        { recipeId: "cake", servingsMultiplier: 1 },
+        { recipeId: "stew", servingsMultiplier: 1 },
+      ],
+      (id) => (id === "bars" ? { defaultLeftoverPortions: 8, tags: ["snack"] } : id === "cake" ? { defaultLeftoverPortions: 6, leftoverMealType: "snack" } : { defaultLeftoverPortions: 2, tags: ["dinner"] }),
+    );
+    expect(by).toEqual({ lunch: 2 });
+  });
   it("review deltas are confirmed − deducted", () => {
     const d = reviewDeltas(
       toMap([

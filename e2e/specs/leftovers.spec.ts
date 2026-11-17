@@ -2,9 +2,9 @@
 // replaces the estimate; the leftover supply item has an expiry; leftover plan items roll over; mark eaten (leftovers,
 // cooked meals, snacks).
 import { addDays, localDate, nextPeriod, periodBounds } from "../../packages/core/src/index";
-import { adminDb } from "../fixtures/admin";
+import { adminDb, eventually } from "../fixtures/admin";
 import { expect, test } from "../fixtures/test";
-import { PlanPage, seedPeriod, seedPlanItem, TZ } from "../pages/plan";
+import { PlanPage, planItems, seedPeriod, seedPlanItem, TZ } from "../pages/plan";
 import { commandsSettled, cookEvents, expectSupply, makeCookRecipe, supplyDoc } from "../pages/supply";
 
 test("cooking a batch turns its leftovers into supply portions with a use-by and lunch items that fill the strip (R6.8, R6.10, R6.9, R8.11)", { tag: ["@R6.8", "@R6.10", "@R6.9", "@R8.11"] }, async ({ page, household }) => {
@@ -35,6 +35,35 @@ test("cooking a batch turns its leftovers into supply portions with a use-by and
   await expect(plan.stripCount("dinner")).toHaveText("1/7");
   await page.goto("/supply");
   await expect(page.getByTestId("leftover-row")).toContainText(r.title);
+});
+
+test("a snack recipe tracks no leftovers: no lunch cells, no leftover Supply or plan items, a notes-only review step (R6.36)", { tag: ["@R6.36"] }, async ({ page, household }) => {
+  const r = await makeCookRecipe("Granola bars", { leftovers: 6, tags: ["snack"] });
+  const pid = await seedPeriod(household.hid);
+  const plan = new PlanPage(page);
+  await plan.goto();
+  await plan.createMeal({ recipes: [r.title], mealType: "Dinner" });
+  const [item] = await eventually(() => planItems(household.hid), (x) => x.length === 1);
+  expect(item!.coverage).toEqual({ dinner: 1 }); // the old snack → lunch fallback filled 6 lunches
+  await expect(plan.stripCount("lunch")).toHaveText("0/7");
+  const itemId = (await adminDb.collection(`households/${household.hid}/planItems`).where("periodId", "==", pid).get()).docs[0]!.id;
+  await page.goto(`/plan/${itemId}/cook`);
+  await page.getByRole("button", { name: "Done cooking", exact: true }).click();
+  await page.getByRole("tab", { name: "3 · Notes" }).click();
+  await expect(page.getByTestId("snack-no-leftovers")).toBeVisible();
+  await expect(page.getByTestId("leftover-count")).toHaveCount(0);
+  await page.getByRole("button", { name: "Save & update supply" }).click();
+  expect(await commandsSettled(household.hid, 2)).toEqual([]);
+  const [ev] = await cookEvents(household.hid);
+  expect(ev!.leftoverPortions).toBe(0);
+  expect(await supplyDoc(household.hid, `leftover_${ev!.id}`)).toBeFalsy();
+  await plan.goto();
+  await expect(page.getByTestId("plan-item").filter({ hasText: "Leftover" })).toHaveCount(0);
+
+  // The editor doesn't ask a snack recipe for leftover portions.
+  await page.goto(`/recipes/${r.id}/edit`);
+  await expect(page.getByTestId("snack-leftovers-note")).toBeVisible();
+  await expect(page.getByLabel("Leftover portions")).toHaveCount(0);
 });
 
 test("mark eaten: a leftover portion leaves supply and the list, its cell solid; a snack too; a cooked meal leaves the list and is eaten when reviewed (R9.5, R6.2)", { tag: ["@R9.5", "@R6.2"] }, async ({ page, household }) => {

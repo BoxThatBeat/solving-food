@@ -67,7 +67,7 @@ export async function cleanupDeletedRecipe(id: string): Promise<CleanupReport> {
       } else {
         // The removed recipe's leftover portions no longer fill slots (R6.2).
         const docs = await Promise.all(rest.map((r) => db.collection("recipes").doc(r.recipeId).get()));
-        const info = new Map(docs.map((d) => [d.id, { defaultLeftoverPortions: Number(d.data()?.defaultLeftoverPortions ?? 0), leftoverMealType: d.data()?.leftoverMealType as MealType | undefined }]));
+        const info = new Map(docs.map((d) => [d.id, { defaultLeftoverPortions: Number(d.data()?.defaultLeftoverPortions ?? 0), leftoverMealType: d.data()?.leftoverMealType as MealType | undefined, tags: (d.data()?.tags ?? []) as string[] }]));
         const mealType = (p.data().mealType ?? "dinner") as MealType;
         await p.ref.update({ recipes: rest, coverage: coverageFor({ kind: "meal", mealType, recipes: rest.map((r) => ({ recipeId: r.recipeId, servingsMultiplier: r.servingsMultiplier ?? 1 })) }, (id) => info.get(id)) });
         report.planItemsUpdated++;

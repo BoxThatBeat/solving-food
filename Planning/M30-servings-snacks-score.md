@@ -38,11 +38,13 @@ Spec §4 (`households`), §7 (Creating meals, Coverage & leftovers, Suggestion s
       `/meals/:id/cook` starts at the first recipe's servings; Settings → Household, the welcome form and the household
       switcher lose Default servings. Tests: `scoring.test.ts` (+1), `household.test.ts`, rules (`firestore.test.ts`
       +1), e2e `plan.spec.ts` (R11.12 rewritten), `settings.spec.ts`, `households.spec.ts`.
-- [ ] **2. Snacks track no leftovers** (R6.36). Core: `tracksLeftovers()` / `leftoverPortionsOf()` in `plan.ts`
+- [x] **2. Snacks track no leftovers** (R6.36). Core: `tracksLeftovers()` / `leftoverPortionsOf()` in `plan.ts`
       (tagged "snack", or leftovers set to feed snacks), used by `coverageFor` and `leftoverPortionsByType` (so
-      `finishCooking` adds no leftover lot or plan items, and `recipeCleanup` passes tags). Web: the review skips the
-      Leftovers step for a meal that makes none from snacks; the editor greys out Leftover portions on a snack recipe
-      and its "Leftovers for" has no Snack option. Tests: `plan.test.ts` (+2), `cooking.test.ts` (+1), e2e.
+      `finishCooking` adds no leftover lot or plan items, and `recipeCleanup` passes tags). Web: the review's step 3 is
+      "Notes" for a meal of only snack recipes (no leftover count sent); the editor shows a note in place of the
+      leftover fields on a snack recipe
+      and its "Leftovers for" labels Snack "not tracked" (kept as an option so a saved value still reads). Tests:
+      `plan.test.ts` (+2), `cooking.test.ts` (+1), e2e `leftovers.spec.ts` (R6.36).
 - [ ] **3. Household suggestion score on the recipe page** (R6.37). Core: `ScoreResult.details` (one line per factor),
       `scoreBreakdown(result, weights)` (points per factor = 100 · sign · w · f ÷ Σ raising weights, most first;
       skipped and weight-0 factors listed). Web: `<SuggestionScore>` at the bottom of `RecipeDetail` (signed in):

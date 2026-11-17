@@ -195,6 +195,7 @@ Orders go in before a period starts, so the next period can be planned and order
 - **R6.8** One recipe can produce **several portions** that cover future lunches or breakfasts, and these can last into the next period.
 - **R6.9** After a meal is cooked, the app asks: *"Estimated leftovers: 3 lunches — correct?"* The user adjusts the number with ▲/▼ buttons.
 - **R6.10** Leftover portions are tracked as their own supply items, with an expiry date (4 days in the fridge or 90 days frozen by default). They fill lunch/breakfast slots in the plan.
+- **R6.36** **Snacks track no leftovers** (M30, owner request). A recipe tagged **snack** (or whose leftovers are set to feed snacks) makes a batch that is eaten over time, not portions saved for later meals, so its leftover estimate is ignored: planning it fills no lunch or breakfast slots, **Done cooking** adds no leftover portions to Supply or the plan, the review's third step holds only the notes for next time, and the recipe editor doesn't ask for leftover portions.
 
 ### 6.3 Suggestions
 

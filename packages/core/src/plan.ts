@@ -20,6 +20,23 @@ export interface RecipeRef {
 export interface CoverageRecipe {
   defaultLeftoverPortions: number;
   leftoverMealType?: MealType | undefined;
+  /** Course tags; a recipe tagged "snack" tracks no leftovers (M30). Absent: not a snack. */
+  tags?: readonly string[] | undefined;
+}
+
+/**
+ * M30 (R6.36): a snack recipe (tagged "snack", or with its leftovers set to feed snacks) tracks no leftovers. A batch of
+ * snacks is eaten over time, not saved as portions for later meals, so its estimate is ignored: no lunch slots filled,
+ * no leftover Supply item at Done cooking, no leftovers step in the review.
+ */
+export function tracksLeftovers(r: Pick<CoverageRecipe, "leftoverMealType" | "tags">): boolean {
+  if (r.leftoverMealType === "snack") return false;
+  return !(r.tags ?? []).some((t) => t.toLowerCase() === "snack");
+}
+
+/** The leftover portions a recipe makes as written: its estimate, or 0 for a snack (M30). */
+export function leftoverPortionsOf(r: CoverageRecipe): number {
+  return tracksLeftovers(r) && r.defaultLeftoverPortions > 0 ? r.defaultLeftoverPortions : 0;
 }
 
 
@@ -27,7 +44,7 @@ export interface CoverageRecipe {
  * `coverageFor(item, recipes)`: the meal itself fills one slot of its type (snacks fill none), and each recipe's
  * leftover portions fill slots of the recipe's leftover meal type (lunch by default), summed across the item's
  * recipes. Leftover portions are the recipe's estimate as written, not scaled by servings (M3 confirms the real
- * count when the batch is cooked).
+ * count when the batch is cooked). Snack recipes make none (M30).
  */
 export function coverageFor(
   item: { kind?: "meal" | "leftover" | "out"; mealType: MealType; recipes: readonly RecipeRef[] },
@@ -42,7 +59,7 @@ export function coverageFor(
   for (const r of item.recipes) {
     const rec = recipes(r.recipeId);
     if (!rec) continue;
-    add(rec.leftoverMealType ?? "lunch", rec.defaultLeftoverPortions);
+    add(rec.leftoverMealType ?? "lunch", leftoverPortionsOf(rec));
   }
   return c;
 }

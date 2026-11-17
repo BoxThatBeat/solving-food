@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { buildEatingOut, buildPlanItem, listedOnPlan, plannedMealFor, carriedItemId, carriesOver, carryOver, cleanSides, coverageFor, createMealInputSchema, defaultMealName, planItemTitle, proteinSummary, sidesLine, emptiestMealType, stripCount, stripModel } from "./plan";
+import { leftoverPortionsOf, tracksLeftovers, buildEatingOut, buildPlanItem, listedOnPlan, plannedMealFor, carriedItemId, carriesOver, carryOver, cleanSides, coverageFor, createMealInputSchema, defaultMealName, planItemTitle, proteinSummary, sidesLine, emptiestMealType, stripCount, stripModel } from "./plan";
 import type { PlanItemDoc } from "./types";
 
-const recipes: Record<string, { defaultLeftoverPortions: number; leftoverMealType?: "breakfast" | "lunch" | "dinner" | "snack" }> = {
+const recipes: Record<string, { defaultLeftoverPortions: number; leftoverMealType?: "breakfast" | "lunch" | "dinner" | "snack"; tags?: string[] }> = {
   plain: { defaultLeftoverPortions: 0 },
   prep: { defaultLeftoverPortions: 4, leftoverMealType: "lunch" },
   bake: { defaultLeftoverPortions: 2, leftoverMealType: "breakfast" },
   sweet: { defaultLeftoverPortions: 3, leftoverMealType: "snack" },
+  bars: { defaultLeftoverPortions: 6, tags: ["Snack"] },
 };
 const lookup = (id: string) => recipes[id];
 const ref = (recipeId: string) => ({ recipeId, servingsMultiplier: 1 });
@@ -23,6 +24,10 @@ describe("coverageFor", () => {
   });
   it("snacks and snack leftovers fill no strip cells", () => {
     expect(coverageFor({ mealType: "snack", recipes: [ref("sweet")] }, lookup)).toEqual({});
+  });
+  it("a snack recipe planned as dinner still fills no lunch slots (M30, R6.36)", () => {
+    expect(coverageFor({ mealType: "dinner", recipes: [ref("bars")] }, lookup)).toEqual({ dinner: 1 });
+    expect(coverageFor({ mealType: "dinner", recipes: [ref("sweet")] }, lookup)).toEqual({ dinner: 1 });
   });
   it("unknown recipes still count the meal", () => {
     expect(coverageFor({ mealType: "lunch", recipes: [ref("gone")] }, lookup)).toEqual({ lunch: 1 });
@@ -215,5 +220,16 @@ describe("plannedMealFor and listedOnPlan (M29, R9.7, R6.1)", () => {
   });
   it("only planned items stay listed", () => {
     expect(["planned", "cooked", "eaten", "skipped"].filter((s) => listedOnPlan(s as PlanItemDoc["status"]))).toEqual(["planned"]);
+  });
+});
+
+describe("tracksLeftovers (M30, R6.36)", () => {
+  it("snack recipes track none, whatever their estimate", () => {
+    expect(tracksLeftovers({ tags: ["snack"] })).toBe(false);
+    expect(tracksLeftovers({ tags: ["dessert"], leftoverMealType: "snack" })).toBe(false);
+    expect(tracksLeftovers({ tags: ["dinner"], leftoverMealType: "lunch" })).toBe(true);
+    expect(tracksLeftovers({})).toBe(true);
+    expect(leftoverPortionsOf({ defaultLeftoverPortions: 6, tags: ["Snack"] })).toBe(0);
+    expect(leftoverPortionsOf({ defaultLeftoverPortions: 4, tags: ["dinner"] })).toBe(4);
   });
 });

@@ -13,6 +13,7 @@ import {
   recipeNotes,
   formatCanonical,
   leftoverPortionsByType,
+  tracksLeftovers,
   mealRequirements,
   totalPortions,
   type MealSide,
@@ -98,7 +99,9 @@ export function ReviewView({ hid, uid, eventId, tz }: { hid: string; uid: string
         <p className="p-6 text-sm font-bold">{event.data === null && !finishCmd ? "This cooked meal isn't here any more." : "Loading…"}</p>
       </Shell>
     );
-  return <ReviewFlow key={eventId} hid={hid} uid={uid} eventId={eventId} source={source} recipeTitles={(id) => recipes.get(id)?.title ?? "Recipe"} tz={tz} members={members} onDone={() => void navigate({ to: "/plan" })} notify={notify} />;
+  // M30 (R6.36): a meal of nothing but snack recipes tracks no leftovers (unless an older cook already recorded some).
+  const snacksOnly = source.leftoverPortions === 0 && source.recipeIds.length > 0 && source.recipeIds.every((id) => recipes.has(id) && !tracksLeftovers(recipes.get(id)!));
+  return <ReviewFlow key={eventId} hid={hid} uid={uid} eventId={eventId} source={source} snacksOnly={snacksOnly} recipeTitles={(id) => recipes.get(id)?.title ?? "Recipe"} tz={tz} members={members} onDone={() => void navigate({ to: "/plan" })} notify={notify} />;
 }
 
 function Shell({ title, kicker = "Review", onClose, children }: { title: string; kicker?: string; onClose: () => void; children?: React.ReactNode }) {
@@ -126,6 +129,7 @@ function ReviewFlow({
   uid,
   eventId,
   source,
+  snacksOnly,
   recipeTitles,
   tz,
   members,
@@ -136,6 +140,8 @@ function ReviewFlow({
   uid: string;
   eventId: string;
   source: Source;
+  /** M30 (R6.36): snack recipes only: step 3 holds just the notes, and the review sends no leftover count. */
+  snacksOnly: boolean;
   recipeTitles: (id: string) => string;
   tz: string;
   members: Map<string, string>;
@@ -186,7 +192,7 @@ function ReviewFlow({
     sendCommand(hid, uid, "submitReview", {
       cookEventId: eventId,
       ratings,
-      ...(rateOnly ? {} : { used: used.map((u) => ({ ingredientId: u.ingredientId, canonicalAmount: Math.max(0, Math.round(u.canonicalAmount * 1000) / 1000) })), leftoverPortions: leftovers }),
+      ...(rateOnly ? {} : { used: used.map((u) => ({ ingredientId: u.ingredientId, canonicalAmount: Math.max(0, Math.round(u.canonicalAmount * 1000) / 1000) })), ...(snacksOnly ? {} : { leftoverPortions: leftovers }) }),
       ...(savedMealId && savedMealId !== source.savedMealId ? { savedMealId } : {}),
       ...(note.trim() ? { note: note.trim().slice(0, 500) } : {}),
     });
@@ -204,7 +210,7 @@ function ReviewFlow({
   const tabs: Array<[Step, string]> = rateOnly ? [[1, "1 · Rate"]] : [
     [1, "1 · Rate"],
     [2, "2 · Used"],
-    [3, "3 · Leftovers"],
+    [3, snacksOnly ? "3 · Notes" : "3 · Leftovers"],
   ];
   const last = rateOnly || step === 3;
 
@@ -315,8 +321,13 @@ function ReviewFlow({
             </>
           ) : (
             <>
-              <h1 className="m-0 font-display text-[2rem] leading-none font-extrabold">Leftovers</h1>
-              <div className="flex items-center gap-4 rounded-ui border-bw bg-base p-4 shadow-hard">
+              <h1 className="m-0 font-display text-[2rem] leading-none font-extrabold">{snacksOnly ? "Notes" : "Leftovers"}</h1>
+              {snacksOnly ? (
+                <p className="m-0 text-[0.8125rem] font-semibold text-sub" data-testid="snack-no-leftovers">
+                  Snacks don&apos;t track leftovers: the batch is eaten over time, not saved for later meals.
+                </p>
+              ) : (
+                <div className="flex items-center gap-4 rounded-ui border-bw bg-base p-4 shadow-hard">
                 <span className="flex flex-1 flex-col gap-1.5">
                   <span className="text-[1.125rem] leading-tight font-extrabold">
                     Estimated leftovers: {source.leftoverPortions} {source.leftoverPortions === 1 ? "portion" : "portions"}. Correct?
@@ -337,7 +348,8 @@ function ReviewFlow({
                     ▼
                   </Button>
                 </span>
-              </div>
+                </div>
+              )}
               {previous ? (
                 <div className="flex flex-col gap-1.5 rounded-ui border-2 border-dashed border-line bg-base px-3 py-2.5" data-testid="previous-note">
                   <p className="m-0 text-[0.9375rem] leading-snug font-semibold">

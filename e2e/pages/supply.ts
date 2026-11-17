@@ -116,7 +116,7 @@ export class SupplyPage {
  * the alarm), 600 g chicken thigh + 140 g spinach + olive oil (free-use), 2 leftover lunches. Made once per worker.
  */
 const cookRecipes = new Map<string, Promise<{ id: string; title: string }>>();
-export function makeCookRecipe(base: string, opts: { leftovers?: number; lines?: string } = {}): Promise<{ id: string; title: string }> {
+export function makeCookRecipe(base: string, opts: { leftovers?: number; lines?: string; tags?: string[] } = {}): Promise<{ id: string; title: string }> {
   const key = JSON.stringify([base, opts]);
   let p = cookRecipes.get(key);
   if (!p) {
@@ -130,7 +130,7 @@ cuisine: other
 main_protein: chicken
 prep_time: 10
 cook_time: 20
-tags: [dinner]
+tags: [${(opts.tags ?? ["dinner"]).join(", ")}]
 leftover_portions: ${opts.leftovers ?? 2}
 prep:
   - Dice the onion
