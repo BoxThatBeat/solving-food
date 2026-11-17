@@ -48,7 +48,6 @@ function household(createdBy: string, extra: Record<string, unknown> = {}) {
     budgetCents: 20000,
     currency: "CAD",
     timezone: "America/Toronto",
-    defaultServings: 4,
     plannedMealTypes: ["breakfast", "lunch", "dinner"],
     pcxStoreId: "loblaws-greenbank-road",
     currentPeriodId: null,
@@ -223,9 +222,14 @@ describe("directory (readable by allowlisted users only)", () => {
 });
 
 describe("household creation (R2.3)", () => {
-  it("the first-household batch succeeds", async () => {
+  it("the first-household batch succeeds (no default servings since M30)", async () => {
     await profile(ALICE);
     await assertSucceeds(createHouseholdBatch(dbAs(ALICE), ALICE.uid, "h1").commit());
+  });
+
+  it("a household with the legacy defaultServings field is still valid (M30)", async () => {
+    await profile(ALICE);
+    await assertSucceeds(createHouseholdBatch(dbAs(ALICE), ALICE.uid, "h1", { hh: household(ALICE.uid, { defaultServings: 4 }) }).commit());
   });
 
   it("the counter must go up by exactly 1 in the same batch", async () => {
@@ -317,10 +321,10 @@ describe("household isolation (R2.8, NFR4)", () => {
   });
 
   it("members update settings but can't change the creator; non-members can't update", async () => {
-    await assertSucceeds(updateDoc(doc(dbAs(ALICE), "households", "hA"), { defaultServings: 2 }));
+    await assertSucceeds(updateDoc(doc(dbAs(ALICE), "households", "hA"), { periodDays: 14 }));
     await assertFails(updateDoc(doc(dbAs(ALICE), "households", "hA"), { createdBy: BOB.uid }));
     await assertFails(updateDoc(doc(dbAs(ALICE), "households", "hA"), { currency: "USD" }));
-    await assertFails(updateDoc(doc(dbAs(BOB), "households", "hA"), { defaultServings: 2 }));
+    await assertFails(updateDoc(doc(dbAs(BOB), "households", "hA"), { periodDays: 14 }));
   });
 
   it("households can't be deleted by clients", async () => {

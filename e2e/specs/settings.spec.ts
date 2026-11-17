@@ -1,12 +1,12 @@
-// settings.spec.ts, M2 parts (TECHNICAL_SPECS §14.1): household (plan period, budget, timezone, default servings,
-// planned meal types), kitchen tools, stores and sourcing rules, brand mappings. Theme is covered by theme.spec.ts;
+// settings.spec.ts, M2 parts (TECHNICAL_SPECS §14.1): household (plan period, budget, timezone, planned meal types;
+// no default servings since M30), kitchen tools, stores and sourcing rules, brand mappings. Theme is covered by theme.spec.ts;
 // preferences, weights, protein goals, and members are later milestones.
 import { adminDb } from "../fixtures/admin";
 import { expect, test } from "../fixtures/test";
 import { cook, makePlanRecipe, PlanPage, seedPeriod, seedPlanItem } from "../pages/plan";
 import { makeRecipe, uniqueTitle, waitForIndexed } from "../fixtures/recipes";
 
-test("household settings: period length, budget, timezone, default servings, meal types (R11.5, R11.6, R11.11–R11.13)", { tag: ["@R11.5", "@R11.6", "@R11.11", "@R11.12", "@R11.13", "@smoke"] }, async ({ page, household }) => {
+test("household settings: period length, budget, timezone, meal types, no default servings (R11.5, R11.6, R11.11, R11.13)", { tag: ["@R11.5", "@R11.6", "@R11.11", "@R11.13", "@smoke"] }, async ({ page, household }) => {
   const pid = await seedPeriod(household.hid);
   await page.goto("/settings/household");
   await expect(page.getByLabel("Name")).toHaveValue(household.householdName);
@@ -14,7 +14,8 @@ test("household settings: period length, budget, timezone, default servings, mea
   await page.getByRole("group", { name: "Plan period" }).getByRole("button", { name: /^Increase/ }).click();
   await page.getByLabel("Budget per period").fill("150");
   await page.getByLabel("Timezone").selectOption("America/Vancouver");
-  await page.getByRole("button", { name: "Fewer servings" }).click();
+  // M30 (R11.12): servings come from each recipe as written; Settings has no default.
+  await expect(page.getByRole("group", { name: "Default servings" })).toHaveCount(0);
   await page.getByRole("button", { name: "Breakfast", exact: true }).click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByTestId("notifications")).toContainText("Household settings saved");
@@ -22,7 +23,6 @@ test("household settings: period length, budget, timezone, default servings, mea
     periodDays: 9,
     budgetCents: 15000,
     timezone: "America/Vancouver",
-    defaultServings: 3,
     plannedMealTypes: ["lunch", "dinner"],
   });
   // The current period's budget follows; its length doesn't change until the next period.

@@ -1,10 +1,11 @@
-// Settings → Household (PRD R11.5, R11.6, R11.11, R11.12, R11.13, R3.1; spec §12): name, plan period length, budget,
-// timezone, default servings, planned meal types. Zod-validated; writes households/{hid}. A new period length applies
+// Settings → Household (PRD R11.5, R11.6, R11.11, R11.13, R3.1; spec §12): name, plan period length, budget,
+// timezone, planned meal types. M30: no default servings (Add to plan uses the recipe's servings as written, R11.12).
+// Zod-validated; writes households/{hid}. A new period length applies
 // from the next period; a budget change also updates the current period's budget. "Restart period" (R3.1, M7) ends the
 // current period now and starts a new one today or tomorrow (`restartPeriod`, the rollover's carry code).
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { formatCents, formatPeriodRange, householdSettingsInputSchema, planRestart, restartBounds, type RestartDay, PERIOD_DAYS_MAX, PLANNABLE_MEAL_TYPES, SERVINGS_MAX, type HouseholdDoc, type HouseholdSettingsInput, type PlannableMealType } from "@solving-food/core";
+import { formatCents, formatPeriodRange, householdSettingsInputSchema, planRestart, restartBounds, type RestartDay, PERIOD_DAYS_MAX, PLANNABLE_MEAL_TYPES, type HouseholdDoc, type HouseholdSettingsInput, type PlannableMealType } from "@solving-food/core";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/input";
@@ -35,7 +36,7 @@ function zones(selected: string): string[] {
 }
 
 function fromDoc(h: HouseholdDoc): HouseholdSettingsInput {
-  return { name: h.name, timezone: h.timezone, defaultServings: h.defaultServings, plannedMealTypes: h.plannedMealTypes, periodDays: h.periodDays, budgetCents: h.budgetCents };
+  return { name: h.name, timezone: h.timezone, plannedMealTypes: h.plannedMealTypes, periodDays: h.periodDays, budgetCents: h.budgetCents };
 }
 
 function HouseholdSettings() {
@@ -91,15 +92,6 @@ function HouseholdForm({ hid, household }: { hid: string; household: HouseholdDo
             ))}
           </Select>
           <span className="text-[0.75rem] font-semibold text-sub">Period boundaries and expiry days are worked out in this timezone.</span>
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <span className="flex flex-col gap-0.5">
-            <span id="hs-servings" className="text-[0.9375rem] font-extrabold">
-              Default servings
-            </span>
-            <span className="tabular-nums text-[0.625rem] font-bold text-sub">Recipes are planned for this many</span>
-          </span>
-          <Stepper label="Default servings" decLabel="Fewer servings" incLabel="More servings" labelledBy="hs-servings" value={form.defaultServings} min={1} max={SERVINGS_MAX} onChange={(v) => setForm((f) => ({ ...f, defaultServings: v }))} />
         </div>
       </Card>
 

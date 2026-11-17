@@ -1,10 +1,11 @@
 // /meals/:id/cook: cook a saved meal straight from the Meals list (PRD R5.6): choose the order, cook each recipe, then
-// review. Servings default to the household's (R11.12). M29 (R9.7): when the current period has this meal planned (made
+// review. Servings default to the first recipe's as written (R11.12, M30). M29 (R9.7): when the current period has this meal planned (made
 // from it, or the same recipes), the cook is that planned meal, so Done cooking marks it cooked.
 import { createFileRoute } from "@tanstack/react-router";
-import { planItemTitle } from "@solving-food/core";
+import { DEFAULT_SERVINGS, planItemTitle, SERVINGS_MAX } from "@solving-food/core";
 import { useActiveHousehold } from "@/data/households";
 import { useMeal, useRecipeDocs } from "@/data/plan";
+import { useRecipe } from "@/data/recipes";
 import { EmptyState, PageBody } from "@/components/AppShell";
 import { CookSession } from "@/components/cook/CookSession";
 import { cookSearchSchema, initialStepOf } from "@/components/cook/cookSearch";
@@ -25,6 +26,8 @@ function CookMeal() {
   const meal = useMeal(id);
   const planned = usePlannedMeal(meal.data ? { savedMealId: id, recipeIds: meal.data.recipes.map((r) => r.recipeId) } : null);
   const plannedRecipes = useRecipeDocs(planned?.data.recipes.map((x) => x.recipeId) ?? []);
+  const firstId = meal.data?.recipes[0]?.recipeId;
+  const firstRecipe = useRecipe(firstId ?? null);
   if (meal.data === undefined || hh.data === undefined || (meal.data && planned === undefined)) return null;
   if (!meal.data)
     return (
@@ -38,7 +41,9 @@ function CookMeal() {
     const title = planItemTitle(planned.data, (rid) => plannedRecipes.get(rid)?.title);
     return <CookSession key={`plan-${planned.id}`} target={planCookTarget(planned.id, planned.data, title, { exitTo: `/meals/${id}`, path: `/meals/${id}/cook` })} {...common} />;
   }
-  const servings = search.servings ?? hh.data?.defaultServings ?? 4;
+  // M30 (R11.12): the first recipe's servings as written (wait for it unless the link carries servings).
+  if (search.servings === undefined && firstId && firstRecipe.data === undefined) return null;
+  const servings = search.servings ?? Math.min(SERVINGS_MAX, Math.max(1, firstRecipe.data?.servings ?? DEFAULT_SERVINGS));
   return (
     <CookSession
       key={`meal-${id}-${servings}`}

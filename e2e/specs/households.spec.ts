@@ -1,4 +1,4 @@
-// households.spec.ts (TECHNICAL_SPECS §14.1): create the first household (timezone, servings, meal types) and the
+// households.spec.ts (TECHNICAL_SPECS §14.1): create the first household (timezone, meal types) and the
 // 3-household limit (R2.3, M0); invites by email and by name, accept and decline, switching, removing, leaving with the
 // last-member warning, and creating more households from the sheet (M4).
 import type { Browser, Page } from "@playwright/test";
@@ -7,7 +7,7 @@ import { seedRecipeId } from "../fixtures/recipes";
 import { expect, signInWithEmailLink, test } from "../fixtures/test";
 import { seedPeriod, seedPlanItem } from "../pages/plan";
 
-test("create the first household with timezone, default servings, and meal types", { tag: ["@R2.3", "@smoke"] }, async ({ page, uniqueEmail }) => {
+test("create the first household with timezone and meal types (no default servings, M30)", { tag: ["@R2.3", "@smoke"] }, async ({ page, uniqueEmail }) => {
   const email = uniqueEmail("creator");
   await allowlist(email);
   await signInWithEmailLink(page, email);
@@ -16,15 +16,13 @@ test("create the first household with timezone, default servings, and meal types
 
   await expect(page.getByLabel("Household name")).toHaveValue("Home");
   await expect(page.getByLabel("Timezone")).toHaveValue("America/Toronto"); // detected from the browser
-  await expect(page.getByRole("group", { name: "Default servings" })).toContainText("4");
+  await expect(page.getByRole("group", { name: "Default servings" })).toHaveCount(0);
   for (const m of ["Breakfast", "Lunch", "Dinner"]) {
     await expect(page.getByRole("button", { name: m })).toHaveAttribute("aria-pressed", "true");
   }
 
   await page.getByLabel("Household name").fill("Silbrass Pvt");
   await page.getByLabel("Timezone").selectOption("America/Vancouver");
-  await page.getByRole("button", { name: "Fewer servings" }).click();
-  await page.getByRole("button", { name: "Fewer servings" }).click();
   await page.getByRole("button", { name: "Breakfast" }).click();
   await page.getByRole("button", { name: "Create household" }).click();
 
@@ -38,11 +36,11 @@ test("create the first household with timezone, default servings, and meal types
   const user = (await adminDb.doc(`users/${uid}`).get()).data()!;
   expect(user.householdsCreated).toBe(1);
   const hh = (await adminDb.doc(`households/${user.activeHouseholdId}`).get()).data()!;
+  expect(hh).not.toHaveProperty("defaultServings");
   expect(hh).toMatchObject({
     name: "Silbrass Pvt",
     createdBy: uid,
     timezone: "America/Vancouver",
-    defaultServings: 2,
     plannedMealTypes: ["lunch", "dinner"],
     currency: "CAD",
     periodDays: 7,

@@ -1,5 +1,5 @@
 // plan.spec.ts, M2 parts (TECHNICAL_SPECS §14.1): Create meal with one recipe, with several, and from a saved meal;
-// the Add to plan shortcut; remove; default servings; meal types; the coverage strip; the budget meter; landing.
+// the Add to plan shortcut; remove; servings as written (M30); meal types; the coverage strip; the budget meter; landing.
 // Expiry badges, protein goals, and receiving are later milestones.
 import { adminDb, eventually } from "../fixtures/admin";
 import { forgetIngredients, seedRecipeId } from "../fixtures/recipes";
@@ -44,13 +44,29 @@ test.describe("Create meal (R5.7)", () => {
     expect(items.find((i) => i.mealType === "dinner")!.recipes).toHaveLength(2);
   });
 
-  test("servings default to the household's default servings (R11.12)", { tag: ["@R11.12"] }, async ({ page, household }) => {
-    await adminDb.doc(`households/${household.hid}`).update({ defaultServings: 6 });
-    const r = await makePlanRecipe("Six-serving stew");
+  test("servings default to the recipe's servings as written, the first recipe's in a meal of several (R11.12)", { tag: ["@R11.12"] }, async ({ page, household }) => {
+    // A legacy household default (removed in M30) is ignored.
+    await adminDb.doc(`households/${household.hid}`).update({ defaultServings: 2 });
+    const six = await makePlanRecipe("Six-serving stew", { lines: CHICKEN_LINES, servings: 6 });
+    const three = await makePlanRecipe("Three-serving salad", { lines: CHICKEN_LINES, servings: 3 });
     const plan = new PlanPage(page);
     await plan.goto();
-    await plan.createMeal({ recipes: [r.title] });
-    await expect(plan.item(r.title)).toContainText("6 servings");
+    const pick = await plan.openCreateMeal();
+    await pick.getByRole("searchbox", { name: "Search recipes to add…" }).fill(six.title);
+    await pick.getByRole("checkbox", { name: new RegExp(`^${six.title}`) }).click();
+    await pick.getByRole("button", { name: /^Next/ }).click();
+    const sheet = page.getByRole("dialog", { name: "Add to plan" });
+    await expect(sheet.getByRole("group", { name: "Servings" }).getByRole("status")).toHaveText("6");
+    await expect(sheet).toContainText("As written");
+    await sheet.getByRole("button", { name: "More servings" }).click();
+    await expect(sheet).toContainText("as written: 6");
+    await sheet.getByRole("button", { name: "Fewer servings" }).click();
+    await plan.finish({});
+    await expect(plan.item(six.title)).toContainText("6 servings");
+
+    await plan.createMeal({ recipes: [three.title, six.title] });
+    const items = await eventually(() => planItems(household.hid), (x) => x.length === 2);
+    expect(items.map((i) => i.servings).sort()).toEqual([3, 6]);
   });
 
   test("Add to plan on a recipe page and on a recipe card opens Create meal with it selected (R5.7)", { tag: ["@R5.7"] }, async ({ page, household }) => {

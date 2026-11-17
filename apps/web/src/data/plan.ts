@@ -38,7 +38,9 @@ import {
   restartUpcoming,
   upcomingPeriod,
   carryOver,
+  DEFAULT_SERVINGS,
   DEFAULT_STORE_ID,
+  SERVINGS_MAX,
   DEFAULT_STORES,
   firstPeriod,
   isEnded,
@@ -414,7 +416,7 @@ export async function setMealFavourite(hid: string, mealId: string, on: boolean)
 
 export async function saveHouseholdSettings(
   hid: string,
-  patch: Partial<Pick<HouseholdDoc, "name" | "periodDays" | "budgetCents" | "timezone" | "defaultServings" | "plannedMealTypes">>,
+  patch: Partial<Pick<HouseholdDoc, "name" | "periodDays" | "budgetCents" | "timezone" | "plannedMealTypes">>,
   currentPeriodId: string | null,
 ): Promise<void> {
   const b = writeBatch(db);
@@ -482,12 +484,14 @@ export function dismissExpiryAlert(hid: string, periodId: string, lotIds: readon
  * Accepts an optimiser set (R6.20): every recipe becomes its own planned meal, in one batch. Coverage needs each
  * recipe's leftover estimate, so the recipe documents are read first (public gets, cached).
  */
-export async function addOptimiserSet(hid: string, periodId: string, uid: string, recipeIds: readonly string[], mealType: MealType, servings: number): Promise<string[]> {
+export async function addOptimiserSet(hid: string, periodId: string, uid: string, recipeIds: readonly string[], mealType: MealType): Promise<string[]> {
   const docs = await Promise.all(recipeIds.map((id) => getDoc(doc(db, "recipes", id))));
-  const info = new Map(docs.filter((d) => d.exists()).map((d) => [d.id, d.data() as CoverageRecipe]));
+  const info = new Map(docs.filter((d) => d.exists()).map((d) => [d.id, d.data() as CoverageRecipe & { servings?: number }]));
   const b = writeBatch(db);
   const ids: string[] = [];
   for (const recipeId of recipeIds) {
+    // M30 (R11.12): each recipe at the servings it's written for.
+    const servings = Math.min(SERVINGS_MAX, Math.max(1, Math.round(info.get(recipeId)?.servings ?? DEFAULT_SERVINGS)));
     const item = buildPlanItem({ recipes: [{ recipeId, servingsMultiplier: 1 }], mealType, servings, saveAsMeal: false }, { periodId, uid, recipes: (id) => info.get(id) });
     const ref = doc(collection(db, "households", hid, "planItems"));
     ids.push(ref.id);

@@ -22,7 +22,6 @@ export interface ScoringSnapshot {
    * cooked is counted from there). Planned items, Supply, incoming and expiring in this snapshot are that period's.
    */
   period?: { view: "current" | "next"; fromMs: number };
-  servings: number;
   periodDays: number;
   mealType: MealType | null;
   recipes: RecipeSummary[];
@@ -62,7 +61,7 @@ export interface WorkerContexts {
   weights: Weights;
   recipes: ScoreRecipe[];
   byId: Map<string, ScoreRecipe>;
-  /** Canonical needs of one recipe at the household's servings (free-use excluded), for the optimiser. */
+  /** Canonical needs of one recipe at its servings as written (free-use excluded, M30), for the optimiser. */
   needsOf: (id: string) => Map<string, number>;
   /** Marginal cost of a set of recipes added to the plan, cents (unknown prices count as $0). */
   setCost: (ids: readonly string[]) => number;
@@ -100,7 +99,7 @@ export function buildContexts(s: ScoringSnapshot, seed: ReadonlyMap<string, Snap
   const needsOf = (id: string) => {
     let n = needsCache.get(id);
     if (!n) {
-      n = needsFor([{ id, status: "planned", servings: s.servings, recipes: [{ recipeId: id, servingsMultiplier: 1 }] }], build);
+      n = needsFor([{ id, status: "planned", servings: lines.get(id)?.servings ?? 1, recipes: [{ recipeId: id, servingsMultiplier: 1 }] }], build);
       needsCache.set(id, n);
     }
     return n;
@@ -111,7 +110,6 @@ export function buildContexts(s: ScoringSnapshot, seed: ReadonlyMap<string, Snap
   const recent = tally(s.recentRecipeIds, (id) => byId.get(id));
   const score: ScoreContext = {
     nowMs: s.period?.fromMs ?? s.nowMs,
-    servings: s.servings,
     mealType: s.mealType,
     periodDays: s.periodDays,
     projected,

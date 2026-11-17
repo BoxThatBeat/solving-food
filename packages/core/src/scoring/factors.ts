@@ -1,6 +1,6 @@
 // Suggestion factors (PRD R6.11, R6.13, R6.16; TECHNICAL_SPECS §7 "Suggestion score"). One pure function per factor,
 // each returning a value in [0, 1] (or null when the factor doesn't apply, e.g. no protein goal for the meal type).
-// Amounts are canonical (g or count) at the household's servings. Everything here is Firebase-free and serialisable
+// Amounts are canonical (g or count) at each recipe's servings as written (M30; a `servings` override scales them all). Everything here is Firebase-free and serialisable
 // enough to run in a Web Worker: the web app builds a ScoreContext snapshot from its listeners.
 
 import type { MealType } from "../taxonomy";
@@ -41,8 +41,11 @@ export interface ExpiringSpare {
 
 export interface ScoreContext {
   nowMs: number;
-  /** Servings the household cooks (amounts are scaled to this). */
-  servings: number;
+  /**
+   * Servings to score every recipe at; absent or null: each recipe at the servings it's written for, which is what Add to
+   * plan defaults to (M30, R11.12).
+   */
+  servings?: number | null | undefined;
   /** The meal type being planned, for the protein goal; null = each recipe's own meal tag (dinner by default). */
   mealType?: MealType | null;
   periodDays: number;
@@ -66,7 +69,7 @@ export interface ScoreContext {
   /** Fibre goals per meal type (M9, R6.26); empty when off or when nutrition tracking is off (R6.27). */
   fibreGoals: Partial<Record<MealType, number>>;
   ingredient: IngredientMetaOf;
-  /** What adding the recipe (at the household's servings) adds to the next order, cents; null when unknown. */
+  /** What adding the recipe (at its servings as written) adds to the next order, cents; null when unknown. */
   costOf: (recipe: ScoreRecipe) => number | null;
   /** Budget left for the period (budget − spent), cents. */
   remainingBudgetCents: number;
@@ -89,12 +92,13 @@ export const PRIOR_WEIGHT = 2;
 
 const clamp01 = (n: number) => (Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0);
 
-/** Canonical amounts the recipe needs at the household's servings, free-use ingredients left out. */
+/** Canonical amounts the recipe needs at its servings as written (or `ctx.servings`), free-use ingredients left out. */
 export function recipeNeeds(r: ScoreRecipe, ctx: Pick<ScoreContext, "servings" | "ingredient">): Map<string, number> {
   const m = new Map<string, number>();
+  const servings = ctx.servings ?? Math.max(1, r.servings);
   for (const [id, per] of Object.entries(r.lines ?? {})) {
     if (!(per > 0) || ctx.ingredient(id)?.freeUse) continue;
-    m.set(id, per * ctx.servings);
+    m.set(id, per * servings);
   }
   return m;
 }

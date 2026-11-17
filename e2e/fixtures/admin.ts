@@ -56,7 +56,6 @@ export async function seedHousehold(uid: string, displayName: string, name = "Si
     budgetCents: 20000,
     currency: "CAD",
     timezone: "America/Toronto",
-    defaultServings: 4,
     plannedMealTypes: ["breakfast", "lunch", "dinner"],
     pcxStoreId: "loblaws-greenbank-road",
     currentPeriodId: null,

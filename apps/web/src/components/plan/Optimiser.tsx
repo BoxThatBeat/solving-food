@@ -28,7 +28,6 @@ export function OptimiserCard({
   hid,
   periodId,
   uid,
-  servings,
   remainingCents,
   goals,
 }: {
@@ -37,7 +36,6 @@ export function OptimiserCard({
   hid: string;
   periodId: string | null;
   uid: string;
-  servings: number;
   remainingCents: number;
   goals: Partial<Record<MealType, number>>;
 }) {
@@ -123,7 +121,7 @@ export function OptimiserCard({
   const accept = () => {
     if (!current || !periodId) return;
     // Shown at once (latency compensation); only a failure comes back (M23).
-    void addOptimiserSet(hid, periodId, uid, current.ids, mealType, servings).catch((e) => notify({ kind: "error", message: `Couldn't add the set: ${(e as Error).message}` }));
+    void addOptimiserSet(hid, periodId, uid, current.ids, mealType).catch((e) => notify({ kind: "error", message: `Couldn't add the set: ${(e as Error).message}` }));
     notify({ kind: "success", message: `Added ${current.ids.length} ${current.ids.length === 1 ? MEAL_LABEL[mealType].toLowerCase() : PLURAL[mealType]} to the plan` });
     reset();
   };

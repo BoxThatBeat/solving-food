@@ -44,8 +44,8 @@ const SETTINGS_GROUPS: ReadonlyArray<{ id: string; label: string; sections: read
       {
         to: "/settings/household",
         label: "Household",
-        sub: "Period, budget, timezone, servings, meal types",
-        keywords: ["name", "rename", "plan period", "length", "days", "restart period", "money", "spend", "dollars", "time zone", "default servings", "portions", "breakfast", "lunch", "dinner", "planned meal types"],
+        sub: "Period, budget, timezone, meal types",
+        keywords: ["name", "rename", "plan period", "length", "days", "restart period", "money", "spend", "dollars", "time zone", "breakfast", "lunch", "dinner", "planned meal types"],
       },
       {
         to: "/settings/members",

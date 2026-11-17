@@ -322,7 +322,7 @@ function PlanPage() {
           />
           {/* M7: the protein summary sits at the bottom, directly above the optimiser, at every width. */}
           {nutrition.on ? <ProteinCard protein={protein} fibre={fibre} plannedTypes={m.household?.plannedMealTypes ?? []} goals={goals} fibreGoals={nutrition.fibreGoals} /> : null}
-          <OptimiserCard snapshot={snapshot} summaries={byId} hid={m.hid} periodId={m.periodId} uid={s.user.uid} servings={m.household?.defaultServings ?? 4} remainingCents={m.budget.remainingCents} goals={goals} />
+          <OptimiserCard snapshot={snapshot} summaries={byId} hid={m.hid} periodId={m.periodId} uid={s.user.uid} remainingCents={m.budget.remainingCents} goals={goals} />
         </div>
 
         <div className="flex min-w-0 flex-col gap-3.5 [grid-area:c] lg:sticky lg:top-4">
@@ -343,7 +343,6 @@ function PlanPage() {
               summaries={summaries ?? []}
               scores={suggestions.byId}
               plannedIds={plannedIds}
-              servings={m.household?.defaultServings ?? 4}
               nowMs={supplyNow}
               tz={tz}
               onAdd={(id) => openCreateMeal({ recipeIds: [id] })}
@@ -363,8 +362,7 @@ function PlanPage() {
                 summaries={summaries ?? []}
                 scores={suggestions.byId}
                 plannedIds={plannedIds}
-                servings={m.household?.defaultServings ?? 4}
-                onAdd={(id) => openCreateMeal({ recipeIds: [id] })}
+                  onAdd={(id) => openCreateMeal({ recipeIds: [id] })}
                 onDismiss={(key) => {
                   if (m.periodId) void dismissExpiryAlert(m.hid, m.periodId, [key]).catch((e) => notify({ kind: "error", message: `Couldn't dismiss it: ${(e as Error).message}` }));
                 }}

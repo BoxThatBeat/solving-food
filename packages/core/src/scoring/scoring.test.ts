@@ -22,6 +22,7 @@ import {
   proteinGoal,
   rank,
   ratingFactor,
+  scoreBreakdown,
   recentlyCooked,
   recipeNeeds,
   resolveWeights,
@@ -227,9 +228,14 @@ describe("individual factors", () => {
     expect(missingIngredients(new Map(), c)).toBe(0.5);
   });
 
-  it("recipeNeeds scales to the household's servings and skips free-use", () => {
+  it("recipeNeeds scales to an explicit servings override and skips free-use", () => {
     const r = recipe("r", { lines: { pasta: 100, "olive-oil": 10 } });
     expect([...recipeNeeds(r, ctx({ servings: 2 }))]).toEqual([["pasta", 200]]);
+  });
+
+  it("recipeNeeds uses each recipe's servings as written by default (M30, R11.12)", () => {
+    expect([...recipeNeeds(recipe("six", { servings: 6 }), ctx())]).toEqual([["pasta", 600]]);
+    expect([...recipeNeeds(recipe("two", { servings: 2 }), ctx())]).toEqual([["pasta", 200]]);
   });
 
   it("rating: Bayesian prior for unrated", () => {
@@ -495,5 +501,34 @@ describe("on sale (M27, R6.34)", () => {
     void _o2;
     void _f2;
     expect(presetOf(resolveWeights(old))).toBe("Adventurous");
+  });
+});
+
+describe("scoreBreakdown (M30, R6.37)", () => {
+  it("splits the score into points per factor that sum to it before rounding", () => {
+    const stats = new Map([["r", { timesCooked: 3, lastCookedAtMs: NOW - 30 * DAY, ratingSum: 24, ratingCount: 3 }]]);
+    const c = ctx({ projected: new Map([["pasta", 200]]), stats, plannedProteins: new Map([["chicken", 1]]) });
+    const res = score(recipe("r"), c, DEFAULT_WEIGHTS);
+    const b = scoreBreakdown(res, DEFAULT_WEIGHTS);
+    expect(b.score).toBe(res.score);
+    expect(Math.round(Math.max(0, Math.min(100, b.exact)))).toBe(res.score);
+    // Most points first; lowering factors (negative points) at the end.
+    for (let i = 1; i < b.rows.length; i++) expect(b.rows[i - 1]!.points).toBeGreaterThanOrEqual(b.rows[i]!.points);
+    expect(b.rows.find((x) => x.key === "sameProtein")!.points).toBeLessThan(0);
+    expect(b.rows.find((x) => x.key === "sameProtein")!.detail).toBe("Another chicken");
+    expect(b.rows.find((x) => x.key === "supplyUtilisation")!.detail).toBe("Have 50%");
+    // No protein goal and nothing on sale: not counted.
+    expect(b.skipped).toEqual(expect.arrayContaining(["proteinGoal", "onSale"]));
+  });
+
+  it("factors weighted 0 are listed as off, and a lowering factor that didn't fire says nothing", () => {
+    const w = { ...DEFAULT_WEIGHTS, variety: 0 };
+    const res = score(recipe("r"), ctx(), w);
+    const b = scoreBreakdown(res, w);
+    expect(b.off).toContain("variety");
+    expect(b.rows.some((x) => x.key === "variety")).toBe(false);
+    const same = b.rows.find((x) => x.key === "sameCuisine")!;
+    expect(same.points).toBeCloseTo(0);
+    expect(same.detail).toBeUndefined();
   });
 });

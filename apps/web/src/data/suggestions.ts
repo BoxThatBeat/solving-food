@@ -76,7 +76,6 @@ export function useScoringSnapshot(m: PlanModel, mealType: MealType | null = nul
     return {
       nowMs: now,
       ...(fromMs !== null ? { period: { view: "next" as const, fromMs } } : {}),
-      servings: household.defaultServings,
       periodDays,
       mealType,
       recipes: summaries,

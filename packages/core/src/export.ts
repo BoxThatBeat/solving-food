@@ -49,7 +49,6 @@ export const EXPORT_HOUSEHOLD_FIELDS = [
   "budgetCents",
   "currency",
   "timezone",
-  "defaultServings",
   "plannedMealTypes",
   "pcxStoreId",
   "pcxStoreName",

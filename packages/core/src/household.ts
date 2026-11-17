@@ -8,10 +8,8 @@ import {
   DEFAULT_HOUSEHOLD_NAME,
   DEFAULT_PCX_STORE_ID,
   DEFAULT_PERIOD_DAYS,
-  DEFAULT_SERVINGS,
   DEFAULT_TIMEZONE,
   MAX_HOUSEHOLDS_CREATED,
-  SERVINGS_MAX,
 } from "./config";
 import { PLANNABLE_MEAL_TYPES } from "./taxonomy";
 import { DEFAULT_STORE_ID } from "./grocery";
@@ -20,7 +18,6 @@ import { householdNameSchema, type HouseholdDoc, type MemberDoc } from "./types"
 export const newHouseholdInputSchema = z.object({
   name: householdNameSchema,
   timezone: z.string().trim().min(1, "Pick a timezone"),
-  defaultServings: z.number().int().min(1).max(SERVINGS_MAX),
   plannedMealTypes: z.array(z.enum(PLANNABLE_MEAL_TYPES)).min(1, "Plan at least one meal type"),
 });
 export type NewHouseholdInput = z.infer<typeof newHouseholdInputSchema>;
@@ -30,7 +27,6 @@ export function defaultHouseholdInput(detectedTimezone?: string): NewHouseholdIn
   return {
     name: DEFAULT_HOUSEHOLD_NAME,
     timezone: detectedTimezone && isValidTimezone(detectedTimezone) ? detectedTimezone : DEFAULT_TIMEZONE,
-    defaultServings: DEFAULT_SERVINGS,
     plannedMealTypes: [...PLANNABLE_MEAL_TYPES],
   };
 }
@@ -72,7 +68,6 @@ export function buildNewHousehold(
       budgetCents: DEFAULT_BUDGET_CENTS,
       currency: CURRENCY,
       timezone: v.timezone,
-      defaultServings: v.defaultServings,
       plannedMealTypes,
       pcxStoreId: DEFAULT_PCX_STORE_ID,
       currentPeriodId: null,

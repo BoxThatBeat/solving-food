@@ -10,6 +10,7 @@ export const STORAGE_BUCKET = "solvingfood.firebasestorage.app";
 export const MAX_HOUSEHOLDS_CREATED = 3;
 
 export const DEFAULT_TIMEZONE = "America/Toronto";
+/** Servings for a meal whose recipes aren't loaded yet (M30: Add to plan otherwise uses the recipe's servings as written). */
 export const DEFAULT_SERVINGS = 4;
 export const DEFAULT_PERIOD_DAYS = 7;
 export const DEFAULT_BUDGET_CENTS = 200_00;
@@ -27,5 +28,6 @@ export const DEFAULT_PCX_STORE_LABEL = "Loblaws Greenbank Road (Ottawa)";
 
 export const DISPLAY_NAME_MAX = 40;
 export const HOUSEHOLD_NAME_MAX = 60;
-export const SERVINGS_MAX = 20;
+/** Servings a meal can be planned or cooked for: a recipe's own limit (M30: Add to plan takes the servings as written). */
+export const SERVINGS_MAX = 100;
 export const PERIOD_DAYS_MAX = 28;

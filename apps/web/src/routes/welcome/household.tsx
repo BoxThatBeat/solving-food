@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Stepper } from "@/components/ui/stepper";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { signOut } from "firebase/auth";
 import {
@@ -8,7 +7,6 @@ import {
   DEFAULT_PERIOD_DAYS,
   MAX_HOUSEHOLDS_CREATED,
   PLANNABLE_MEAL_TYPES,
-  SERVINGS_MAX,
   canCreateHousehold,
   defaultHouseholdInput,
   newHouseholdInputSchema,
@@ -149,22 +147,6 @@ function CreateHouseholdPage() {
                 </option>
               ))}
             </Select>
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label id="servings-label">Default servings</Label>
-            <div className="flex items-center gap-3">
-              <Stepper
-                label="Default servings"
-                labelledBy="servings-label"
-                decLabel="Fewer servings"
-                incLabel="More servings"
-                value={form.defaultServings}
-                min={1}
-                max={SERVINGS_MAX}
-                onChange={(v) => setForm((f) => ({ ...f, defaultServings: v }))}
-              />
-              <span className="text-[0.8125rem] font-semibold text-sub">Recipes are planned for this many.</span>
-            </div>
           </div>
           <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
             <legend className="mb-2 tabular-nums text-[0.6875rem] font-bold tracking-[0.045rem]">Planned meal types</legend>

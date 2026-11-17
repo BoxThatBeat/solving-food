@@ -18,7 +18,6 @@ import {
   HOUSEHOLD_NAME_MAX,
   MAX_HOUSEHOLDS_CREATED,
   PERIOD_DAYS_MAX,
-  SERVINGS_MAX,
 } from "./config";
 
 /** Firestore Timestamp (anything with toMillis) or a JS Date. */
@@ -301,7 +300,8 @@ export const householdSchema = z.object({
   budgetCents: cents.min(0),
   currency: z.literal(CURRENCY),
   timezone: z.string().min(1),
-  defaultServings: z.number().int().min(1).max(SERVINGS_MAX),
+  /** Legacy (removed in M30): Add to plan uses the recipe's servings as written. Older households still carry it; nothing reads it. */
+  defaultServings: z.number().int().min(1).max(20).optional(),
   plannedMealTypes: z.array(z.enum(PLANNABLE_MEAL_TYPES)).min(1),
   pcxStoreId: z.string().min(1),
   /** The PC Express store's name as the store search showed it (M5); absent for the default store. */

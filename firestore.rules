@@ -82,13 +82,14 @@ service cloud.firestore {
                                'defaultServings', 'plannedMealTypes', 'pcxStoreId', 'pcxStoreName', 'currentPeriodId',
                                'defaultStoreId', 'settings', 'createdAt'])
         && d.keys().hasAll(['name', 'createdBy', 'periodDays', 'budgetCents', 'currency', 'timezone',
-                            'defaultServings', 'plannedMealTypes', 'pcxStoreId'])
+                            'plannedMealTypes', 'pcxStoreId'])
         && str(d.name, 1, 60) && d.name.trim().size() > 0
         && d.periodDays is int && d.periodDays >= 1 && d.periodDays <= 28
         && d.budgetCents is int && d.budgetCents >= 0
         && d.currency == 'CAD'
         && str(d.timezone, 1, 64)
-        && d.defaultServings is int && d.defaultServings >= 1 && d.defaultServings <= 20
+        // Legacy (M30): older households carry defaultServings; new ones don't.
+        && (!('defaultServings' in d) || (d.defaultServings is int && d.defaultServings >= 1 && d.defaultServings <= 20))
         && d.plannedMealTypes is list && d.plannedMealTypes.size() >= 1
         && d.plannedMealTypes.hasOnly(['breakfast', 'lunch', 'dinner'])
         && str(d.pcxStoreId, 1, 100)

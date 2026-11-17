@@ -70,7 +70,7 @@ export interface ScoreResult {
   planned?: boolean;
   /** The top two raising factors and the strongest lowering one ("why" chips). */
   reasons: Reason[];
-  /** Marginal cost at the household's servings (cents), null when unknown. */
+  /** Marginal cost at the recipe's servings as written (cents), null when unknown. */
   costCents: number | null;
   /** Soonest spare expiring ingredient it uses (for "Expiring first" and the alert row). */
   expiring: { ingredientId: string; daysLeft: number; used: number } | null;
@@ -81,6 +81,8 @@ export interface ScoreResult {
   deal?: { ingredientId: string; dealPct: number; label: string };
   /** M28 (R6.35): missing ingredients covered by a substitute in projected Supply (only while substitutions are on). */
   swaps?: Swap[];
+  /** M30 (R6.37): one line per factor saying what it saw ("Have 60%", "+$12.40"), for the recipe page's breakdown. */
+  details?: Partial<Record<FactorKey, string>>;
 }
 
 const short = (ctx: ScoreContext, id: string) => (ctx.ingredient(id)?.name ?? id.replace(/-/g, " ")).split(/[,(]/)[0]!.trim();
@@ -192,6 +194,11 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
   const neg = contrib.filter(([, c]) => c < -0.05).sort((a, b) => a[1] - b[1])[0];
   if (neg && !blocked) reasons.push({ key: neg[0], label: label(neg[0]), tone: "bad" });
 
+  // M30 (R6.37): the breakdown's lines. Factors whose label assumes they fired ("Another chicken") only say it when they did.
+  const ALWAYS: ReadonlySet<FactorKey> = new Set(["supplyUtilisation", "rating", "historicalPref", "cost", "proteinGoal", "fibreGoal"]);
+  const details: Partial<Record<FactorKey, string>> = {};
+  for (const [k, v] of Object.entries(f) as Array<[FactorKey, number]>) if (ALWAYS.has(k) || v > 0.05) details[k] = label(k);
+
   const dealUse = sale.uses.find((u) => u.ingredientId === sale.costliest || PROTEIN_CATEGORIES.has(ctx.ingredient(u.ingredientId)?.category ?? ""));
   return {
     id: r.id,
@@ -203,6 +210,7 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
     ...(stub ? { stub } : {}),
     ...(ctx.plannedRecipeIds.has(r.id) ? { planned: true } : {}),
     reasons,
+    details,
     costCents: cost,
     expiring: exp,
     ...(swaps.length ? { swaps } : {}),
@@ -211,6 +219,54 @@ export function score(r: ScoreRecipe, ctx: ScoreContext, w: Weights): ScoreResul
 }
 
 const capital = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
+
+export interface BreakdownRow {
+  key: FactorKey;
+  label: string;
+  /** What the factor measures (Settings' one line). */
+  hint: string;
+  sign: 1 | -1;
+  weight: number;
+  /** The factor's value, 0..1. */
+  value: number;
+  /** Its share of the score in points: 100 · sign · weight · value ÷ Σ raising weights. */
+  points: number;
+  detail?: string | undefined;
+}
+
+export interface ScoreBreakdown {
+  /** The card's number (0..100). */
+  score: number;
+  /** Σ points, before rounding and the 0..100 clamp. */
+  exact: number;
+  /** Counted factors with a weight, most points first (lowering ones last). */
+  rows: BreakdownRow[];
+  /** Factors that don't apply right now (no goal, nothing on sale), so they aren't counted. */
+  skipped: FactorKey[];
+  /** Factors with weight 0 in Settings. */
+  off: FactorKey[];
+}
+
+/**
+ * M30 (R6.37): how each factor adds to a recipe's suggestion score. Points are the score formula split per factor, so
+ * they sum to the score before it is rounded and clamped to 0..100.
+ */
+export function scoreBreakdown(r: Pick<ScoreResult, "score" | "factors" | "details">, w: Weights): ScoreBreakdown {
+  let max = 0;
+  for (const info of FACTORS) if (info.sign > 0 && r.factors[info.key] !== undefined) max += w[info.key] ?? 0;
+  const rows: BreakdownRow[] = [];
+  const skipped: FactorKey[] = [];
+  const off: FactorKey[] = [];
+  for (const info of FACTORS) {
+    const value = r.factors[info.key];
+    const weight = w[info.key] ?? 0;
+    if (value === undefined) skipped.push(info.key);
+    else if (weight === 0) off.push(info.key);
+    else rows.push({ key: info.key, label: info.label, hint: info.hint, sign: info.sign, weight, value, points: (100 * info.sign * weight * value) / (max || 1), detail: r.details?.[info.key] });
+  }
+  rows.sort((a, b) => b.points - a.points || (a.sign === b.sign ? 0 : a.sign > 0 ? -1 : 1));
+  return { score: r.score, exact: rows.reduce((t, x) => t + x.points, 0), rows, skipped, off };
+}
 
 /** Where a result sorts: suggestions first, then blocked ones, then recipes already in the plan at the very bottom. */
 const tier = (x: ScoreResult) => (x.planned ? 2 : x.blocked ? 1 : 0);
@@ -289,7 +345,6 @@ export function tally(ids: Iterable<string>, of: (id: string) => { cuisine: stri
 export function emptyScoreContext(overrides: Partial<ScoreContext> = {}): ScoreContext {
   return {
     nowMs: Date.now(),
-    servings: 4,
     mealType: null,
     periodDays: 7,
     projected: new Map(),

@@ -32,7 +32,7 @@ function HouseholdRow({ hid, active, onPick }: { hid: string; active: boolean; o
           <span className="text-lg font-extrabold">{hh.data?.name ?? "…"}</span>
           <span className="tabular-nums text-[0.65625rem] font-semibold">
             {n === undefined ? "" : `${n} member${n === 1 ? "" : "s"}`}
-            {hh.data ? ` · ${hh.data.timezone} · serves ${hh.data.defaultServings}` : ""}
+            {hh.data ? ` · ${hh.data.timezone}` : ""}
           </span>
         </span>
         {active ? <Check aria-hidden className="size-5" strokeWidth={3} /> : <span aria-hidden className="text-base font-extrabold">→</span>}

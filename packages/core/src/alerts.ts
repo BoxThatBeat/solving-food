@@ -35,14 +35,14 @@ export function expiryAlerts(
 
 /**
  * Recipes that use an expiring ingredient, most of it first (R6.13 "suggests recipes that use more of it"): amount at
- * the household's servings, capped by the spare amount; ties by `tieBreak` (the suggestion score), then title. A
+ * the recipe's servings as written (M30; or `servings` when given), capped by the spare amount; ties by `tieBreak` (the suggestion score), then title. A
  * recipe that uses less than `minSpare(canonicalUnit)` of it isn't offered (M21: "uses 1.6 g" of broccoli).
  */
 export function recipesUsing(
   ingredientId: string,
   spare: number,
   recipes: readonly ScoreRecipe[],
-  servings: number,
+  servings: number | null,
   tieBreak: (id: string) => number = () => 0,
   canonicalUnit?: "g" | "count",
 ): Array<{ recipe: ScoreRecipe; uses: number }> {
@@ -51,7 +51,7 @@ export function recipesUsing(
   for (const r of recipes) {
     const per = r.lines?.[ingredientId];
     if (!per || per <= 0) continue;
-    const uses = Math.min(spare, per * servings);
+    const uses = Math.min(spare, per * (servings ?? Math.max(1, r.servings)));
     if (uses < min) continue;
     out.push({ recipe: r, uses });
   }

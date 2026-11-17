@@ -1,7 +1,7 @@
 // <CreateMealSheet> (PRD R5.7, R5.8; TECHNICAL_SPECS §7 "Creating meals", §12): the Plan page's primary action.
 // Step 1 picks one or more recipes with the shared <CollectionView> in multi-select mode (Suggested first, selected
-// recipes pinned on top with a servings multiplier), or a saved meal. Step 2 sets the meal type, servings (default
-// R11.12), sides (R5.9, picked from a search dropdown with the household's portion per person snapshotted), and
+// recipes pinned on top with a servings multiplier), or a saved meal. Step 2 sets the meal type, servings (the first
+// recipe's as written until changed, R11.12, M30), sides (R5.9, picked from a search dropdown with the household's portion per person snapshotted), and
 // optionally a name + "Save as meal", shows the budget impact, and adds the plan item. M9 (R6.23): a third tab,
 // Eating out, adds a plan item with no recipes for a meal type and an optional note.
 import * as React from "react";
@@ -13,6 +13,7 @@ import {
   collectionSearchSchema,
   createMealInputSchema,
   defaultMealName,
+  DEFAULT_SERVINGS,
   EATING_OUT_NOTE_MAX,
   formatCents,
   formatMinutes,
@@ -145,7 +146,11 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
   const [mealType, setMealType] = React.useState<MealType>(() => request.mealType ?? "dinner");
   const effectiveType: MealType = mealTypes.includes(mealType) ? mealType : (mealTypes[0] ?? "dinner");
   const [servings, setServings] = React.useState<number | null>(null);
-  const effectiveServings = servings ?? household?.defaultServings ?? 4;
+  // M30 (R11.12): servings default to the recipe's as written (the first recipe's in a meal of several) until changed.
+  const firstId = selected[0]?.recipeId;
+  const firstServings = firstId ? (byId.get(firstId)?.servings ?? pickedRecipes.get(firstId)?.servings) : undefined;
+  const asWritten = Math.min(SERVINGS_MAX, Math.max(1, Math.round(firstServings ?? DEFAULT_SERVINGS)));
+  const effectiveServings = servings ?? asWritten;
 
   const titles = selected.map((r) => byId.get(r.recipeId)?.title ?? recipeOf(r.recipeId)?.title ?? "Recipe");
   const sideNames = sides.map((x) => sideName(x.ingredientId) ?? pickedIngredients.get(x.ingredientId)?.name ?? model.ingredients.get(x.ingredientId)?.name ?? "side");
@@ -441,7 +446,13 @@ function CreateMealBody({ request, close }: { request: CreateMealRequest; close:
           <span id="cm-servings" className="tabular-nums text-[0.625rem] font-bold tracking-[0.045rem]">
             Servings
           </span>
-          <span className="text-[0.75rem] font-semibold text-sub">Each recipe is scaled to this</span>
+          <span className="text-[0.75rem] font-semibold text-sub" aria-live="polite">
+            {effectiveServings !== asWritten
+              ? `Each recipe is scaled to this · as written: ${asWritten}`
+              : selected.length > 1
+                ? `As written for ${titles[0]} · each recipe is scaled to this`
+                : "As written"}
+          </span>
         </span>
         <Stepper label="Servings" decLabel="Fewer servings" incLabel="More servings" labelledBy="cm-servings" value={effectiveServings} min={1} max={SERVINGS_MAX} onChange={setServings} />
       </div>

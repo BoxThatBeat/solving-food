@@ -11,11 +11,10 @@ import { DEFAULT_BUDGET_CENTS, DEFAULT_PCX_STORE_ID, DEFAULT_PERIOD_DAYS } from 
 const creator = { uid: "u1", displayName: "Aaron" };
 
 describe("defaultHouseholdInput", () => {
-  it("uses Home, 4 servings, all three meal types, and the detected timezone", () => {
+  it("uses Home, all three meal types, and the detected timezone (no default servings, M30)", () => {
     expect(defaultHouseholdInput("America/Vancouver")).toEqual({
       name: "Home",
       timezone: "America/Vancouver",
-      defaultServings: 4,
       plannedMealTypes: ["breakfast", "lunch", "dinner"],
     });
   });
@@ -29,7 +28,7 @@ describe("defaultHouseholdInput", () => {
 describe("buildNewHousehold", () => {
   it("builds a valid household with CAD, 7 days, $200, and the default store", () => {
     const { household, member } = buildNewHousehold(
-      { name: "  Silbrass Pvt ", timezone: "America/Toronto", defaultServings: 2, plannedMealTypes: ["dinner", "lunch"] },
+      { name: "  Silbrass Pvt ", timezone: "America/Toronto", plannedMealTypes: ["dinner", "lunch"] },
       creator,
     );
     expect(householdSchema.parse(household)).toBeTruthy();
@@ -40,18 +39,17 @@ describe("buildNewHousehold", () => {
       periodDays: DEFAULT_PERIOD_DAYS,
       budgetCents: DEFAULT_BUDGET_CENTS,
       pcxStoreId: DEFAULT_PCX_STORE_ID,
-      defaultServings: 2,
       plannedMealTypes: ["lunch", "dinner"],
       currentPeriodId: null,
     });
+    expect(household).not.toHaveProperty("defaultServings");
     expect(member).toEqual({ uid: "u1", displayName: "Aaron" });
   });
 
-  it("rejects an empty name, zero meal types, bad servings, and unknown timezones", () => {
+  it("rejects an empty name, zero meal types, and unknown timezones", () => {
     const ok = defaultHouseholdInput();
     expect(() => buildNewHousehold({ ...ok, name: " " }, creator)).toThrow();
     expect(() => buildNewHousehold({ ...ok, plannedMealTypes: [] }, creator)).toThrow();
-    expect(() => buildNewHousehold({ ...ok, defaultServings: 0 }, creator)).toThrow();
     expect(() => buildNewHousehold({ ...ok, timezone: "Nowhere/Land" }, creator)).toThrow();
   });
 });
