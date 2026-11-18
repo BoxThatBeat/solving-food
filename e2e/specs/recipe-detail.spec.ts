@@ -180,3 +180,26 @@ test("a Nutrition facts panel, closed by default, shows the Canadian label per s
   await expect(vp.getByTestId("nf-carbG")).toContainText(/Carbohydrate ~?\d+ g/);
   await visitor.close();
 });
+
+test("the household suggestion score at the bottom: the total and each factor's points, with the household's weights (R6.37)", { tag: ["@R6.37"] }, async ({ page, household }) => {
+  await adminDb.doc(`households/${household.hid}`).update({ "settings.scoreWeights": { variety: 0 } });
+  const id = await seedRecipeId("Garlic Rice and Chicken");
+  await page.goto(`/recipes/${id}`);
+  const score = detail(page).getByTestId("suggestion-score");
+  await expect(score.getByRole("heading", { name: "Household suggestion score" })).toBeVisible();
+  const total = Number(await score.getByTestId("suggestion-score-total").textContent({ timeout: 30_000 }));
+  expect(total).toBeGreaterThanOrEqual(0);
+  expect(total).toBeLessThanOrEqual(100);
+  // Every recipe is unrated here: the rating prior (6/10) always adds points.
+  await expect(score.getByTestId("score-row-rating")).toContainText("Household rating");
+  await expect(score.getByTestId("score-row-rating")).toContainText(/\+\d+/);
+  // The rows add up to the total, give or take rounding (and the 0..100 clamp).
+  const rows = await score.getByRole("list", { name: "How the score adds up" }).locator("[data-testid^=score-row-]").allTextContents();
+  const sum = rows.map((t) => Number((/([+−]\d+|0)$/.exec(t.trim())?.[1] ?? "0").replace("−", "-"))).reduce((a, b) => a + b, 0);
+  expect(Math.abs(Math.max(0, Math.min(100, sum)) - total)).toBeLessThanOrEqual(rows.length);
+  // A factor weighted 0 isn't counted, and says so.
+  await expect(score.getByTestId("score-row-variety")).toHaveCount(0);
+  await expect(score).toContainText("Weighted 0: Variety.");
+  await score.getByRole("link", { name: "Change suggestion weights" }).click();
+  await expect(page).toHaveURL(/\/settings\/weights$/);
+});

@@ -1,6 +1,6 @@
 # M30 — Servings as written, snacks without leftovers, the suggestion score explained
 
-Status: in progress
+Status: done (owner: plan a recipe and cook a snack on the phone; see the exit criteria)
 
 ## Goal
 
@@ -45,13 +45,17 @@ Spec §4 (`households`), §7 (Creating meals, Coverage & leftovers, Suggestion s
       leftover fields on a snack recipe
       and its "Leftovers for" labels Snack "not tracked" (kept as an option so a saved value still reads). Tests:
       `plan.test.ts` (+2), `cooking.test.ts` (+1), e2e `leftovers.spec.ts` (R6.36).
-- [ ] **3. Household suggestion score on the recipe page** (R6.37). Core: `ScoreResult.details` (one line per factor),
+- [x] **3. Household suggestion score on the recipe page** (R6.37). Core: `ScoreResult.details` (one line per factor),
       `scoreBreakdown(result, weights)` (points per factor = 100 · sign · w · f ÷ Σ raising weights, most first;
       skipped and weight-0 factors listed). Web: `<SuggestionScore>` at the bottom of `RecipeDetail` (signed in):
-      the total, one row per factor with its points and a bar, not-suggested reasons (blocked, already planned), and
-      a link to Settings → Suggestion weights. Tests: `scoring.test.ts` (+2), e2e `recipe-detail.spec.ts`.
-- [ ] **4. Docs, screenshots, CI**: PRD, spec, this plan; phone and desktop screenshots of Create meal, the review,
-      the editor and the recipe page; `pnpm e2e:coverage`; push and watch CI.
+      the total, one row per factor worth at least half a point with its line, weight, points and a bar (the rest
+      named in one line, after the screenshot check showed eight "0" rows reading like claims), not-suggested reasons
+      (blocked, already planned), and a link to Settings → Suggestion weights. Tests: `scoring.test.ts` (+2), e2e `recipe-detail.spec.ts`.
+- [x] **4. Docs, screenshots, CI**: PRD v0.16, spec, this plan; phone and desktop screenshots of Create meal
+      (As written, as written: N), Settings → Household, the editor's snack note and the recipe page's score. The
+      review's notes-only step wasn't screenshotted (it needs a cooked snack in the dev data; it is one sub-text line in
+      the step's existing layout, covered by `leftovers.spec.ts`). Typecheck, lint, unit, rules, functions tests and
+      `pnpm e2e:coverage` pass locally; e2e runs in CI (no local e2e on the laptop).
 
 ## Exit criteria
 

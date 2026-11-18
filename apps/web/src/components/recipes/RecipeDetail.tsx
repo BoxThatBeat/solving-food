@@ -1,4 +1,4 @@
-// Recipe detail (PRD R4.8, R4.11, R4.13, R4.14, R4.21, R4.26, R6.15; spec §12). Renders for signed-out
+// Recipe detail (PRD R4.8, R4.11, R4.13, R4.14, R4.21, R4.26, R6.15, R6.37; spec §12). Renders for signed-out
 // visitors too (share links): then only the global recipe shows, without notes, favourites, supply badges, stats, or
 // edit controls.
 import { Stepper } from "@/components/ui/stepper";
@@ -45,6 +45,7 @@ import { RecipeImage } from "./RecipeImage";
 import { useCreateMeal } from "@/components/plan/plan-sheet-context";
 import { useSupply } from "@/data/supply";
 import { SupplyBadge } from "./SupplyBadge";
+import { SuggestionScore } from "./SuggestionScore";
 import { useNow } from "@/hooks/useNow";
 
 const DAY = 86_400_000;
@@ -418,6 +419,9 @@ export function RecipeDetail({
         ) : null}
 
         {ctx ? <HouseholdNotes hid={ctx.hid} uid={ctx.uid} recipeId={id} /> : null}
+
+        {/* M30 (R6.37): the household suggestion score and what each factor adds, at the bottom (signed in only). */}
+        {ctx && recipe.status === "active" ? <SuggestionScore recipeId={id} household={ctx.household} /> : null}
 
         <div className="flex flex-col gap-1.5 tabular-nums text-[0.65625rem] leading-normal font-semibold text-sub">
           {recipe.sourceUrl ? (
